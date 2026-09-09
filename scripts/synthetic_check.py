@@ -66,6 +66,9 @@ BANNER = "SYNTHETIC DATA -- mechanism check only, not a result about SNNs"
 def max_attainable_confidence(timesteps: int, n_classes: int) -> float:
     """Largest softmax confidence the RAW readout can emit: ``e^T / (e^T + C - 1)``.
 
+    ``[DERIVED]`` -- softmax of the extreme reachable count vector ``[T, 0, ..., 0]``. Not
+    from any paper; see SOURCES.md, Derivations.
+
     A ceiling on the uncalibrated model only. Temperature scaling with ``t < 1`` sharpens
     past it, and as ``t`` approaches 0 confidence approaches 1, so no calibrator is
     trapped by it. What it explains is why the uncalibrated model is structurally
@@ -257,6 +260,8 @@ def main() -> int:
     parser.add_argument("--classes", type=int, default=10)
     parser.add_argument("--n-cal", type=int, default=10000)
     parser.add_argument("--n-test", type=int, default=10000)
+    # [DESIGN] Generator parameters. Chosen to produce visible miscalibration; not tuned,
+    # not sourced, and meaningless outside this synthetic check. See SOURCES.md.
     parser.add_argument("--p-hi", type=float, default=0.75)
     parser.add_argument("--p-lo", type=float, default=0.15)
     parser.add_argument("--noise", type=float, default=0.20, help="uniform mode: constant label noise")

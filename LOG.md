@@ -375,3 +375,107 @@ just here.**
 - Earlier open items stand: subject-disjoint calibration for DVS-Gesture, whether `val` is
   needed at all, CIFAR10-DVS split undefined, only `T = 10` built, no confidence intervals
   on any ECE.
+
+---
+
+## 2026-09-09 — Provenance rule, model and training, bootstrap intervals, CI
+
+**Did.** Adopted a provenance rule: every numeric constant and factual claim carries
+`[LIT]`, `[DERIVED]`, `[MEASURED]` or `[UNVERIFIED]`. Created `SOURCES.md` and audited
+`NOTES.md`, the `spikecalib/` docstrings and the `scripts/` docstrings against it.
+Implemented `spikecalib/models.py` (`build_model`, `SpikingClassifier`, `SynOpsCounter`)
+and `spikecalib/train.py` (`set_seed`, `train`, `predict_counts`). Added bootstrap
+confidence intervals and a paired difference bootstrap to `spikecalib/calibration.py`.
+Added `scripts/smoke_train.py`, `.github/workflows/tests.yml`, `tests/conftest.py`,
+`tests/test_models.py` and `tests/test_train.py`.
+
+**Ran.** `pytest tests/ -q` → **92 passed** (up from 54).
+`scripts/fetch_data.py --dataset nmnist --timesteps 4` → built the T=4 frame cache;
+`events_np` reused, no re-download.
+`scripts/smoke_train.py` → exit 0. 1,000 train / 400 val / 600 cal / 2,000 test, 2 epochs,
+1.6 s on MPS. Val accuracy 0.2275 against 0.100 chance. Counts `int64`, range `[0, 2]` at
+T=4, only 3 distinct confidences on the calibration split, tie rate 0.8765. SynOps
+530,590,554 AC and 420,789,312 MAC → 1.207 µJ per sample as a design-comparison proxy.
+Equal-width ECE: uncalibrated 0.0896 [0.0802, 0.1061], temperature 0.0035 [0.0010,
+0.0175], isotonic-top 0.0230 [0.0109, 0.0352]. Paired difference isotonic − temperature
++0.0195 with 95% CI [−0.0062, +0.0255] — **not resolvable**, which is the correct answer
+for a 2,000-sample smoke test.
+
+**Chose.**
+- *`[UNVERIFIED]` on the Horowitz energy constants, rather than a plausible citation.*
+  The paper's existence and topic are not in doubt, but the figure number, the exact
+  0.9 pJ, and whether 4.6 pJ is stated or is the community convention of FP-multiply plus
+  FP-add are all unconfirmed here. `SOURCES.md` records what specifically needs checking.
+  The same applies to the four prior-work references, which came from the project brief
+  and have never been checked against a primary document — they are now labelled as such
+  in `NOTES.md` itself, not just in the log.
+- *`[LIT]` for the dataset papers, because they are locally verifiable.* Titles, venues
+  and DOIs were read directly out of the installed SpikingJelly docstrings. Author lists
+  beyond the first name are still `[UNVERIFIED]`.
+- *BatchNorm in the fully-connected head.* Not a design preference — a bug fix. The first
+  version of the model emitted **exactly zero output spikes for every input**, at every
+  input scale, in both train and eval mode. A `Linear` over sparse binary spikes with
+  default PyTorch init produces pre-activations around 1e-3 against a threshold of 1.0,
+  so the head never fired and no gradient ever returned. Layer-by-layer activations
+  located it at the first fully-connected LIF. `SeqToANNContainer(nn.BatchNorm1d(...))`
+  rather than `layer.BatchNorm1d`, which requires a 4-D input in multi-step mode. There is
+  now a test asserting the untrained model fires at all.
+- *`forward` returns a float tensor with integral values; `count_spikes` returns `int64`.*
+  Autograd cannot flow through an integer dtype, so training forces float. Rather than
+  hide that, both properties are asserted: values are integral and bounded by `T`, and the
+  inference path returns a true integer dtype.
+- *`predict_counts` resets neuron state before every batch, and two tests cover it.* One
+  asserts that scoring the same data twice gives identical counts and that counts are
+  independent of batch size; the other *demonstrates the failure* by showing consecutive
+  forwards without a reset disagree. Without the second test the first could pass
+  vacuously on a model that had no state to leak.
+- *SynOps gates operations by input sparsity for both AC and MAC*, and the AC/MAC
+  distinction is about whether the input is binary rather than about layer type. The
+  counter also records how often an AC-costed layer received non-binary input, so a wrong
+  assumption is visible rather than silently mis-costed.
+- *Bootstrap holds bin edges fixed* at those from the full sample. This conditions on the
+  observed confidence support, which in this setting is nearly fixed by construction: the
+  attainable confidence set is determined by `T` and the class count, not by chance.
+  Recomputing bins per resample is the defensible alternative and is not done; the choice
+  is documented where the interval is produced.
+- *Added a paired difference bootstrap.* Two separate intervals cannot answer "is isotonic
+  better than temperature": overlapping intervals do not imply no difference, and the arms
+  share a test set so their errors are correlated. Resampling one index set and evaluating
+  both arms on it keeps the pairing and cancels the shared binning bias. `smoke_train.py`
+  reports it, and it correctly says the smoke-test difference is unresolvable.
+
+**Found while testing.**
+- *Binned ECE is positively biased, and the bootstrap interval can sit entirely above the
+  point estimate.* A test asserting the interval brackets the point estimate failed:
+  0.01304 against a CI of [0.01407, 0.03060]. This is not an implementation error.
+  Averaging `|accuracy − confidence|` converts sampling noise into positive error, so the
+  statistic overstates calibration error, and a resample — being noisier than the full
+  sample — overstates it more. The test was rewritten to assert the true behaviour so a
+  future change cannot quietly "fix" it into something that is no longer the sampling
+  distribution of this estimator.
+- *That bias is not constant across the sweep.* It depends on how many samples fall in
+  each bin, so at low `T`, where the effective bin count collapses, the bias shrinks with
+  it. **Comparing raw ECE across `T` compares differently-biased numbers.** Comparing two
+  calibrators at the same `T` on the same test split does not have this problem, which is
+  a further argument for the headline quantity being a paired difference. Documented in
+  `calibration.py`; it should also go into `NOTES.md` when the sweep is designed.
+
+**Open.**
+- *The smoke model is badly undertrained and it shows in the readout*: counts reach only
+  2 of a possible 4, giving 3 distinct confidences and an 87.65% tie rate. That is
+  expected at 2 epochs on 1,000 samples, but it means the smoke test exercises the
+  low-distinct-confidence regime by accident rather than by design. A properly trained
+  model at T=4 should use more of the count range, and if it does not, that is itself
+  worth knowing before the sweep.
+- *`lr = 1e-3` is the Adam default and has never been tuned* for this model, dataset or
+  `T`. Listed in `SOURCES.md` "To verify" item 12 because an untuned constant that
+  determines whether a model converges is not a neutral choice.
+- *No MPS-specific test exists yet.* `tests/conftest.py` provides the skip marker and CI
+  runs CPU-only, but every current test is device-agnostic. A test that MPS and CPU agree
+  to a stated tolerance would make the non-determinism caveat concrete rather than
+  asserted.
+- *CI has never actually run.* The workflow is written but unproven until the first push
+  reaches GitHub; the CPU torch wheel pin in particular is untested.
+- Earlier open items stand: capacity statistic, severity-matched synthetic generator,
+  subject-disjoint calibration for DVS-Gesture, whether `val` is needed, CIFAR10-DVS
+  split, and confidence intervals now exist but are not yet wired into a sweep.

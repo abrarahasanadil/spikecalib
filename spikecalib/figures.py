@@ -1,7 +1,10 @@
 """Figures and tables for the paper.
 
-Owns correctness rule 3: **energy is the SynOps proxy** computed with the Horowitz
-(ISSCC 2014) 45 nm constants, ``E_AC = 0.9 pJ`` and ``E_MAC = 4.6 pJ``. Every appearance
+Owns correctness rule 3: **energy is the SynOps proxy** computed with 45 nm constants
+``E_AC = 0.9 pJ`` and ``E_MAC = 4.6 pJ``, attributed to Horowitz, ISSCC 2014. ``[LIT]``
+for the paper; **``[UNVERIFIED]`` for the values** -- the figure number and the exact
+figures have not been checked (SOURCES.md, "To verify" item 1), so captions must not cite
+a figure number. Every appearance
 of an energy number -- in an axis label, a caption, a table header, or body text --
 describes it as a **design-comparison proxy**. It is never described as measured power,
 and no claim about a physical device is derived from it. That wording is enforced here

@@ -3,7 +3,9 @@
 This module is the contribution. Everything else in the repository is scaffolding that
 gets data into it and results out of it.
 
-Owns correctness rule 2: **both equal-width (Guo et al.) and equal-mass ECE are computed
+Owns correctness rule 2: **both equal-width (Guo et al., ICML 2017; ``[LIT]`` for the
+method, ``[UNVERIFIED]`` for the 15-bin default attributed to it -- SOURCES.md item 2)
+and equal-mass ECE are computed
 and both are reported.** :func:`compute_metrics` returns them together in one object, so
 there is no code path that produces one without the other. With discrete spike counts the
 confidence distribution is lumpy -- only finitely many softmax outputs are reachable from
@@ -74,6 +76,7 @@ __all__ = [
     "ece_equal_width",
     "ece_equal_mass",
     "compute_metrics",
+    "bootstrap_ece_difference",
     "CalibrationMetrics",
     "DegenerateBinningError",
 ]
@@ -518,7 +521,10 @@ def _validate(conf: np.ndarray, correct: np.ndarray) -> tuple[np.ndarray, np.nda
 
 
 def ece_equal_width(conf: np.ndarray, correct: np.ndarray, n_bins: int = 15) -> float:
-    """Expected calibration error with equal-width bins (Guo et al.).
+    """Expected calibration error with equal-width bins (Guo et al., ICML 2017).
+
+    ``[LIT]`` for the binning scheme. The ``n_bins = 15`` default is attributed to that
+    paper and is ``[UNVERIFIED]``; see SOURCES.md "To verify" item 2.
 
     Bins partition ``[0, 1]`` into ``n_bins`` intervals of equal width regardless of where
     the data is. With discrete spike counts most intervals are empty and the occupied ones
@@ -608,6 +614,88 @@ def _equal_mass_effective_bins(conf: np.ndarray, n_bins: int) -> int:
     return _equal_mass_bins(conf, n_bins)[1]
 
 
+def _ece_from_bins(bin_index: np.ndarray, correct: np.ndarray, conf: np.ndarray, n_bins: int) -> float:
+    """Weighted mean |accuracy - confidence| over occupied bins, via bincount.
+
+    Same quantity as :func:`_bin_ece`, computed without a Python loop so the bootstrap can
+    afford a thousand of them.
+    """
+    total = conf.size
+    counts = np.bincount(bin_index, minlength=n_bins).astype(np.float64)
+    sum_correct = np.bincount(bin_index, weights=correct, minlength=n_bins)
+    sum_conf = np.bincount(bin_index, weights=conf, minlength=n_bins)
+    occupied = counts > 0
+    if not occupied.any():
+        return 0.0
+    gaps = np.abs(sum_correct[occupied] / counts[occupied] - sum_conf[occupied] / counts[occupied])
+    return float(np.sum(counts[occupied] / total * gaps))
+
+
+def _bootstrap_ci(
+    conf: np.ndarray,
+    correct: np.ndarray,
+    ew_index: np.ndarray,
+    n_ew: int,
+    em_index: Optional[np.ndarray],
+    n_em: int,
+    n_bootstrap: int,
+    seed: int,
+) -> tuple[tuple[float, float], tuple[float, float]]:
+    """Percentile bootstrap 95% CIs for both ECE estimators.
+
+    Without an interval, no difference between two ECEs can be called real -- and with
+    discrete confidences the per-bin accuracies are estimated from few samples, so the
+    intervals are wide enough to matter.
+
+    **Bin edges are held fixed** at those computed on the full sample rather than
+    recomputed per resample. This conditions on the observed confidence support and
+    isolates sampling variability in the per-bin accuracies, which is the quantity of
+    interest. It is also well justified in this specific setting: the attainable
+    confidence set is determined by ``T`` and the class count, so the support is close to
+    fixed by construction rather than by chance. Recomputing bins per resample would add
+    binning variability and is the defensible alternative; it is not done here, and this
+    choice is recorded so a reader can discount it.
+
+    **Binned ECE is positively biased, and the interval shows it.** Averaging
+    ``|accuracy - confidence|`` turns sampling noise in the per-bin accuracies into
+    positive error, so the statistic overstates calibration error, and the overstatement
+    grows as bins get thinner. A bootstrap resample is noisier than the full sample, so
+    the resampled ECEs are more inflated still: **the percentile interval can lie entirely
+    above the point estimate.** That is expected for a biased statistic and is not
+    corrected here, because the interval's job is to describe how much this estimator
+    would move on a different test draw -- which is exactly the question "is this ECE
+    difference real?" A test pins the behaviour so it cannot be silently "fixed".
+
+    Because the bias depends on how many samples fall in each bin, it is **not constant
+    across the sweep**: at low ``T`` the effective bin count collapses and the bias
+    shrinks with it. Comparing raw ECE across ``T`` therefore compares differently-biased
+    numbers. Comparing two calibrators *at the same* ``T`` on the same test split does not
+    have that problem, which is another reason the headline quantity is a difference; use
+    :func:`bootstrap_ece_difference` for it.
+
+    Resampling uses ``numpy.random.default_rng(seed)`` only -- CPU, reproducible
+    bit-for-bit (correctness rule 4).
+    """
+    rng = np.random.default_rng(seed)
+    n = conf.size
+    ew = np.empty(n_bootstrap, dtype=np.float64)
+    em = np.empty(n_bootstrap, dtype=np.float64)
+    for i in range(n_bootstrap):
+        idx = rng.integers(0, n, size=n)
+        c = correct[idx]
+        f = conf[idx]
+        ew[i] = _ece_from_bins(ew_index[idx], c, f, n_ew)
+        if em_index is None:
+            # Degenerate single-bin case: the gap is |accuracy - confidence| outright.
+            em[i] = abs(float(c.mean()) - float(f.mean()))
+        else:
+            em[i] = _ece_from_bins(em_index[idx], c, f, n_em)
+    return (
+        (float(np.percentile(ew, 2.5)), float(np.percentile(ew, 97.5))),
+        (float(np.percentile(em, 2.5)), float(np.percentile(em, 97.5))),
+    )
+
+
 @dataclass(frozen=True)
 class CalibrationMetrics:
     """Both ECE estimators plus the scores and the diagnostics needed to read them.
@@ -628,7 +716,25 @@ class CalibrationMetrics:
     equal_width_bins_occupied: int
     equal_mass_bins_effective: int
     degenerate: bool
+    ece_equal_width_ci: Optional[tuple[float, float]] = None
+    ece_equal_mass_ci: Optional[tuple[float, float]] = None
+    n_bootstrap: int = 0
+    bootstrap_seed: int = 0
     notes: tuple[str, ...] = field(default_factory=tuple)
+
+    @staticmethod
+    def _fmt_ci(ci: Optional[tuple[float, float]]) -> str:
+        return "n/a" if ci is None else f"[{ci[0]:.4f}, {ci[1]:.4f}]"
+
+    @property
+    def ci_overlap_note(self) -> str:
+        """Human-readable reminder that overlapping intervals are not a difference."""
+        if self.ece_equal_width_ci is None:
+            return "no bootstrap requested; no ECE difference can be called real"
+        return (
+            f"equal-width 95% CI {self._fmt_ci(self.ece_equal_width_ci)}, "
+            f"equal-mass 95% CI {self._fmt_ci(self.ece_equal_mass_ci)}"
+        )
 
     @property
     def ece_disagreement(self) -> float:
@@ -649,12 +755,81 @@ class CalibrationMetrics:
             "equal_width_bins_occupied": self.equal_width_bins_occupied,
             "equal_mass_bins_effective": self.equal_mass_bins_effective,
             "degenerate": self.degenerate,
+            "ece_equal_width_ci_low": None if self.ece_equal_width_ci is None else self.ece_equal_width_ci[0],
+            "ece_equal_width_ci_high": None if self.ece_equal_width_ci is None else self.ece_equal_width_ci[1],
+            "ece_equal_mass_ci_low": None if self.ece_equal_mass_ci is None else self.ece_equal_mass_ci[0],
+            "ece_equal_mass_ci_high": None if self.ece_equal_mass_ci is None else self.ece_equal_mass_ci[1],
+            "n_bootstrap": self.n_bootstrap,
+            "bootstrap_seed": self.bootstrap_seed,
         }
         return d
 
 
+def bootstrap_ece_difference(
+    conf_a: np.ndarray,
+    conf_b: np.ndarray,
+    correct: np.ndarray,
+    n_bins: int = 15,
+    n_bootstrap: int = 1000,
+    seed: int = 0,
+    estimator: str = "equal_width",
+) -> dict:
+    """Paired bootstrap on the ECE *difference* between two calibrators.
+
+    This is the statistic the study actually needs. Two separate confidence intervals
+    cannot answer "is isotonic better than temperature": overlapping intervals do not
+    imply no difference, and the two arms are evaluated on the **same** test samples, so
+    their errors are correlated. Resampling the sample indices once and computing both
+    arms on that same resample keeps the pairing and cancels the shared test-set variation
+    -- which also cancels most of the shared binning bias.
+
+    ``conf_a`` and ``conf_b`` are the calibrated confidences of the two arms for the same
+    samples, in the same order; ``correct`` is their shared correctness vector, which is
+    identical because neither calibrator changes the prediction.
+
+    Returns the point difference ``a - b``, its percentile interval, and the fraction of
+    resamples in which ``a`` had the lower ECE. A ``ci`` that straddles zero means the
+    difference is not resolvable at this test-set size, whatever the point estimate says.
+    """
+    conf_a, correct_a = _validate(conf_a, correct)
+    conf_b, _ = _validate(conf_b, correct)
+    if conf_a.size != conf_b.size:
+        raise ValueError(f"arms have different sizes: {conf_a.size} vs {conf_b.size}")
+    if estimator not in ("equal_width", "equal_mass"):
+        raise ValueError(f"unknown estimator {estimator!r}")
+
+    def ece(c, y):
+        if estimator == "equal_width":
+            return ece_equal_width(c, y, n_bins)
+        return ece_equal_mass(c, y, n_bins)
+
+    point = ece(conf_a, correct_a) - ece(conf_b, correct_a)
+    rng = np.random.default_rng(seed)
+    n = conf_a.size
+    diffs = np.empty(n_bootstrap, dtype=np.float64)
+    for i in range(n_bootstrap):
+        idx = rng.integers(0, n, size=n)  # ONE index set, used for both arms
+        y = correct_a[idx]
+        diffs[i] = ece(conf_a[idx], y) - ece(conf_b[idx], y)
+
+    low, high = float(np.percentile(diffs, 2.5)), float(np.percentile(diffs, 97.5))
+    return {
+        "estimator": estimator,
+        "difference": point,
+        "ci": (low, high),
+        "a_better_fraction": float((diffs < 0).mean()),
+        "resolvable": bool(low > 0.0 or high < 0.0),
+        "n_bootstrap": n_bootstrap,
+        "seed": seed,
+    }
+
+
 def compute_metrics(
-    conf: np.ndarray, correct: np.ndarray, n_bins: int = 15
+    conf: np.ndarray,
+    correct: np.ndarray,
+    n_bins: int = 15,
+    n_bootstrap: int = 1000,
+    bootstrap_seed: int = 0,
 ) -> CalibrationMetrics:
     """Both ECEs, NLL, Brier and accuracy, computed together.
 
@@ -672,7 +847,14 @@ def compute_metrics(
     ew_index = np.clip(np.digitize(conf, edges[1:-1], right=True), 0, n_bins - 1)
     ece_ew, occupied = _bin_ece(conf, correct, ew_index, n_bins)
 
+    em_index, n_em = _equal_mass_bins(conf, n_bins)
     ece_em = ece_equal_mass(conf, correct, n_bins)
+
+    ew_ci = em_ci = None
+    if n_bootstrap > 0:
+        ew_ci, em_ci = _bootstrap_ci(
+            conf, correct, ew_index, n_bins, em_index, n_em, n_bootstrap, bootstrap_seed
+        )
 
     clipped = np.clip(conf, _EPS, 1.0 - _EPS)
     nll = float(-(correct * np.log(clipped) + (1.0 - correct) * np.log(1.0 - clipped)).mean())
@@ -703,5 +885,9 @@ def compute_metrics(
         equal_width_bins_occupied=occupied,
         equal_mass_bins_effective=effective,
         degenerate=degenerate,
+        ece_equal_width_ci=ew_ci,
+        ece_equal_mass_ci=em_ci,
+        n_bootstrap=n_bootstrap,
+        bootstrap_seed=bootstrap_seed,
         notes=tuple(notes),
     )

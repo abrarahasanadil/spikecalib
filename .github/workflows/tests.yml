@@ -1,0 +1,45 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies (CPU-only torch)
+        # CI has no Apple silicon and no GPU. The CPU wheel index keeps the download small
+        # and, more usefully, CPU float is bitwise deterministic where MPS is not -- so the
+        # reproducibility tests are stricter here than on the development machine.
+        run: |
+          python -m pip install --upgrade pip
+          pip install --index-url https://download.pytorch.org/whl/cpu \
+            torch==2.14.0 torchvision==0.29.0
+          pip install -r requirements.txt
+
+      - name: Show environment
+        run: |
+          python -c "import torch, sklearn, numpy; print('torch', torch.__version__)"
+          python -c "import torch; print('mps available:', torch.backends.mps.is_available())"
+
+      - name: Run tests
+        # Tests that genuinely need MPS are marked and skip automatically; see
+        # tests/conftest.py. Everything else must pass on CPU.
+        run: python -m pytest tests/ -v --tb=short
+
+      - name: Check no tooling files are tracked
+        # Repository convention: tooling ignore entries live in .git/info/exclude and no
+        # tracked file may reference them by name.
+        run: |
+          if git ls-files | xargs grep -l -i -e 'LOCAL_TOOLING_FILE' -e 'LOCAL_TOOLING_DIR' 2>/dev/null; then
+            echo "A tracked file references local tooling by name."
+            exit 1
+          fi
+          echo "clean"

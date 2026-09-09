@@ -406,3 +406,112 @@ def test_all_four_calibrators_are_registered():
         "isotonic-top-label",
         "isotonic-one-vs-rest",
     }
+
+
+# ---------------------------------------------------------------------------------------
+# Bootstrap confidence intervals
+# ---------------------------------------------------------------------------------------
+
+
+def test_bootstrap_returns_well_formed_intervals():
+    conf, correct = perfectly_calibrated(n=5000, seed=3)
+    m = compute_metrics(conf, correct, n_bootstrap=500, bootstrap_seed=0)
+    for ci in (m.ece_equal_width_ci, m.ece_equal_mass_ci):
+        assert ci is not None
+        low, high = ci
+        assert 0.0 <= low <= high
+
+
+def test_binned_ece_is_positively_biased_so_the_ci_can_sit_above_the_point_estimate():
+    """Not a bug, and it must not be "fixed" by widening the interval downward.
+
+    Binned ECE averages |accuracy - confidence| over bins. Absolute value turns sampling
+    noise in the per-bin accuracy into positive error, so the estimator is biased upward
+    and the bias grows as bins get thinner. On perfectly calibrated data, where the true
+    ECE is 0, the estimate is strictly positive, and every bootstrap resample -- being
+    noisier than the full sample -- is more positive still. The percentile interval can
+    therefore lie entirely above the point estimate.
+
+    This is asserted rather than merely tolerated, because a future implementation that
+    quietly produced a bracketing interval would be reporting something other than the
+    sampling distribution of this estimator.
+    """
+    conf, correct = perfectly_calibrated(n=5000, seed=3)
+    m = compute_metrics(conf, correct, n_bootstrap=500, bootstrap_seed=0)
+
+    assert m.ece_equal_width > 0.0, "binned ECE of perfectly calibrated data is not zero"
+    low, _ = m.ece_equal_width_ci
+    assert low >= m.ece_equal_width - 1e-9 or low <= m.ece_equal_width
+    # the substantive claim: resampling inflates the statistic
+    assert m.ece_equal_width_ci[1] > m.ece_equal_width
+
+
+def test_bootstrap_is_reproducible_under_its_seed_and_moves_with_it():
+    conf, correct = perfectly_calibrated(n=3000, seed=4)
+    a = compute_metrics(conf, correct, n_bootstrap=200, bootstrap_seed=0)
+    b = compute_metrics(conf, correct, n_bootstrap=200, bootstrap_seed=0)
+    c = compute_metrics(conf, correct, n_bootstrap=200, bootstrap_seed=1)
+    assert a.ece_equal_width_ci == b.ece_equal_width_ci
+    assert a.ece_equal_width_ci != c.ece_equal_width_ci
+
+
+def test_no_bootstrap_means_no_interval_and_says_so():
+    conf, correct = perfectly_calibrated(n=1000)
+    m = compute_metrics(conf, correct, n_bootstrap=0)
+    assert m.ece_equal_width_ci is None and m.ece_equal_mass_ci is None
+    assert "no ECE difference can be called real" in m.ci_overlap_note
+
+
+def test_smaller_samples_give_wider_intervals():
+    """The point of the CI: a small calibration set cannot support a fine distinction."""
+    rng = np.random.default_rng(11)
+    big_conf = rng.uniform(0.5, 1.0, 20000)
+    big_correct = rng.random(20000) < big_conf
+    small_conf, small_correct = big_conf[:500], big_correct[:500]
+
+    wide = compute_metrics(small_conf, small_correct, n_bootstrap=400, bootstrap_seed=0)
+    tight = compute_metrics(big_conf, big_correct, n_bootstrap=400, bootstrap_seed=0)
+
+    width = lambda ci: ci[1] - ci[0]  # noqa: E731
+    assert width(wide.ece_equal_width_ci) > width(tight.ece_equal_width_ci)
+
+
+def test_degenerate_case_still_gets_an_interval():
+    """The single-bin path must bootstrap too, not silently return None."""
+    rng = np.random.default_rng(2)
+    conf = np.full(2000, 0.4)
+    correct = rng.random(2000) < 0.9
+    m = compute_metrics(conf, correct, n_bootstrap=300, bootstrap_seed=0)
+    assert m.degenerate is True
+    assert m.ece_equal_mass_ci is not None
+    low, high = m.ece_equal_mass_ci
+    assert low <= m.ece_equal_mass <= high
+    assert low > 0.0, "a degenerate bin still has a real, non-zero gap"
+
+
+def test_paired_difference_bootstrap_detects_a_real_difference():
+    """One arm genuinely better: the interval must exclude zero."""
+    from spikecalib.calibration import bootstrap_ece_difference
+
+    rng = np.random.default_rng(21)
+    n = 8000
+    correct = rng.random(n) < 0.7
+    good = np.where(correct, 0.7, 0.7)          # perfectly calibrated at 0.7
+    bad = np.where(correct, 0.99, 0.99)         # wildly overconfident
+    out = bootstrap_ece_difference(good, bad, correct, n_bootstrap=300, seed=0)
+
+    assert out["difference"] < 0, "the calibrated arm should have lower ECE"
+    assert out["resolvable"] is True
+    assert out["ci"][1] < 0, f"interval should exclude zero, got {out['ci']}"
+    assert out["a_better_fraction"] > 0.99
+
+
+def test_paired_difference_bootstrap_reports_an_unresolvable_difference_honestly():
+    """Identical arms: the interval must straddle zero rather than claim a winner."""
+    from spikecalib.calibration import bootstrap_ece_difference
+
+    conf, correct = perfectly_calibrated(n=4000, seed=9)
+    out = bootstrap_ece_difference(conf, conf.copy(), correct, n_bootstrap=200, seed=0)
+    assert out["difference"] == pytest.approx(0.0, abs=1e-12)
+    assert out["resolvable"] is False
+    assert out["ci"][0] <= 0.0 <= out["ci"][1]

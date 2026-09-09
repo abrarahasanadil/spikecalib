@@ -26,8 +26,10 @@ import sys
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# LIF drive. With tau=2.0, v_threshold=1.0, v_reset=0.0 and a constant input of 1.5,
-# the membrane potential goes 0.75 (no spike) -> 1.125 (SPIKE, reset to 0) -> 0.75.
+# LIF drive. [DERIVED] from the LIF update v <- v + (x - v)/tau with tau=2.0,
+# v_threshold=1.0, v_reset=0.0 and a constant input of 1.5: the membrane potential goes
+# 0.75 (no spike) -> 1.125 (SPIKE, reset to 0) -> 0.75. Not from any paper; tau and
+# v_threshold are conventional defaults and are design choices (see SOURCES.md).
 # That trajectory is deliberate: step 1 must not spike and step 2 must, so a neuron that
 # fires unconditionally and a neuron that never fires both fail this check.
 T_STEPS = 3

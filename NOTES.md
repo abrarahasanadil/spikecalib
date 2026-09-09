@@ -6,7 +6,14 @@ This document is the authoritative design record for the study. It states what i
 being claimed, what would falsify it, which datasets are in scope, how the work is
 positioned against prior art, and which rules must hold for the reported numbers to
 mean anything. Decisions recorded here are settled; where a decision is still open it
-is marked as such. Code in this repository is expected to follow this document, and
+is marked as such.
+
+Every numeric constant and factual claim below carries a provenance tag: `[LIT]` from
+published literature, `[DERIVED]` from mathematics stated in this repository,
+`[MEASURED]` from a run here, and `[UNVERIFIED]` for something believed to come from the
+literature whose source has not been confirmed. `SOURCES.md` holds the full references
+and the list of what still needs checking. Nothing marked `[UNVERIFIED]` may be cited in
+the paper until verified. Code in this repository is expected to follow this document, and
 where the two disagree, this document is what needs updating first.
 
 ---
@@ -29,6 +36,7 @@ reachable. At `T = 2` that set is small enough to enumerate. The set is also bou
 above: the most extreme count vector puts `T` on one class and `0` on the rest, so the
 largest confidence the raw readout can emit is `e^T / (e^T + C - 1)`. For `C = 10` that
 ceiling is **0.451 at `T = 2`**, 0.859 at `T = 4`, and only reaches 0.978 by `T = 6`.
+`[DERIVED]` — softmax of the extreme count vector `[T, 0, ..., 0]`; not from any paper.
 
 The scope of that ceiling must be stated precisely, because it is easy to overclaim.
 **It bounds the raw readout, not what a calibrator can output.** Temperature scaling with
@@ -43,7 +51,8 @@ effectively absent and the familiar overconfidence returns. **The direction of
 miscalibration therefore flips across the sweep**, which is why the study reports the
 signed calibration gap and not only `|ECE|`: averaging the two regimes would cancel them.
 This is observed, not merely argued — on synthetic counts the fitted temperature was
-0.556 at `T = 2` (sharpening) and 1.696 at `T = 10` (softening).
+0.556 at `T = 2` (sharpening) and 1.696 at `T = 10` (softening). `[MEASURED]` —
+`scripts/synthetic_check.py`, seed 0, uniform mode, 2026-09-09; synthetic data.
 
 ### 2. The number of distinct confidence levels is small at low `T` — the mechanism
 
@@ -71,7 +80,9 @@ estimated from many samples.
 On synthetic counts with 10 classes and a 10,000-sample calibration split, `T = 2` gave
 52 distinct confidence levels — about **190 samples per level**, so each per-level
 accuracy is well conditioned. `T = 10` gave 3,035 levels, roughly **3 samples per
-level**, which is where isotonic starts fitting noise.
+level**, which is where isotonic starts fitting noise. `[MEASURED]` —
+`scripts/synthetic_check.py`, seed 0, 2026-09-09; **synthetic data, not a result about
+SNNs**.
 
 So discreteness, which normally penalises isotonic, protects it — and it does so in
 precisely the low-timestep regime where SNNs are energy-competitive. The usual objection
@@ -200,6 +211,11 @@ dropping the inconvenient dataset, and any dataset that is run is reported.
 The study claims novelty over none of the following. Each is cited, and the difference
 is stated rather than implied.
 
+**All four references in this section are `[UNVERIFIED]`.** They were supplied in the
+project brief and have not been checked against primary documents in this repository.
+Authors, titles, venues and years must be confirmed before the paper cites any of them;
+see `SOURCES.md`, "To verify" items 3–6.
+
 **Li, Jones & Furber, "Dynamic Confidence" (ICCV 2023).** Constructs a runtime
 confidence signal for early exit in SNNs, so that inference can stop as soon as the
 network is confident enough. The setting is ANN-to-SNN conversion on static image data,
@@ -235,7 +251,8 @@ stub in this repository restates the rule it is responsible for.
    the evaluation set reports its own training error as a result, which is the single
    most damaging thing that can silently go wrong in this study.
 
-2. **Two ECE estimators, both reported.** Equal-width binning (Guo et al.) and
+2. **Two ECE estimators, both reported.** Equal-width binning (Guo et al., ICML 2017;
+   `[LIT]` for the method, `[UNVERIFIED]` for the 15-bin default attributed to it) and
    equal-mass binning are both computed and both reported. With discrete spike counts
    the confidence distribution is lumpy: equal-width binning leaves bins empty and
    concentrates mass in a few others, which biases the estimate **optimistically** at low
@@ -245,8 +262,14 @@ stub in this repository restates the rule it is responsible for.
    rather than being resolved by picking the more convenient one.
 
 3. **Energy is a proxy, stated as such.** Energy is reported as the SynOps proxy using
-   the Horowitz (ISSCC 2014) 45 nm figures: `E_AC = 0.9 pJ` for an accumulate and
-   `E_MAC = 4.6 pJ` for a multiply-accumulate. Every appearance of an energy number in
+   45 nm figures attributed to Horowitz, "Computing's Energy Problem (and what we can do
+   about it)", ISSCC 2014: `E_AC = 0.9 pJ` for an accumulate and `E_MAC = 4.6 pJ` for a
+   multiply-accumulate. `[LIT]` for the paper; **`[UNVERIFIED]` for the values** — the
+   figure or table number, the exact 0.9 pJ (believed to be the 32-bit floating-point ADD
+   at 45 nm), and whether 4.6 pJ is stated in the paper or is the community convention of
+   FP multiply plus FP add, are all unconfirmed. See `SOURCES.md`, "To verify" item 1.
+   These constants must not be cited with a figure number until checked. Every appearance
+   of an energy number in
    text, table, or figure describes it as a **design-comparison proxy**. It is never
    described as measured power, and no claim about a physical device is derived from it.
 
@@ -310,7 +333,10 @@ advance, rather than discovered mid-analysis.
 study needs to commit to one.
 
 Amir et al. (CVPR 2017) describe "1,342 instances of a set of 11 hand and arm gestures".
-SpikingJelly produces **1,464**, as 1,176 train and 288 test. The gap is 122, which is
+`[LIT]`, quoted verbatim in the installed `spikingjelly/datasets/dvs128_gesture.py`
+docstring, which is where this repository read it. SpikingJelly produces **1,464**, as
+1,176 train and 288 test — `[LIT]` from that same docstring, and **not yet reproduced by
+building the dataset here** (`SOURCES.md`, "To verify" item 10). The gap is 122, which is
 also the number of recording trials, so it is one extra sample per trial on average.
 
 The mechanism is not a twelfth category. Both counts cover the same 11 classes, and
