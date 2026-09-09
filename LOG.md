@@ -479,3 +479,88 @@ for a 2,000-sample smoke test.
 - Earlier open items stand: capacity statistic, severity-matched synthetic generator,
   subject-disjoint calibration for DVS-Gesture, whether `val` is needed, CIFAR10-DVS
   split, and confidence intervals now exist but are not yet wired into a sweep.
+
+---
+
+## 2026-09-09 — The validation metric was broken; fixing it, then a model that actually trains
+
+**Did.** Fixed `_evaluate` in `spikecalib/train.py`, which used `counts.argmax(dim=1)` and
+therefore broke ties by lowest index. Validation now uses
+`spikecalib.calibration.predict_with_ties` under a fixed `eval_seed`, recorded in the
+`RunRecord`, and every history entry carries the validation tie rate. Added per-layer
+attribution to `SynOpsCounter` so encoder energy can be separated from spiking energy.
+Added `output_v_threshold` to `ModelConfig`. Wrote `scripts/train_one.py` and trained
+N-MNIST at T=4, seed 0 on the real split.
+
+**Ran.** `pytest tests/ -q` → **100 passed** (up from 92).
+`scripts/train_one.py --dataset nmnist --timesteps 4 --seed 0 --epochs 15 --lr 1e-3
+--batch-size 128 --patience 5 --num-workers 6` → exit 0. Split 50,000 / 5,000 / 5,000 /
+10,000, fingerprint `e524beccace851af`, 1,070,868 parameters. **Best validation accuracy
+0.9900 at epoch 12**, final validation tie rate 0.0078. 291.1 s wall clock, 19.4 s per
+epoch. Extrapolating, 15 runs (5 timesteps x 3 seeds) cost about **1.2 h** at T=4, more at
+higher T.
+Per-layer SynOps on the smoke-test model: the input encoder is **89.8%** of the energy
+proxy (`net.0`, MAC, 85.2 M ops) against 10.2% for all three spiking layers combined.
+
+**Chose.**
+- *Validation uses the study's own tie-break, not a debiased alternative.* The obvious
+  narrow fix is to break ties randomly in the metric. Using `predict_with_ties` with a
+  recorded seed instead means the number early stopping consumes is produced the same way
+  as every number in the paper, so validation accuracy and reported accuracy cannot drift
+  apart for a reason nobody is looking for.
+- *`eval_seed` is fixed rather than drawn per epoch.* Early stopping compares epochs; a
+  tie-break that re-rolled each epoch would add noise to the comparison for nothing.
+- *Validation tie rate is printed every epoch.* It is the diagnostic that makes the
+  original bug impossible to miss: at epoch 0 of the pilot it read 0.7562, which says
+  plainly that three quarters of samples had no unique argmax and any accuracy alongside
+  it is close to meaningless.
+- *Kept the default output threshold of 1.0.* A sweep on the 8,000-sample pilot gave 0.2568
+  at threshold 1.0, 0.1996 at 0.5, and 0.1998 at 0.25. Lowering it did exactly what it
+  should mechanically -- non-zero counts rose from 2.50% to 17.51% and the tie rate fell
+  from 0.169 to 0.049 -- and accuracy did not improve. `output_v_threshold` stays as
+  configuration because the argument for it was reasonable, but the default is unchanged
+  because the evidence did not support changing it.
+
+**Errors I made while diagnosing, recorded because the corrections matter.**
+- *I evaluated on `splits.val[:1500]` and read 0.6647 accuracy, then reported it as
+  evidence the model worked in eval mode.* It did not. `splits.val` is sorted, and
+  N-MNIST is stored class-ordered, so the first 1,500 indices are **classes 0, 1 and 2
+  only** -- `[500, 500, 500, 0, 0, 0, 0, 0, 0, 0]`. The same mistake inflated a
+  "train-subset accuracy 0.9773". On the full, balanced validation split the real number
+  was 0.2378, exactly what the training loop had reported. **Any subset of a sorted index
+  array is class-ordered, not random**, and this class of error is invisible because the
+  inflated number looks like good news.
+- *I then concluded "the network is not discriminating" and went looking for an
+  architectural fault.* That was also wrong. The model was starved of data: the pilot used
+  8,000 training samples. On the full 50,000-sample split the same architecture reaches
+  97.4% after a single epoch and 99.0% by epoch 12. Nothing was wrong with the model, the
+  threshold, or the learning rate. Two experiments -- the threshold sweep and the
+  per-layer firing diagnostic -- were spent on a problem that did not exist, because I
+  drew a conclusion from a pilot small enough that underfitting dominated everything else.
+
+**Found.**
+- *Input encoding dominates the energy proxy.* 89.8% of the modelled energy is the first
+  layer, which receives real-valued event frames and is therefore costed at 4.6 pJ per
+  operation rather than 0.9 pJ. An SNN energy argument rests on spikes being cheap, and
+  the layer that does not receive spikes is nine tenths of the bill. This is now reported
+  separately by `SynOps.encoder_energy_fraction`, and the paper should lead with it rather
+  than be asked about it.
+- *A trained model at T=4 has a low tie rate: 0.0078.* The smoke test's 87.65% was an
+  artefact of being undertrained, not a property of T=4. **The hypothesis' prediction that
+  tie rate rises as T falls must therefore be tested on converged models only**, and the
+  sweep must record validation accuracy alongside tie rate so an undertrained run cannot
+  be mistaken for a low-T discreteness effect. This is the concrete reason `val` exists.
+
+**Open.**
+- *Only T=4 has been trained.* The claim that a trained model has a low tie rate is a
+  single data point; the T=2 model is the one that matters most to the hypothesis and has
+  not been run.
+- *15 epochs did not early-stop*, so 0.9900 may not be the ceiling. Validation accuracy was
+  still drifting up slowly. Whether to train longer is a cost question for the sweep.
+- *The threshold sweep was run on the 8,000-sample pilot* and its conclusion may not
+  transfer to the full split. It is evidence that threshold is not the dominant lever, not
+  evidence that 1.0 is optimal.
+- *Per-epoch cost is 19.4 s at T=4*, so the full sweep is about 1.2 h at this T and more at
+  higher T -- affordable, which removes any argument for cutting corners on seeds.
+- Earlier open items stand: capacity statistic, severity-matched synthetic generator,
+  subject-disjoint calibration for DVS-Gesture, CIFAR10-DVS split, CI never yet run.

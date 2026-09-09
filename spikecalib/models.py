@@ -45,6 +45,7 @@ __all__ = [
     "build_model",
     "SynOpsCounter",
     "SynOps",
+    "LayerSynOps",
     "E_AC_JOULES",
     "E_MAC_JOULES",
     "EVENT_POLARITY_CHANNELS",
@@ -79,6 +80,13 @@ class ModelConfig:
     # is the SpikingJelly default. Neither is sourced; see SOURCES.md.
     tau: float = 2.0
     v_threshold: float = 1.0
+    # [DESIGN] Threshold for the OUTPUT layer specifically. None means "same as
+    # v_threshold". This exists because the readout layer has a job the hidden layers do
+    # not: it must spread counts across [0, T] so the argmax is informative. With
+    # BatchNorm normalising pre-activations to roughly unit variance, a threshold of 1.0
+    # fires only the top few percent per step, so most classes stay at 0, most samples are
+    # fully tied, and predictions are close to random. Measured, not assumed -- see LOG.md.
+    output_v_threshold: Optional[float] = None
     # [DESIGN] ATan surrogate gradient. The spike function's true derivative is zero almost
     # everywhere and undefined at threshold, so a surrogate is required to train directly.
     # SpikingJelly implements g(x) = (1/pi) arctan((pi/2) alpha x) + 1/2, whose derivative
@@ -95,6 +103,21 @@ class ModelConfig:
 
 
 @dataclass
+class LayerSynOps:
+    """Operation counts for one instrumented layer."""
+
+    name: str
+    kind: str  # "mac" for the real-valued input encoder, "ac" for spiking layers
+    ac: float = 0.0
+    mac: float = 0.0
+    calls: int = 0
+
+    @property
+    def energy_joules(self) -> float:
+        return self.ac * E_AC_JOULES + self.mac * E_MAC_JOULES
+
+
+@dataclass
 class SynOps:
     """Operation counts and the energy proxy derived from them.
 
@@ -108,6 +131,41 @@ class SynOps:
     mac: float = 0.0
     samples: int = 0
     non_binary_ac_inputs: int = 0
+    per_layer: dict = field(default_factory=dict)
+
+    @property
+    def encoder_energy_joules(self) -> float:
+        """Energy attributable to the layers that consume real-valued input.
+
+        Reported separately because it is the obvious reviewer question: an SNN energy
+        argument rests on spikes being cheap, and the first layer does not receive spikes.
+        It receives the event frame, so every one of its operations is a genuine
+        multiply-accumulate at 4.6 pJ rather than an accumulate at 0.9 pJ. If input
+        encoding dominates, the energy story is about the encoder, not the network.
+        """
+        return sum(l.energy_joules for l in self.per_layer.values() if l.kind == "mac")
+
+    @property
+    def spiking_energy_joules(self) -> float:
+        return sum(l.energy_joules for l in self.per_layer.values() if l.kind == "ac")
+
+    @property
+    def encoder_energy_fraction(self) -> float:
+        total = self.energy_joules
+        return self.encoder_energy_joules / total if total else 0.0
+
+    def layer_table(self) -> str:
+        """Per-layer attribution, ordered by share of the energy proxy."""
+        total = self.energy_joules
+        lines = [f"  {'layer':<28}{'kind':>6}{'AC ops':>16}{'MAC ops':>16}{'% energy':>10}"]
+        for name, l in sorted(
+            self.per_layer.items(), key=lambda kv: -kv[1].energy_joules
+        ):
+            share = 100.0 * l.energy_joules / total if total else 0.0
+            lines.append(
+                f"  {name:<28}{l.kind:>6}{l.ac:>16,.0f}{l.mac:>16,.0f}{share:>9.1f}%"
+            )
+        return "\n".join(lines)
 
     @property
     def energy_joules(self) -> float:
@@ -119,11 +177,20 @@ class SynOps:
         return self.energy_joules / self.samples if self.samples else 0.0
 
     def __add__(self, other: "SynOps") -> "SynOps":
+        merged: dict = {}
+        for source in (self.per_layer, other.per_layer):
+            for name, l in source.items():
+                if name not in merged:
+                    merged[name] = LayerSynOps(name=l.name, kind=l.kind)
+                merged[name].ac += l.ac
+                merged[name].mac += l.mac
+                merged[name].calls += l.calls
         return SynOps(
             ac=self.ac + other.ac,
             mac=self.mac + other.mac,
             samples=self.samples + other.samples,
             non_binary_ac_inputs=self.non_binary_ac_inputs + other.non_binary_ac_inputs,
+            per_layer=merged,
         )
 
     def as_dict(self) -> dict:
@@ -133,6 +200,9 @@ class SynOps:
             "samples": self.samples,
             "energy_joules_proxy": self.energy_joules,
             "energy_per_sample_joules_proxy": self.energy_per_sample_joules,
+            "encoder_energy_joules_proxy": self.encoder_energy_joules,
+            "spiking_energy_joules_proxy": self.spiking_energy_joules,
+            "encoder_energy_fraction": self.encoder_energy_fraction,
             "non_binary_ac_inputs": self.non_binary_ac_inputs,
         }
 
@@ -197,15 +267,18 @@ class SpikingClassifier(nn.Module):
             self._lif(),
             layer.Linear(cfg.hidden, self.n_classes, bias=False),
             layer.SeqToANNContainer(nn.BatchNorm1d(self.n_classes)),
-            self._lif(),  # output layer: its spikes ARE the logits, once summed over T
+            self._lif(output_layer=True),  # its spikes ARE the logits, once summed over T
         ]
         self.net = nn.Sequential(*blocks)
         functional.set_step_mode(self, step_mode="m")
 
-    def _lif(self) -> neuron.LIFNode:
+    def _lif(self, output_layer: bool = False) -> neuron.LIFNode:
+        threshold = self.cfg.v_threshold
+        if output_layer and self.cfg.output_v_threshold is not None:
+            threshold = self.cfg.output_v_threshold
         return neuron.LIFNode(
             tau=self.cfg.tau,
-            v_threshold=self.cfg.v_threshold,
+            v_threshold=threshold,
             surrogate_function=surrogate.ATan(alpha=self.cfg.surrogate_alpha),
             detach_reset=self.cfg.detach_reset,
         )
@@ -280,7 +353,11 @@ class SynOpsCounter:
         self.model = model
         self.totals = SynOps()
         self._handles: list[torch.utils.hooks.RemovableHandle] = []
-        self._counted_layers = [m for m in model.modules() if isinstance(m, self.COUNTED)]
+        self._counted_layers = [
+            (name or type(m).__name__, m)
+            for name, m in model.named_modules()
+            if isinstance(m, self.COUNTED)
+        ]
         if not self._counted_layers:
             raise ValueError("model has no Conv2d or Linear layers to instrument")
 
@@ -293,11 +370,12 @@ class SynOpsCounter:
 
     def attach(self) -> "SynOpsCounter":
         self.detach()
-        for index, module in enumerate(self._counted_layers):
+        for index, (name, module) in enumerate(self._counted_layers):
             # The first counted layer sees real-valued event frames; the rest see spikes.
             kind = "mac" if index == 0 else "ac"
+            self.totals.per_layer.setdefault(name, LayerSynOps(name=name, kind=kind))
             self._handles.append(
-                module.register_forward_hook(self._make_hook(kind))
+                module.register_forward_hook(self._make_hook(name, kind))
             )
         return self
 
@@ -308,11 +386,14 @@ class SynOpsCounter:
 
     def reset(self) -> None:
         self.totals = SynOps()
+        for index, (name, _module) in enumerate(self._counted_layers):
+            kind = "mac" if index == 0 else "ac"
+            self.totals.per_layer[name] = LayerSynOps(name=name, kind=kind)
 
     def add_samples(self, n: int) -> None:
         self.totals.samples += int(n)
 
-    def _make_hook(self, kind: str):
+    def _make_hook(self, name: str, kind: str):
         def hook(module, inputs, output):  # noqa: ANN001 - torch hook signature
             x = inputs[0]
             if not torch.is_tensor(x) or not torch.is_tensor(output):
@@ -322,10 +403,14 @@ class SynOpsCounter:
             total_elems = float(x.numel())
             activity = nonzero / total_elems if total_elems else 0.0
             ops = dense * activity
+            entry = self.totals.per_layer[name]
+            entry.calls += 1
             if kind == "mac":
                 self.totals.mac += ops
+                entry.mac += ops
             else:
                 self.totals.ac += ops
+                entry.ac += ops
                 # A layer designated AC must be receiving binary spikes. If it is not, the
                 # cost model is wrong for it, and that should be visible.
                 if not self._is_binary(x):

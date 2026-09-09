@@ -220,3 +220,87 @@ def test_run_record_flags_mps_nondeterminism_honestly():
 
 def test_resolve_device_honours_an_explicit_request():
     assert resolve_device("cpu").type == "cpu"
+
+
+# ---------------------------------------------------------------------------------------
+# The validation metric must not break ties by lowest index
+# ---------------------------------------------------------------------------------------
+
+
+def test_argmax_accuracy_is_the_class_zero_fraction_when_everything_is_tied():
+    """Why _evaluate cannot use argmax, stated as arithmetic.
+
+    ``np.argmax`` sends every tie to the lowest index, so on fully-tied counts it predicts
+    class 0 for every sample and its "accuracy" is just the class-0 fraction of the labels
+    -- a property of the label distribution, not of the model. The seeded uniform
+    tie-break reports 1/C instead, which is the truth: a model with no information gets
+    chance.
+
+    The labels here are deliberately imbalanced, because that is the dangerous direction.
+    On balanced classes the bug understates accuracy (the smoke test printed exactly
+    0.1000 and looked merely undertrained); on imbalanced classes it *overstates* it, and
+    a 0.60 validation accuracy from a model that knows nothing would not look like a bug
+    at all.
+    """
+    from spikecalib.calibration import predict_with_ties
+
+    n, n_classes = 5000, 10
+    counts = np.zeros((n, n_classes), dtype=np.int64)  # every class tied at 0
+    labels = np.full(n, 0, dtype=np.int64)
+    labels[int(0.60 * n):] = np.arange(n - int(0.60 * n)) % (n_classes - 1) + 1
+
+    argmax_accuracy = float((counts.argmax(axis=1) == labels).mean())
+    assert argmax_accuracy == pytest.approx(0.60, abs=1e-9)
+    assert argmax_accuracy == pytest.approx(float((labels == 0).mean()), abs=1e-9)
+
+    predictions, tie_mask = predict_with_ties(counts, np.random.default_rng(0))
+    tie_broken_accuracy = float((predictions == labels).mean())
+    assert tie_mask.all()
+    assert tie_broken_accuracy == pytest.approx(1.0 / n_classes, abs=0.02)
+    assert tie_broken_accuracy < argmax_accuracy / 3
+
+
+def test_evaluate_uses_the_seeded_tie_break_not_argmax():
+    """End to end: an untrained model in eval mode emits all-zero, fully-tied counts."""
+    from spikecalib.train import _evaluate
+
+    n, batch = 500, 50
+    g = torch.Generator().manual_seed(0)
+    x = torch.rand(n, T, EVENT_POLARITY_CHANNELS, *SPEC.spatial, generator=g)
+    labels = torch.zeros(n, dtype=torch.long)
+    labels[int(0.60 * n):] = torch.arange(n - int(0.60 * n)) % (SPEC.n_classes - 1) + 1
+    loader = DataLoader(TensorDataset(x, labels), batch_size=batch)
+
+    model = build_model(SPEC, T, tiny_cfg())  # eval mode, untrained BN -> zero counts
+    accuracy, tie_rate = _evaluate(model, loader, torch.device("cpu"), eval_seed=0)
+
+    assert tie_rate == pytest.approx(1.0), "this fixture is only meaningful if all tied"
+    class_zero_fraction = float((labels == 0).float().mean())
+    assert accuracy == pytest.approx(1.0 / SPEC.n_classes, abs=0.05)
+    assert accuracy < class_zero_fraction / 3, (
+        f"accuracy {accuracy:.4f} is near the class-0 fraction {class_zero_fraction:.4f}; "
+        "the metric is breaking ties by lowest index again"
+    )
+
+
+def test_evaluate_is_deterministic_across_calls_at_a_fixed_eval_seed():
+    """Early stopping compares epochs, so the tie-break must not re-roll between them."""
+    from spikecalib.train import _evaluate
+
+    model = build_model(SPEC, T, tiny_cfg())
+    loader = fake_loader(n=64, batch_size=16)
+    warm_batchnorm(model, loader)
+    a = _evaluate(model, loader, torch.device("cpu"), eval_seed=0)
+    b = _evaluate(model, loader, torch.device("cpu"), eval_seed=0)
+    assert a == b
+
+
+def test_history_and_record_carry_the_validation_tie_rate_and_eval_seed():
+    model = build_model(SPEC, T, tiny_cfg())
+    loaders = {"train": fake_loader(n=32, seed=1), "val": fake_loader(n=16, seed=2)}
+    cfg = TrainConfig(epochs=2, batch_size=16, patience=5, device="cpu", eval_seed=3)
+    _, record = train(model, loaders, cfg, seed=0, dataset="nmnist", timesteps=T)
+
+    assert record.eval_seed == 3
+    assert all("val_tie_rate" in h for h in record.history)
+    assert 0.0 <= record.final_val_tie_rate <= 1.0

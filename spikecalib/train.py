@@ -34,6 +34,7 @@ import torch
 import torch.nn as nn
 from spikingjelly.activation_based import functional
 
+from .calibration import predict_with_ties
 from .models import SpikingClassifier, SynOps, SynOpsCounter
 
 __all__ = [
@@ -65,6 +66,8 @@ class TrainConfig:
     min_delta: float = 0.0
     device: Optional[str] = None
     log_every: int = 0  # 0 silences per-epoch printing
+    # Fixed so the validation tie-break is identical across epochs; see _evaluate.
+    eval_seed: int = 0
 
 
 @dataclass
@@ -76,6 +79,7 @@ class RunRecord:
     """
 
     seed: int
+    eval_seed: int
     dataset: str
     timesteps: int
     split_fingerprint: Optional[str]
@@ -83,6 +87,7 @@ class RunRecord:
     epochs_run: int
     best_val_accuracy: float
     final_val_accuracy: float
+    final_val_tie_rate: float
     best_epoch: int
     early_stopped: bool
     lr: float
@@ -136,23 +141,53 @@ def to_time_first(batch: torch.Tensor) -> torch.Tensor:
     return batch.transpose(0, 1).contiguous()
 
 
-def _evaluate(model: SpikingClassifier, loader: Iterable, device: torch.device) -> float:
-    """Top-1 accuracy on a loader. Ties broken by argmax here, which is fine: this is a
-    training-time convergence signal, not a reported number. Every reported prediction goes
-    through the seeded uniform tie-break in :func:`spikecalib.calibration.predict_with_ties`.
+def _evaluate(
+    model: SpikingClassifier,
+    loader: Iterable,
+    device: torch.device,
+    eval_seed: int = 0,
+) -> tuple[float, float]:
+    """Top-1 accuracy and tie rate on a loader, using the study's own tie-break.
+
+    Returns ``(accuracy, tie_rate)``.
+
+    **This must not use ``torch.argmax``.** A previous version did, and it was wrong in a
+    way that looked like a converged model. ``argmax`` resolves ties to the lowest index,
+    so every tied sample is assigned class 0; with a high tie rate on balanced classes the
+    reported accuracy collapses to the class-0 fraction -- exactly ``1/C``. The smoke test
+    duly printed a validation accuracy of 0.1000 at epoch 0 on ten balanced classes, which
+    reads as "not learning yet" and is actually "metric is broken". Early stopping and
+    best-epoch selection both consume this number, so a biased metric can halt training at
+    the wrong epoch or fail to notice real improvement.
+
+    The fix is not merely to unbias it but to use **the same tie-break as every reported
+    number**: :func:`spikecalib.calibration.predict_with_ties`, seeded. ``eval_seed`` is
+    fixed rather than drawn per epoch so that the validation signal is comparable across
+    epochs -- a tie-break that re-rolled each epoch would add noise to the early-stopping
+    criterion for no reason. The seed is recorded in the :class:`RunRecord`.
+
+    The tie rate is returned alongside because it is the diagnostic that would have caught
+    the original bug immediately: a model whose validation tie rate sits near 1.0 is not
+    separating classes at all, whatever its accuracy appears to be.
     """
     model.eval()
     correct = 0
     total = 0
+    tied = 0
+    rng = np.random.default_rng(eval_seed)
     with torch.no_grad():
         for frames, labels in loader:
             functional.reset_net(model)
             x = to_time_first(frames.float()).to(device)
-            y = labels.to(device)
-            counts = model(x)
-            correct += int((counts.argmax(dim=1) == y).sum().item())
-            total += int(y.numel())
-    return correct / total if total else 0.0
+            counts = model(x).round().to(torch.int64).cpu().numpy()
+            y = np.asarray(labels).astype(np.int64)
+            predictions, tie_mask = predict_with_ties(counts, rng)
+            correct += int((predictions == y).sum())
+            tied += int(tie_mask.sum())
+            total += int(y.size)
+    if not total:
+        return 0.0, 0.0
+    return correct / total, tied / total
 
 
 def train(
@@ -210,18 +245,19 @@ def train(
             epoch_loss += float(loss.item()) * int(y.numel())
             seen += int(y.numel())
 
-        val_accuracy = _evaluate(model, loaders["val"], device)
+        val_accuracy, val_tie_rate = _evaluate(model, loaders["val"], device, cfg.eval_seed)
         epochs_run = epoch + 1
         record = {
             "epoch": epoch,
             "train_loss": epoch_loss / seen if seen else float("nan"),
             "val_accuracy": val_accuracy,
+            "val_tie_rate": val_tie_rate,
         }
         history.append(record)
         if cfg.log_every and (epoch % cfg.log_every == 0 or epoch == cfg.epochs - 1):
             print(
                 f"    epoch {epoch:>3}  loss {record['train_loss']:.4f}  "
-                f"val acc {val_accuracy:.4f}"
+                f"val acc {val_accuracy:.4f}  val tie rate {val_tie_rate:.4f}"
             )
 
         if val_accuracy > best_val + cfg.min_delta:
@@ -236,8 +272,10 @@ def train(
                 break
 
     final_val = history[-1]["val_accuracy"] if history else 0.0
+    final_tie = history[-1]["val_tie_rate"] if history else 0.0
     return best_state, RunRecord(
         seed=seed,
+        eval_seed=cfg.eval_seed,
         dataset=dataset,
         timesteps=timesteps,
         split_fingerprint=split_fingerprint,
@@ -245,6 +283,7 @@ def train(
         epochs_run=epochs_run,
         best_val_accuracy=best_val,
         final_val_accuracy=final_val,
+        final_val_tie_rate=final_tie,
         best_epoch=best_epoch,
         early_stopped=early_stopped,
         lr=cfg.lr,

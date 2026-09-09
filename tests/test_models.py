@@ -88,7 +88,7 @@ def test_untrained_model_actually_fires():
     model = build_model(spec, 4, tiny_cfg()).train()
     functional.reset_net(model)
     out = model(frames(4, 64, spec))
-    assert float(out.sum()) > 0.0, "model emits no spikes at all; the head is starving"
+    assert float(out.detach().sum()) > 0.0, "model emits no spikes at all; the head is starving"
 
 
 # ---------------------------------------------------------------------------------------
@@ -207,3 +207,64 @@ def test_counter_reset_clears_totals():
     assert counter.totals.ac > 0
     counter.reset()
     assert counter.totals.ac == 0 and counter.totals.mac == 0
+
+
+# ---------------------------------------------------------------------------------------
+# Per-layer energy attribution
+# ---------------------------------------------------------------------------------------
+
+
+def test_per_layer_attribution_sums_to_the_totals():
+    spec = DATASETS["nmnist"]
+    model = build_model(spec, 4, tiny_cfg()).train()
+    with SynOpsCounter(model) as counter:
+        functional.reset_net(model)
+        with torch.no_grad():
+            model(frames(4, 8, spec))
+    totals = counter.totals
+    assert totals.per_layer, "no per-layer attribution recorded"
+    assert sum(l.ac for l in totals.per_layer.values()) == pytest.approx(totals.ac)
+    assert sum(l.mac for l in totals.per_layer.values()) == pytest.approx(totals.mac)
+    assert totals.encoder_energy_joules + totals.spiking_energy_joules == pytest.approx(
+        totals.energy_joules
+    )
+
+
+def test_exactly_one_layer_is_the_encoder():
+    """Only the first layer sees real-valued frames; everything else sees spikes."""
+    spec = DATASETS["nmnist"]
+    model = build_model(spec, 4, tiny_cfg()).train()
+    with SynOpsCounter(model) as counter:
+        functional.reset_net(model)
+        with torch.no_grad():
+            model(frames(4, 8, spec))
+    encoders = [l for l in counter.totals.per_layer.values() if l.kind == "mac"]
+    assert len(encoders) == 1
+    assert encoders[0].mac > 0 and encoders[0].ac == 0
+
+
+def test_encoder_fraction_is_reported_and_is_the_dominant_share():
+    """The reviewer question: how much of the energy is input encoding, not spiking?"""
+    spec = DATASETS["nmnist"]
+    model = build_model(spec, 4, tiny_cfg()).train()
+    with SynOpsCounter(model) as counter:
+        functional.reset_net(model)
+        with torch.no_grad():
+            model(frames(4, 16, spec))
+    fraction = counter.totals.encoder_energy_fraction
+    assert 0.0 < fraction < 1.0
+    assert "% energy" in counter.totals.layer_table()
+
+
+def test_synops_addition_merges_per_layer_entries():
+    a = SynOps(ac=1.0, mac=2.0, samples=1)
+    a.per_layer["net.0"] = __import__(
+        "spikecalib.models", fromlist=["LayerSynOps"]
+    ).LayerSynOps(name="net.0", kind="mac", mac=2.0, calls=1)
+    b = SynOps(ac=3.0, mac=4.0, samples=1)
+    b.per_layer["net.0"] = __import__(
+        "spikecalib.models", fromlist=["LayerSynOps"]
+    ).LayerSynOps(name="net.0", kind="mac", mac=4.0, calls=1)
+    total = a + b
+    assert total.per_layer["net.0"].mac == pytest.approx(6.0)
+    assert total.per_layer["net.0"].calls == 2
