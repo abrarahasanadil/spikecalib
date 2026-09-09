@@ -23,8 +23,9 @@ rather than loudly:
     SpikingJelly's ``create_events_np_files`` treats *every* entry under ``extract/Train/``
     as a class directory. One ``.DS_Store`` there becomes an eleventh "class". So the
     archives are extracted here, the metadata is pruned, and only then is the tree handed
-    over. Pruning happens again before disk sizes are reported, because Finder recreates
-    ``.DS_Store`` files mid-run.
+    over. Pruning once is not enough: Finder recreates ``.DS_Store`` files mid-run, so
+    ``os.listdir`` is also filtered for the duration of the build, which closes the race
+    rather than narrowing it.
 
 (c) SpikingJelly only checks that a cache directory EXISTS. An interrupted run leaves a
     stump that the next run silently accepts, yielding a truncated dataset with no error
@@ -245,6 +246,40 @@ def prune_macos_metadata(root: str) -> int:
                 except OSError:
                     pass
     return removed
+
+
+@contextlib.contextmanager
+def macos_metadata_free_listdir():
+    """Filter macOS metadata out of ``os.listdir`` for the duration of a build.
+
+    Trap (b), in the form that survives contact with Finder. Pruning the tree before
+    handing it to SpikingJelly is not sufficient on its own: macOS recreates
+    ``.DS_Store`` whenever a directory is touched, including while a multi-minute build
+    is running, and SpikingJelly's ``create_events_np_files`` does
+
+        for class_name in os.listdir(source_dir):
+            os.mkdir(os.path.join(target_dir, class_name))
+            for bin_file in os.listdir(bin_dir):
+
+    so a ``.DS_Store`` that appears *after* the prune becomes an eleventh class
+    directory and the build dies with ``NotADirectoryError`` partway through -- leaving
+    exactly the kind of stump described in trap (c). This was observed, not theorised:
+    a prune at 17:46 was undone by Finder at 17:47 in the middle of the build.
+
+    ``create_same_directory_structure`` reads ``os.listdir`` too, so the frame-cache path
+    has the same exposure. Filtering the listing closes the race instead of narrowing it.
+    The patch is scoped to the build and reverted on the way out.
+    """
+    real_listdir = os.listdir
+
+    def filtered_listdir(path="."):
+        return [name for name in real_listdir(path) if not is_macos_metadata(name)]
+
+    os.listdir = filtered_listdir
+    try:
+        yield
+    finally:
+        os.listdir = real_listdir
 
 
 def count_files(root: str, suffix: str) -> int:
@@ -541,10 +576,15 @@ def acquire_nmnist(spec: DatasetSpec, root: str, timesteps: int, keep_archive: b
     build_log = os.path.join(root, "build.log")
 
     section("Cache state")
-    events_ok = (
-        ensure_cache_or_clear(os.path.join(events_root, "train"), spec.n_train, "events_np/train")
-        and ensure_cache_or_clear(os.path.join(events_root, "test"), spec.n_test, "events_np/test")
+    # Both are evaluated deliberately -- `and` would short-circuit and leave the second
+    # cache unreported, and the point of this block is to show the reader the full state.
+    train_ok = ensure_cache_or_clear(
+        os.path.join(events_root, "train"), spec.n_train, "events_np/train"
     )
+    test_ok = ensure_cache_or_clear(
+        os.path.join(events_root, "test"), spec.n_test, "events_np/test"
+    )
+    events_ok = train_ok and test_ok
     # events_np is built as a unit by SpikingJelly, and it refuses to build into an
     # existing directory, so a half-good events_np must go entirely.
     if not events_ok and os.path.isdir(events_root):
@@ -572,9 +612,12 @@ def acquire_nmnist(spec: DatasetSpec, root: str, timesteps: int, keep_archive: b
     print("  this takes a while on a cold cache; the counts below are the real check")
     started = time.time()
     sets = {}
+    # Prune right before handing over, then keep the listing filtered for the whole
+    # build -- the prune alone loses the race against Finder (see the shim's docstring).
+    prune_macos_metadata(root)
     with open(build_log, "a") as log:
         log.write(f"\n===== build {time.strftime('%Y-%m-%d %H:%M:%S')} T={timesteps} =====\n")
-        with contextlib.redirect_stdout(log):
+        with contextlib.redirect_stdout(log), macos_metadata_free_listdir():
             for train in (True, False):
                 sets["train" if train else "test"] = sj_class(
                     root=root,
