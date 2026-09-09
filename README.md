@@ -16,7 +16,8 @@ isotonic advantage grows as `T` falls — that is, whether isotonic regression i
 correct method precisely in the low-timestep regime where SNNs are energy-competitive.
 
 The full research design, including the correctness rules that every reported number
-depends on, is in [NOTES.md](NOTES.md).
+depends on, is in [NOTES.md](NOTES.md). [LOG.md](LOG.md) is the append-only working log:
+what was tried, what broke, and which alternatives were rejected and why.
 
 ## Install
 
@@ -45,7 +46,23 @@ python scripts/fetch_data.py --dataset nmnist --timesteps 10
 ```
 
 N-MNIST is implemented; DVS-Gesture and CIFAR10-DVS are registered with their metadata
-but not yet downloadable. Model, training, and calibration code are not yet written.
+but not yet downloadable.
+
+Build and verify the four-way train / validation / calibration / test split. This asserts
+correctness rule 1 — that the calibration split is disjoint from the others — on the real
+index sets, and round-trips the split through disk:
+
+```sh
+python scripts/check_splits.py --dataset nmnist --timesteps 10 --seed 0
+```
+
+Run the tests:
+
+```sh
+python -m pytest tests/ -q
+```
+
+Model, training, and calibration code are not yet written.
 
 ## Citation
 

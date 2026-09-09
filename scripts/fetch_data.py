@@ -42,13 +42,11 @@ from __future__ import annotations
 import argparse
 import contextlib
 import hashlib
-import importlib
 import os
 import shutil
 import sys
 import time
 import zipfile
-from dataclasses import dataclass, field
 from typing import NoReturn, Optional
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -64,131 +62,14 @@ MIB = 1024 ** 2
 # --------------------------------------------------------------------------------------
 # Registry
 # --------------------------------------------------------------------------------------
+#
+# The registry itself lives in spikecalib/datasets.py so that this script and the
+# experiment code cannot drift apart on what a dataset is. Dataset metadata has exactly
+# one home.
 
+sys.path.insert(0, REPO_ROOT)
 
-@dataclass(frozen=True)
-class Mirror:
-    """A third-party source for archives SpikingJelly will not fetch itself."""
-
-    url: str
-    archive_name: str
-    approx_bytes: int
-    description: str
-
-
-@dataclass(frozen=True)
-class DatasetSpec:
-    """Per-dataset configuration.
-
-    ``n_train``/``n_test`` are the counts every cache is verified against -- they are the
-    defence against trap (c). ``spatial`` and ``n_classes`` are what model sizing reads,
-    so that no part of the codebase hardcodes 34x34 or 10 classes.
-    """
-
-    key: str
-    display_name: str
-    module: str
-    class_name: str
-    n_classes: int
-    spatial: tuple[int, int]
-    n_train: Optional[int]
-    n_test: Optional[int]
-    sj_downloadable: bool
-    implemented: bool
-    mirror: Optional[Mirror] = None
-    notes: str = ""
-    hazards: tuple[str, ...] = field(default_factory=tuple)
-
-    @property
-    def n_total(self) -> Optional[int]:
-        if self.n_train is None or self.n_test is None:
-            return None
-        return self.n_train + self.n_test
-
-    def load_class(self):
-        """Import the SpikingJelly dataset class named by this spec."""
-        return getattr(importlib.import_module(self.module), self.class_name)
-
-
-DATASETS: dict[str, DatasetSpec] = {
-    "nmnist": DatasetSpec(
-        key="nmnist",
-        display_name="N-MNIST",
-        module="spikingjelly.datasets.n_mnist",
-        class_name="NMNIST",
-        n_classes=10,
-        spatial=(34, 34),
-        n_train=60_000,
-        n_test=10_000,
-        sj_downloadable=False,
-        implemented=True,
-        mirror=Mirror(
-            # SpikingJelly's resource list gives the dataset homepage, not a file, so the
-            # archives come from the author's Dropbox mirror. It resolves to N-MNIST.zip,
-            # which contains Train.zip and Test.zip -- the two files SpikingJelly expects
-            # in download/, and the two files its MD5s cover.
-            url="https://www.dropbox.com/sh/tg2ljlbmtzygrag/AABrCc6FewNZSNsoObWJqY74a?dl=1",
-            archive_name="N-MNIST.zip",
-            approx_bytes=1_181_573_087,
-            description="author's Dropbox mirror (Orchard et al.); wraps Train.zip + Test.zip",
-        ),
-        notes="Primary dataset. Official train/test split.",
-        hazards=(
-            "SpikingJelly cannot download it; archives come from the mirror and are "
-            "verified against SpikingJelly's own MD5s.",
-            "Archives carry macOS metadata that SpikingJelly would read as extra classes.",
-            "Cache directories are checked only for existence upstream, so counts are "
-            "verified here.",
-        ),
-    ),
-    "dvsgesture": DatasetSpec(
-        key="dvsgesture",
-        display_name="DVS-Gesture",
-        module="spikingjelly.datasets.dvs128_gesture",
-        class_name="DVS128Gesture",
-        n_classes=11,
-        spatial=(128, 128),
-        # Documented expectations from the standard DVS128 Gesture trial split. They are
-        # re-verified against the built cache when acquisition is implemented; nothing
-        # downstream depends on them until then.
-        n_train=1_176,
-        n_test=288,
-        sj_downloadable=False,
-        implemented=False,
-        mirror=None,
-        notes="Second dataset. Small: ~1.3k samples total.",
-        hazards=(
-            "Roughly 1,342 samples total, so a 500-per-class calibration split is "
-            "impossible; split sizes are per-dataset configuration.",
-            "Isotonic regression overfits small calibration sets -- cross-validated "
-            "isotonic is planned here, and calibration-set size is reported with every "
-            "result.",
-            "SpikingJelly cannot download it; it is gated behind an IBM Box login.",
-        ),
-    ),
-    "cifar10dvs": DatasetSpec(
-        key="cifar10dvs",
-        display_name="CIFAR10-DVS",
-        module="spikingjelly.datasets.cifar10_dvs",
-        class_name="CIFAR10DVS",
-        n_classes=10,
-        spatial=(128, 128),
-        # No official split exists, so there is no upstream train/test count to verify
-        # against. The split this study uses will be defined, seeded, saved and
-        # documented in NOTES.md when the dataset is brought in.
-        n_train=None,
-        n_test=None,
-        sj_downloadable=True,
-        implemented=False,
-        mirror=None,
-        notes="Third dataset, if time allows. 10,000 samples, no official split.",
-        hazards=(
-            "No official train/test split. The split must be defined, seeded, saved to "
-            "disk and documented in NOTES.md.",
-            "SpikingJelly can download this one (figshare), so no mirror is needed.",
-        ),
-    ),
-}
+from spikecalib.datasets import DATASETS, DatasetSpec, get_spec  # noqa: E402
 
 
 # --------------------------------------------------------------------------------------
@@ -572,7 +453,7 @@ def acquire_nmnist(spec: DatasetSpec, root: str, timesteps: int, keep_archive: b
     download_root = os.path.join(root, "download")
     extract_root = os.path.join(root, "extract")
     events_root = os.path.join(root, "events_np")
-    frames_root = os.path.join(root, f"frames_number_{timesteps}_split_by_number")
+    frames_root = os.path.join(root, spec.frames_dir(timesteps))
     build_log = os.path.join(root, "build.log")
 
     section("Cache state")
@@ -591,9 +472,7 @@ def acquire_nmnist(spec: DatasetSpec, root: str, timesteps: int, keep_archive: b
         print("  events_np/ is incomplete as a whole; removing it so it is rebuilt")
         shutil.rmtree(events_root)
 
-    frames_ok = ensure_cache_or_clear(
-        frames_root, spec.n_total, f"frames_number_{timesteps}_split_by_number"
-    )
+    frames_ok = ensure_cache_or_clear(frames_root, spec.n_total, spec.frames_dir(timesteps))
 
     if events_ok and frames_ok:
         print()
@@ -664,7 +543,7 @@ def acquire_nmnist(spec: DatasetSpec, root: str, timesteps: int, keep_archive: b
         "download": download_root,
         "extract": extract_root,
         "events_np": events_root,
-        f"frames_number_{timesteps}_split_by_number": frames_root,
+        spec.frames_dir(timesteps): frames_root,
     }
 
 
@@ -673,11 +552,11 @@ def acquire_nmnist(spec: DatasetSpec, root: str, timesteps: int, keep_archive: b
 # --------------------------------------------------------------------------------------
 
 
-def report_disk(root: str, paths: dict, timesteps: int) -> None:
+def report_disk(root: str, paths: dict, spec: DatasetSpec, timesteps: int) -> None:
     section("Disk cost")
     prune_macos_metadata(root)  # Finder recreates these; prune before measuring.
 
-    per_t_key = f"frames_number_{timesteps}_split_by_number"
+    per_t_key = spec.frames_dir(timesteps)
     one_time = {k: v for k, v in paths.items() if k != per_t_key}
     per_t = {k: v for k, v in paths.items() if k == per_t_key}
 
@@ -715,6 +594,8 @@ def print_registry(spec: DatasetSpec) -> None:
     train = f"{spec.n_train:,}" if spec.n_train is not None else "n/a (no official split)"
     test = f"{spec.n_test:,}" if spec.n_test is not None else "n/a (no official split)"
     print(f"  expected train / test : {train} / {test}")
+    print(f"  val / cal per class   : {spec.n_val_per_class} / {spec.n_cal_per_class} "
+          f"(val {spec.n_val:,}, cal {spec.n_cal:,} total)")
     print(f"  SpikingJelly can DL   : {spec.sj_downloadable}")
     print(f"  mirror                : {spec.mirror.description if spec.mirror else 'none'}")
     print(f"  acquisition           : {'implemented' if spec.implemented else 'NOT IMPLEMENTED'}")
@@ -749,7 +630,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    spec = DATASETS[args.dataset]
+    spec = get_spec(args.dataset)
     root = os.path.join(args.data_root, spec.key)
 
     print("SpikeCalib data acquisition")
@@ -774,7 +655,7 @@ def main() -> int:
     print(f"  free disk : {human(free_bytes(root))}")
 
     paths = acquire_nmnist(spec, root, args.timesteps, args.keep_archive)
-    report_disk(root, paths, args.timesteps)
+    report_disk(root, paths, spec, args.timesteps)
 
     section("Result")
     print(f"  {spec.display_name} is ready at T={args.timesteps}.")

@@ -65,7 +65,7 @@ Datasets, in priority order:
 | Order | Dataset     | Resolution | Classes | Samples (train/test) | Status                |
 |-------|-------------|------------|---------|----------------------|-----------------------|
 | 1     | N-MNIST     | 34 x 34    | 10      | 60,000 / 10,000      | Primary, done first   |
-| 2     | DVS-Gesture | 128 x 128  | 11      | ~1,342 total         | Second                |
+| 2     | DVS-Gesture | 128 x 128  | 11      | 1,176 / 288          | Second                |
 | 3     | CIFAR10-DVS | 128 x 128  | 10      | 10,000 total         | Third, if time allows |
 
 The sweep is `T` in `{2, 4, 6, 8, 10}` with 3 seeds, on every dataset that makes it into
@@ -180,15 +180,46 @@ metrics.
 Each of these is a known property of the dataset that is designed around here, in
 advance, rather than discovered mid-analysis.
 
-**DVS-Gesture — small sample count.** The dataset has roughly 1,342 samples in total
-across 11 classes. A 500-per-class calibration split is arithmetically impossible, and
-more importantly isotonic regression **overfits on small calibration sets**: a step
-function with enough steps can fit calibration-set noise exactly. Two consequences for
-the design: split sizes are **per-dataset configuration** rather than a global constant,
-and **calibration-set size is reported alongside every result** so a reader can judge
-whether an isotonic win is real or is small-sample overfitting. **Cross-validated
-isotonic is planned for the small datasets**, so that the reported isotonic performance
-is not an in-sample artifact.
+**DVS-Gesture — sample count.** Two different totals for this dataset circulate, and the
+study needs to commit to one.
+
+Amir et al. (CVPR 2017) describe "1,342 instances of a set of 11 hand and arm gestures".
+SpikingJelly produces **1,464**, as 1,176 train and 288 test. The gap is 122, which is
+also the number of recording trials, so it is one extra sample per trial on average.
+
+The mechanism is not a twelfth category. Both counts cover the same 11 classes, and
+"other gestures" is already one of them — it is class 11 in the per-trial label CSVs,
+which SpikingJelly maps to label index 10. What differs is segmentation. SpikingJelly
+emits one sample per *row* of each trial's `_labels.csv`, and some trials label a gesture
+more than once: the `user01_fluorescent` CSV reproduced in SpikingJelly's own
+documentation has twelve rows for eleven classes, because class 8 appears twice, and
+SpikingJelly's source carries a note that `user26_fluorescent_labels.csv` has several
+samples sharing a label. So the extra instances are repeated gesture segments, not a new
+category. SpikingJelly attributes the difference to "different pre-processing methods",
+and snnTorch's loader independently arrives at the same 1,176 / 288.
+
+**This study uses SpikingJelly's convention: 11 classes, 1,176 train / 288 test, 1,464
+total.** The reason is that the pipeline is built on SpikingJelly, so those are the
+samples that will actually exist on disk, and every count in the paper has to match the
+artifacts that produced it rather than a figure inherited from a citation. The paper will
+report both numbers and this explanation, so a reader comparing against Amir et al. is
+not left to guess whether the difference is a bug.
+
+One consequence worth recording: SpikingJelly's train/test division is by recording
+trial, listed in `trials_to_train.txt` and `trials_to_test.txt`, so no subject appears on
+both sides. Splits carved out of the training set do **not** automatically inherit that
+property — validation and calibration samples can come from subjects also seen in
+training. Whether the calibration split should be subject-disjoint too is open; it is
+recorded in `LOG.md` rather than silently decided here.
+
+Either way the dataset is small — about 107 training samples per class. A 500-per-class
+calibration split is arithmetically impossible, and more importantly isotonic regression
+**overfits on small calibration sets**: a step function with enough steps can fit
+calibration-set noise exactly. Two consequences for the design: split sizes are
+**per-dataset configuration** rather than a global constant, and **calibration-set size
+is reported alongside every result** so a reader can judge whether an isotonic win is
+real or is small-sample overfitting. **Cross-validated isotonic is planned for the small
+datasets**, so that the reported isotonic performance is not an in-sample artifact.
 
 **CIFAR10-DVS — no official split.** The dataset ships as 10,000 samples with no
 canonical train/test division, which means every paper using it has invented one and few
