@@ -18,9 +18,16 @@ experiment seed, never by lowest index.** ``np.argmax`` silently returns the low
 which biases every tie toward class 0; that bias grows as ``T`` falls, because fewer
 attainable count values means more collisions -- so it would contaminate precisely the
 trend under test. :func:`predict_with_ties` therefore does not use ``np.argmax`` on the
-counts. The tie rate is a **reported quantity, not a diagnostic**: the hypothesis predicts
-it rises as ``T`` falls, and that rise is direct evidence for the discreteness mechanism
-independent of any ECE number.
+counts. The tie rate is a **reported quantity**, but it is a descriptive measure of how
+discrete the output is, *not* the mechanism by which isotonic beats temperature scaling --
+neither calibrator breaks ties. See ``NOTES.md``, "What tie rate is, and what it is not".
+
+The mechanism the study argues for is **capacity**: temperature scaling has one parameter
+and can only rescale the whole confidence curve, while isotonic has as many effective
+degrees of freedom as the calibration set has distinct confidence levels (fewer, after
+monotonicity pooling). At low ``T`` there are few levels and many samples supporting each
+one, so the usual variance objection to isotonic weakens exactly where SNNs are
+energy-competitive.
 
 Owns the calibrator-fitting half of correctness rule 4: **fitting runs on CPU with
 deterministic libraries only** -- scikit-learn for the isotonic fits, ``scipy.optimize``
@@ -158,10 +165,16 @@ def predict_with_ties(
 def tie_rate(counts: np.ndarray) -> float:
     """Fraction of samples whose argmax is tied.
 
-    A reported quantity, not a diagnostic. The hypothesis predicts this rises as ``T``
-    falls, because fewer attainable count values means more collisions, and that rise is
-    direct evidence for the mechanism the paper argues for -- visible without reference to
-    any ECE number. It belongs in the results table.
+    A reported quantity that belongs in the results table. It rises as ``T`` falls, because
+    fewer attainable count values means more collisions, and that rise is direct evidence
+    that the output really is discrete -- it makes the premise of the capacity argument
+    visible and measurable.
+
+    It is **not** the reason isotonic outperforms temperature scaling, and it cannot be:
+    neither calibrator breaks ties. Temperature is order-preserving, so a tie survives any
+    temperature; isotonic top-label is a monotone function of the scalar confidence, so two
+    samples with identical counts receive identical output from it too. Tie-breaking happens
+    once, in :func:`predict_with_ties`, before either calibrator runs.
     """
     return float((_max_mask(counts).sum(axis=1) > 1).mean())
 
@@ -277,10 +290,19 @@ class TemperatureScaling(Calibrator):
     defined: it divides the logits by a scalar and re-softmaxes. Guo et al.'s method, and
     the baseline used for SNN uncertainty by Sun & Bohte (AOT-SNN).
 
-    The claim under test lives here. Dividing every logit by the same positive scalar is
-    strictly order-preserving, so it cannot change which class is predicted and cannot
-    separate a tie -- two classes on equal counts stay equal at every temperature. On an
-    integer lattice that limitation binds hard at low ``T``.
+    The claim under test lives here, and it is about **capacity**. One parameter and a
+    rigid functional form means temperature can only rescale the entire confidence curve.
+    Where miscalibration is a uniform offset that is sufficient; where miscalibration
+    varies with confidence -- overconfident at the top of the range, underconfident at the
+    bottom -- no single ``t`` corrects both ends, because the only available move applies
+    everywhere at once.
+
+    Two properties are worth stating precisely, because both are easy to overclaim.
+    Dividing by a positive scalar is order-preserving, so temperature cannot change the
+    predicted class or separate a tie -- but neither can isotonic top-label, so this does
+    not distinguish the methods. And temperature is *not* trapped by the attainable-
+    confidence ceiling of the raw readout: as ``t`` approaches 0 the softmax approaches
+    one-hot, so sharpening reaches confidences the readout itself could never emit.
 
     Optimised with ``scipy.optimize.minimize_scalar`` over ``log(t)``, which keeps the
     temperature positive and makes the search scale-free. Bounded, deterministic, CPU.
@@ -345,6 +367,12 @@ class IsotonicTopLabel(Calibrator):
     estimator rather than a violated assumption. ``out_of_bounds='clip'`` because test
     confidences can fall outside the calibration range, and clipping is the monotone
     extension -- extrapolating a step function would invent structure.
+
+    This is where the capacity argument cashes out. The fit has at most one free value per
+    distinct calibration confidence, and :attr:`n_levels_` reports how many survived the
+    pool-adjacent-violators step -- the model's *realised* degrees of freedom. Comparing
+    that against the calibration-set size gives the samples-per-level ratio the hypothesis
+    is really about.
     """
 
     name = "isotonic-top-label"
@@ -368,6 +396,25 @@ class IsotonicTopLabel(Calibrator):
         if self.model_ is None:
             raise RuntimeError("IsotonicTopLabel.transform called before fit")
         return np.asarray(self.model_.transform(np.asarray(conf, dtype=np.float64)))
+
+    @property
+    def n_knots_(self) -> int:
+        """Distinct calibration confidences the fit was built on: the capacity ceiling."""
+        if self.model_ is None:
+            raise RuntimeError("IsotonicTopLabel.n_knots_ accessed before fit")
+        return int(np.asarray(self.model_.X_thresholds_).size)
+
+    @property
+    def n_levels_(self) -> int:
+        """Distinct output values after monotonicity pooling: the realised capacity.
+
+        Pool-adjacent-violators merges neighbouring knots that would violate monotonicity,
+        so this is at most :attr:`n_knots_` and is usually far smaller. It is the honest
+        parameter count for the fitted step function.
+        """
+        if self.model_ is None:
+            raise RuntimeError("IsotonicTopLabel.n_levels_ accessed before fit")
+        return int(np.unique(np.asarray(self.model_.y_thresholds_)).size)
 
 
 class IsotonicOneVsRest(Calibrator):

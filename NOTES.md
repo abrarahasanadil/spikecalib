@@ -20,50 +20,157 @@ counts, that assumption does not hold. Each class output is an integer in `[0, T
 where `T` is the number of simulation timesteps. The logit vector is a point on an
 integer lattice, not a point in a continuous space.
 
-Two consequences follow, and both sharpen as `T` falls:
+Discreteness has two distinct consequences, and it matters which one does the work.
 
-1. **The attainable confidence set is small and coarse.** With `C` classes and counts
-   bounded by `T`, only finitely many softmax outputs are reachable. At `T = 2` that set
-   is small enough to enumerate. Temperature scaling can only slide confidence along the
-   curve traced by dividing one of those finitely many integer vectors by a scalar; it
-   cannot reach values between the rungs.
+### 1. The attainable confidence set is small, coarse, and bounded
 
-   The set is also *bounded*, which turns out to matter more than its coarseness. The
-   most extreme count vector puts `T` on one class and `0` on the rest, so the largest
-   confidence any spike-count readout can emit is `e^T / (e^T + C - 1)`. For `C = 10`
-   that ceiling is **0.451 at `T = 2`**, 0.859 at `T = 4`, and only reaches 0.978 by
-   `T = 6`. A model whose accuracy exceeds 0.451 at `T = 2` is therefore *forced* into
-   underconfidence: there is no reachable output that would be correctly confident, and no
-   calibrator can be blamed for the shortfall. So the direction of miscalibration is
-   expected to flip across the sweep — structurally underconfident at low `T`, plausibly
-   overconfident at high `T` — and the study must report the signed gap rather than only
-   `|ECE|`, or the two regimes will average each other away.
-2. **Ties cannot be broken by a scalar.** If two classes finish with the same spike
-   count, dividing both by the same temperature leaves them equal. No choice of
-   temperature separates them, because temperature is monotone in the logit and applies
-   identically to every class.
+With `C` classes and counts bounded by `T`, only finitely many softmax outputs are
+reachable. At `T = 2` that set is small enough to enumerate. The set is also bounded
+above: the most extreme count vector puts `T` on one class and `0` on the rest, so the
+largest confidence the raw readout can emit is `e^T / (e^T + C - 1)`. For `C = 10` that
+ceiling is **0.451 at `T = 2`**, 0.859 at `T = 4`, and only reaches 0.978 by `T = 6`.
 
-Isotonic regression does not carry the assumption that fails here. It is
-non-parametric and only requires monotonicity, so it fits a step function over the
-observed confidence values. Discreteness is native to that estimator rather than a
-violated precondition: a coarse, lumpy input distribution is exactly the kind of input a
-step function represents well.
+The scope of that ceiling must be stated precisely, because it is easy to overclaim.
+**It bounds the raw readout, not what a calibrator can output.** Temperature scaling with
+`t < 1` sharpens, and as `t` approaches 0 the softmax approaches one-hot, so confidence
+approaches 1 — sharpening escapes the ceiling entirely. Isotonic can map any input level
+to any value in `[0, 1]`. Neither calibrator is trapped by it.
+
+What the ceiling does explain is the shape of the *uncalibrated* error. A model whose
+accuracy exceeds 0.451 at `T = 2` cannot emit a correctly confident output at all, so it
+is structurally underconfident before any calibration. At high `T` the ceiling is
+effectively absent and the familiar overconfidence returns. **The direction of
+miscalibration therefore flips across the sweep**, which is why the study reports the
+signed calibration gap and not only `|ECE|`: averaging the two regimes would cancel them.
+This is observed, not merely argued — on synthetic counts the fitted temperature was
+0.556 at `T = 2` (sharpening) and 1.696 at `T = 10` (softening).
+
+### 2. The number of distinct confidence levels is small at low `T` — the mechanism
+
+This is the consequence that does the work, and the argument is about **capacity**.
+
+**Temperature scaling has one parameter and a rigid functional form.** It can rescale the
+whole confidence curve and nothing else. Where the miscalibration is uniform — the same
+direction and roughly the same magnitude across the confidence range — one scalar is
+genuinely sufficient, and isotonic's extra flexibility buys nothing. Where the
+miscalibration *varies with confidence* — overconfident at the top of the range,
+underconfident at the bottom — no single `t` can correct both ends at once, because
+raising confidence everywhere is the only move available.
+
+**Isotonic regression is non-parametric.** Its effective degrees of freedom are bounded
+above by the number of distinct confidence values in the calibration set, and reduced
+below that by the pool-adjacent-violators step that enforces monotonicity. It can set
+each distinct confidence level to its own empirical accuracy.
+
+The inversion is the point. The standard objection to isotonic regression is variance:
+with many distinct levels and few samples supporting each one, it fits noise, and that
+is exactly why it is usually considered the riskier choice on small calibration sets.
+Discreteness removes that objection at low `T`. Few distinct levels means each level is
+estimated from many samples.
+
+On synthetic counts with 10 classes and a 10,000-sample calibration split, `T = 2` gave
+52 distinct confidence levels — about **190 samples per level**, so each per-level
+accuracy is well conditioned. `T = 10` gave 3,035 levels, roughly **3 samples per
+level**, which is where isotonic starts fitting noise.
+
+So discreteness, which normally penalises isotonic, protects it — and it does so in
+precisely the low-timestep regime where SNNs are energy-competitive. The usual objection
+to the method evaporates exactly where the method is needed.
+
+### What tie rate is, and what it is not
+
+Argmax ties are frequent at low `T` and the tie rate is reported, but **it is a
+descriptive measure of how discrete the output is, not the reason isotonic wins.**
+
+Neither calibrator breaks ties, so the tie rate cannot distinguish them. Temperature
+scaling divides every logit by the same positive scalar, which is order-preserving, so
+two classes on equal counts stay equal at every temperature. Isotonic top-label computes
+`conf' = f(conf)` for a monotone `f`, so two samples with identical counts have identical
+confidence and receive identical output from it as well. Both calibrators hold the
+prediction fixed by design; tie-breaking happens once, before either of them runs, under
+the experiment seed (see "Tie-breaking" under resolved design decisions).
+
+An earlier version of this document offered "ties cannot be broken by a scalar" as the
+mechanism separating the two methods. That was wrong for the reason just given, and the
+correction is recorded in `LOG.md`. Tie rate stays in the results table as evidence that
+the output really is discrete and as a measure of how coarse it is — it is what makes the
+capacity argument's premise visible — but the mechanism is capacity.
 
 ## Hypothesis
 
-**The isotonic advantage over temperature scaling grows as `T` falls.** If that holds,
-isotonic regression is the correct calibration method precisely in the low-timestep
-regime — which is the regime where SNNs are energy-competitive in the first place, and
-therefore the regime anyone deploying one actually cares about. The argument would then
-be not merely that isotonic calibrates better on average, but that the gap is largest
-where it matters most.
+**The isotonic advantage over temperature scaling is governed by the number of
+calibration samples per distinct confidence level, `n_cal / n_distinct`.** Lower `T`
+means fewer distinct levels, hence more samples supporting each level, hence a
+better-conditioned isotonic fit. So the advantage is expected to grow as `T` falls — but
+`T` is the mechanism's *proxy*, and the ratio is the mechanism.
 
-The hypothesis is falsifiable and the falsification is cheap to observe. If the
-advantage is flat in `T` — isotonic wins by roughly the same margin at `T = 10` as at
-`T = 2`, or wins nowhere — then the discreteness mechanism is not what is driving the
-difference, the hypothesis is false, and **the study reports that**. A flat trend is a
-publishable result about a plausible mechanism that turns out not to matter; it is not a
-reason to reframe the question after the fact.
+If that holds, isotonic regression is the correct calibration method precisely in the
+low-timestep regime, which is the regime where SNNs are energy-competitive in the first
+place and therefore the regime anyone deploying one actually cares about. The argument is
+then not merely that isotonic calibrates better on average, but that it is best where it
+matters most, for a reason that can be stated and measured.
+
+The hypothesis is falsifiable in three distinct ways, and the study reports whichever
+occurs:
+
+1. **Flat in `T`.** If isotonic wins by roughly the same margin at `T = 10` as at
+   `T = 2`, or wins nowhere, the discreteness account is not driving the difference and
+   the hypothesis is false.
+2. **Tracks `T` but not the ratio.** This is the sharper test, and it is the one that
+   distinguishes the capacity explanation from any other story about low `T`. The ratio
+   can be moved *independently of `T`* by changing the calibration-set size: at fixed `T`,
+   shrinking `n_cal` lowers `n_cal / n_distinct` and should shrink the isotonic advantage.
+   If the advantage tracks `T` but is indifferent to `n_cal` at fixed `T`, then something
+   other than capacity is producing the trend and the stated mechanism is wrong even
+   though its prediction appeared to hold.
+3. **Uniform miscalibration.** The advantage requires miscalibration whose *shape* varies
+   with confidence. Where the error is a uniform offset, one scalar is sufficient by
+   construction and no amount of extra capacity helps. So the study reports the shape of
+   the miscalibration, not only its magnitude; an isotonic advantage that vanishes under
+   uniform miscalibration confirms the mechanism rather than undermining it.
+
+A flat trend, or a trend that fails the ratio test, is a publishable result about a
+plausible mechanism that turns out not to matter. It is not a reason to reframe the
+question after the fact.
+
+### What the synthetic pre-test already shows
+
+The capacity mechanism was tested on synthetic counts before any model existed
+(`scripts/synthetic_check.py`), and **it did not survive that test cleanly**. This is
+recorded here rather than in the log alone, because it changes what the real experiment
+has to measure.
+
+Three observations, all from synthetic data with a smooth monotone true calibration curve:
+
+1. **Isotonic's realised capacity is small and roughly constant.** The pool-adjacent-
+   violators step collapses the fit far below the `n_distinct` upper bound. Across runs
+   where `n_distinct` spanned 34 to 4,197 — a factor of 123 — the number of distinct
+   fitted output values stayed between 4 and 22, with no trend. Isotonic self-regularises:
+   the parameters it actually uses are set by the complexity of the true calibration
+   curve, not by how many confidence levels exist. **`n_distinct` is therefore a very
+   loose bound, and `n_cal / n_distinct` may be the wrong statistic.** The realised block
+   count is reported alongside it so both can be checked.
+
+2. **The advantage was indifferent to the ratio at fixed `T = 10`.** Moving `n_cal` from
+   250 to 20,000 took samples-per-level from 1.1 to 4.8 and left the isotonic advantage
+   flat at 0.137–0.159. At 1.1 samples per level — essentially one sample per confidence
+   value — isotonic did not overfit and did not lose. At `T = 2` there was a weak positive
+   trend (0.008 to 0.027 as the ratio went 7.4 to 350.9), so the ratio is not irrelevant,
+   but it is not the driver the hypothesis names.
+
+3. **`T` is confounded with miscalibration severity.** In the conditional generator the
+   uncalibrated ECE rose from 0.084 at `T = 2` to 0.276 at `T = 10` — 3.3x more error to
+   correct — because a wider count range gives the injected miscalibration more room to
+   vary. The isotonic advantage rose with `T` in step with that severity, which is a
+   different explanation from capacity and fits the data better here.
+
+None of this refutes the hypothesis for real SNNs: a synthetic generator with a smooth
+monotone calibration curve is the best possible case for isotonic's self-regularisation,
+and real event data may not be so kind. But it does impose two requirements on the real
+experiment. **Realised isotonic block count is reported, not just `n_distinct`.** And the
+isotonic advantage is compared **at matched uncalibrated ECE** wherever possible, because
+otherwise a trend in the advantage across `T` cannot be separated from a trend in how much
+miscalibration exists to remove.
 
 ## Scope
 
@@ -182,12 +289,17 @@ seed**. They are never broken by lowest index, which is the library default and 
 biases every tie toward class 0 — an artifact that would grow as `T` falls and would
 contaminate the exact trend under test.
 
-The tie rate is a **reported quantity, not a diagnostic**. The hypothesis predicts that
-ties become more frequent as `T` falls, because fewer available count values means more
-collisions. Observing that rise is direct evidence for the discreteness mechanism the
-paper argues for — it is the mechanism made visible, independent of any ECE number.
-The tie rate therefore appears **in the results table**, next to the calibration
-metrics.
+The tie rate is a **reported quantity, not a diagnostic**, and it appears in the results
+table next to the calibration metrics. Ties become more frequent as `T` falls, because
+fewer available count values means more collisions, and that rise is direct evidence that
+the output is genuinely discrete — it makes the premise of the capacity argument visible
+and measurable.
+
+It is *not* the reason isotonic outperforms temperature scaling. Neither calibrator breaks
+ties, so the tie rate cannot separate them; see "What tie rate is, and what it is not"
+under the claim. Tie-breaking happens once, here, before any calibrator runs, and both
+arms inherit the same predictions — which is what keeps the comparison about calibration
+alone.
 
 ## Per-dataset hazards
 

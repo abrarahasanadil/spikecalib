@@ -276,3 +276,102 @@ discreteness mechanism behaving as argued. Equal-width ECE for uncalibrated rang
 - *Cross-validated isotonic for DVS-Gesture* is designed for but not implemented.
 - *No confidence intervals on any ECE.* With 3 seeds the study will need a defensible
   spread estimate; bootstrap over the test split is the obvious candidate.
+
+---
+
+## 2026-09-09 — The mechanism was wrong: tie-breaking replaced by capacity, then tested
+
+**Did.** Rewrote the "Claim under test" and "Hypothesis" sections of `NOTES.md`. The
+mechanism the study argues for is no longer tie-breaking; it is **capacity**. Corrected
+the same argument where it had been copied into code docstrings (`calibration.py` module
+docstring, `tie_rate`, `TemperatureScaling`, `IsotonicTopLabel`) and the `sweep.py` and
+`figures.py` stubs. Added `IsotonicTopLabel.n_knots_` and `.n_levels_` so the fit's
+realised degrees of freedom can be measured. Rewrote `scripts/synthetic_check.py` with a
+`--miscalibration {uniform,conditional,both}` flag and a ratio test that varies `n_cal` at
+fixed `T`.
+
+**Ran.** `pytest tests/ -q` → **54 passed**, unchanged.
+Verified both defects in the old argument directly against the implementation before
+rewriting: two samples with identical tied counts get identical output from
+`IsotonicTopLabel` (0.4879 → 0.4932 for both), and `softmax(z/t)` at `T=2, C=10` reaches
+0.8585 at `t=0.5` and 0.9996 at `t=0.2`, against a raw-readout ceiling of 0.4509.
+`scripts/synthetic_check.py` (10 classes, 10k cal / 10k test, seed 0) — conditional mode,
+equal-width ECE:
+
+| T | samp/lvl | iso levels | uncal ECE | temp ECE | iso ECE | advantage |
+|---|----------|-----------|-----------|----------|---------|-----------|
+| 2 | 188.7 | 13 | 0.0838 | 0.0306 | 0.0086 | 0.0220 |
+| 4 | 26.1 | 17 | 0.1335 | 0.1459 | 0.0042 | 0.1418 |
+| 6 | 8.9 | 14 | 0.1840 | 0.1748 | 0.0108 | 0.1640 |
+| 8 | 4.8 | 12 | 0.2341 | 0.1664 | 0.0081 | 0.1583 |
+| 10 | 3.4 | 11 | 0.2756 | 0.1597 | 0.0047 | 0.1550 |
+
+Ratio test at fixed `T = 10`, `n_cal` from 250 to 20,000: samples-per-level moved 1.1 →
+4.8 and the advantage stayed flat at 0.137–0.159. At `T = 2`, `n_cal` 250 → 20,000 moved
+samples-per-level 7.4 → 350.9 and the advantage 0.0076 → 0.0269.
+
+**Chose.**
+- *Replaced tie-breaking with capacity as the mechanism, and said so explicitly in
+  `NOTES.md` rather than quietly editing.* The old argument — "ties cannot be broken by a
+  scalar" — is true of temperature but equally true of isotonic top-label, which computes
+  `conf' = f(conf)` for monotone `f`, so two samples with identical counts get identical
+  output from it as well. Both calibrators hold the prediction fixed by design and
+  tie-breaking happens once before either runs. The claim therefore never distinguished
+  the two methods. It was caught by asking what isotonic actually does to a tie, which is
+  a question the implementation can answer in three lines; it should have been asked when
+  the argument was first written.
+- *Corrected the ceiling claim's scope rather than deleting it.* `NOTES.md` had said a
+  model above the ceiling is forced into underconfidence and "no calibrator can be blamed
+  for the shortfall". The ceiling `e^T / (e^T + C - 1)` is real and bounds the **raw
+  readout**, but not the calibrators: as `t` approaches 0, `softmax(z/t)` approaches
+  one-hot, so temperature sharpening escapes it entirely. The synthetic run had already
+  shown this and it was not noticed — fitted temperature was 0.556 at `T = 2`, i.e.
+  sharpening, which is only useful if sharpening reaches past the ceiling. The ceiling now
+  explains the shape of the *uncalibrated* error and the flip in miscalibration direction,
+  which is what it actually supports.
+- *Kept tie rate in the results table, reclassified.* It is a descriptive measure that the
+  output is genuinely discrete — the premise of the capacity argument — not the reason
+  isotonic wins. Removing it would lose a real and cheap piece of evidence; leaving it
+  labelled as the mechanism would repeat the error.
+- *Conditional miscalibration implemented as count-dependent label noise.* `p_noise` rises
+  linearly with the favoured class's count, so high-confidence samples are wrong more often
+  and low-confidence ones less often. This is the shape one scalar cannot fix, and it makes
+  the control/treatment contrast the point of the script rather than an aside.
+- *Added a ratio test that varies `n_cal` at fixed `T`.* The `T` sweep alone cannot
+  separate capacity from anything else that changes with `T`. Varying calibration-set size
+  moves `n_cal / n_distinct` while `T` is held constant, which is the only manipulation in
+  reach that isolates the named mechanism.
+
+**The pre-test did not support the mechanism, and that is recorded in `NOTES.md`, not
+just here.**
+- *Isotonic self-regularises, so `n_distinct` is the wrong statistic.* Pool-adjacent-
+  violators collapsed the fit to 4–22 distinct output values while `n_distinct` spanned 34
+  to 4,197 — a factor of 123 in the bound and no trend in the realised count. The
+  parameters isotonic actually uses are set by the complexity of the true calibration
+  curve, not by how many confidence levels exist.
+- *The advantage was indifferent to the ratio at `T = 10`.* At 1.1 samples per confidence
+  level, isotonic neither overfit nor lost. The `T = 2` sweep showed a weak positive trend,
+  so the ratio is not irrelevant, but it is not the driver the hypothesis names.
+- *`T` is confounded with miscalibration severity.* Uncalibrated ECE rose 0.084 → 0.276
+  from `T = 2` to `T = 10` in the conditional generator, because a wider count range gives
+  the injected miscalibration more room to vary. The advantage rose with `T` in step with
+  severity, which explains the data better than capacity does here.
+- This is not a refutation for real SNNs: a smooth monotone synthetic calibration curve is
+  the best possible case for isotonic's self-regularisation. But it imposes two
+  requirements on the real experiment, now written into `NOTES.md` — report the realised
+  block count, not only `n_distinct`, and compare the advantage at matched uncalibrated
+  ECE.
+
+**Open.**
+- *Is there a better capacity statistic than `n_cal / n_distinct`?* Realised block count
+  per calibration sample is the obvious candidate but it is an output of the fit, not a
+  property of the regime, so it cannot be used to predict where isotonic will win.
+- *Can a synthetic generator hold miscalibration severity fixed across `T`?* Without that
+  the `T` sweep cannot cleanly test capacity even in simulation. Calibrating `noise_hi`
+  per `T` to equalise uncalibrated ECE would be the way.
+- *Does PAVA self-regularisation hold on real SNN confidences?* The whole negative result
+  rests on the true calibration curve being smooth. Real event data may produce a rougher
+  one, where realised capacity does track `n_distinct`.
+- Earlier open items stand: subject-disjoint calibration for DVS-Gesture, whether `val` is
+  needed at all, CIFAR10-DVS split undefined, only `T = 10` built, no confidence intervals
+  on any ECE.
