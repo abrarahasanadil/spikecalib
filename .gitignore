@@ -1,0 +1,8 @@
+data/
+results/*.csv
+*.pt
+*.pth
+__pycache__/
+.DS_Store
+.venv/
+.env

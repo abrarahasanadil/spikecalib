@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "SpikeCalib: Post-hoc confidence calibration for event-driven spiking neural networks"
+version: 0.1.0
+authors:
+  - family-names: "Chowdhury"
+    given-names: "Mohammed Abrar Ahasan"
+    orcid: "https://orcid.org/0009-0006-9273-6593"
+license: MIT
+repository-code: "https://github.com/abrarahasanadil/spikecalib"
+# TODO: replace with the arXiv DOI once the preprint is posted.
+doi: "10.48550/arXiv.TODO"
