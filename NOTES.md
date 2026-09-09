@@ -54,6 +54,21 @@ This is observed, not merely argued — on synthetic counts the fitted temperatu
 0.556 at `T = 2` (sharpening) and 1.696 at `T = 10` (softening). `[MEASURED]` —
 `scripts/synthetic_check.py`, seed 0, uniform mode, 2026-09-09; synthetic data.
 
+#### The ceiling is also a floor on the training loss
+
+A consequence worth stating because it changes how convergence is judged. Cross-entropy on
+spike-count logits cannot fall below `-ln(ceiling)`: the best reachable logit vector is
+`[T, 0, ..., 0]`, whose softmax gives the true class exactly the ceiling probability. For
+`C = 10` that floor is **0.797 at `T = 2`** and **0.153 at `T = 4`**.
+
+Measured: the `T = 2` model plateaued at a training loss of 0.806 and the `T = 4` model at
+0.166 — each within 0.014 of its own floor. `[MEASURED]` `scripts/train_one.py`, seed 0,
+2026-09-09.
+
+So **training loss is not comparable across `T`**, and a high loss at low `T` is not
+evidence of underfitting. Convergence in the sweep is judged by validation accuracy, never
+by loss.
+
 ### 2. The number of distinct confidence levels is small at low `T` — the mechanism
 
 This is the consequence that does the work, and the argument is about **capacity**.

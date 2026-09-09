@@ -564,3 +564,91 @@ proxy (`net.0`, MAC, 85.2 M ops) against 10.2% for all three spiking layers comb
   higher T -- affordable, which removes any argument for cutting corners on seeds.
 - Earlier open items stand: capacity statistic, severity-matched synthetic generator,
   subject-disjoint calibration for DVS-Gesture, CIFAR10-DVS split, CI never yet run.
+
+---
+
+## 2026-09-09 — T=2 trained; what a converged readout looks like where the ceiling binds
+
+**Did.** Built the T=2 frame cache, trained N-MNIST at T=2 seed 0 with the same settings as
+the T=4 run, and wrote `scripts/readout_report.py` to describe a trained model's raw
+readout without fitting any calibrator. Added a note to `NOTES.md` that the
+attainable-confidence ceiling is also a floor on the training loss.
+
+**Ran.** `scripts/fetch_data.py --dataset nmnist --timesteps 2` → frame shape
+`(2, 2, 34, 34)`, 106.5 MiB, `events_np` reused.
+`scripts/train_one.py --timesteps 2 --seed 0 --epochs 15 --lr 1e-3 --batch-size 128` →
+best validation accuracy **0.9842** at epoch 13, final validation tie rate 0.0112, 159.2 s
+at 10.6 s per epoch.
+`scripts/readout_report.py --timesteps 2 4 --seed 0`, both on split `e524beccace851af`:
+
+| quantity | T=2 | T=4 |
+|---|---|---|
+| validation accuracy | 0.9842 | 0.9900 |
+| test accuracy | 0.9853 | 0.9888 |
+| test tie rate | 0.0133 | 0.0072 |
+| distinct confidences (cal) | 12 | 48 |
+| samples per level (cal) | 416.7 | 104.2 |
+| attainable ceiling | 0.4509 | 0.8585 |
+| max confidence observed | 0.4509 | 0.8585 |
+| mean confidence | 0.4463 | 0.8451 |
+| mean confidence − accuracy | −0.5390 | −0.1437 |
+| winning-class count / T | 0.9952 | 0.9911 |
+| encoder share of energy proxy | 63.5% | 49.1% |
+| energy per sample (proxy) | 2.353 µJ | 3.942 µJ |
+
+Count histograms: at T=2, 89.48% of entries are 0, 0.57% are 1, 9.95% are 2. At T=4,
+88.68% are 0, 9.70% are 4, and everything in between totals 1.62%.
+
+**Found.**
+- *The ceiling binds hard, and the model saturates it exactly.* Max observed confidence
+  equals the derived ceiling to four decimals at both settings — 0.4509 at T=2 and 0.8585
+  at T=4. The model drives the winning class to essentially the maximum count (0.9952 and
+  0.9911 of `T`) and everything else to zero. So structural underconfidence is not a
+  possibility the design warned about; it is what a converged model actually does, at
+  **−0.539** at T=2.
+- *The ceiling is also a floor on the training loss.* Cross-entropy cannot fall below
+  `-ln(ceiling)` = 0.797 at T=2 and 0.153 at T=4. Observed plateaus were 0.806 and 0.166,
+  each within 0.014. The T=2 loss curve looks like a failure to converge next to the T=4
+  curve and is nothing of the kind. **Training loss is not comparable across `T`**, and
+  convergence must be judged on validation accuracy. Now recorded in `NOTES.md`.
+- *The trained readout is effectively binary.* Intermediate counts are almost unused:
+  1.62% of entries at T=4 and 0.57% at T=2. The attainable confidence set is not merely
+  coarse in principle — the model occupies only a handful of its points, 12 distinct
+  confidences at T=2 and 48 at T=4 on a 5,000-sample calibration split.
+- *That is the capacity regime the hypothesis names, and it is real on trained models.*
+  416.7 calibration samples per distinct confidence level at T=2 against 104.2 at T=4, a
+  4x difference in exactly the predicted direction. This is the first evidence for the
+  mechanism that is not synthetic.
+- *Tie rate moves the predicted way but is far too small to carry the argument.* 0.0133 at
+  T=2 against 0.0072 at T=4 — the right direction, and a factor of 1.8, but both are near
+  1%. The synthetic check's 44% at T=2 came from an untrained-like generator with no
+  learned separation. **On converged models the tie rate is a weak signal**, and the
+  paper should not lean on it as evidence of discreteness; the distinct-confidence count
+  is the far stronger measure and moves 4x over the same interval.
+- *Encoder share of the energy proxy falls as `T` rises*: 63.5% at T=2, 49.1% at T=4.
+  Spiking operations grow faster with `T` (2.3x from T=2 to T=4) than encoder operations
+  do (1.3x), because event frames get sparser per frame as the same events are split
+  across more time bins. So the "input encoding dominates" claim is itself `T`-dependent
+  and must be reported per `T`, not once.
+
+**Chose.**
+- *`readout_report.py` fits no calibrator.* The question here is what the raw readout looks
+  like; mixing in calibration results would make it impossible to tell which properties are
+  the model's and which are the calibrator's.
+- *The report reconstructs the model from the saved `model_config` in the run record*
+  rather than from defaults, so it cannot silently analyse a different architecture than
+  the one that was trained.
+
+**Open.**
+- *Confidence is highly concentrated near the ceiling* — mean 0.4463 against a max of
+  0.4509 at T=2, a spread of under 0.005 across 10,000 test samples. This is close to the
+  degenerate case that `ece_equal_mass` has a special path for, and it is where equal-width
+  and equal-mass binning should diverge most. Untested until calibration runs.
+- *Only 12 distinct confidence levels at T=2* means isotonic has at most 12 knots and,
+  after monotonicity pooling, likely far fewer. Whether that is enough capacity to beat a
+  single temperature is now an empirical question with real numbers behind it.
+- *T=6, 8, 10 are not trained*, so the trend in distinct confidences and samples-per-level
+  rests on two points.
+- *Neither model early-stopped in 15 epochs*, so neither accuracy is a ceiling.
+- Earlier open items stand: severity-matched synthetic generator, subject-disjoint
+  calibration for DVS-Gesture, CIFAR10-DVS split, CI never yet run.
