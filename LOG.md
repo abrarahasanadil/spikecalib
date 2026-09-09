@@ -181,3 +181,98 @@ Real class imbalance in the training split is visible: min 4,421 (class 5), max 
 - *CIFAR10-DVS train/test split* still undefined, so `make_splits` raises for it rather
   than inventing one.
 - Only `T = 10` is built. The sweep needs `T` in {2, 4, 6, 8, 10}.
+
+---
+
+## 2026-09-09 — Calibrators, both ECE estimators, and a synthetic mechanism check
+
+**Did.** Implemented `spikecalib/calibration.py`: `softmax_probs`/`softmax_confidence`,
+`predict_with_ties`/`tie_rate`, the `Outputs` bundle, four calibrators (`Uncalibrated`,
+`TemperatureScaling`, `IsotonicTopLabel` as primary, `IsotonicOneVsRest` as secondary),
+`ece_equal_width`, `ece_equal_mass`, and `compute_metrics` returning both estimators
+together. Wrote `tests/test_calibration.py` (31 tests) and `scripts/synthetic_check.py`.
+Amended `NOTES.md` in two places (see **Chose**).
+
+**Ran.** `pytest tests/ -q` → **54 passed** (23 split, 31 calibration).
+Mutation-checked the new suite: tie-breaking by `np.argmax` fails 2 tests; equal-mass
+returning 0.0 on the degenerate case fails 4; splitting ties across equal-mass bins by
+rank fails 5; a temperature stuck at 1.0 fails 1; dropping isotonic's `out_of_bounds`
+clipping fails 2.
+`scripts/synthetic_check.py` (10 classes, p_hi 0.75, p_lo 0.15, noise 0.20, 10k cal /
+10k test, seed 0):
+
+| T | accuracy | tie rate | distinct conf | mean conf | max conf | fitted temp |
+|---|---------|----------|---------------|-----------|----------|-------------|
+| 2 | 0.5045 | 0.4436 | 52 | 0.2860 | 0.4509 | 0.5564 |
+| 4 | 0.6773 | 0.1872 | 388 | 0.5056 | 0.8585 | 0.7934 |
+| 6 | 0.7483 | 0.0768 | 1,093 | 0.7049 | 0.9782 | 1.0636 |
+| 8 | 0.7756 | 0.0308 | 2,033 | 0.8414 | 0.9970 | 1.3628 |
+| 10 | 0.7833 | 0.0118 | 3,035 | 0.9170 | 0.9996 | 1.6963 |
+
+Tie rate rises 38x from T=10 to T=2 and distinct confidences fall 58x, which is the
+discreteness mechanism behaving as argued. Equal-width ECE for uncalibrated ranged
+0.11–0.22; isotonic-top-label was the best arm at every T (0.0096–0.0149).
+
+**Chose.**
+- *Equal-mass bins are built by packing unique confidence values, not from
+  `np.quantile` edges.* The quantile version was written first and was wrong for this
+  study. `np.quantile` interpolates: given observed confidences of 0.81 and 0.85 it
+  produces an edge at 0.83, a value no sample holds and no spike-count readout can emit.
+  For continuous scores that is harmless; here it mis-assigns exactly the lattice
+  structure being measured. The replacement walks unique values in order and greedily
+  packs them into bins of about `n / n_bins` samples, so a bin boundary can never fall
+  inside a tie. Rank-splitting ties was the other candidate and is worse: with all
+  confidences equal it manufactures per-bin accuracy differences out of sampling noise
+  and reports them as calibration error.
+- *`compute_metrics` returns both ECEs in one object.* Correctness rule 2 becomes a
+  property of the interface rather than a convention someone has to remember; there is no
+  code path that yields equal-width without equal-mass.
+- *The degenerate case returns the honest single-bin gap by default and raises under
+  `strict=True`.* Returning 0.0 would claim perfect calibration for the most degenerate
+  point in the sweep. Returning the real gap `|accuracy − confidence|` and flagging
+  `degenerate=True` keeps the number usable; `strict` exists for callers that would rather
+  stop.
+- *`predict_with_ties` draws one uniform per (sample, class), masks non-maximal entries to
+  −1, and takes the argmax of the draws.* Uniform over the tied set, vectorised, and
+  structurally incapable of selecting a non-maximal class. The obvious alternative —
+  adding small random noise to the counts — can reorder near-ties in floating point and
+  would silently corrupt the tie statistics that are being reported.
+- *NLL and Brier are the top-label binary scores*, not multiclass. The top-label
+  calibrators emit a scalar confidence and no distribution, so multiclass NLL is undefined
+  for them; using the binary version keeps every number in a results row about the same
+  quantity that ECE measures.
+- *One-vs-rest holds the prediction fixed.* Renormalised one-vs-rest can move the argmax.
+  Letting it would change accuracy between arms, so the arms would differ by more than the
+  calibrator and the comparison would stop being about calibration.
+- *Temperature scaling uses `scipy.optimize.minimize_scalar` over `log(t)`.* Rule 4 as
+  written said "scikit-learn only", but temperature scaling has no scikit-learn
+  implementation. `scipy.optimize` is already pinned, CPU-only and deterministic, so the
+  rule was **amended in `NOTES.md`** to name what the path actually uses rather than be
+  quietly violated. Hand-rolling a 1-D optimiser was the alternative and is worse
+  engineering than using a tested one for a well-understood convex problem.
+- *Added the attainable-confidence ceiling to `NOTES.md`.* The synthetic run exposed
+  something the design document had not: the reachable confidence set is not merely coarse,
+  it is **bounded**. The extreme count vector gives `e^T / (e^T + C − 1)`, which for 10
+  classes is 0.451 at T=2 and 0.859 at T=4. In the run, accuracy at T=2 was 0.5045 —
+  *above* the ceiling — so the model was structurally incapable of being correctly
+  confident, and the fitted temperature went below 1 to sharpen rather than above 1 to
+  soften. The direction of miscalibration therefore flips across the sweep. This is a
+  design-relevant fact, so it went into the claim section of `NOTES.md`, with the
+  consequence that the study should report the **signed** calibration gap and not only
+  `|ECE|`, or the low-T and high-T regimes will cancel when averaged.
+
+**Open.**
+- *The synthetic run does not reproduce the hypothesis, and should not be read as
+  evidence against it.* The isotonic-minus-temperature gap in equal-width ECE was 0.023 at
+  T=2 against 0.109 at T=10 — smallest where the hypothesis predicts it should be largest.
+  That is a property of this generator: at T=2 its miscalibration is a near-uniform
+  underconfidence, which a single scalar happens to fix well. Real SNN counts are not
+  Binomial with a fixed `p_hi`. The synthetic check tests the machinery, not the claim.
+- *Equal-width and equal-mass agreed to within 0.007 everywhere in the run*, so the
+  "disagreement is a finding" case did not arise. The unit tests construct it deliberately
+  (0.33 vs 0.52 on two confidences inside one bin). Whether it arises on real data is open.
+- *Should the sweep report signed calibration gap alongside ECE?* Implied by the ceiling
+  finding above but not yet decided or implemented.
+- *Cross-validated isotonic for DVS-Gesture* is designed for but not implemented.
+- *No confidence intervals on any ECE.* With 3 seeds the study will need a defensible
+  spread estimate; bootstrap over the test split is the obvious candidate.

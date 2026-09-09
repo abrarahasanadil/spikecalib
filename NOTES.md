@@ -27,6 +27,17 @@ Two consequences follow, and both sharpen as `T` falls:
    is small enough to enumerate. Temperature scaling can only slide confidence along the
    curve traced by dividing one of those finitely many integer vectors by a scalar; it
    cannot reach values between the rungs.
+
+   The set is also *bounded*, which turns out to matter more than its coarseness. The
+   most extreme count vector puts `T` on one class and `0` on the rest, so the largest
+   confidence any spike-count readout can emit is `e^T / (e^T + C - 1)`. For `C = 10`
+   that ceiling is **0.451 at `T = 2`**, 0.859 at `T = 4`, and only reaches 0.978 by
+   `T = 6`. A model whose accuracy exceeds 0.451 at `T = 2` is therefore *forced* into
+   underconfidence: there is no reachable output that would be correctly confident, and no
+   calibrator can be blamed for the shortfall. So the direction of miscalibration is
+   expected to flip across the sweep — structurally underconfident at low `T`, plausibly
+   overconfident at high `T` — and the study must report the signed gap rather than only
+   `|ECE|`, or the two regimes will average each other away.
 2. **Ties cannot be broken by a scalar.** If two classes finish with the same spike
    count, dividing both by the same temperature leaves them equal. No choice of
    temperature separates them, because temperature is monotone in the logit and applies
@@ -137,7 +148,10 @@ stub in this repository restates the rule it is responsible for.
    reader: **MPS floating-point operations are not bitwise deterministic**, so training
    on Apple silicon varies slightly at a fixed seed. Consequently, everything that can be
    made exactly reproducible is kept off the accelerator — **data splits and calibrator
-   fitting use CPU RNG and scikit-learn only**. Split index sets and fitted calibrators
+   fitting run on CPU with deterministic libraries only**: NumPy's `default_rng` for
+   splits, scikit-learn for the isotonic fits, and `scipy.optimize` for the
+   one-dimensional temperature search, which has no scikit-learn equivalent. No torch and
+   no MPS anywhere in this path. Split index sets and fitted calibrators
    are therefore reproducible bit-for-bit; trained weights are reproducible only up to
    MPS float variation, which is why results are reported over 3 seeds rather than one.
 
