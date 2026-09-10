@@ -56,6 +56,7 @@ from __future__ import annotations
 
 import contextlib
 import io
+import json
 import os
 import time
 from dataclasses import dataclass
@@ -67,6 +68,7 @@ from torch.utils.data import DataLoader, Subset
 
 from .calibration import (
     IsotonicOneVsRest,
+    discrimination,
     IsotonicTopLabel,
     TemperatureScaling,
     Uncalibrated,
@@ -78,7 +80,7 @@ from .calibration import (
 from .data import load_dataset, make_splits, training_labels
 from .datasets import DatasetSpec, get_spec
 from .models import ModelConfig, build_model
-from .train import TrainConfig, predict_counts, resolve_device, train
+from .train import RunRecord, TrainConfig, predict_counts, resolve_device, train
 
 __all__ = [
     "CacheStatus",
@@ -86,11 +88,22 @@ __all__ = [
     "verify_caches",
     "assert_caches_ready",
     "SweepConfig",
+    "run_paths",
+    "reuse_decision",
     "run_one",
     "run_sweep",
     "convergence_audit",
+    "val_accuracy_audit",
+    "VAL_OUTLIER_TOLERANCE",
     "ARMS",
 ]
+
+VAL_OUTLIER_TOLERANCE = 0.02  # 2 accuracy points
+# "More than 2 points below" must not fire on a run that is exactly 2 points below.
+# Accuracies are ratios of integers, so a gap that is mathematically 0.02 can come back
+# as 0.020000000000000018 and clear a bare > comparison. The slack is far below any
+# difference worth flagging and far above float64 representation error.
+_VAL_TOLERANCE_SLACK = 1e-9
 
 ARMS = (
     ("uncalibrated", Uncalibrated),
@@ -225,6 +238,112 @@ class SweepConfig:
         return ModelConfig(channels=tuple(self.channels), hidden=self.hidden)
 
 
+def run_paths(out_dir: str, spec: DatasetSpec, timesteps: int, seed: int) -> tuple[str, str]:
+    """Weights and record paths for one run, matching ``scripts/train_one.py``'s naming.
+
+    Deliberately the same convention, so a model trained by either entry point is visible
+    to the other.
+    """
+    stem = f"{spec.key}_T{timesteps}_seed{seed}"
+    return (
+        os.path.join(out_dir, f"{stem}_weights.pt"),
+        os.path.join(out_dir, f"{stem}_record.json"),
+    )
+
+
+def reuse_decision(
+    record: dict,
+    spec: DatasetSpec,
+    timesteps: int,
+    seed: int,
+    cfg: "SweepConfig",
+    split_fingerprint: str,
+) -> tuple[bool, str]:
+    """Decide whether a saved run can stand in for retraining, and say why or why not.
+
+    Identity has to match exactly: dataset, timesteps, seed, model configuration and split
+    fingerprint. Any difference means the saved weights answer a different question.
+
+    There is one further condition beyond identity, and it exists because of a hazard this
+    project already walked into. A saved run that **hit its epoch cap** was still improving
+    when it stopped, so it is only equivalent to what this sweep would produce if the cap
+    was at least as generous. Reusing a run capped at 15 epochs inside a sweep that allows
+    50 would silently mix an undertrained model in with converged ones -- exactly the
+    confound the convergence audit exists to prevent. A run that stopped on the patience
+    rule converged on its own terms and is reusable whatever cap it had.
+    """
+    if record.get("dataset") != spec.key:
+        return False, f"dataset {record.get('dataset')!r} != {spec.key!r}"
+    if record.get("timesteps") != timesteps:
+        return False, f"timesteps {record.get('timesteps')} != {timesteps}"
+    if record.get("seed") != seed:
+        return False, f"seed {record.get('seed')} != {seed}"
+    if record.get("split_fingerprint") != split_fingerprint:
+        return False, (
+            f"split fingerprint {record.get('split_fingerprint')} != {split_fingerprint}"
+        )
+
+    saved_model = record.get("model_config") or {}
+    wanted = cfg.model_config()
+    if list(saved_model.get("channels", [])) != list(wanted.channels):
+        return False, f"channels {saved_model.get('channels')} != {list(wanted.channels)}"
+    for field in ("hidden", "tau", "v_threshold", "surrogate_alpha"):
+        if saved_model.get(field) != getattr(wanted, field):
+            return False, f"{field} {saved_model.get(field)} != {getattr(wanted, field)}"
+
+    if not record.get("early_stopped", False):
+        saved_cap = record.get("epochs_requested", 0)
+        if saved_cap < cfg.epochs:
+            return False, (
+                f"saved run hit its {saved_cap}-epoch cap and this sweep allows "
+                f"{cfg.epochs}; it may be undertrained"
+            )
+    return True, "identity and convergence match"
+
+
+def _load_saved_run(
+    out_dir: str, spec: DatasetSpec, timesteps: int, seed: int,
+    cfg: "SweepConfig", split_fingerprint: str,
+) -> tuple[Optional[dict], Optional[dict], str]:
+    """Return (state_dict, record_dict, reason) for a reusable saved run, else (None, None, reason)."""
+    weights_path, record_path = run_paths(out_dir, spec, timesteps, seed)
+    if not (os.path.exists(weights_path) and os.path.exists(record_path)):
+        return None, None, "no saved run"
+    try:
+        with open(record_path) as fh:
+            record = json.load(fh)
+    except (OSError, ValueError) as exc:
+        return None, None, f"record unreadable ({exc})"
+    ok, reason = reuse_decision(record, spec, timesteps, seed, cfg, split_fingerprint)
+    if not ok:
+        return None, None, reason
+    try:
+        state = torch.load(weights_path, map_location="cpu")
+    except Exception as exc:  # noqa: BLE001 - a corrupt checkpoint must not kill the sweep
+        return None, None, f"weights unreadable ({exc})"
+    return state, record, reason
+
+
+def _save_run(
+    out_dir: str, spec: DatasetSpec, timesteps: int, seed: int,
+    cfg: "SweepConfig", state: dict, record: RunRecord,
+) -> None:
+    """Persist weights and record after every run, so a crash at run 12 keeps runs 1-11."""
+    os.makedirs(out_dir, exist_ok=True)
+    weights_path, record_path = run_paths(out_dir, spec, timesteps, seed)
+    torch.save(state, weights_path)
+    payload = record.as_dict()
+    mc = cfg.model_config()
+    payload["model_config"] = {
+        "channels": list(mc.channels), "hidden": mc.hidden, "tau": mc.tau,
+        "v_threshold": mc.v_threshold, "surrogate_alpha": mc.surrogate_alpha,
+    }
+    tmp = record_path + ".tmp"
+    with open(tmp, "w") as fh:
+        json.dump(payload, fh, indent=2)
+    os.replace(tmp, record_path)  # atomic: never leave a half-written record
+
+
 def run_one(
     spec: DatasetSpec,
     timesteps: int,
@@ -232,6 +351,8 @@ def run_one(
     cfg: SweepConfig,
     data_root: str,
     device: Optional[torch.device] = None,
+    out_dir: Optional[str] = None,
+    allow_resume: bool = True,
 ) -> list[dict]:
     """Train one (dataset, T, seed) and return one results row per calibration arm.
 
@@ -258,17 +379,53 @@ def run_one(
         )
 
     model = build_model(spec, timesteps, cfg.model_config())
-    state, record = train(
-        model,
-        {"train": loader(train_set, splits.train, shuffle=True),
-         "val": loader(train_set, splits.val)},
-        cfg.train_config(),
-        seed=seed,
-        dataset=spec.key,
-        timesteps=timesteps,
-        split_fingerprint=splits.fingerprint,
-    )
-    model.load_state_dict(state)
+
+    saved_state = saved_record = None
+    reuse_reason = "resume disabled"
+    if allow_resume and out_dir:
+        saved_state, saved_record, reuse_reason = _load_saved_run(
+            out_dir, spec, timesteps, seed, cfg, splits.fingerprint
+        )
+
+    if saved_state is not None:
+        model.load_state_dict(saved_state)
+        record = RunRecord(
+            seed=saved_record["seed"],
+            eval_seed=saved_record.get("eval_seed", cfg.eval_seed),
+            dataset=saved_record["dataset"],
+            timesteps=saved_record["timesteps"],
+            split_fingerprint=saved_record["split_fingerprint"],
+            epochs_requested=saved_record["epochs_requested"],
+            epochs_run=saved_record["epochs_run"],
+            best_val_accuracy=saved_record["best_val_accuracy"],
+            final_val_accuracy=saved_record["final_val_accuracy"],
+            final_val_tie_rate=saved_record.get("final_val_tie_rate", float("nan")),
+            best_epoch=saved_record["best_epoch"],
+            early_stopped=saved_record["early_stopped"],
+            lr=saved_record["lr"],
+            batch_size=saved_record["batch_size"],
+            device=saved_record["device"],
+            n_parameters=saved_record["n_parameters"],
+            seconds=saved_record["seconds"],
+            mps_nondeterministic=saved_record["mps_nondeterministic"],
+            history=saved_record.get("history", []),
+        )
+        resumed = True
+    else:
+        state, record = train(
+            model,
+            {"train": loader(train_set, splits.train, shuffle=True),
+             "val": loader(train_set, splits.val)},
+            cfg.train_config(),
+            seed=seed,
+            dataset=spec.key,
+            timesteps=timesteps,
+            split_fingerprint=splits.fingerprint,
+        )
+        model.load_state_dict(state)
+        resumed = False
+        if out_dir:
+            _save_run(out_dir, spec, timesteps, seed, cfg, state, record)
 
     cal_counts, cal_labels, _ = predict_counts(
         model, loader(train_set, splits.cal), device, count_synops=False
@@ -280,6 +437,12 @@ def run_one(
     cal = model_outputs(cal_counts, cal_labels, np.random.default_rng(seed))
     test = model_outputs(test_counts, test_labels, np.random.default_rng(seed + 1))
     n_distinct = int(np.unique(cal.conf).size)
+    # AUROC on the RAW readout, before any calibrator touches it. A monotone calibrator
+    # cannot reorder samples, so this is the ceiling on what any calibrated confidence in
+    # this run can express -- and the per-arm value below shows whether a calibrator threw
+    # some of it away by collapsing distinct confidences into ties.
+    raw_test = discrimination(test.conf, test.correct)
+    raw_cal = discrimination(cal.conf, cal.correct)
 
     fitted: dict[str, np.ndarray] = {}
     rows: list[dict] = []
@@ -298,6 +461,7 @@ def run_one(
             iso_blocks = calibrator.n_levels_
         if name == "temperature":
             temperature = calibrator.temperature_
+        arm_disc = discrimination(calibrated, test.correct)
 
         rows.append({
             "dataset": spec.key,
@@ -322,6 +486,17 @@ def run_one(
             "samples_per_level": cal.n / max(n_distinct, 1),
             "isotonic_blocks": iso_blocks,
             "temperature": temperature,
+            # --- can confidence separate right from wrong at all? ---
+            "auroc_raw_test": raw_test["auroc"],
+            "auroc_raw_cal": raw_cal["auroc"],
+            "auroc": arm_disc["auroc"],
+            "auroc_lost_to_calibration": raw_test["auroc"] - arm_disc["auroc"],
+            "mean_conf_correct": arm_disc["mean_conf_correct"],
+            "mean_conf_incorrect": arm_disc["mean_conf_incorrect"],
+            "conf_gap_correct_minus_incorrect": arm_disc["gap"],
+            "conf_std": arm_disc["std"],
+            "conf_std_over_mean": arm_disc["cv"],
+            "raw_conf_std_over_mean": raw_test["cv"],
             # --- calibration, both estimators, both intervals ---
             **metrics.as_dict(),
             # --- energy proxy ---
@@ -330,6 +505,8 @@ def run_one(
             "encoder_energy_fraction": synops.encoder_energy_fraction,
             # --- provenance ---
             "split_fingerprint": splits.fingerprint,
+            "resumed": resumed,
+            "resume_reason": reuse_reason,
             "seconds": time.time() - started,
         })
 
@@ -353,6 +530,8 @@ def run_sweep(
     cfg: SweepConfig,
     data_root: str,
     on_run_complete=None,
+    out_dir: Optional[str] = None,
+    allow_resume: bool = True,
 ) -> list[dict]:
     """Run the full sweep, refusing to start if any frame cache is missing."""
     spec = get_spec(dataset)
@@ -362,7 +541,8 @@ def run_sweep(
     rows: list[dict] = []
     for timesteps in timesteps_list:
         for seed in seeds:
-            run_rows = run_one(spec, timesteps, seed, cfg, data_root, device)
+            run_rows = run_one(spec, timesteps, seed, cfg, data_root, device,
+                               out_dir=out_dir, allow_resume=allow_resume)
             rows.extend(run_rows)
             if on_run_complete is not None:
                 on_run_complete(run_rows)
@@ -399,4 +579,52 @@ def convergence_audit(rows: Iterable[dict]) -> dict:
         "n_capped": len(capped),
         "capped": capped,
         "all_converged": not capped,
+    }
+
+
+def val_accuracy_audit(rows: Iterable[dict], tolerance: float = VAL_OUTLIER_TOLERANCE) -> dict:
+    """Flag any run whose validation accuracy sits well below the best at the same ``T``.
+
+    Seeds at a fixed ``T`` differ only by initialisation, shuffling and the split draw, so
+    they should land close together. One seed trailing the others by more than a couple of
+    accuracy points is not seed noise -- it is a run that failed to train properly, and its
+    readout will differ from its siblings in exactly the ways that matter here: fewer
+    distinct confidence levels, a higher tie rate, a different confidence distribution.
+    Averaging it into a per-``T`` calibration result would smear a training failure across
+    the trend the study is measuring.
+
+    The comparison is within a ``T``, not across, because accuracy legitimately varies with
+    ``T`` and a cross-``T`` threshold would flag the low-``T`` runs for being low-``T``.
+    """
+    per_run: dict[tuple, dict] = {}
+    for row in rows:
+        key = (row["dataset"], row["timesteps"], row["seed"])
+        per_run[key] = {
+            "dataset": row["dataset"],
+            "timesteps": row["timesteps"],
+            "seed": row["seed"],
+            "best_val_accuracy": row["best_val_accuracy"],
+            "test_accuracy": row["test_accuracy"],
+        }
+    runs = sorted(per_run.values(), key=lambda r: (r["timesteps"], r["seed"]))
+
+    best_at_t: dict[int, float] = {}
+    for r in runs:
+        t = r["timesteps"]
+        best_at_t[t] = max(best_at_t.get(t, float("-inf")), r["best_val_accuracy"])
+
+    outliers = []
+    for r in runs:
+        r["best_at_timesteps"] = best_at_t[r["timesteps"]]
+        r["below_best"] = best_at_t[r["timesteps"]] - r["best_val_accuracy"]
+        r["val_outlier"] = r["below_best"] > tolerance + _VAL_TOLERANCE_SLACK
+        if r["val_outlier"]:
+            outliers.append(r)
+    return {
+        "runs": runs,
+        "best_at_timesteps": best_at_t,
+        "tolerance": tolerance,
+        "outliers": outliers,
+        "n_outliers": len(outliers),
+        "all_consistent": not outliers,
     }

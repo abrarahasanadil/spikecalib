@@ -39,9 +39,12 @@ from torch.utils.data import DataLoader, Subset
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, REPO_ROOT)
 
-from sklearn.metrics import roc_auc_score  # noqa: E402
-
-from spikecalib.calibration import predict_with_ties, softmax_confidence, tie_rate  # noqa: E402
+from spikecalib.calibration import (  # noqa: E402
+    discrimination,
+    predict_with_ties,
+    softmax_confidence,
+    tie_rate,
+)
 from spikecalib.data import load_dataset, make_splits, training_labels  # noqa: E402
 from spikecalib.datasets import get_spec  # noqa: E402
 from spikecalib.models import ModelConfig, build_model  # noqa: E402
@@ -57,60 +60,6 @@ def section(title: str) -> None:
 def ceiling(timesteps: int, n_classes: int) -> float:
     """[DERIVED] softmax of the extreme count vector [T, 0, ..., 0]. See SOURCES.md."""
     return float(np.exp(timesteps) / (np.exp(timesteps) + n_classes - 1))
-
-
-def discrimination(conf: np.ndarray, correct: np.ndarray) -> dict:
-    """Can confidence separate correct predictions from incorrect ones at all?
-
-    AUROC of confidence as a score for the binary label "this prediction is right". 0.5
-    means confidence carries no information about correctness; 1.0 means it orders them
-    perfectly.
-
-    This is prior to calibration, not part of it. A calibrator is a monotone map from
-    confidence to a probability, and a monotone map cannot change the ordering of samples
-    by confidence -- so it cannot change AUROC at all. Whatever separation exists here is
-    the ceiling on what any calibrated confidence can express. If it is 0.5, the best
-    possible calibrator outputs the base accuracy rate for every sample, which is a correct
-    but useless model, and the interesting question stops being "which calibrator" and
-    becomes "why is the readout uninformative".
-
-    Also returns the mean confidence conditioned on correctness, whose gap is the same
-    question in units a reader can interpret directly, and the coefficient of variation of
-    confidence, which measures how much room a calibrator has to act differently on
-    different samples.
-    """
-    conf = np.asarray(conf, dtype=np.float64)
-    correct = np.asarray(correct).astype(bool)
-    n_correct = int(correct.sum())
-    n_wrong = int((~correct).sum())
-
-    if n_correct == 0 or n_wrong == 0:
-        auroc = float("nan")
-        note = f"AUROC undefined: {n_correct:,} correct and {n_wrong:,} incorrect"
-    elif np.unique(conf).size == 1:
-        auroc = 0.5
-        note = "confidence takes a single value, so it cannot order anything: AUROC is 0.5 by construction"
-    else:
-        auroc = float(roc_auc_score(correct, conf))
-        note = ""
-
-    mean_correct = float(conf[correct].mean()) if n_correct else float("nan")
-    mean_wrong = float(conf[~correct].mean()) if n_wrong else float("nan")
-    mean = float(conf.mean())
-    std = float(conf.std(ddof=0))
-    return {
-        "auroc": auroc,
-        "note": note,
-        "n_correct": n_correct,
-        "n_wrong": n_wrong,
-        "mean_conf_correct": mean_correct,
-        "mean_conf_incorrect": mean_wrong,
-        "gap": mean_correct - mean_wrong,
-        "mean": mean,
-        "std": std,
-        "cv": std / mean if mean else float("nan"),
-        "n_distinct": int(np.unique(conf).size),
-    }
 
 
 def confidence_table(conf: np.ndarray, correct: np.ndarray) -> list[dict]:

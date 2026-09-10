@@ -34,6 +34,7 @@ from spikecalib.sweep import (  # noqa: E402
     SweepConfig,
     convergence_audit,
     run_one,
+    val_accuracy_audit,
     verify_caches,
 )
 from spikecalib.train import resolve_device  # noqa: E402
@@ -77,6 +78,10 @@ def main() -> int:
     parser.add_argument("--num-workers", type=int, default=6)
     parser.add_argument("--bootstrap", type=int, default=1000)
     parser.add_argument("--bins", type=int, default=15)
+    parser.add_argument("--no-resume", action="store_true",
+                        help="retrain even when a matching saved run exists")
+    parser.add_argument("--val-tolerance", type=float, default=0.02,
+                        help="flag runs this far below the best val accuracy at their T")
     parser.add_argument("--verify-only", action="store_true",
                         help="check the frame caches and exit without training")
     parser.add_argument("--data-root", default=os.path.join(REPO_ROOT, "data"))
@@ -147,16 +152,20 @@ def main() -> int:
         for timesteps in args.timesteps:
             for seed in args.seeds:
                 t0 = time.time()
-                run_rows = run_one(spec, timesteps, seed, cfg, args.data_root, device)
+                run_rows = run_one(spec, timesteps, seed, cfg, args.data_root, device,
+                                   out_dir=args.out, allow_resume=not args.no_resume)
                 rows.extend(run_rows)
                 head = run_rows[0]
                 flag = "" if head["early_stopped"] else "   <-- HIT EPOCH CAP"
+                if head["resumed"]:
+                    flag += "   [resumed]"
                 print(
                     f"  T={timesteps:<3} seed={seed}  "
                     f"epochs {head['epochs_run']:>2}/{head['epochs_requested']}  "
                     f"val {head['best_val_accuracy']:.4f}  "
                     f"test {head['test_accuracy']:.4f}  "
                     f"levels {head['n_distinct_cal']:>4}  "
+                    f"auroc {head['auroc_raw_test']:.3f}  "
                     f"{time.time() - t0:>6.1f}s{flag}",
                     flush=True,
                 )
@@ -192,6 +201,37 @@ def main() -> int:
         print("  calibration with convergence. Re-run with a higher --epochs before")
         print("  reading the calibration results.")
 
+    val_audit = val_accuracy_audit(rows, tolerance=args.val_tolerance)
+    section(f"Validation-accuracy audit -- outliers more than {args.val_tolerance:.2f} below best at their T")
+    print(f"  {'T':>4}{'seed':>6}{'best val':>11}{'best at T':>12}{'below':>9}  flag")
+    for r in val_audit["runs"]:
+        mark = "  <-- OUTLIER" if r["val_outlier"] else ""
+        print(f"  {r['timesteps']:>4}{r['seed']:>6}{r['best_val_accuracy']:>11.4f}"
+              f"{r['best_at_timesteps']:>12.4f}{r['below_best']:>9.4f}{mark}")
+    print()
+    if val_audit["all_consistent"]:
+        print("  All seeds agree within tolerance at every T, so no run looks like a")
+        print("  training failure masquerading as seed noise.")
+    else:
+        print(f"  WARNING: {val_audit['n_outliers']} run(s) trail the best at their T by more")
+        print(f"  than {args.val_tolerance:.2f}. A run that failed to train has a different readout")
+        print("  from its siblings -- fewer confidence levels, higher tie rate -- and averaging")
+        print("  it into a per-T result smears a training failure across the trend.")
+
+    # Rewrite the CSV with the per-T outlier flags now that every run is known. The
+    # incremental file written during the sweep is the crash-safe copy; this is the final
+    # one, and it only replaces the incremental version once every row is in hand.
+    flags = {(r["dataset"], r["timesteps"], r["seed"]): r for r in val_audit["runs"]}
+    for row in rows:
+        key = (row["dataset"], row["timesteps"], row["seed"])
+        row["val_below_best_at_t"] = flags[key]["below_best"]
+        row["val_outlier"] = flags[key]["val_outlier"]
+    if rows:
+        with open(csv_path, "w", newline="") as fh:
+            final = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
+            final.writeheader()
+            final.writerows(rows)
+
     summary_path = os.path.join(args.out, f"sweep_{spec.key}_audit.json")
     with open(summary_path, "w") as fh:
         json.dump({
@@ -205,13 +245,18 @@ def main() -> int:
             "n_bootstrap": args.bootstrap,
             "wall_clock_seconds": time.time() - started,
             "audit": audit,
+            "val_audit": val_audit,
         }, fh, indent=2)
 
     section("Saved")
     print(f"  rows  : {os.path.relpath(csv_path, REPO_ROOT)}  ({len(rows):,} rows)")
     print(f"  audit : {os.path.relpath(summary_path, REPO_ROOT)}")
     print(f"  total : {(time.time() - started) / 60:,.1f} min")
-    return 0 if audit["all_converged"] else 2
+    if not audit["all_converged"]:
+        return 2
+    if not val_audit["all_consistent"]:
+        return 3
+    return 0
 
 
 if __name__ == "__main__":
