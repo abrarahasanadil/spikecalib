@@ -62,6 +62,8 @@ from sklearn.isotonic import IsotonicRegression
 
 __all__ = [
     "softmax_confidence",
+    "quantise_confidence",
+    "CONFIDENCE_DECIMALS",
     "softmax_probs",
     "predict_with_ties",
     "tie_rate",
@@ -84,6 +86,31 @@ __all__ = [
 # Guarding log(0) in NLL. Small enough not to move a reported figure, large enough that a
 # confidently wrong sample gives a finite loss instead of inf.
 _EPS = 1e-12
+
+# Decimal places confidences are rounded to before they are compared for equality.
+#
+# This is not cosmetic. Two samples whose spike counts are the same multiset -- say
+# {2, 1, 0, ..., 0} -- have mathematically identical confidence, but if the winning class
+# sits in a different position the softmax sums its terms in a different order and float64
+# returns values differing by ~5e-17. Left alone that inflates the distinct-confidence
+# count, which is the statistic the capacity hypothesis is stated in, and it lets
+# _equal_mass_bins split a genuine tie across two bins -- the one thing that function is
+# documented never to do.
+#
+# 12 decimals sits far above the noise (~1e-16 relative) and far below the smallest gap
+# between genuinely different attainable confidences. The closest two attainable values can
+# be is set by changing one class's count by one, which moves the softmax denominator by at
+# least e/(e^T + C - 1); for C=10 that is ~8e-5 even at T=10. Twelve decimals is seven
+# orders of magnitude of headroom.
+CONFIDENCE_DECIMALS = 12
+
+
+def quantise_confidence(conf: np.ndarray) -> np.ndarray:
+    """Round confidences so that mathematically equal values compare equal.
+
+    See :data:`CONFIDENCE_DECIMALS` for why this is necessary rather than fastidious.
+    """
+    return np.round(np.asarray(conf, dtype=np.float64), CONFIDENCE_DECIMALS)
 
 
 class DegenerateBinningError(ValueError):
@@ -124,8 +151,13 @@ def softmax_confidence(counts: np.ndarray) -> np.ndarray:
     argmax is tied -- two classes tied on counts share the same probability, and the
     confidence is that shared value. Which of them is predicted is
     :func:`predict_with_ties`' problem, not this function's.
+
+    The result is quantised (see :data:`CONFIDENCE_DECIMALS`) so that two samples with the
+    same multiset of counts get byte-identical confidence regardless of which class held
+    the maximum. Without that, summation order alone splits one attainable confidence level
+    into several, and the number of levels is exactly what the study measures.
     """
-    return softmax_probs(counts).max(axis=1)
+    return quantise_confidence(softmax_probs(counts).max(axis=1))
 
 
 def _max_mask(counts: np.ndarray) -> np.ndarray:
@@ -225,7 +257,10 @@ def model_outputs(counts: np.ndarray, labels: np.ndarray, rng: np.random.Generat
         predictions=predictions,
         tie_mask=tie_mask,
         probs=probs,
-        conf=probs[np.arange(probs.shape[0]), predictions],
+        # Quantised for the same reason softmax_confidence is: indexing the probs matrix
+        # inherits the summation-order noise, and Outputs.conf is what every calibrator and
+        # every distinct-level count downstream consumes.
+        conf=quantise_confidence(probs[np.arange(probs.shape[0]), predictions]),
         correct=(predictions == labels),
     )
 
@@ -560,7 +595,9 @@ def _equal_mass_bins(conf: np.ndarray, n_bins: int) -> tuple[Optional[np.ndarray
     effective bin count can fall well below ``n_bins``; that is reported rather than
     hidden.
     """
-    values, inverse, counts = np.unique(conf, return_inverse=True, return_counts=True)
+    values, inverse, counts = np.unique(
+        quantise_confidence(conf), return_inverse=True, return_counts=True
+    )
     if values.size < 2:
         return None, 1
 
@@ -599,7 +636,7 @@ def ece_equal_mass(
         gap = abs(float(correct.mean()) - float(conf.mean()))
         if strict:
             raise DegenerateBinningError(
-                f"confidence collapsed to {np.unique(conf).size} distinct value(s) across "
+                f"confidence collapsed to {np.unique(quantise_confidence(conf)).size} distinct value(s) across "
                 f"{conf.size:,} samples, so equal-mass binning cannot form more than one "
                 f"bin. The single-bin calibration gap is {gap:.6f}; it is not zero. "
                 f"This is expected at low T and must be reported, not discarded."
@@ -840,7 +877,7 @@ def compute_metrics(
     what ECE measures, keeping every number in a row about the same quantity.
     """
     conf, correct = _validate(conf, correct)
-    n_distinct = int(np.unique(conf).size)
+    n_distinct = int(np.unique(quantise_confidence(conf)).size)
     effective = _equal_mass_effective_bins(conf, n_bins)
 
     edges = np.linspace(0.0, 1.0, n_bins + 1)

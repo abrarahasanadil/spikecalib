@@ -652,3 +652,99 @@ Count histograms: at T=2, 89.48% of entries are 0, 0.57% are 1, 9.95% are 2. At 
 - *Neither model early-stopped in 15 epochs*, so neither accuracy is a ceiling.
 - Earlier open items stand: severity-matched synthetic generator, subject-disjoint
   calibration for DVS-Gesture, CIFAR10-DVS split, CI never yet run.
+
+---
+
+## 2026-09-10 — Can confidence separate right from wrong? Plus a float-noise bug in the capacity statistic
+
+**Did.** Added four measurements to `scripts/readout_report.py`: AUROC of confidence for
+predicting correctness, mean confidence split by correctness with the gap, the full
+confidence table on the calibration split (every distinct value, its support, and the
+accuracy at it), and the standard deviation of confidence with its ratio to the mean.
+Found and fixed a floating-point bug that had been inflating every distinct-confidence
+count in the repository. Recorded a dated, pre-registered prediction in `NOTES.md`.
+
+**Ran.** `pytest tests/ -q` → **104 passed** (up from 100).
+`scripts/readout_report.py --timesteps 2 4 --seed 0`, N-MNIST, calibration split 5,000:
+
+| quantity | T=2 | T=4 |
+|---|---|---|
+| AUROC of confidence vs correctness (test) | 0.9106 | 0.9728 |
+| mean confidence \| correct | 0.4481 | 0.8484 |
+| mean confidence \| incorrect | 0.3258 | 0.5568 |
+| gap | +0.1223 | +0.2916 |
+| confidence std (test) | 0.027156 | 0.061963 |
+| confidence std / mean (test) | 0.06085 | 0.07332 |
+| distinct levels (cal) | 8 | 29 |
+| share of cal mass at the top level | 95.0% | 89.0% |
+| gap at that level | +0.5464 | +0.1415 |
+| mass-weighted mean gap | +0.5412 | +0.1449 |
+
+**Found: summation order was inventing confidence levels.**
+Two samples whose counts form the same multiset -- say `{2, 1, 0, ..., 0}` -- have
+mathematically identical confidence. If the winning class sits at a different index the
+softmax sums its terms in a different order, and float64 returns values ~5.55e-17 apart.
+`np.unique` then counts them as separate levels.
+
+This was not cosmetic. It corrupted two things:
+
+- **The capacity statistic the hypothesis is stated in.** `n_distinct` and
+  `n_cal / n_distinct` are the quantities `NOTES.md` says the isotonic advantage should
+  track. On the trained models the counts fell from 12 to **8** at T=2 and from 48 to
+  **29** at T=4 once fixed. On the synthetic check the overcount was 40-50% at every T:
+  53 -> 34, 383 -> 204, 1,126 -> 584, 2,071 -> 1,173, 2,956 -> 1,816.
+- **Equal-mass binning.** `_equal_mass_bins` calls `np.unique` to keep tied confidences in
+  the same bin, and is documented as never splitting a tie -- because splitting one
+  manufactures per-bin accuracy differences out of sampling noise. Noise-separated values
+  were being split exactly as if they were genuinely different.
+
+Fixed by quantising confidence to 12 decimal places at source, in both
+`softmax_confidence` and `model_outputs` (the latter builds `conf` by indexing the probs
+matrix rather than calling the former, so it needed the same treatment and was missed on
+the first pass -- caught only because the synthetic counts did not move after the first
+fix). `_equal_mass_bins` and `compute_metrics` also quantise defensively, since a
+calibrator's output is not guaranteed to have come through either function. Three tests
+cover it and all three fail if the quantisation is made a no-op.
+
+Twelve decimals is chosen with headroom: the noise is ~1e-16 relative, while the smallest
+gap between genuinely different attainable confidences is set by changing one class's count
+by one, which for C=10 is ~8e-5 even at T=10. Seven orders of magnitude of margin.
+
+Reported ECEs did not move -- `compute_metrics` was already quantising defensively -- so
+the calibration conclusions in earlier entries stand. Only the distinct-level and
+samples-per-level figures were wrong. Earlier entries are left as written, since this log
+is append-only; `NOTES.md` has been corrected, as it is the authoritative current state.
+
+**Found: confidence does carry information, so calibration is a real question.**
+AUROC is 0.9106 at T=2 and 0.9728 at T=4. A calibrator is a monotone map and cannot
+reorder samples, so it cannot change AUROC at all -- whatever separation exists here is a
+hard ceiling on what any calibrated confidence can express. Had it come back near 0.5, the
+best possible calibrator would output the base accuracy rate for every sample and the study
+would be asking the wrong question. It did not, so the question stands.
+
+**Chose.**
+- *Recorded the prediction with a date, in `NOTES.md`, before fitting anything.* It
+  predicts that **temperature scaling will match or beat isotonic at every `T` on
+  N-MNIST**, which **contradicts the study's own hypothesis**. The reasoning is that ECE is
+  mass-weighted and ~90% of the calibration mass sits at one confidence level, so
+  correcting that single level is almost the whole job and a scalar can do it. Writing down
+  the conflict in advance is the only way the result can settle it; a prediction that can be
+  edited afterwards is not a prediction.
+- *Stated the caveat in the same section rather than saving it.* The per-level gap is not
+  constant -- it runs +0.154 to +0.698 across the eight levels at T=2 -- so this is not a
+  uniform-offset miscalibration in the strict sense, and the claim rests specifically on
+  mass weighting. If isotonic wins, that is the most likely reason, and saying so now costs
+  nothing while saying it afterwards would be worthless.
+- *The confidence table is printed for the calibration split, not the test split.* It is
+  meant to show what the calibrator actually fits on.
+
+**Open.**
+- *The prediction is for N-MNIST only.* DVS-Gesture has ~107 samples per class and a much
+  smaller calibration split, where isotonic's per-level estimates will be far noisier; the
+  mass-concentration argument may not transfer at all.
+- *T=6, 8, 10 are still untrained*, so the concentration figures rest on two points.
+- *AUROC is computed on a heavily tied score* -- 8 distinct values across 5,000 samples at
+  T=2. scikit-learn handles ties correctly, but the number is coarse and its sampling
+  variability has not been quantified. A bootstrap on AUROC would be cheap and is not done.
+- Earlier open items stand: severity-matched synthetic generator, subject-disjoint
+  calibration for DVS-Gesture, CIFAR10-DVS split, CI never yet run.

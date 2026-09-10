@@ -13,6 +13,13 @@ is below any respectable accuracy, so a converged model is *structurally* unable
 correctly confident (``NOTES.md``, claim section). This script measures whether that
 actually happens rather than assuming it.
 
+It also asks a question that comes logically *before* calibration: does confidence
+carry any information about correctness at all? AUROC of confidence against correctness
+answers it. At 0.5 confidence is pure noise with respect to being right, and no
+calibrator -- isotonic, temperature or anything else -- can create information that is not
+there. All any of them could do is map every confidence onto the base accuracy rate. So
+this number decides whether calibration is even the right question for this readout.
+
 No calibration is performed here. Counts, confidences and energy only.
 """
 
@@ -32,6 +39,8 @@ from torch.utils.data import DataLoader, Subset
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, REPO_ROOT)
 
+from sklearn.metrics import roc_auc_score  # noqa: E402
+
 from spikecalib.calibration import predict_with_ties, softmax_confidence, tie_rate  # noqa: E402
 from spikecalib.data import load_dataset, make_splits, training_labels  # noqa: E402
 from spikecalib.datasets import get_spec  # noqa: E402
@@ -48,6 +57,84 @@ def section(title: str) -> None:
 def ceiling(timesteps: int, n_classes: int) -> float:
     """[DERIVED] softmax of the extreme count vector [T, 0, ..., 0]. See SOURCES.md."""
     return float(np.exp(timesteps) / (np.exp(timesteps) + n_classes - 1))
+
+
+def discrimination(conf: np.ndarray, correct: np.ndarray) -> dict:
+    """Can confidence separate correct predictions from incorrect ones at all?
+
+    AUROC of confidence as a score for the binary label "this prediction is right". 0.5
+    means confidence carries no information about correctness; 1.0 means it orders them
+    perfectly.
+
+    This is prior to calibration, not part of it. A calibrator is a monotone map from
+    confidence to a probability, and a monotone map cannot change the ordering of samples
+    by confidence -- so it cannot change AUROC at all. Whatever separation exists here is
+    the ceiling on what any calibrated confidence can express. If it is 0.5, the best
+    possible calibrator outputs the base accuracy rate for every sample, which is a correct
+    but useless model, and the interesting question stops being "which calibrator" and
+    becomes "why is the readout uninformative".
+
+    Also returns the mean confidence conditioned on correctness, whose gap is the same
+    question in units a reader can interpret directly, and the coefficient of variation of
+    confidence, which measures how much room a calibrator has to act differently on
+    different samples.
+    """
+    conf = np.asarray(conf, dtype=np.float64)
+    correct = np.asarray(correct).astype(bool)
+    n_correct = int(correct.sum())
+    n_wrong = int((~correct).sum())
+
+    if n_correct == 0 or n_wrong == 0:
+        auroc = float("nan")
+        note = f"AUROC undefined: {n_correct:,} correct and {n_wrong:,} incorrect"
+    elif np.unique(conf).size == 1:
+        auroc = 0.5
+        note = "confidence takes a single value, so it cannot order anything: AUROC is 0.5 by construction"
+    else:
+        auroc = float(roc_auc_score(correct, conf))
+        note = ""
+
+    mean_correct = float(conf[correct].mean()) if n_correct else float("nan")
+    mean_wrong = float(conf[~correct].mean()) if n_wrong else float("nan")
+    mean = float(conf.mean())
+    std = float(conf.std(ddof=0))
+    return {
+        "auroc": auroc,
+        "note": note,
+        "n_correct": n_correct,
+        "n_wrong": n_wrong,
+        "mean_conf_correct": mean_correct,
+        "mean_conf_incorrect": mean_wrong,
+        "gap": mean_correct - mean_wrong,
+        "mean": mean,
+        "std": std,
+        "cv": std / mean if mean else float("nan"),
+        "n_distinct": int(np.unique(conf).size),
+    }
+
+
+def confidence_table(conf: np.ndarray, correct: np.ndarray) -> list[dict]:
+    """Every distinct confidence value, how many samples hold it, and their accuracy.
+
+    This is literally the input to a top-label calibrator: it fits a monotone map from the
+    left column to the right one. Printing it in full makes the capacity argument concrete
+    -- the number of rows is the most knots isotonic could ever place, and the count column
+    is how many samples support each.
+    """
+    conf = np.asarray(conf, dtype=np.float64)
+    correct = np.asarray(correct).astype(bool)
+    values, inverse = np.unique(conf, return_inverse=True)
+    counts = np.bincount(inverse, minlength=values.size)
+    hits = np.bincount(inverse, weights=correct.astype(np.float64), minlength=values.size)
+    return [
+        {
+            "confidence": float(v),
+            "n": int(c),
+            "accuracy": float(h / c) if c else float("nan"),
+            "gap": float(h / c - v) if c else float("nan"),
+        }
+        for v, c, h in zip(values, counts, hits)
+    ]
 
 
 def analyse(spec, timesteps, seed, data_root, results_dir, batch_size, num_workers):
@@ -91,10 +178,14 @@ def analyse(spec, timesteps, seed, data_root, results_dir, batch_size, num_worke
         model, loader(test_set, splits.test), device
     )
 
-    rng = np.random.default_rng(seed + 1)
-    predictions, tie_mask = predict_with_ties(test_counts, rng)
+    # Same seeding convention as the calibration stage: cal draws from seed, test from
+    # seed + 1, so the tie-break here is the one a calibration run would see.
+    cal_predictions, _ = predict_with_ties(cal_counts, np.random.default_rng(seed))
+    predictions, tie_mask = predict_with_ties(test_counts, np.random.default_rng(seed + 1))
     test_conf = softmax_confidence(test_counts)
     cal_conf = softmax_confidence(cal_counts)
+    cal_correct = cal_predictions == cal_labels
+    test_correct = predictions == test_labels
 
     return {
         "timesteps": timesteps,
@@ -111,12 +202,19 @@ def analyse(spec, timesteps, seed, data_root, results_dir, batch_size, num_worke
         "n_distinct_test": int(np.unique(test_conf).size),
         "counts": test_counts,
         "conf": test_conf,
+        "cal_conf": cal_conf,
+        "cal_correct": cal_correct,
+        "test_correct": test_correct,
+        "cal_accuracy": float(cal_correct.mean()),
+        "discrimination_cal": discrimination(cal_conf, cal_correct),
+        "discrimination_test": discrimination(test_conf, test_correct),
+        "confidence_table_cal": confidence_table(cal_conf, cal_correct),
         "ceiling": ceiling(timesteps, spec.n_classes),
         "synops": synops,
     }
 
 
-def report(spec, r) -> None:
+def report(spec, r, max_rows: int = 60) -> None:
     T = r["timesteps"]
     print()
     print("=" * 78)
@@ -165,6 +263,76 @@ def report(spec, r) -> None:
           f"({r['n_cal'] / max(r['n_distinct_cal'], 1):.1f} samples per level)")
     print(f"  distinct confidences on TEST : {r['n_distinct_test']:,}")
 
+    section("Does confidence carry information about correctness?")
+    print("  AUROC of confidence as a score for 'this prediction is right'. A calibrator is")
+    print("  a monotone map, so it cannot reorder samples and cannot change this number.")
+    print("  Whatever separation exists here bounds what ANY calibrated confidence can say.")
+    print()
+    print(f"  {'split':<8}{'n':>9}{'accuracy':>10}{'AUROC':>9}"
+          f"{'mean|correct':>14}{'mean|wrong':>12}{'gap':>10}")
+    for name, key, accuracy in (
+        ("cal", "discrimination_cal", r["cal_accuracy"]),
+        ("test", "discrimination_test", r["test_accuracy"]),
+    ):
+        d = r[key]
+        print(
+            f"  {name:<8}{d['n_correct'] + d['n_wrong']:>9,}{accuracy:>10.4f}"
+            f"{d['auroc']:>9.4f}{d['mean_conf_correct']:>14.4f}"
+            f"{d['mean_conf_incorrect']:>12.4f}{d['gap']:>+10.4f}"
+        )
+    for key in ("discrimination_cal", "discrimination_test"):
+        if r[key]["note"]:
+            print(f"  note: {r[key]['note']}")
+    auroc = r["discrimination_test"]["auroc"]
+    if not np.isnan(auroc):
+        if auroc < 0.55:
+            print("  -> AUROC near 0.5: confidence barely orders correct above incorrect, so no")
+            print("     calibrator can do better than mapping everything to the base accuracy.")
+        elif auroc > 0.8:
+            print("  -> confidence orders correctness well; calibration is a meaningful question.")
+        else:
+            print("  -> confidence carries some information, but weakly.")
+
+    section("Confidence spread -- how much room a calibrator has")
+    print(f"  {'split':<8}{'distinct':>10}{'mean':>10}{'std':>10}{'std/mean':>11}{'min':>10}{'max':>10}")
+    for name, key, conf in (
+        ("cal", "discrimination_cal", r["cal_conf"]),
+        ("test", "discrimination_test", r["conf"]),
+    ):
+        d = r[key]
+        print(
+            f"  {name:<8}{d['n_distinct']:>10,}{d['mean']:>10.4f}{d['std']:>10.6f}"
+            f"{d['cv']:>11.5f}{float(conf.min()):>10.4f}{float(conf.max()):>10.4f}"
+        )
+    print("  std/mean is the coefficient of variation. Near zero means confidence is")
+    print("  effectively a constant, and a constant offers a calibrator nothing to")
+    print("  discriminate on -- every monotone map collapses to a single output value.")
+
+    section("Full confidence table on the CALIBRATION split -- the calibrator's actual input")
+    table = r["confidence_table_cal"]
+    print("  A top-label calibrator fits a monotone map from 'confidence' to 'accuracy'.")
+    print("  Rows are the most knots isotonic could ever place; n is the support for each.")
+    print()
+    print(f"  {'#':>4}{'confidence':>13}{'n':>9}{'accuracy':>11}{'acc - conf':>13}")
+    shown = table if len(table) <= max_rows else table[:max_rows]
+    for i, row in enumerate(shown):
+        print(
+            f"  {i:>4}{row['confidence']:>13.6f}{row['n']:>9,}"
+            f"{row['accuracy']:>11.4f}{row['gap']:>+13.4f}"
+        )
+    if len(shown) < len(table):
+        print(f"  ... {len(table) - len(shown):,} further rows suppressed "
+              f"(--histogram-max-rows to raise the cap)")
+    print(f"  {len(table):,} distinct confidence values across {r['n_cal']:,} calibration samples")
+    gaps = np.array([row["gap"] for row in table])
+    weights = np.array([row["n"] for row in table], dtype=np.float64)
+    print(f"  weighted mean (accuracy - confidence): "
+          f"{float(np.average(gaps, weights=weights)):+.4f}")
+    print(f"  spread of that gap across rows       : "
+          f"{float(gaps.min()):+.4f} to {float(gaps.max()):+.4f}")
+    print("  If the gap column is near-constant, the miscalibration is a uniform offset and")
+    print("  a single scalar can remove it. If it varies with confidence, it cannot.")
+
     section("Energy proxy -- encoder vs spiking layers")
     s = r["synops"]
     print(s.layer_table())
@@ -185,6 +353,8 @@ def main() -> int:
     parser.add_argument("--num-workers", type=int, default=6)
     parser.add_argument("--data-root", default=os.path.join(REPO_ROOT, "data"))
     parser.add_argument("--results", default=os.path.join(REPO_ROOT, "results"))
+    parser.add_argument("--histogram-max-rows", type=int, default=60,
+                        help="cap on printed rows of the full confidence table")
     args = parser.parse_args()
 
     spec = get_spec(args.dataset)
@@ -196,7 +366,7 @@ def main() -> int:
     for timesteps in args.timesteps:
         r = analyse(spec, timesteps, args.seed, args.data_root, args.results,
                     args.batch_size, args.num_workers)
-        report(spec, r)
+        report(spec, r, args.histogram_max_rows)
         rows.append(r)
 
     if len(rows) > 1:
@@ -218,6 +388,12 @@ def main() -> int:
         line("winning-class count / T", lambda r: float(
             r["counts"][np.arange(r["counts"].shape[0]), r["counts"].argmax(axis=1)].mean()
             / r["timesteps"]))
+        line("AUROC conf vs correctness (test)", lambda r: r["discrimination_test"]["auroc"])
+        line("mean conf | correct", lambda r: r["discrimination_test"]["mean_conf_correct"])
+        line("mean conf | incorrect", lambda r: r["discrimination_test"]["mean_conf_incorrect"])
+        line("gap (correct - incorrect)", lambda r: r["discrimination_test"]["gap"], "{:+.4f}")
+        line("confidence std (test)", lambda r: r["discrimination_test"]["std"], "{:.6f}")
+        line("confidence std/mean (test)", lambda r: r["discrimination_test"]["cv"], "{:.5f}")
         line("encoder share of energy", lambda r: r["synops"].encoder_energy_fraction)
         print()
         print("  No calibrator has been fitted. These are raw readout properties.")

@@ -515,3 +515,79 @@ def test_paired_difference_bootstrap_reports_an_unresolvable_difference_honestly
     assert out["difference"] == pytest.approx(0.0, abs=1e-12)
     assert out["resolvable"] is False
     assert out["ci"][0] <= 0.0 <= out["ci"][1]
+
+
+# ---------------------------------------------------------------------------------------
+# Float noise must not invent confidence levels
+# ---------------------------------------------------------------------------------------
+
+
+def test_same_count_multiset_gives_identical_confidence_regardless_of_position():
+    """Summation order must not split one attainable confidence level into several.
+
+    Two samples with counts {2, 1, 0, ..., 0} have the same confidence mathematically. If
+    the winning class sits in a different index the softmax adds its terms in a different
+    order, and raw float64 returns values ~5e-17 apart. That inflates the distinct-level
+    count, which is the statistic the capacity hypothesis is stated in.
+    """
+    a = np.zeros((1, 10)); a[0, 0] = 2.0; a[0, 1] = 1.0
+    b = np.zeros((1, 10)); b[0, 3] = 2.0; b[0, 9] = 1.0
+
+    raw_a = softmax_probs(a).max()
+    raw_b = softmax_probs(b).max()
+    assert raw_a != raw_b, "fixture is pointless if raw softmax already agrees"
+
+    assert softmax_confidence(a)[0] == softmax_confidence(b)[0]
+
+
+def test_distinct_confidence_count_is_not_inflated_by_float_noise():
+    counts = np.zeros((4, 10))
+    counts[0, 0] = 2; counts[0, 1] = 1
+    counts[1, 3] = 2; counts[1, 9] = 1
+    counts[2, 5] = 2; counts[2, 2] = 1
+    counts[3, 7] = 2; counts[3, 4] = 1
+    conf = softmax_confidence(counts)
+    assert np.unique(conf).size == 1, "one attainable level, reported as several"
+
+    m = compute_metrics(conf, np.array([1, 1, 0, 1]), n_bootstrap=0)
+    assert m.n_distinct_confidences == 1
+    assert m.degenerate is True
+
+
+def test_equal_mass_binning_does_not_split_a_float_noise_tie():
+    """The failure mode the quantisation prevents, asserted directly."""
+    from spikecalib.calibration import _equal_mass_bins
+
+    n = 600
+    counts = np.zeros((n, 10))
+    winners = np.arange(n) % 10           # rotate which class holds the max
+    seconds = (winners + 3) % 10
+    counts[np.arange(n), winners] = 2
+    counts[np.arange(n), seconds] = 1
+    conf = softmax_confidence(counts)
+
+    bin_index, n_effective = _equal_mass_bins(conf, n_bins=15)
+    assert bin_index is None and n_effective == 1, (
+        "one confidence level was split across bins by summation-order noise"
+    )
+
+
+def test_model_outputs_confidence_is_quantised_like_softmax_confidence():
+    """Outputs.conf is what the pipeline consumes, so it needs the same treatment.
+
+    It is built by indexing the probs matrix rather than by calling softmax_confidence, so
+    it inherits the same summation-order noise and needs quantising at the same point.
+    """
+    n = 400
+    counts = np.zeros((n, 10))
+    winners = np.arange(n) % 10
+    seconds = (winners + 3) % 10
+    counts[np.arange(n), winners] = 2
+    counts[np.arange(n), seconds] = 1
+    labels = winners.copy()
+
+    out = model_outputs(counts, labels, np.random.default_rng(0))
+    assert np.unique(out.conf).size == 1, (
+        "one attainable confidence level reported as several via Outputs.conf"
+    )
+    assert np.unique(out.conf)[0] == softmax_confidence(counts)[0]

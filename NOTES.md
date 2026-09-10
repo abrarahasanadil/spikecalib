@@ -92,12 +92,14 @@ is exactly why it is usually considered the riskier choice on small calibration 
 Discreteness removes that objection at low `T`. Few distinct levels means each level is
 estimated from many samples.
 
-On synthetic counts with 10 classes and a 10,000-sample calibration split, `T = 2` gave
-52 distinct confidence levels — about **190 samples per level**, so each per-level
-accuracy is well conditioned. `T = 10` gave 3,035 levels, roughly **3 samples per
-level**, which is where isotonic starts fitting noise. `[MEASURED]` —
-`scripts/synthetic_check.py`, seed 0, 2026-09-09; **synthetic data, not a result about
-SNNs**.
+On a trained N-MNIST model, `T = 2` gave **8** distinct confidence levels on a
+5,000-sample calibration split — about **625 samples per level**, so each per-level
+accuracy is well conditioned. `T = 4` gave **29** levels, roughly **172 samples per
+level**. `[MEASURED]` — `scripts/readout_report.py`, seed 0, 2026-09-10.
+
+Earlier figures quoted here (52 and 3,035 levels, from the synthetic check) were inflated:
+softmax summation order split one attainable confidence into several float64 values that
+differed at ~1e-16. Confidences are now quantised at source; see `LOG.md` 2026-09-10.
 
 So discreteness, which normally penalises isotonic, protects it — and it does so in
 precisely the low-timestep regime where SNNs are energy-competitive. The usual objection
@@ -197,6 +199,71 @@ experiment. **Realised isotonic block count is reported, not just `n_distinct`.*
 isotonic advantage is compared **at matched uncalibrated ECE** wherever possible, because
 otherwise a trend in the advantage across `T` cannot be separated from a trend in how much
 miscalibration exists to remove.
+
+## Pre-registered prediction, recorded 2026-09-10
+
+**This is written before any calibrator has been fitted to a trained model, and it must
+not be revised afterwards.** If the sweep contradicts it, the sweep is right and this
+section stands as a record of what was expected and why. The whole point of dating it is
+that a prediction which can be edited after the result is not a prediction.
+
+### What was measured first
+
+`scripts/readout_report.py`, N-MNIST seed 0, calibration split of 5,000 samples.
+`[MEASURED]` 2026-09-10.
+
+| | `T = 2` | `T = 4` |
+|---|---|---|
+| distinct confidence levels (cal) | 8 | 29 |
+| share of calibration mass at the single top level | **95.0%** (4,750 / 5,000) | **89.0%** (4,449 / 5,000) |
+| accuracy at that level | 0.9973 | 1.0000 |
+| calibration gap at that level (accuracy − confidence) | +0.5464 | +0.1415 |
+| mass-weighted mean gap over all levels | +0.5412 | +0.1449 |
+| confidence std / mean (test) | 0.0609 | 0.0733 |
+| AUROC of confidence for correctness (test) | 0.9106 | 0.9728 |
+
+Two facts matter and they pull in opposite directions. Confidence **does** carry
+information: AUROC is 0.91 and 0.97, so confidence orders correct predictions above
+incorrect ones, and calibration is a meaningful question rather than a vacuous one. But
+confidence is **extremely concentrated**: nine tenths of the calibration mass sits at a
+single value, and the mass-weighted mean gap (+0.5412) is within 0.006 of the gap at that
+one level (+0.5464).
+
+### The prediction
+
+Expected calibration error is mass-weighted. When ~90% of the mass sits at one confidence
+level, ECE is very nearly the gap at that level, and **correcting that single level
+correctly is almost the entire job**. A single scalar can do that: temperature scaling
+sharpens `softmax(z/t)` and can map the dominant level anywhere in `(0, 1)`, including onto
+its empirical accuracy. Isotonic's extra capacity buys it only the remaining ~10% of mass,
+spread across 7 or 28 sparsely-populated levels where its per-level estimates are noisiest.
+
+So, on N-MNIST:
+
+> **Temperature scaling will match or beat top-label isotonic at every `T`, and the
+> isotonic advantage will not be statistically resolvable at any `T`** — that is, the 95%
+> paired-bootstrap interval on the equal-width ECE difference will straddle zero at
+> `T` in {2, 4, 6, 8, 10}.
+
+**This contradicts the study's own hypothesis**, which predicts an isotonic advantage that
+grows as `T` falls. That is deliberate. The hypothesis was formed from the structure of the
+readout; this prediction is formed from the measured distribution of the readout's outputs
+on a trained model, and the measurement postdates the hypothesis. Recording the conflict
+in advance is the only way the eventual result can settle it.
+
+### Falsification
+
+The prediction is wrong if, at any `T`, isotonic beats temperature by a margin whose 95%
+paired-bootstrap CI excludes zero. Should that happen, the concentration argument above is
+incorrect — most likely because the sparsely-populated tail of low-confidence samples
+carries more ECE weight than its mass share suggests, or because temperature cannot reach
+the dominant level's empirical accuracy without badly mis-mapping the tail.
+
+One caveat stated in advance rather than discovered later: the per-level gap is **not**
+constant. At `T = 2` it ranges from +0.154 to +0.698 across the eight levels. So this is
+not a uniform-offset miscalibration in the strict sense, and a scalar is not guaranteed to
+be sufficient. The claim rests specifically on the *mass weighting*, not on the shape of
+the gap curve. If isotonic wins, this is the most likely reason.
 
 ## Scope
 
