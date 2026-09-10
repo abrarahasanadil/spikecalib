@@ -4,109 +4,91 @@
   "dataset": "nmnist",
   "timesteps": 4,
   "split_fingerprint": "e524beccace851af",
-  "epochs_requested": 15,
-  "epochs_run": 15,
-  "best_val_accuracy": 0.99,
-  "final_val_accuracy": 0.9884,
-  "final_val_tie_rate": 0.0078,
-  "best_epoch": 12,
-  "early_stopped": false,
+  "epochs_requested": 50,
+  "epochs_run": 12,
+  "best_val_accuracy": 0.9886,
+  "final_val_accuracy": 0.988,
+  "final_val_tie_rate": 0.0076,
+  "best_epoch": 6,
+  "early_stopped": true,
   "lr": 0.001,
   "batch_size": 128,
   "device": "mps",
   "n_parameters": 1070868,
-  "seconds": 291.03067111968994,
+  "seconds": 227.44777607917786,
   "mps_nondeterministic": true,
   "history": [
     {
       "epoch": 0,
-      "train_loss": 0.4122172470664978,
-      "val_accuracy": 0.9742,
-      "val_tie_rate": 0.0168
+      "train_loss": 0.40235818490982056,
+      "val_accuracy": 0.9758,
+      "val_tie_rate": 0.016
     },
     {
       "epoch": 1,
-      "train_loss": 0.22567155441284178,
-      "val_accuracy": 0.9824,
-      "val_tie_rate": 0.0082
+      "train_loss": 0.224365279378891,
+      "val_accuracy": 0.9808,
+      "val_tie_rate": 0.0138
     },
     {
       "epoch": 2,
-      "train_loss": 0.20386847148418427,
-      "val_accuracy": 0.9858,
-      "val_tie_rate": 0.009
+      "train_loss": 0.20630437572956084,
+      "val_accuracy": 0.9878,
+      "val_tie_rate": 0.0084
     },
     {
       "epoch": 3,
-      "train_loss": 0.1926491299390793,
+      "train_loss": 0.19314135394096374,
       "val_accuracy": 0.9836,
-      "val_tie_rate": 0.01
+      "val_tie_rate": 0.0098
     },
     {
       "epoch": 4,
-      "train_loss": 0.1877876527786255,
-      "val_accuracy": 0.985,
-      "val_tie_rate": 0.0102
+      "train_loss": 0.18738552513599396,
+      "val_accuracy": 0.9854,
+      "val_tie_rate": 0.0084
     },
     {
       "epoch": 5,
-      "train_loss": 0.18097963351726531,
-      "val_accuracy": 0.9866,
-      "val_tie_rate": 0.0078
+      "train_loss": 0.18134141627788544,
+      "val_accuracy": 0.9846,
+      "val_tie_rate": 0.0082
     },
     {
       "epoch": 6,
-      "train_loss": 0.17871248452186583,
-      "val_accuracy": 0.9878,
-      "val_tie_rate": 0.008
+      "train_loss": 0.17886115767002106,
+      "val_accuracy": 0.9886,
+      "val_tie_rate": 0.009
     },
     {
       "epoch": 7,
-      "train_loss": 0.17632515731334686,
-      "val_accuracy": 0.9858,
-      "val_tie_rate": 0.01
+      "train_loss": 0.1759571481561661,
+      "val_accuracy": 0.9878,
+      "val_tie_rate": 0.0072
     },
     {
       "epoch": 8,
-      "train_loss": 0.17353452628612517,
-      "val_accuracy": 0.988,
-      "val_tie_rate": 0.007
+      "train_loss": 0.17385709151744844,
+      "val_accuracy": 0.9882,
+      "val_tie_rate": 0.0078
     },
     {
       "epoch": 9,
-      "train_loss": 0.1720391409254074,
-      "val_accuracy": 0.9882,
-      "val_tie_rate": 0.01
+      "train_loss": 0.17300475860118866,
+      "val_accuracy": 0.987,
+      "val_tie_rate": 0.0066
     },
     {
       "epoch": 10,
-      "train_loss": 0.1701526176404953,
-      "val_accuracy": 0.9874,
-      "val_tie_rate": 0.0064
+      "train_loss": 0.17212244206428529,
+      "val_accuracy": 0.9884,
+      "val_tie_rate": 0.006
     },
     {
       "epoch": 11,
-      "train_loss": 0.1702746435213089,
-      "val_accuracy": 0.9876,
-      "val_tie_rate": 0.007
-    },
-    {
-      "epoch": 12,
-      "train_loss": 0.16805790577411653,
-      "val_accuracy": 0.99,
-      "val_tie_rate": 0.008
-    },
-    {
-      "epoch": 13,
-      "train_loss": 0.16755432503700257,
-      "val_accuracy": 0.989,
-      "val_tie_rate": 0.0062
-    },
-    {
-      "epoch": 14,
-      "train_loss": 0.16644185641288758,
-      "val_accuracy": 0.9884,
-      "val_tie_rate": 0.0078
+      "train_loss": 0.17081651618003846,
+      "val_accuracy": 0.988,
+      "val_tie_rate": 0.0076
     }
   ],
   "model_config": {
@@ -118,13 +100,5 @@
     "tau": 2.0,
     "v_threshold": 1.0,
     "surrogate_alpha": 2.0
-  },
-  "split_sizes": {
-    "train": 50000,
-    "val": 5000,
-    "cal": 5000,
-    "test": 10000
-  },
-  "limit_train": 0,
-  "wall_clock_seconds": 291.086284160614
+  }
 }

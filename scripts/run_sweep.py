@@ -185,7 +185,7 @@ def main() -> int:
     for r in audit["runs"]:
         stopped = "early stopping" if r["early_stopped"] else "EPOCH CAP"
         print(f"  {r['timesteps']:>4}{r['seed']:>6}"
-              f"{r['epochs_run']:>6}/{r['epochs_requested']:<2}"
+              f"{r['epochs_run']:>6}/{r['epochs_requested']:<4}"
               f"{stopped:>14}{r['best_val_accuracy']:>11.4f}")
     print()
     if audit["all_converged"]:

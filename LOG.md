@@ -814,3 +814,95 @@ cutting only the training half.
   across a sweep; not done, and not needed for correctness.
 - Earlier open items stand: severity-matched synthetic generator, subject-disjoint
   calibration for DVS-Gesture, CIFAR10-DVS split, CI never yet run.
+
+---
+
+## 2026-09-10 — The sweep ran, and the hypothesis did not survive it
+
+**Did.** Moved `discrimination()` from `scripts/readout_report.py` into
+`spikecalib/calibration.py` so the sweep reuses it rather than duplicating it, and added
+AUROC to every results row. Made the sweep resumable. Added a validation-accuracy outlier
+audit. Ran the full sweep and recorded the outcome in `NOTES.md` beneath the pre-registered
+prediction, which was left untouched.
+
+**Ran.** `pytest tests/ -q` → **129 passed** (up from 115).
+`scripts/run_sweep.py --epochs 50 --patience 5` → exit **0**, 15 runs, **159.8 min**.
+
+Convergence audit: **all 15 runs stopped on the patience rule**, between 10 and 21 epochs
+against a 50 cap. Nothing hit the cap, so no comparison below is confounded by unequal
+convergence. Validation-accuracy audit: the largest gap from the best seed at any `T` was
+0.0034, far inside the 0.02 tolerance, so no run looks like a training failure.
+
+Readout, mean over 3 seeds:
+
+| `T` | test acc | tie rate | distinct levels | samples/level | AUROC | ceiling |
+|---|---|---|---|---|---|---|
+| 2 | 0.9850 | 0.0128 | 9 | 583.3 | 0.9204 | 0.4509 |
+| 4 | 0.9887 | 0.0070 | 31 | 162.3 | 0.9735 | 0.8585 |
+| 6 | 0.9902 | 0.0055 | 71 | 70.4 | 0.9842 | 0.9782 |
+| 8 | 0.9898 | 0.0055 | 168 | 29.9 | 0.9837 | 0.9970 |
+| 10 | 0.9908 | 0.0036 | 277 | 18.2 | 0.9863 | 0.9996 |
+
+Mean equal-width ECE:
+
+| `T` | uncalibrated | temperature | iso top-label | iso one-vs-rest |
+|---|---|---|---|---|
+| 2 | 0.5386 | 0.0018 | 0.0042 | 0.0041 |
+| 4 | 0.1447 | 0.0031 | 0.0029 | 0.0028 |
+| 6 | 0.0273 | 0.0026 | 0.0027 | 0.0031 |
+| 8 | 0.0072 | 0.0028 | 0.0031 | 0.0035 |
+| 10 | 0.0029 | 0.0026 | 0.0028 | 0.0034 |
+
+**Found: the hypothesis is falsified on N-MNIST.**
+It predicted an isotonic advantage growing as `T` falls. At `T = 2` — the most discrete
+regime, 583 calibration samples per distinct confidence level — **temperature beat
+isotonic**, by a larger margin than at any other `T` (+0.0024). From `T = 4` upward the
+difference is within noise. The refined, capacity-based version fares no better: samples
+per level spanned 583 to 18, a 32-fold range and precisely the quantity the mechanism said
+the advantage should track, and the advantage was flat and near zero across all of it.
+
+Fourteen of fifteen paired-bootstrap intervals straddle zero. Of the two that do not, one
+favours temperature and one favours isotonic (`T = 6` seed 0, CI [−0.0024, −0.0003]). One
+resolvable result in fifteen at a 95% level is what multiple comparisons produce unaided;
+the expected count under no true difference is about 0.75. My own pre-registered
+prediction, which said every interval would straddle zero, is therefore **wrong in the
+letter** — `T = 6` did not — while its substance held.
+
+**Found: the ceiling result is the real finding.**
+Uncalibrated ECE at `T = 2` is **0.5386**, nearly all of it structural underconfidence
+forced by the 0.4509 attainable-confidence ceiling, falling to 0.0029 by `T = 10` as the
+ceiling recedes. Both calibrators remove essentially all of it. The paper's finding is not
+*which* calibrator but that **calibration matters enormously at low `T` and the choice of
+method does not**. That is a cleaner, more useful claim than the one the study set out to
+make, and it is supported by every run.
+
+**Found: the two ECE estimators disagree where correctness rule 2 said they would.**
+At `T = 2`, equal-width gives temperature 0.0018 and isotonic 0.0042; equal-mass gives
+0.0008 and 0.0015. A factor of two on the same data, in the regime where confidence is most
+concentrated. Reporting only one would have produced a different ranking.
+
+**Chose.**
+- *Reuse refuses a saved run that hit a smaller epoch cap.* The condition is beyond what
+  was asked, and it fired immediately: the existing `T = 2` and `T = 4` records hit a
+  15-epoch cap and were refused by this 50-epoch sweep. Reusing them would have mixed
+  undertrained models into a sweep whose whole point was equal convergence.
+- *The outlier tolerance uses a 1e-9 slack.* Accuracies are ratios of integers, so a gap
+  mathematically equal to 0.02 arrives as 0.020000000000000018 and would clear a bare
+  `>`, flagging a run that is exactly at tolerance rather than beyond it.
+- *The prediction section in `NOTES.md` was not edited.* The outcome is a new dated section
+  beneath it. A prediction that gets revised after the result is worthless, and the value
+  of having written it down is precisely that it can now be shown to have been wrong.
+
+**Open.**
+- *DVS-Gesture is now the interesting case, not a formality.* Its calibration split is
+  roughly 330 samples against N-MNIST's 5,000, so isotonic's per-level estimates will be an
+  order of magnitude noisier. Everything above says the two methods tie when the
+  calibration set is large; whether that survives a small one is untested and is the
+  question the study should now be organised around.
+- *Every `T` here reached ~0.99 accuracy*, so the sweep never explored a regime where the
+  model is genuinely uncertain. Calibration differences may only appear where accuracy is
+  lower.
+- *Uncalibrated ECE spans 0.5386 to 0.0029 across `T`*, so calibrated ECE compared across
+  `T` compares wildly different amounts of work done. The severity-matched comparison
+  flagged in an earlier entry is now clearly necessary rather than merely tidy.
+- *CIFAR10-DVS split still undefined; CI has still never run.*

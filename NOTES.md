@@ -265,6 +265,63 @@ not a uniform-offset miscalibration in the strict sense, and a scalar is not gua
 be sufficient. The claim rests specifically on the *mass weighting*, not on the shape of
 the gap curve. If isotonic wins, this is the most likely reason.
 
+### Outcome, recorded 2026-09-10 after the sweep
+
+The prediction above is left exactly as written. This section records what happened.
+
+The sweep ran 15 runs (5 timesteps x 3 seeds) at a 50-epoch cap with patience 5.
+**All 15 stopped on the patience rule**, so no result below is confounded by one model
+being less converged than another, and no seed trailed the best at its `T` by more than
+0.0034. `[MEASURED]` `scripts/run_sweep.py --epochs 50 --patience 5`, 2026-09-10.
+
+Mean equal-width ECE over 3 seeds:
+
+| `T` | uncalibrated | temperature | isotonic top-label | isotonic − temperature |
+|---|---|---|---|---|
+| 2 | 0.5386 | **0.0018** | 0.0042 | **+0.0024** (temperature better) |
+| 4 | 0.1447 | 0.0031 | 0.0029 | −0.0002 |
+| 6 | 0.0273 | 0.0026 | 0.0027 | +0.0001 |
+| 8 | 0.0072 | 0.0028 | 0.0031 | +0.0003 |
+| 10 | 0.0029 | 0.0026 | 0.0028 | +0.0002 |
+
+**The letter of the prediction is falsified; its substance holds.** Fourteen of the
+fifteen paired-bootstrap intervals straddle zero, and of the two that do not, one favours
+temperature (`T = 2`, seed 1) and one favours isotonic (`T = 6`, seed 0, CI
+[−0.0024, −0.0003]). The prediction said the interval would straddle zero at *every* `T`,
+and at `T = 6` it did not, so the prediction as stated is wrong. But one resolvable result
+in fifteen at a 95% level is what multiple comparisons produce on their own — the expected
+count under no true difference is about 0.75 — and it does not survive as evidence of an
+isotonic advantage.
+
+**The study's own hypothesis fares worse.** It predicted an isotonic advantage that grows
+as `T` falls. At `T = 2`, the most discrete regime, with 583 calibration samples per
+distinct confidence level, **temperature scaling beat isotonic** by more than at any other
+`T`. The advantage does not grow as `T` falls; it is zero from `T = 4` upward and negative
+at `T = 2`.
+
+**The capacity mechanism gets no support either.** Samples per distinct level ran 583, 162,
+70, 30, 18 across the sweep — a 32-fold range, exactly the manipulation the refined
+hypothesis said the advantage should track. The advantage was flat and near zero across all
+of it.
+
+Two things did hold, and both matter to the paper:
+
+- **The ceiling result is dramatic.** Uncalibrated ECE at `T = 2` is **0.5386**, almost
+  entirely structural underconfidence forced by the 0.4509 attainable-confidence ceiling.
+  It falls to 0.0029 by `T = 10` as the ceiling recedes. Post-hoc calibration removes
+  essentially all of it — both methods reach ~0.002–0.004 at every `T`. The finding is not
+  "which calibrator", it is "**calibration matters enormously at low `T`, and which method
+  you use does not**".
+- **The two ECE estimators disagree exactly where predicted.** At `T = 2` equal-width gives
+  temperature 0.0018 and isotonic 0.0042, while equal-mass gives 0.0008 and 0.0015 — the
+  estimators differ by a factor of two on the same data, in the regime where confidence is
+  most concentrated. Correctness rule 2 earns its place.
+
+The honest summary for the paper: on N-MNIST the discreteness argument does not produce a
+calibrator preference. Whether it does on DVS-Gesture, where the calibration split is
+roughly 330 samples rather than 5,000 and isotonic's per-level estimates are far noisier,
+is untested and is now the more interesting question.
+
 ## Scope
 
 A multi-dataset benchmark. One dataset is an anecdote; the claim is about a mechanism
