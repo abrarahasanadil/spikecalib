@@ -3,397 +3,438 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SpikeCalib — post-hoc confidence calibration for event-driven spiking neural networks</title>
-<meta name="description" content="Directly-trained SNNs at low timestep counts are severely miscalibrated for a structural reason. Post-hoc calibration removes almost all of it, and which calibrator you use does not matter.">
+<title>SpikeCalib — confidence calibration for event-driven spiking neural networks</title>
+<meta name="description" content="A measurement instrument for spiking neural networks: the attainable-confidence ceiling, the cross-entropy floor it implies, and a 15-run calibration sweep on N-MNIST.">
+<meta name="color-scheme" content="dark">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="wrap">
 
-<header>
-  <h1>SpikeCalib</h1>
-  <p class="subtitle">Post-hoc confidence calibration for event-driven spiking neural networks</p>
-  <p class="byline">
-    <strong>Mohammed Abrar Ahasan Chowdhury</strong><br>
-    ORCID <a href="https://orcid.org/0009-0006-9273-6593">0009-0006-9273-6593</a>
-  </p>
-  <ul class="links">
-    <li><a href="https://github.com/abrarahasanadil/spikecalib">Code repository</a></li>
-    <li><span style="color:var(--ink-faint)">arXiv preprint — in preparation</span></li>
-    <li><a href="sweep.csv">Full results (CSV)</a></li>
-  </ul>
+<aside class="rail" aria-label="Controls">
+ <div class="rail-inner">
+  <div class="rail-head">
+    <div class="name">SpikeCalib</div>
+    <div class="what">Confidence calibration for event-driven spiking neural networks. N-MNIST, 15 runs.</div>
+  </div>
 
-  <p class="lede">
-    A directly-trained spiking neural network read out by spike counts is severely
-    miscalibrated at low timestep counts, and the reason is structural rather than a
-    training failure: with <em>C</em> classes and counts bounded by <em>T</em>, the largest
-    confidence the readout can express is capped, and at <em>T</em>&nbsp;=&nbsp;2 that cap
-    sits far below the model's own accuracy. Post-hoc calibration removes almost all of the
-    resulting error — expected calibration error falls from 0.5386 to roughly 0.002. Which
-    calibrator does the removing does not matter: temperature scaling and isotonic
-    regression are statistically indistinguishable at 14 of 15 runs across five timestep
-    settings and three seeds.
-  </p>
-</header>
+  <div class="rail-group">
+    <h3>Ceiling instrument</h3>
+    <label class="field" for="t-slider">
+      <span class="field-top">
+        <span class="field-label">Simulation timesteps</span>
+        <span class="field-value">T = <span id="t-value">2</span></span>
+      </span>
+      <input type="range" id="t-slider" min="1" max="20" step="1" value="2">
+    </label>
+    <label class="field" for="c-slider">
+      <span class="field-top">
+        <span class="field-label">Classes</span>
+        <span class="field-value">C = <span id="c-value">10</span></span>
+      </span>
+      <input type="range" id="c-slider" min="2" max="100" step="1" value="10">
+    </label>
+    <div class="preset-row">
+      <button type="button" class="chip" data-preset="2,10" aria-pressed="true">N-MNIST, 10 classes</button>
+      <button type="button" class="chip" data-preset="2,11" aria-pressed="false">DVS-Gesture, 11 classes</button>
+      <button type="button" class="chip" data-preset="4,100" aria-pressed="false">CIFAR-100</button>
+    </div>
+  </div>
 
-<!-- ================= FINDING 1 ================= -->
-<h2><span class="num">Finding 1.</span> The attainable-confidence ceiling</h2>
+  <div class="rail-sep"></div>
 
-<div class="headline">
-  <span class="big">99.2%</span>
-  <span class="what">of uncalibrated expected calibration error at <em>T</em> = 2 is accounted
-  for by the gap between the model's accuracy and the highest confidence its readout can
-  physically express.</span>
-</div>
+  <div class="rail-group">
+    <h3>Timesteps</h3>
+    <div class="chips" id="filter-t"></div>
+  </div>
+  <div class="rail-group">
+    <h3>Seed</h3>
+    <div class="chips" id="filter-seed"></div>
+  </div>
+  <div class="rail-group">
+    <h3>Calibrator</h3>
+    <div class="chips" id="filter-arm"></div>
+  </div>
+  <div class="rail-group">
+    <h3>ECE estimator</h3>
+    <div class="chips" id="filter-est"></div>
+    <p class="hint">Both are reported everywhere in this study. With discrete confidences
+    they can disagree by a factor of two, and picking one would change the ranking.</p>
+  </div>
+ </div>
+</aside>
 
-<p>
-  The per-class output of the network is an integer spike count in <code>[0, T]</code>, and
-  confidence is the softmax over those counts. The most extreme reachable count vector puts
-  every spike on one class, so confidence has a hard upper bound:
-</p>
+<main class="main">
 
-<div class="eq">
-  ceiling(T, C) = e<sup>T</sup> / (e<sup>T</sup> + C − 1)
-  <span class="note">Derivation, in full: the extreme count vector is [T, 0, …, 0]; its softmax
-  gives the winning class e<sup>T</sup> over e<sup>T</sup> + (C−1)e<sup>0</sup>. This is
-  arithmetic, not a result from any paper.</span>
-</div>
+  <header class="masthead c12">
+    <h1>SpikeCalib</h1>
+    <p class="tagline">Post-hoc confidence calibration for event-driven spiking neural networks</p>
+    <p class="who">
+      <strong>Mohammed Abrar Ahasan Chowdhury</strong> &nbsp; ORCID
+      <a href="https://orcid.org/0009-0006-9273-6593">0009-0006-9273-6593</a>
+    </p>
+    <ul class="masthead-links">
+      <li><a href="https://github.com/abrarahasanadil/spikecalib">Code repository</a></li>
+      <li><span class="pending">arXiv preprint in preparation</span></li>
+      <li><a href="sweep.csv">Download sweep.csv</a></li>
+    </ul>
+    <p class="lede">
+      A directly-trained spiking neural network read out by spike counts is severely
+      miscalibrated at low timestep counts, and the reason is structural rather than a
+      training failure: with <em>C</em> classes and counts bounded by <em>T</em>, the largest
+      confidence the readout can express is capped, and at <em>T</em>&nbsp;=&nbsp;2 that cap
+      sits far below the model's own accuracy. Post-hoc calibration removes almost all of the
+      resulting error — expected calibration error falls from 0.5386 at <em>T</em>&nbsp;=&nbsp;2
+      to roughly 0.002 at <em>T</em>&nbsp;=&nbsp;2. Which calibrator does the removing does not
+      matter: temperature scaling and isotonic regression are statistically indistinguishable
+      in 14 of 15 runs across five timestep settings and three seeds.
+    </p>
+  </header>
 
-<p>
-  For 10 classes that is <strong>0.451 at <em>T</em> = 2</strong>. A model with 98.5%
-  accuracy cannot emit a confidence anywhere near its own correctness rate, so it is forced
-  into underconfidence before any calibrator is involved. The trained models saturate the
-  bound exactly — observed maxima match the derived value to roughly one part in 10<sup>13</sup>,
-  which is float64 rounding rather than approximation.
-</p>
+  <div class="band"><span class="idx">01</span><h2>Live metrics</h2>
+    <p class="sub">computed from sweep.csv for the current filter</p></div>
+  <div class="tiles c12" id="tiles"></div>
 
-<div class="scroll">
-<table>
-  <caption>Ceiling versus what the trained models actually reached. Seed 0; accuracy and ECE are means over 3 seeds.</caption>
-  <thead><tr><th>T</th><th>Ceiling (derived)</th><th>Max confidence observed</th><th>Difference</th><th>Test accuracy</th><th>Uncalibrated ECE</th><th>Share explained</th></tr></thead>
-  <tbody>
-    <tr><td>2</td><td>0.4509</td><td>0.4509</td><td class="dim">2.8&times;10<sup>−13</sup></td><td>0.9850</td><td>0.5386</td><td class="win">99.2%</td></tr>
-    <tr><td>4</td><td>0.8585</td><td>0.8585</td><td class="dim">2.1&times;10<sup>−13</sup></td><td>0.9887</td><td>0.1447</td><td class="win">90.0%</td></tr>
-    <tr><td>6</td><td>0.9782</td><td>0.9782</td><td class="dim">3.8&times;10<sup>−14</sup></td><td>0.9902</td><td>0.0273</td><td>44.2%</td></tr>
-    <tr><td>8</td><td>0.9970</td><td>0.9970</td><td class="dim">1.4&times;10<sup>−13</sup></td><td>0.9898</td><td>0.0072</td><td class="dim">n/a</td></tr>
-    <tr><td>10</td><td>0.9996</td><td>0.9996</td><td class="dim">3.9&times;10<sup>−13</sup></td><td>0.9908</td><td>0.0029</td><td class="dim">n/a</td></tr>
-  </tbody>
-</table>
-</div>
+  <div class="band"><span class="idx">02</span><h2>The ceiling instrument</h2>
+    <p class="sub">derived arithmetic, not measurement</p></div>
 
-<p>
-  The explanation applies only where the ceiling binds. By <em>T</em> = 8 accuracy has
-  fallen <em>below</em> the ceiling, correct confidence becomes reachable, and the small
-  residual error is ordinary overconfidence with a different cause — which is why the last
-  two rows are marked not applicable rather than given a negative percentage.
-</p>
+  <section class="panel c7">
+    <div class="well"><div id="ceiling-chart"></div></div>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>ceiling, derived</span>
+      <span><i class="block" style="background:var(--accent);opacity:.28"></i>accuracy here forces underconfidence</span>
+      <span><i class="ring"></i>measured maxima</span>
+    </div>
+    <p class="chart-note" id="measured-note"></p>
+    <p class="chart-note"><b>What this does not show:</b> any calibrated confidence.
+      Calibrators are not bounded by this ceiling — temperature scaling with <em>t</em> &lt; 1
+      sharpens past it, and isotonic can map any level anywhere in [0, 1]. The bound
+      constrains the raw readout only.</p>
+  </section>
 
-<figure>
-  <picture>
-    <source srcset="figures/fig1-ceiling.svg" type="image/svg+xml">
-    <img src="figures/fig1-ceiling.png" alt="Confidence against simulation timesteps. A blue curve shows the derived ceiling rising from 0.45 at T=2 to 1.0. Open orange circles marking observed maximum confidence sit exactly on the curve. A dashed green line shows test accuracy flat near 0.99, above the ceiling at T=2 and T=4.">
-  </picture>
-  <figcaption>
-    <b>Figure 1.</b> The derived ceiling, the maximum confidence each trained model actually
-    produced, and test accuracy. The orange markers are drawn open because they land on the
-    blue curve to within float64 rounding; where the accuracy line sits inside the shaded
-    band, no reachable output could have been correctly confident.
-    <span class="not">What it does not show: any calibrated confidence. Calibrators are not
-    bounded by this ceiling — temperature scaling with <em>t</em> &lt; 1 sharpens past it, and
-    isotonic can map any level anywhere in [0, 1]. The bound constrains the raw readout only.
-    Single seed (0); the other two seeds agree to four decimals.</span>
-  </figcaption>
-</figure>
+  <section class="panel c5">
+    <h3>Derived quantities</h3>
+    <div class="readout">
+      <div class="readout-row"><span class="readout-label">Ceiling</span>
+        <span class="readout-value big" id="out-ceiling">0.4509</span></div>
+      <div class="readout-row"><span class="readout-label">Cross-entropy floor</span>
+        <span class="readout-value" id="out-floor">0.7966</span></div>
+      <div class="readout-row"><span class="readout-label">Binds above accuracy</span>
+        <span class="readout-value" id="out-bind">45.1%</span></div>
+    </div>
+    <p class="hint">ceiling = e<sup>T</sup> / (e<sup>T</sup> + C − 1), the softmax of the
+      extreme count vector [T, 0, …, 0]. The floor is −ln(ceiling): cross-entropy cannot go
+      below it, because the best reachable logit vector gives the true class exactly the
+      ceiling probability.</p>
+    <div class="verdict">
+      <span class="lamp" aria-hidden="true"></span>
+      <p><span class="tag">verdict</span><span id="verdict-text"></span></p>
+    </div>
+  </section>
 
-<!-- ================= FINDING 2 ================= -->
-<h2><span class="num">Finding 2.</span> The same bound is a floor on the training loss</h2>
+  <div class="band"><span class="idx">03</span><h2>Sweep results</h2>
+    <p class="sub">15 runs, five timestep settings, three seeds</p></div>
 
-<p>
-  Cross-entropy on spike-count logits cannot fall below −ln(ceiling), for the same reason:
-  the best reachable logit vector gives the true class exactly the ceiling probability. The
-  floor is 0.797 at <em>T</em> = 2 and 0.0004 at <em>T</em> = 10, a range of three orders of
-  magnitude driven entirely by <em>T</em>.
-</p>
+  <section class="panel c6">
+    <h3>Paired bootstrap, isotonic minus temperature</h3>
+    <div class="well"><div id="interval-chart"></div></div>
+    <p class="chart-note" id="interval-count"></p>
+    <p class="chart-note">Paired rather than two separate intervals: both arms are scored on
+      the same test samples, so their errors are correlated and overlapping marginal intervals
+      would not settle the question. Amber marks a run whose interval excludes zero.</p>
+    <p class="chart-note"><b>What this does not show:</b> a corrected significance level.
+      These are independent 95% intervals with no multiple-comparison adjustment, which is
+      exactly why one exclusion in fifteen is unremarkable rather than a finding.</p>
+  </section>
 
-<div class="scroll">
-<table>
-  <caption>Predicted floor against the observed training-loss plateau, mean of the final epoch over 3 seeds.</caption>
-  <thead><tr><th>T</th><th>Ceiling</th><th>Floor = −ln(ceiling)</th><th>Observed plateau</th><th>Excess over floor</th></tr></thead>
-  <tbody>
-    <tr><td>2</td><td>0.4509</td><td>0.7966</td><td>0.8052</td><td>0.0086</td></tr>
-    <tr><td>4</td><td>0.8585</td><td>0.1526</td><td>0.1667</td><td>0.0141</td></tr>
-    <tr><td>6</td><td>0.9782</td><td>0.0221</td><td>0.0359</td><td>0.0138</td></tr>
-    <tr><td>8</td><td>0.9970</td><td>0.0030</td><td>0.0134</td><td>0.0104</td></tr>
-    <tr><td>10</td><td>0.9996</td><td>0.0004</td><td>0.0090</td><td>0.0086</td></tr>
-  </tbody>
-</table>
-</div>
+  <section class="panel c6">
+    <h3>Filtered rows</h3>
+    <div class="scroll"><table id="results-table"></table></div>
+    <p class="table-meta" id="table-meta"></p>
+    <p class="chart-note"><b>What this does not show:</b> the columns not displayed. The CSV
+      carries 60 columns including both bootstrap intervals, energy proxy, isotonic block
+      counts and the split fingerprint; this view shows eleven.</p>
+  </section>
 
-<p>
-  <strong>The practical consequence: training loss is not comparable across <em>T</em>.</strong>
-  A <em>T</em> = 2 model plateauing at 0.81 and a <em>T</em> = 10 model plateauing at 0.009
-  are equally converged; the first is sitting on a floor that is 2,000 times higher. Read
-  naively, the low-<em>T</em> curve looks like a failure to train and invites "fixes" for a
-  problem that does not exist. Convergence in this study is judged on validation accuracy,
-  never on loss.
-</p>
+  <section class="panel c12">
+    <h3>Reliability diagrams</h3>
+    <p class="chart-note" style="margin-top:0" id="reliability-count"></p>
+    <div class="rel-grid" id="reliability-grid"></div>
+    <p class="chart-note">Marker area tracks the number of samples in the bin, and the exact
+      count is in the tooltip, so a point resting on three samples cannot look as solid as one
+      resting on four thousand. The dashed diagonal is perfect calibration.</p>
+    <p class="chart-note"><b>What this does not show:</b> uncertainty on each bin. A bin
+      holding a handful of samples has an accuracy estimate with a very wide interval, and
+      none is drawn here; read the small markers as suggestive only.</p>
+  </section>
 
-<figure>
-  <picture>
-    <source srcset="figures/fig2-loss-floor.svg" type="image/svg+xml">
-    <img src="figures/fig2-loss-floor.png" alt="Cross-entropy loss on a log axis against timesteps. A blue line shows the derived floor falling steeply from 0.8 to 0.0004. Orange dots showing observed plateaus sit on the line at low T and flatten above it at high T.">
-  </picture>
-  <figcaption>
-    <b>Figure 2.</b> The derived floor and the observed plateau, log axis. At low <em>T</em>
-    the plateau sits on the floor; by <em>T</em> = 8 the floor has dropped away and the
-    observed loss flattens, because other sources of loss dominate once the bound stops
-    binding.
-    <span class="not">What it does not show: that the models are optimally trained. The
-    excess over the floor (0.009–0.014) is not decomposed, and part of it is ordinary
-    fitting error rather than the bound. Seed 0 for the plotted points.</span>
-  </figcaption>
-</figure>
+  <div class="band"><span class="idx">04</span><h2>Findings</h2></div>
 
-<!-- ================= FINDING 3 ================= -->
-<h2><span class="num">Finding 3.</span> Which calibrator you use does not matter</h2>
+  <section class="panel c7">
+    <div class="prose">
+<h3>The ceiling accounts for almost all uncalibrated error at low T</h3>
+    <p>
+      At <em>T</em> = 2 with 10 classes the ceiling is 0.4509, and the trained models
+      saturate it exactly — observed maxima match the derived value to roughly one part in
+      10<sup>13</sup>, which is float64 rounding rather than approximation. A model at 98.5%
+      accuracy cannot emit a confidence near its own correctness rate, so it is forced into
+      underconfidence before any calibrator is involved. The gap between accuracy and the
+      ceiling accounts for <strong>99.2%</strong> of uncalibrated expected calibration error
+      at <em>T</em> = 2, 90.0% at <em>T</em> = 4 and 44.2% at <em>T</em> = 6.
+    </p>
+    <p style="color:var(--ink-3);font-size:13.5px">
+      That comparison is not exact and should not be read as one. The 99.2% sets a single
+      overall accuracy against a single ceiling value, whereas ECE is a mass-weighted mean
+      of per-bin gaps. The two agree closely here only because roughly 95% of the
+      calibration mass sits at the top confidence level, so the per-bin average is dominated
+      by that one bin. Where confidence is more spread out the two quantities would part
+      company.
+    </p>
+    <p>
+      By <em>T</em> = 8 accuracy has fallen below the ceiling, correct confidence becomes
+      reachable, and the small residual error is ordinary overconfidence with a different
+      cause. The ceiling explanation applies only where the ceiling binds.
+    </p>
 
-<p>
-  This study was designed around a hypothesis: that isotonic regression should beat
-  temperature scaling by a margin that <em>grows</em> as <em>T</em> falls, because a
-  spike-count readout is discrete and a scalar temperature is the wrong tool for a discrete
-  confidence distribution. That hypothesis is not supported.
-</p>
+    <h3>The same bound is a floor on the training loss</h3>
+    <p>
+      Cross-entropy on spike-count logits cannot fall below −ln(ceiling): 0.7966 at
+      <em>T</em> = 2 against 0.0004 at <em>T</em> = 10. The observed plateaus sit between
+      0.0086 and 0.0141 above their own floor at every timestep setting. A <em>T</em> = 2
+      model plateauing at 0.81 and a <em>T</em> = 10 model plateauing at 0.009 are equally
+      converged. <strong>Training loss is therefore not comparable across <em>T</em></strong>,
+      and read naively the low-<em>T</em> curve looks like a failure to train and invites
+      fixes for a problem that does not exist. Convergence here is judged on validation
+      accuracy, never on loss.
+    </p>
 
-<div class="scroll">
-<table>
-  <caption>Equal-width ECE, mean over 3 seeds. Lower is better; the last column is isotonic minus temperature, so positive means temperature won.</caption>
-  <thead><tr><th>T</th><th>Uncalibrated</th><th>Temperature</th><th>Isotonic (top-label)</th><th>Isotonic (one-vs-rest)</th><th>iso − temp</th></tr></thead>
-  <tbody>
-    <tr><td>2</td><td>0.5386</td><td class="win">0.0018</td><td>0.0042</td><td>0.0041</td><td class="win">+0.0024</td></tr>
-    <tr><td>4</td><td>0.1447</td><td>0.0031</td><td>0.0029</td><td>0.0028</td><td>−0.0001</td></tr>
-    <tr><td>6</td><td>0.0273</td><td>0.0026</td><td>0.0027</td><td>0.0031</td><td>+0.0000</td></tr>
-    <tr><td>8</td><td>0.0072</td><td>0.0028</td><td>0.0031</td><td>0.0035</td><td>+0.0003</td></tr>
-    <tr><td>10</td><td>0.0029</td><td>0.0026</td><td>0.0028</td><td>0.0034</td><td>+0.0002</td></tr>
-  </tbody>
-</table>
-</div>
+    <h3>Which calibrator you use does not matter</h3>
+    <p>
+      The study was designed around a hypothesis: that isotonic regression should beat
+      temperature scaling by a margin that <em>grows</em> as <em>T</em> falls, because a
+      spike-count readout is discrete and a scalar temperature is the wrong tool for a
+      discrete confidence distribution. It is not supported. At <em>T</em> = 2 — the most
+      discrete regime in the sweep, with 583 calibration samples per distinct confidence
+      level — temperature scaling <em>beat</em> isotonic, by a wider margin than at any other
+      <em>T</em> and in the opposite direction to the prediction.
+    </p>
 
-<p>
-  At <em>T</em> = 2 — the most discrete regime in the sweep, with 583 calibration samples
-  per distinct confidence level — <strong>temperature scaling beat isotonic</strong>, by a
-  wider margin than at any other <em>T</em> and in the opposite direction to the prediction.
-  From <em>T</em> = 4 upward the difference is indistinguishable from zero.
-</p>
+    <div class="pre-reg">
+      <p class="stamp">pre-registered 2026-09-10, before any calibrator was fitted to a trained model</p>
+      <blockquote>
+        Temperature scaling will match or beat top-label isotonic at every <em>T</em>, and
+        the isotonic advantage will not be statistically resolvable at any <em>T</em> — the
+        95% paired-bootstrap interval on the equal-width ECE difference will straddle zero
+        at <em>T</em> in {2, 4, 6, 8, 10}.
+      </blockquote>
+      <p class="verdict-text">
+        <strong>Outcome: the letter of the prediction is false.</strong> Fourteen of fifteen
+        intervals straddle zero. The fifteenth, <em>T</em> = 6 seed 0, resolves in isotonic's
+        favour with a CI of [−0.0024, −0.0003], so the claim that <em>every</em> interval
+        would straddle zero is wrong. One resolvable result in fifteen at a 95% level is what
+        multiple comparisons produce unaided — the expected count under no true difference is
+        about 0.75 — so it is not evidence of an isotonic advantage, but the prediction as
+        written did not survive and is recorded here unedited.
+      </p>
+    </div>
 
-<figure>
-  <picture>
-    <source srcset="figures/fig3-ece-by-arm.svg" type="image/svg+xml">
-    <img src="figures/fig3-ece-by-arm.png" alt="Two panels of expected calibration error against timesteps on log axes, one per binning scheme. The uncalibrated line falls steeply from 0.54 to 0.003. The three calibrated arms cluster together near 0.002 to 0.004 at every timestep setting.">
-  </picture>
-  <figcaption>
-    <b>Figure 3.</b> ECE for all four arms under both binning schemes, log axis, mean over
-    3 seeds. The uncalibrated line spans two orders of magnitude; the three calibrated arms
-    are flat and overlapping. The two panels disagree at low <em>T</em> — at <em>T</em> = 2
-    equal-width gives temperature 0.0018 and isotonic 0.0042, while equal-mass gives 0.0008
-    and 0.0015 — which is why both estimators are always reported.
-    <span class="not">What it does not show: statistical significance. Means over three
-    seeds cannot establish that two arms differ; that requires the paired test in Figure 4,
-    and by eye the separation at <em>T</em> = 2 looks larger than it is.</span>
-  </figcaption>
-</figure>
+    <p>
+      The refined form of the hypothesis fares no better. It held that the isotonic
+      advantage should track the number of calibration samples per distinct confidence
+      level, for which <em>T</em> is a proxy. That quantity moves 32-fold across the sweep,
+      from 583 samples per level at <em>T</em> = 2 to 18 at <em>T</em> = 10 — exactly the
+      manipulation the mechanism named. The advantage was flat and near zero across all of it.
+    </p>
 
-<div class="pre-reg">
-  <p class="stamp">Pre-registered 2026-09-10 · before any calibrator was fitted to a trained model</p>
-  <blockquote>
-    Temperature scaling will match or beat top-label isotonic at every <em>T</em>, and the
-    isotonic advantage will not be statistically resolvable at any <em>T</em> — the 95%
-    paired-bootstrap interval on the equal-width ECE difference will straddle zero at
-    <em>T</em> in {2, 4, 6, 8, 10}.
-  </blockquote>
-  <p class="verdict">
-    <strong>Outcome: the letter of the prediction is false.</strong> Fourteen of fifteen
-    intervals straddle zero. The fifteenth, <em>T</em> = 6 seed 0, resolves in isotonic's
-    favour with a CI of [−0.0024, −0.0003], so the claim that <em>every</em> interval would
-    straddle zero is wrong. One resolvable result in fifteen at a 95% level is what multiple
-    comparisons produce unaided — the expected count under no true difference is about 0.75 —
-    so it is not evidence of an isotonic advantage, but the prediction as written did not
-    survive and is recorded here unedited.
-  </p>
-</div>
+    <h3>A note on energy</h3>
+    <p>
+      The case for spiking networks is energy, so the sweep records a SynOps proxy. The
+      result complicates that case: the input encoder — the first layer, which receives
+      real-valued event frames rather than spikes and is therefore costed as
+      multiply-accumulates — is between 41% and 65% of the modelled energy at every timestep
+      setting. The layer that does <em>not</em> receive spikes is roughly half the bill.
+      This is a design-comparison proxy built from operation counts and published
+      per-operation energies; it ignores memory traffic, static power and clock, and no claim
+      about a physical device follows from it.
+    </p>
+      </div>
+  </section>
 
-<figure>
-  <picture>
-    <source srcset="figures/fig4-paired-difference.svg" type="image/svg+xml">
-    <img src="figures/fig4-paired-difference.png" alt="Fifteen horizontal confidence intervals, one per run, for the isotonic minus temperature ECE difference. Thirteen blue intervals cross the zero line. Two orange intervals do not: T=2 seed 1 favours temperature and T=6 seed 0 favours isotonic.">
-  </picture>
-  <figcaption>
-    <b>Figure 4.</b> The paired bootstrap on the ECE difference, one interval per run, 1,000
-    resamples. Paired rather than two separate intervals because both arms are scored on the
-    same test samples, so their errors are correlated and overlapping marginal intervals
-    would not settle the question. Orange marks the two runs whose interval excludes zero;
-    they point in opposite directions.
-    <span class="not">What it does not show: a corrected significance level. These are
-    fifteen independent 95% intervals with no multiple-comparison adjustment, which is
-    precisely why one exclusion is unremarkable rather than a finding.</span>
-  </figcaption>
-</figure>
+  <section class="panel c5">
+    <h3>Related work</h3>
+    <p class="chart-note" style="margin-top:0">This study claims novelty over none of the
+      following. <span class="unver">All four references are unverified.</span></p>
+    <div class="prose">
+<div class="cite">
+      <h4>Dynamic Confidence</h4>
+      <p class="venue">Li, Jones &amp; Furber, ICCV 2023</p>
+      <p>
+        Constructs a runtime confidence signal for early exit in SNNs, so inference can stop
+        as soon as the network is confident enough. The setting is ANN-to-SNN conversion on
+        static image data, with an ANN as the calibration reference.
+      </p>
+      <p class="diff">
+        <b>This study differs</b> on three axes: the networks are directly trained as SNNs
+        rather than converted, the data is event data rather than static frames, and the
+        object of study is the calibration method itself rather than a stopping rule built
+        on top of a confidence signal.
+      </p>
+    </div>
 
-<h3>The refined mechanism fares no better</h3>
+    <div class="cite">
+      <h4>AOT-SNN</h4>
+      <p class="venue">Sun &amp; Bohte</p>
+      <p>
+        Uses temperature scaling as the calibration baseline for SNN uncertainty estimation.
+      </p>
+      <p class="diff">
+        <b>This study differs</b> by interrogating that choice rather than adopting it. The
+        question here is whether a scalar calibrator is appropriate given a spike-count
+        readout — and the answer, on N-MNIST, turns out to be that it is entirely adequate.
+      </p>
+    </div>
 
-<p>
-  The hypothesis had a sharper form: the isotonic advantage should track the number of
-  calibration samples per distinct confidence level, for which <em>T</em> is a proxy. That
-  quantity moves 32-fold across the sweep, from 583 samples per level at <em>T</em> = 2 to
-  18 at <em>T</em> = 10 — exactly the manipulation the mechanism said the advantage should
-  follow. The advantage was flat and near zero across all of it.
-</p>
+    <div class="cite">
+      <h4>SNN overconfidence, Bayesian treatment</h4>
+      <p class="venue">Skatchkovsky &amp; Simeone</p>
+      <p>
+        Documents overconfidence in SNNs and addresses it with a Bayesian treatment — a
+        training-time and model-class intervention.
+      </p>
+      <p class="diff">
+        <b>This study differs</b> by being strictly post-hoc: the trained network is fixed and
+        only the mapping from its outputs to confidences changes. The two are complementary
+        rather than competing. Note also that the miscalibration found here at low <em>T</em>
+        is <em>under</em>confidence, not overconfidence, and is structural.
+      </p>
+    </div>
 
-<figure>
-  <picture>
-    <source srcset="figures/fig5-capacity.svg" type="image/svg+xml">
-    <img src="figures/fig5-capacity.png" alt="Two panels. Left: distinct confidence levels rising from 9 at T=2 to 277 at T=10. Right: calibration samples per level falling on a log axis from 583 to 18.">
-  </picture>
-  <figcaption>
-    <b>Figure 5.</b> The capacity statistic the refined hypothesis is stated in. Two panels
-    rather than two y-axes, because the measures differ in scale by more than an order of
-    magnitude and a dual axis would invite a false visual correlation.
-    <span class="not">What it does not show: the isotonic advantage, which is in Figure 4
-    and is flat. Placing them on one plot would suggest a relationship the data does not
-    contain. Counts are means over 3 seeds on the 5,000-sample calibration split.</span>
-  </figcaption>
-</figure>
+    <div class="cite">
+      <h4>Knowing When to Stop</h4>
+      <p class="venue">conformal prediction for SNN early exit</p>
+      <p>
+        Applies conformal prediction to the SNN stopping problem, producing coverage
+        guarantees for early exit.
+      </p>
+      <p class="diff">
+        <b>This study differs</b> in the quantity targeted: conformal methods give set-valued
+        coverage, this measures scalar confidence calibration by ECE. Related problem,
+        different object.
+      </p>
+    </div>
 
-<h3>A note on energy</h3>
+    <div class="cite">
+      <p class="unver">Provenance</p>
+      <p>
+        All four references were supplied in the project brief and have not been checked
+        against primary documents. Authors, titles, venues and years must be confirmed before
+        the paper cites any of them. The repository's <code>SOURCES.md</code> lists them under
+        "To verify" alongside the Horowitz energy constants, which are in the same state.
+      </p>
+    </div>
+    </div>
+  </section>
 
-<p>
-  The case for spiking networks is energy, so the sweep records a SynOps proxy. The result
-  is worth stating because it complicates that case: the input encoder — the first layer,
-  which receives real-valued event frames rather than spikes and is therefore costed as
-  multiply-accumulates — is between 41% and 65% of the modelled energy at every timestep
-  setting. The layer that does <em>not</em> receive spikes is roughly half the bill.
-</p>
+  <div class="band"><span class="idx">05</span><h2>Reproduce it</h2></div>
 
-<figure>
-  <picture>
-    <source srcset="figures/fig6-energy.svg" type="image/svg+xml">
-    <img src="figures/fig6-energy.png" alt="Left: stacked bars showing the encoder share of the energy proxy ranging from 41 to 65 percent across timestep settings. Right: energy proxy per sample rising from 2.3 to 5.9 microjoules and then falling to 4.7.">
-  </picture>
-  <figcaption>
-    <b>Figure 6.</b> Encoder versus spiking share of the SynOps energy proxy, and proxy
-    energy per sample. Neither series is monotone in <em>T</em>: per-sample energy peaks at
-    <em>T</em> = 8 and falls at <em>T</em> = 10, because spike sparsity differs between
-    independently trained models.
-    <span class="not">What it does not show: power. This is a design-comparison proxy built
-    from operation counts and published per-operation energies; it ignores memory traffic,
-    static power, clock and any hardware mapping, and no claim about a physical device
-    follows from it. The constants are also unverified — see Limitations. Seed 0.</span>
-  </figcaption>
-</figure>
-
-<!-- ================= LIMITATIONS ================= -->
-<h2><span class="num">·</span> Limitations</h2>
-
-<ul class="plain">
-  <li>
-    <strong>One dataset.</strong> Everything here is N-MNIST. The design calls for
-    DVS-Gesture and CIFAR10-DVS and neither has been run. DVS-Gesture matters most: its
-    calibration split is roughly 330 samples against N-MNIST's 5,000, so isotonic's
-    per-level estimates would be an order of magnitude noisier. The conclusion that the two
-    calibrators tie is established only where the calibration set is large.
-  </li>
-  <li>
-    <strong>No genuinely uncertain regime was sampled.</strong> Every one of the fifteen
-    models reached roughly 0.99 test accuracy. Calibration differences between methods may
-    only emerge where a model is actually unsure, and this sweep never put one there.
-  </li>
-  <li>
-    <strong>The energy constants are unverified.</strong> E<sub>AC</sub> = 0.9 pJ and
-    E<sub>MAC</sub> = 4.6 pJ are attributed to Horowitz, ISSCC 2014, but the specific figure
-    or table, the exact 0.9 pJ, and whether 4.6 pJ is stated in the paper or is the
-    community convention of multiply-plus-add have not been checked against the primary
-    document. They are marked unverified in the repository and must not be cited with a
-    figure number until checked.
-  </li>
-  <li>
-    <strong>Five points is too few to infer a scaling law.</strong> The ceiling relation is
-    derived arithmetic and holds exactly, but every empirical trend here — ECE against
-    <em>T</em>, distinct levels against <em>T</em>, energy against <em>T</em> — rests on five
-    timestep settings at one dataset. None of them should be extrapolated.
-  </li>
-  <li>
-    <strong>Binned ECE is a biased estimator.</strong> It averages absolute gaps, so
-    sampling noise becomes positive error, and the bias depends on how many samples fall in
-    each bin. That makes raw ECE only loosely comparable across <em>T</em>, which is a
-    further reason the headline comparison is a paired difference at fixed <em>T</em>.
-  </li>
-</ul>
-
-<!-- ================= REPRODUCE ================= -->
-<h2><span class="num">·</span> Reproduce it</h2>
-
-<p>
-  Every number on this page comes from the two artifacts linked below, and both regenerate
-  from a clean checkout. Training on Apple silicon is not bitwise deterministic, so trained
-  weights vary slightly at a fixed seed; splits and calibrator fitting are kept on CPU RNG
-  and scikit-learn and <em>are</em> exactly reproducible.
-</p>
-
-<pre><code>git clone https://github.com/abrarahasanadil/spikecalib
+  <section class="panel c7">
+    <div class="prose">
+      <p>Every number on this page comes from artifacts that regenerate from a clean
+      checkout. Training on Apple silicon is not bitwise deterministic, so trained weights
+      vary slightly at a fixed seed; splits and calibrator fitting are kept on CPU RNG and
+      scikit-learn and are exactly reproducible.</p>
+<pre><span class="c"># clone and set up</span>
+git clone https://github.com/abrarahasanadil/spikecalib
 cd spikecalib
 python3 -m venv .venv &amp;&amp; source .venv/bin/activate
 pip install -r requirements.txt
 
-python scripts/check_env.py                              # verifies MPS + a real LIF forward pass
-python scripts/fetch_data.py --dataset nmnist --timesteps 2   # repeat for 4, 6, 8, 10
-python scripts/run_sweep.py --epochs 50 --patience 5      # 15 runs, ~2.7 h on an M-series Mac
-python scripts/extract_readout_stats.py                   # per-T readout cache
-python scripts/make_figures.py                            # regenerates every figure here</code></pre>
+<span class="c"># verify MPS and a real LIF forward pass before anything else</span>
+python scripts/check_env.py
 
-<div class="scroll">
-<table>
-  <caption>Environment and provenance.</caption>
-  <thead><tr><th>Item</th><th>Value</th></tr></thead>
-  <tbody>
-    <tr><td>Split fingerprint</td><td><code>e524beccace851af</code></td></tr>
-    <tr><td>Split sizes</td><td>50,000 train / 5,000 val / 5,000 calibration / 10,000 test</td></tr>
-    <tr><td>Seeds</td><td>0, 1, 2</td></tr>
-    <tr><td>Epoch cap / patience</td><td>50 / 5 — all 15 runs stopped early, between 10 and 21 epochs</td></tr>
-    <tr><td>Python</td><td>3.13.1</td></tr>
-    <tr><td>PyTorch</td><td>2.14.0 (MPS backend)</td></tr>
-    <tr><td>SpikingJelly</td><td>0.0.0.0.14</td></tr>
-    <tr><td>scikit-learn</td><td>1.9.0</td></tr>
-    <tr><td>Bootstrap</td><td>1,000 resamples, seeded per run</td></tr>
-  </tbody>
-</table>
-</div>
+<span class="c"># build the frame caches (repeat for 4, 6, 8, 10)</span>
+python scripts/fetch_data.py --dataset nmnist --timesteps 2
 
-<p>
-  The split fingerprint is a hash of the exact index sets. Any run reporting
-  <code>e524beccace851af</code> used byte-identical splits, so a result can prove which
-  split produced it rather than assert it.
-</p>
+<span class="c"># 15 runs: 5 timestep settings x 3 seeds, ~2.7 h on an M-series Mac</span>
+python scripts/run_sweep.py --epochs 50 --patience 5
 
-<h3>Data</h3>
+<span class="c"># regenerate everything this page reads</span>
+python scripts/extract_readout_stats.py
+python scripts/export_dashboard_data.py</pre>
 
-<p>
-  <a href="sweep.csv"><strong>sweep.csv</strong></a> — all 60 rows (15 runs &times; 4
-  calibration arms), one row per arm per run, with both ECE estimators, their bootstrap
-  intervals, the paired difference and its interval, AUROC, distinct confidence levels,
-  energy proxy, epochs run, early-stopping flag and split fingerprint. Everything plotted
-  above can be replotted from this file alone. It is also in the repository at
-  <code>results/sweep_nmnist.csv</code>.
-</p>
+    <div class="scroll" style="margin-top:16px">
+      <table>
+        <thead><tr><th scope="col" style="cursor:default">Item</th><th scope="col" style="cursor:default">Value</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Split fingerprint</td><td>e524beccace851af</td></tr>
+          <tr><td class="k">Split sizes</td><td>50,000 / 5,000 / 5,000 / 10,000</td></tr>
+          <tr><td class="k">Seeds</td><td>0, 1, 2</td></tr>
+          <tr><td class="k">Epoch cap, patience</td><td>50, 5 — all 15 stopped early (10–21 epochs)</td></tr>
+          <tr><td class="k">Python</td><td>3.13.1</td></tr>
+          <tr><td class="k">PyTorch</td><td>2.14.0, MPS backend</td></tr>
+          <tr><td class="k">SpikingJelly</td><td>0.0.0.0.14</td></tr>
+          <tr><td class="k">scikit-learn</td><td>1.9.0</td></tr>
+          <tr><td class="k">Bootstrap</td><td>1,000 resamples, seeded per run</td></tr>
+        </tbody>
+      </table>
+    </div>
 
-<footer>
-  <p>
-    The repository's <code>NOTES.md</code> is the design document, including the
-    pre-registered prediction and its outcome. <code>LOG.md</code> is an append-only record
-    of how the work was done, including the mistakes. <code>SOURCES.md</code> lists every
-    numeric constant with its provenance and everything still to verify.
-  </p>
-  <p>Last updated 2026-09-10.</p>
-</footer>
+    <p style="margin-top:14px">
+      The split fingerprint is a hash of the exact index sets. Any run reporting
+      <code>e524beccace851af</code> used byte-identical splits, so a result can prove which
+      split produced it rather than assert it.
+    </p>
 
-</div>
+    </div>
+  </section>
+
+  <section class="panel c5">
+    <div class="prose">
+<h3>Limitations</h3>
+    <ul>
+      <li>
+        <strong>One dataset.</strong> Everything here is N-MNIST. DVS-Gesture matters most
+        of the two not yet run: its calibration split is roughly 330 samples against
+        N-MNIST's 5,000, so isotonic's per-level estimates would be an order of magnitude
+        noisier. The conclusion that the calibrators tie is established only where the
+        calibration set is large.
+      </li>
+      <li>
+        <strong>No genuinely uncertain regime was sampled.</strong> All fifteen models
+        reached roughly 0.99 test accuracy. Differences between calibration methods may only
+        emerge where a model is actually unsure, and this sweep never put one there.
+      </li>
+      <li>
+        <strong>The energy constants are unverified.</strong> E<sub>AC</sub> = 0.9 pJ and
+        E<sub>MAC</sub> = 4.6 pJ are attributed to Horowitz, ISSCC 2014, but the specific
+        figure, the exact 0.9 pJ, and whether 4.6 pJ is stated or is the community convention
+        of multiply-plus-add have not been checked against the primary document.
+      </li>
+      <li>
+        <strong>Five points is too few to infer a scaling law.</strong> The ceiling relation
+        is derived arithmetic and holds exactly, but every empirical trend here rests on five
+        timestep settings on one dataset. None should be extrapolated.
+      </li>
+      <li>
+        <strong>Binned ECE is a biased estimator.</strong> It averages absolute gaps, so
+        sampling noise becomes positive error, and the bias depends on bin occupancy. That
+        makes raw ECE only loosely comparable across <em>T</em>, which is a further reason the
+        headline comparison is a paired difference at fixed <em>T</em>.
+      </li>
+    </ul>
+    </div>
+  </section>
+
+  <footer class="c12">
+    <p>The repository's <code>NOTES.md</code> is the design document, including the
+      pre-registered prediction and its outcome. <code>LOG.md</code> is an append-only record
+      of how the work was done, including the mistakes. <code>SOURCES.md</code> lists every
+      numeric constant with its provenance and everything still to verify.</p>
+    <p>Last updated 2026-09-10.</p>
+  </footer>
+
+</main>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

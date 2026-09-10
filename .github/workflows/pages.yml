@@ -37,13 +37,13 @@ jobs:
         # breaks is a missing asset. Fail here rather than shipping a page with
         # broken figures.
         run: |
-          test -f docs/index.html
-          test -f docs/style.css
-          test -f docs/sweep.csv
-          for n in 1-ceiling 2-loss-floor 3-ece-by-arm 4-paired-difference 5-capacity 6-energy; do
-            test -f "docs/figures/fig${n}.svg" || { echo "missing docs/figures/fig${n}.svg"; exit 1; }
-            test -f "docs/figures/fig${n}.png" || { echo "missing docs/figures/fig${n}.png"; exit 1; }
+          for f in index.html style.css app.js data.js sweep.csv; do
+            test -f "docs/$f" || { echo "missing docs/$f"; exit 1; }
           done
+          # data.js is generated from results/; a stale or empty one would leave the
+          # dashboard rendering nothing, which is worse than failing here.
+          grep -q "window.SPIKECALIB_CSV" docs/data.js || { echo "docs/data.js has no CSV payload"; exit 1; }
+          grep -q "window.SPIKECALIB" docs/data.js || { echo "docs/data.js has no payload"; exit 1; }
           echo "all assets present"
 
       - uses: actions/configure-pages@v5

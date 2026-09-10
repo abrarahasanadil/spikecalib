@@ -23,7 +23,7 @@ def main() -> int:
     parser.add_argument("--dataset", default="nmnist")
     parser.add_argument("--sweep", default=os.path.join(REPO_ROOT, "results", "sweep_nmnist.csv"))
     parser.add_argument("--stats", default=os.path.join(REPO_ROOT, "results", "readout_stats.json"))
-    parser.add_argument("--out", default=os.path.join(REPO_ROOT, "docs", "figures"))
+    parser.add_argument("--out", default=os.path.join(REPO_ROOT, "figures"))
     args = parser.parse_args()
 
     for path, hint in (
