@@ -1,0 +1,63 @@
+name: pages
+
+# Deploys docs/ to GitHub Pages on every push to main.
+#
+# This workflow will fail until Pages is enabled for the repository
+# (Settings -> Pages -> Build and deployment -> Source: GitHub Actions).
+# That is deliberate: the site is not meant to go live until the preprint is,
+# and enabling Pages is a separate, manual decision.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; queue rather than cancel, so a push mid-deploy
+# does not leave the site half-updated.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the site is self-contained
+        # The site is plain HTML and CSS with no build step, so the only way it
+        # breaks is a missing asset. Fail here rather than shipping a page with
+        # broken figures.
+        run: |
+          test -f docs/index.html
+          test -f docs/style.css
+          test -f docs/sweep.csv
+          for n in 1-ceiling 2-loss-floor 3-ece-by-arm 4-paired-difference 5-capacity 6-energy; do
+            test -f "docs/figures/fig${n}.svg" || { echo "missing docs/figures/fig${n}.svg"; exit 1; }
+            test -f "docs/figures/fig${n}.png" || { echo "missing docs/figures/fig${n}.png"; exit 1; }
+          done
+          echo "all assets present"
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

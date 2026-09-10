@@ -1,33 +1,343 @@
-"""Figures and tables for the paper.
+"""Figures for the study.
 
 Owns correctness rule 3: **energy is the SynOps proxy** computed with 45 nm constants
 ``E_AC = 0.9 pJ`` and ``E_MAC = 4.6 pJ``, attributed to Horowitz, ISSCC 2014. ``[LIT]``
 for the paper; **``[UNVERIFIED]`` for the values** -- the figure number and the exact
 figures have not been checked (SOURCES.md, "To verify" item 1), so captions must not cite
-a figure number. Every appearance
-of an energy number -- in an axis label, a caption, a table header, or body text --
-describes it as a **design-comparison proxy**. It is never described as measured power,
-and no claim about a physical device is derived from it. That wording is enforced here
-rather than left to whoever writes the caption later.
+a figure number. Every appearance of an energy number -- in an axis label, a caption, a
+table header, or body text -- describes it as a **design-comparison proxy**. It is never
+described as measured power, and no claim about a physical device is derived from it.
 
-The headline figure is the isotonic-minus-temperature calibration gap against ``T``,
-which is the plot the hypothesis lives or dies on. The mechanism panel plots that same
-gap against the samples-per-distinct-level ratio ``n_cal / n_distinct``, because that
-ratio -- not ``T`` -- is what the capacity argument predicts it tracks. Tie rate against
-``T`` is a third, descriptive panel showing the output really is discrete; it is not the
-mechanism, since neither calibrator breaks ties.
+Every figure is emitted as **both SVG and PNG** so a page can prefer the vector and fall
+back. Every figure also has a companion data table on the site, which is not decoration:
+one of the categorical hues sits below 3:1 contrast on the light surface, so identity must
+never rest on colour alone. Series are direct-labelled as well as legended.
 
-Where the two ECE estimators disagree (correctness rule 2), the figure shows both rather
-than choosing one.
+Design constraints applied here, so they do not have to be remembered per plot:
 
-TODO: plot_gap_vs_timesteps(results) -> headline figure, one panel per dataset.
-TODO: plot_gap_vs_samples_per_level(results) -> mechanism panel; the ratio is moved
-      independently of T by varying calibration-set size.
-TODO: plot_tie_rate_vs_timesteps(results) -> descriptive discreteness panel.
-TODO: plot_energy_proxy(results) -> SynOps proxy, axis label and caption both stating
-      "design-comparison proxy, not measured power".
-TODO: headline_table(results) -> top-label isotonic primary, one-vs-rest secondary, with
-      both ECEs, tie rate, calibration-set size and seed on every row.
+- Categorical hues are assigned in fixed order and never cycled. The four-slot set used
+  for the calibration arms was validated for colour-vision deficiency across **all** pairs,
+  not merely adjacent ones, because a four-line chart invites any-pair comparison.
+- **No dual-axis plots.** Where two measures of different scale belong together they get
+  two panels, never two y-scales on one.
+- Grid and axes are recessive; marks are thin; only endpoints carry direct labels rather
+  than every point.
 """
 
-# TODO: implement.
+from __future__ import annotations
+
+import csv
+import json
+import os
+from collections import defaultdict
+
+import numpy as np
+
+__all__ = [
+    "PALETTE",
+    "load_sweep",
+    "load_readout_stats",
+    "ceiling",
+    "save",
+    "figure_ceiling",
+    "figure_loss_floor",
+    "figure_ece_by_arm",
+    "figure_paired_difference",
+    "figure_capacity",
+    "figure_energy",
+    "ALL_FIGURES",
+]
+
+# Categorical slots, validated all-pairs on the light surface: worst CVD deltaE 9.2,
+# worst normal-vision deltaE 16.3. Aqua sits below 3:1 contrast, which is why every
+# figure ships direct labels and a data table.
+PALETTE = {
+    "blue": "#2a78d6",
+    "orange": "#eb6834",
+    "aqua": "#1baf7a",
+    "violet": "#4a3aa7",
+}
+SURFACE = "#fcfcfb"
+INK = "#0b0b0b"
+INK_SOFT = "#52514e"
+GRID = "#d9d8d4"
+
+ARM_COLOURS = {
+    "uncalibrated": PALETTE["blue"],
+    "temperature": PALETTE["orange"],
+    "isotonic-top-label": PALETTE["aqua"],
+    "isotonic-one-vs-rest": PALETTE["violet"],
+}
+ARM_LABELS = {
+    "uncalibrated": "uncalibrated",
+    "temperature": "temperature",
+    "isotonic-top-label": "isotonic (top-label)",
+    "isotonic-one-vs-rest": "isotonic (one-vs-rest)",
+}
+
+
+def _style():
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    plt.rcParams.update({
+        "font.family": "serif",
+        "font.serif": ["Georgia", "Times New Roman", "DejaVu Serif"],
+        "font.size": 10,
+        "figure.facecolor": SURFACE,
+        "axes.facecolor": SURFACE,
+        "savefig.facecolor": SURFACE,
+        "text.color": INK,
+        "axes.labelcolor": INK,
+        "axes.edgecolor": GRID,
+        "xtick.color": INK_SOFT,
+        "ytick.color": INK_SOFT,
+        "axes.grid": True,
+        "grid.color": GRID,
+        "grid.linewidth": 0.6,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+        "lines.linewidth": 2.0,
+        "lines.markersize": 6,
+        "legend.frameon": False,
+    })
+    return plt
+
+
+def _halo():
+    """A surface-coloured stroke behind label text.
+
+    Point labels sit near the marks they annotate, and on a steep line the text and the
+    line collide. A halo is more robust than hand-tuning each offset, which breaks the
+    moment the data changes.
+    """
+    import matplotlib.patheffects as pe
+
+    return [pe.withStroke(linewidth=3.0, foreground=SURFACE)]
+
+
+def ceiling(timesteps: int, n_classes: int = 10) -> float:
+    """[DERIVED] ``e^T / (e^T + C - 1)``: softmax of the extreme count vector ``[T, 0...]``."""
+    return float(np.exp(timesteps) / (np.exp(timesteps) + n_classes - 1))
+
+
+def load_sweep(path: str) -> list[dict]:
+    with open(path) as fh:
+        return list(csv.DictReader(fh))
+
+
+def load_readout_stats(path: str, dataset: str = "nmnist") -> dict:
+    with open(path) as fh:
+        return json.load(fh)[dataset]
+
+
+def _by_t(rows, arm):
+    out = defaultdict(list)
+    for r in rows:
+        if r["arm"] == arm:
+            out[int(r["timesteps"])].append(r)
+    return dict(sorted(out.items()))
+
+
+def save(fig, out_dir: str, name: str) -> list[str]:
+    """Write SVG and PNG side by side; the page prefers the vector."""
+    os.makedirs(out_dir, exist_ok=True)
+    paths = []
+    for ext in ("svg", "png"):
+        path = os.path.join(out_dir, f"{name}.{ext}")
+        fig.savefig(path, format=ext, bbox_inches="tight", dpi=160)
+        paths.append(path)
+    return paths
+
+
+# ---------------------------------------------------------------------------------------
+
+
+def figure_ceiling(rows, stats, out_dir):
+    """Attainable-confidence ceiling against T, with what the models actually reached."""
+    plt = _style()
+    Ts = sorted(int(t) for t in stats)
+    ceil = [stats[str(t)]["ceiling_derived"] for t in Ts]
+    observed = [stats[str(t)]["max_confidence_observed"] for t in Ts]
+    acc = [np.mean([float(r["test_accuracy"]) for r in _by_t(rows, "uncalibrated")[t]]) for t in Ts]
+
+    fig, ax = plt.subplots(figsize=(6.8, 4.2))
+    grid = np.linspace(2, 10, 240)
+    curve = [ceiling(t) for t in grid]
+    band = ax.fill_between(grid, curve, 1.0, color=PALETTE["blue"], alpha=0.07, zorder=1,
+                           label="unreachable by any spike-count readout")
+    ax.plot(grid, curve, color=PALETTE["blue"], lw=2, zorder=2,
+            label="ceiling  $e^T/(e^T{+}C{-}1)$  [derived]")
+    ax.plot(Ts, acc, "s--", color=PALETTE["aqua"], mec=SURFACE, mew=1.8, lw=1.6, zorder=3,
+            label="test accuracy")
+    # Open markers, because the observed maxima land ON the derived curve to ~1e-13 and a
+    # filled marker would simply disappear into the line. That coincidence is the finding.
+    ax.plot(Ts, observed, "o", color=PALETTE["orange"], mfc=SURFACE, mew=2.2, ms=9, zorder=4,
+            label="observed max confidence")
+
+    ax.set_xlabel("simulation timesteps $T$")
+    ax.set_ylabel("confidence")
+    ax.set_xticks(Ts)
+    ax.set_xlim(1.6, 10.5)
+    ax.set_ylim(0.18, 1.05)
+    ax.legend(loc="lower right", fontsize=8.5, borderaxespad=0.8)
+    ax.set_title("Where accuracy sits above the ceiling, correct confidence is unreachable",
+                 fontsize=10.5, color=INK, pad=10)
+    return save(fig, out_dir, "fig1-ceiling")
+
+
+def figure_loss_floor(rows, stats, out_dir):
+    """Cross-entropy floor -ln(ceiling) against the observed training-loss plateau."""
+    plt = _style()
+    Ts = sorted(int(t) for t in stats)
+    floor = [stats[str(t)]["cross_entropy_floor"] for t in Ts]
+    observed = [stats[str(t)]["train_loss_final"] for t in Ts]
+
+    fig, ax = plt.subplots(figsize=(6.6, 3.8))
+    ax.plot(Ts, floor, "-", color=PALETTE["blue"], lw=2, zorder=2)
+    ax.plot(Ts, observed, "o", color=PALETTE["orange"], mec=SURFACE, mew=2, zorder=3)
+    for t, f, o in zip(Ts, floor, observed):
+        ax.plot([t, t], [f, o], color=INK_SOFT, lw=0.8, alpha=0.5, zorder=1)
+
+    ax.set_yscale("log")
+    ax.set_xticks(Ts)
+    ax.set_xlabel("simulation timesteps $T$")
+    ax.set_ylabel("cross-entropy loss (log scale)")
+    ax.annotate("floor  $-\\ln(\\mathrm{ceiling})$", xy=(8, floor[3]), xytext=(5.4, 0.0016),
+                fontsize=9, color=PALETTE["blue"],
+                arrowprops=dict(arrowstyle="-", color=PALETTE["blue"], lw=1))
+    ax.annotate("observed plateau", xy=(10, observed[4]), xytext=(7.2, 0.030),
+                fontsize=9, color=PALETTE["orange"],
+                arrowprops=dict(arrowstyle="-", color=PALETTE["orange"], lw=1))
+    ax.set_title("Training loss cannot fall below the floor, so it is not comparable across $T$",
+                 fontsize=10.5, color=INK, pad=10)
+    return save(fig, out_dir, "fig2-loss-floor")
+
+
+def figure_ece_by_arm(rows, stats, out_dir):
+    """Equal-width and equal-mass ECE for all four arms, on a log axis."""
+    plt = _style()
+    fig, axes = plt.subplots(1, 2, figsize=(9.4, 4.0), sharey=True)
+    for ax, key, title in zip(
+        axes,
+        ("ece_equal_width", "ece_equal_mass"),
+        ("equal-width bins (Guo et al.)", "equal-mass bins"),
+    ):
+        for arm, colour in ARM_COLOURS.items():
+            grouped = _by_t(rows, arm)
+            Ts = sorted(grouped)
+            means = [np.mean([float(r[key]) for r in grouped[t]]) for t in Ts]
+            ax.plot(Ts, means, "-o", color=colour, mec=SURFACE, mew=1.6, label=ARM_LABELS[arm])
+        ax.set_yscale("log")
+        ax.set_xticks(Ts)
+        ax.set_xlabel("simulation timesteps $T$")
+        ax.set_title(title, fontsize=10, color=INK_SOFT, pad=8)
+    axes[0].set_ylabel("expected calibration error (log scale)")
+    axes[0].legend(loc="center left", bbox_to_anchor=(0.02, 0.40), fontsize=8.5)
+    fig.suptitle("Calibration removes almost all of the error; which calibrator does not matter",
+                 fontsize=10.5, color=INK, y=1.0)
+    return save(fig, out_dir, "fig3-ece-by-arm")
+
+
+def figure_paired_difference(rows, stats, out_dir):
+    """Paired isotonic-minus-temperature ECE difference with 95% bootstrap intervals."""
+    plt = _style()
+    entries = sorted(
+        (r for r in rows if r["arm"] == "isotonic-top-label"),
+        key=lambda r: (int(r["timesteps"]), int(r["seed"])),
+    )
+    fig, ax = plt.subplots(figsize=(6.8, 5.4))
+    ax.axvline(0.0, color=INK_SOFT, lw=1.2, zorder=1)
+    labels = []
+    for i, r in enumerate(entries):
+        d = float(r["iso_minus_temp_ece_ew"])
+        lo, hi = float(r["iso_minus_temp_ci_low"]), float(r["iso_minus_temp_ci_high"])
+        resolvable = r["iso_minus_temp_resolvable"] == "True"
+        colour = PALETTE["orange"] if resolvable else PALETTE["blue"]
+        ax.plot([lo, hi], [i, i], color=colour, lw=2, solid_capstyle="round", zorder=2)
+        ax.plot([d], [i], "o", color=colour, mec=SURFACE, mew=1.6, zorder=3)
+        if resolvable:
+            winner = "isotonic" if hi < 0 else "temperature"
+            ax.annotate(f"  resolvable: {winner} better", xy=(hi, i), fontsize=8,
+                        color=PALETTE["orange"], va="center")
+        labels.append(f"T={r['timesteps']}  seed {r['seed']}")
+    ax.set_yticks(range(len(entries)))
+    ax.set_yticklabels(labels, fontsize=8.5)
+    ax.invert_yaxis()
+    ax.set_xlabel("isotonic ECE − temperature ECE   (negative = isotonic better)")
+    ax.grid(axis="y", visible=False)
+    ax.set_title("14 of 15 intervals straddle zero", fontsize=10.5, color=INK, pad=10)
+    return save(fig, out_dir, "fig4-paired-difference")
+
+
+def figure_capacity(rows, stats, out_dir):
+    """Distinct confidence levels and samples per level -- two panels, never two y-axes."""
+    plt = _style()
+    grouped = _by_t(rows, "uncalibrated")
+    Ts = sorted(grouped)
+    levels = [np.mean([float(r["n_distinct_cal"]) for r in grouped[t]]) for t in Ts]
+    per_level = [np.mean([float(r["samples_per_level"]) for r in grouped[t]]) for t in Ts]
+
+    fig, axes = plt.subplots(1, 2, figsize=(9.8, 3.9))
+    fig.subplots_adjust(wspace=0.32)
+    axes[0].plot(Ts, levels, "-o", color=PALETTE["blue"], mec=SURFACE, mew=1.6)
+    axes[0].set_ylabel("distinct confidence levels")
+    axes[1].plot(Ts, per_level, "-o", color=PALETTE["orange"], mec=SURFACE, mew=1.6)
+    axes[1].set_ylabel("calibration samples per level")
+    axes[1].set_yscale("log")
+    for ax in axes:
+        ax.set_xticks(Ts)
+        ax.set_xlabel("simulation timesteps $T$")
+    for ax, values in zip(axes, (levels, per_level)):
+        for t, v in zip(Ts, values):
+            ax.annotate(f"{v:.0f}", xy=(t, v), xytext=(0, 11), textcoords="offset points",
+                        ha="center", fontsize=8, color=INK_SOFT, path_effects=_halo())
+    fig.suptitle("The capacity statistic moves 32-fold across the sweep; the advantage does not",
+                 fontsize=10.5, color=INK, y=1.02)
+    return save(fig, out_dir, "fig5-capacity")
+
+
+def figure_energy(rows, stats, out_dir):
+    """Energy proxy split between the input encoder and the spiking layers."""
+    plt = _style()
+    Ts = sorted(int(t) for t in stats)
+    encoder = np.array([stats[str(t)]["encoder_energy_fraction"] for t in Ts]) * 100
+    spiking = 100 - encoder
+    per_sample = [stats[str(t)]["energy_per_sample_joules_proxy"] * 1e6 for t in Ts]
+
+    fig, axes = plt.subplots(1, 2, figsize=(9.8, 3.9))
+    fig.subplots_adjust(wspace=0.30)
+    width = 1.1
+    axes[0].bar(Ts, encoder, width=width, color=PALETTE["blue"], label="input encoder (MAC)")
+    axes[0].bar(Ts, spiking, width=width, bottom=encoder + 0.6, color=PALETTE["orange"],
+                label="spiking layers (AC)")
+    for t, e in zip(Ts, encoder):
+        axes[0].annotate(f"{e:.0f}%", xy=(t, e / 2), ha="center", va="center",
+                         fontsize=8.5, color=SURFACE, weight="bold")
+    axes[0].set_ylabel("share of energy proxy (%)")
+    axes[0].legend(loc="lower left", bbox_to_anchor=(0.0, 1.02), fontsize=8.5, ncol=2)
+    axes[0].grid(axis="x", visible=False)
+
+    axes[1].plot(Ts, per_sample, "-o", color=PALETTE["aqua"], mec=SURFACE, mew=1.6)
+    axes[1].set_ylabel("energy proxy per sample (µJ)")
+    for t, v in zip(Ts, per_sample):
+        axes[1].annotate(f"{v:.1f}", xy=(t, v), xytext=(0, 11), textcoords="offset points",
+                         ha="center", fontsize=8, color=INK_SOFT, path_effects=_halo())
+    for ax in axes:
+        ax.set_xticks(Ts)
+        ax.set_xlabel("simulation timesteps $T$")
+    fig.suptitle("Design-comparison proxy only — not measured power", fontsize=10.5,
+                 color=INK, y=1.02)
+    return save(fig, out_dir, "fig6-energy")
+
+
+ALL_FIGURES = (
+    figure_ceiling,
+    figure_loss_floor,
+    figure_ece_by_arm,
+    figure_paired_difference,
+    figure_capacity,
+    figure_energy,
+)

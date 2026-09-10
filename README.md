@@ -15,8 +15,9 @@ and multiple event datasets (N-MNIST, DVS-Gesture, CIFAR10-DVS), to test whether
 isotonic advantage grows as `T` falls — that is, whether isotonic regression is the
 correct method precisely in the low-timestep regime where SNNs are energy-competitive.
 
-The full research design, including the correctness rules that every reported number
-depends on, is in [NOTES.md](NOTES.md). [LOG.md](LOG.md) is the append-only working log:
+A summary of the results, with figures, is published from [docs/](docs/) as a single
+static page. The full research design, including the correctness rules that every
+reported number depends on, is in [NOTES.md](NOTES.md). [LOG.md](LOG.md) is the append-only working log:
 what was tried, what broke, and which alternatives were rejected and why.
 
 ## Install
