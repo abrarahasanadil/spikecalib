@@ -8,3 +8,4 @@ __pycache__/
 .env
 .pytest_cache/
 results/*.npz
+results/*_audit.json

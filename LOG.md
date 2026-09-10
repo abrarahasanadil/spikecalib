@@ -748,3 +748,69 @@ would be asking the wrong question. It did not, so the question stands.
   variability has not been quantified. A bootstrap on AUROC would be cheap and is not done.
 - Earlier open items stand: severity-matched synthetic generator, subject-disjoint
   calibration for DVS-Gesture, CIFAR10-DVS split, CI never yet run.
+
+---
+
+## 2026-09-10 — Sweep preconditions: all five caches built, and convergence made visible
+
+**Did.** Built the missing T=6 and T=8 frame caches. Implemented `spikecalib/sweep.py`
+(`verify_caches`, `assert_caches_ready`, `SweepConfig`, `run_one`, `run_sweep`,
+`convergence_audit`) and a thin CLI in `scripts/run_sweep.py` with `--verify-only`. The
+sweep now refuses to start unless every frame cache it will need is present and complete,
+and every results row records `epochs_run` and `early_stopped`.
+
+**Ran.** `scripts/fetch_data.py --timesteps 6` and `--timesteps 8` → both exit 0, frame
+shapes `(6, 2, 34, 34)` and `(8, 2, 34, 34)`, 70,000 npz each, assertions passed.
+`scripts/run_sweep.py --verify-only` → all five caches complete (70,000 npz each), exit 0.
+Fail-early path checked by requesting an unbuilt T=12: exits **1**, lists the missing
+cache and prints the exact `fetch_data.py` command to build it.
+Harness smoke (`--timesteps 2 --seeds 0 --epochs 2 --patience 1`) → 4 rows written, one
+per arm; audit correctly reported `EPOCH CAP` and warned.
+`pytest tests/ -q` → **115 passed** (up from 104), 11 of them new for the preconditions.
+
+**Chose.**
+- *Defaults are `epochs=30`, `patience=5`, so the stopping rule decides and not the cap.*
+  30 is well beyond where N-MNIST converged in earlier runs; patience 5 ends a run once
+  validation accuracy has been flat for five epochs.
+- *`epochs_run` and `early_stopped` go on every row, not just in a side file.* Each run
+  emits four rows, one per calibration arm, and all four repeat the training provenance.
+  A reader looking at a single calibration number can see whether the model behind it
+  converged without cross-referencing anything.
+- *A convergence audit prints before the calibration numbers, and a capped run makes the
+  process exit 2.* An undertrained model has a genuinely different readout -- fewer
+  distinct confidence levels, a higher tie rate, lower accuracy -- so comparing a converged
+  low-`T` model against an undertrained high-`T` one would attribute a training difference
+  to a calibration mechanism. The audit deduplicates the four arm rows and counts runs.
+- *Cache verification counts files rather than trusting the directory.* Same defence
+  `fetch_data.py` applies: SpikingJelly checks only that a cache directory exists, so an
+  interrupted build leaves a stump that looks fine. A test covers the stump case, and
+  another covers hidden files not counting towards completeness.
+- *Rows are flushed to CSV after each run.* An interrupted sweep keeps what it has earned.
+
+**Wrong hypothesis, corrected by measurement.**
+The harness smoke took 198.9 s for a 2-epoch T=2 run, against ~21 s of expected training.
+I suspected the SynOps forward hooks: they call `.item()` twice per counted layer per
+batch, forcing a device sync, and `_is_binary` materialises two boolean tensors the size
+of the activation. Profiling said otherwise -- **hook overhead measured −0.1 s, i.e. free**.
+The cost is `predict_counts` itself: 45.3 s for 10,000 test samples with hooks *disabled*,
+dominated by reading npz files. Bootstrap (1,000 resamples) is 0.2 s and both calibrator
+fits are under 0.05 s. The instrumentation I was about to optimise was not the problem.
+
+That corrected a real defect in the cost estimate, which had modelled training epochs only.
+Count extraction is ~34 s per unit of `T` per run and is paid whether or not a run stops
+early, adding ~0.8 h across 15 runs. The CLI now reports training and extraction
+separately: **3.8 h + 0.8 h = 4.6 h worst case** for the full sweep, with early stopping
+cutting only the training half.
+
+**Open.**
+- *The sweep has not been run.* Preconditions pass and the harness is smoke-tested end to
+  end, but no calibration numbers exist yet.
+- *Whether 30 epochs is enough is untested.* Both earlier full runs hit a 15-epoch cap
+  without early stopping, and validation accuracy was still drifting up at 15. If runs come
+  back capped at 30, the audit will say so and the cap needs raising before the numbers can
+  be read.
+- *`predict_counts` is the per-run bottleneck at ~4.5 ms per sample*, and it is file-read
+  bound rather than compute bound. Caching decoded frames in memory would pay for itself
+  across a sweep; not done, and not needed for correctness.
+- Earlier open items stand: severity-matched synthetic generator, subject-disjoint
+  calibration for DVS-Gesture, CIFAR10-DVS split, CI never yet run.
