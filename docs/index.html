@@ -283,6 +283,68 @@
     </p>
   </div></section>
 
+  <section class="panel c12"><div class="prose wide">
+<h3>Why membrane ranks worse at high T is not quantisation</h3>
+    <p>
+      Membrane calibrates better wherever the ceiling binds and <em>ranks</em> worse from
+      T = 6 up. The obvious explanation needs no new mechanism: a spike count is a
+      thresholded membrane signal, thresholding discards information, and if what it
+      discards is noise then the count readout gets a free denoiser. That was tested
+      directly — the saved membrane confidences coarsened to N ordered levels, no
+      retraining — and it is <strong>false</strong>.
+    </p>
+    <p>
+      The arithmetic makes the prediction exact. Coarsening cannot reorder a pair, only
+      merge pairs into ties, and AUROC scores a tie as 0.5. So with W the fraction of
+      correct/incorrect pairs merged and A the AUROC <em>within</em> levels,
+      AUROC(coarse) − AUROC(full) = W × (0.5 − A) — an identity. Coarsening can only help
+      where the structure it destroys is <em>worse than chance</em>.
+    </p>
+    <div class="scroll" style="margin:12px 0">
+      <table>
+        <thead><tr><th style="cursor:default">T</th><th style="cursor:default">N=5</th>
+          <th style="cursor:default">N=20</th><th style="cursor:default">N=100</th>
+          <th style="cursor:default">N=1000</th><th style="cursor:default">full</th>
+          <th style="cursor:default">count</th></tr></thead>
+        <tbody>
+          <tr><td class="k">2</td><td>0.8970</td><td>0.9587</td><td>0.9654</td><td>0.9659</td><td><strong>0.9659</strong></td><td>0.9205</td></tr>
+          <tr><td class="k">4</td><td>0.8999</td><td>0.9675</td><td>0.9768</td><td>0.9772</td><td><strong>0.9772</strong></td><td>0.9735</td></tr>
+          <tr><td class="k">6</td><td>0.8939</td><td>0.9604</td><td>0.9705</td><td>0.9710</td><td><strong>0.9710</strong></td><td>0.9842</td></tr>
+          <tr><td class="k">8</td><td>0.9008</td><td>0.9687</td><td>0.9768</td><td>0.9772</td><td><strong>0.9772</strong></td><td>0.9837</td></tr>
+          <tr><td class="k">10</td><td>0.9020</td><td>0.9683</td><td>0.9768</td><td>0.9773</td><td><strong>0.9773</strong></td><td>0.9863</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      <strong>AUROC rises monotonically with N and saturates at full precision</strong>, at
+      every T and every seed. No interior peak anywhere. The curve is not even flat in N,
+      which refutes the hypothesis more strongly than the flat case would have: coarsening
+      does not merely fail to help, it <em>costs</em>, and the cost grows as the binning
+      gets coarser. Coarsening nudged AUROC up in 10 of 15 cells, and the magnitude is the
+      point — the largest gain anywhere is <strong>+0.000073</strong>, against a T = 6
+      deficit of 0.0132 it would have to close. It is 180&times; too small, and the sign
+      flutter is what floating-point noise around zero looks like.
+    </p>
+    <p>
+      The identity says why. At N = 5, where a fifth of all pairs are merged, the detail
+      being destroyed orders correct from incorrect at AUROC <strong>0.89</strong>; at
+      N = 20, 0.72; at N = 100, 0.56. <strong>Membrane's fine structure is signal, not
+      noise</strong>, at every resolution that merges a meaningful number of pairs. Of 266
+      measured points only 24 fall below chance, all at N ≥ 200 where under 1% of pairs
+      merge, bounding their effect at 0.0013.
+    </p>
+    <p>
+      What the test rules <em>in</em> is sharper than what it rules out. Coarsened to
+      count's own level count, membrane at T = 2 <strong>still beats count</strong>
+      (0.9367 vs 0.9204) and at T = 6 is <strong>still 0.0138 behind</strong> it
+      (0.9705 vs 0.9842). Held at identical resolution the two readouts rank differently in
+      both directions, so the difference cannot be resolution. The remaining explanation is
+      that they rank <em>different quantities</em>: a count is a sum of thresholded events
+      and is invariant to how far above threshold each crossing was, where a potential is
+      not. That is untested, and this result does not establish it.
+    </p>
+  </div></section>
+
   <section class="panel c12"><div class="prose wide"><div class="two-col">
 <h3>Why the count readout exists</h3>
     <p>

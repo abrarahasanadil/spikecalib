@@ -906,3 +906,90 @@ concentrated. Reporting only one would have produced a different ranking.
   `T` compares wildly different amounts of work done. The severity-matched comparison
   flagged in an earlier entry is now clearly necessary rather than merely tidy.
 - *CIFAR10-DVS split still undefined; CI has still never run.*
+
+---
+
+## 2026-09-11 — Quantisation tested as the explanation for the membrane ranking deficit, and rejected
+
+**Did.** Added `spikecalib/quantisation.py`, `tests/test_quantisation.py`,
+`scripts/quantisation_test.py` and `figure_quantisation`. The question was the one left
+open by the readout comparison: membrane calibrates better wherever the ceiling binds but
+*ranks* worse from `T = 6` up, and the natural explanation is that a spike count is a
+thresholded membrane signal whose thresholding discards noise. The test coarsens the saved
+membrane confidences to `N` levels — no retraining — and recomputes AUROC and AURC.
+
+**Ran.** `pytest -q` → **174 passed** (up from 152).
+`scripts/quantisation_test.py` → exit **0**, 30 inference cells, 296 rows, ~23 min.
+All 15 full-precision AUROCs reproduced `results/readout_experiment.json` exactly, which is
+the check that the cached confidences are the same ones the earlier numbers came from.
+
+**Found: the hypothesis is falsified, and not in the way anticipated.**
+The predicted signature was AUROC rising as `N` falls, peaking in the tens or low hundreds
+near count's own level count, then falling. Nothing resembling it occurs at any `T` or any
+seed. **AUROC rises monotonically with `N` and saturates at full precision.** The
+alternative outcome written into the task — "if AUROC is flat in `N`, quantisation is not
+the mechanism" — did not happen either. The curve is not flat: coarsening actively costs,
+and the cost grows as the binning coarsens. That refutes the hypothesis more strongly than
+flatness would have.
+
+Coarsening did raise AUROC in 10 of 15 cells, and the magnitude is the finding: the largest
+gain anywhere is **+0.000073**, against a `T = 6` deficit of **0.0132**. It is 180 times
+too small, and the sign flutter across cells is floating-point noise around zero. Equal-width
+binning agrees, with a best gain of +0.0013 — still an order of magnitude short.
+
+**Found: the identity made the result readable rather than merely observed.**
+Coarsening is monotone and non-injective, so it cannot reorder a pair, only merge pairs into
+ties that AUROC scores 0.5. Hence `AUROC(coarse) − AUROC(full) = W × (0.5 − A)` exactly,
+with `W` the fraction of pairs merged and `A` the within-level AUROC. Measured, `A` runs
+0.89 at `N = 5` down to 0.50 at `N = 1000` and is above chance everywhere that merges a
+meaningful number of pairs. **Membrane's fine structure is signal, not noise.** Of 266
+points 24 fall below 0.5, all at `N ≥ 200` where under 1% of pairs merge, bounding their
+possible effect at 0.0013.
+
+**Found: the sharper comparison rules something in.**
+Held at count's own level count, membrane at `T = 2` still beats count (0.9367 against
+0.9204) and at `T = 6` is still 0.0138 behind it (0.9705 against 0.9842). At identical
+resolution the two readouts rank differently in **both directions**, so resolution cannot
+be what separates them. The remaining explanation is that they rank different quantities.
+
+**Broke: a `DataLoader` deadlock took forty minutes of completed inference with it.**
+The first full run hung at cell 14 of 30 — 0% CPU, no workers alive, no progress. Cause:
+`persistent_workers=True` on loaders that are each iterated exactly once and then dropped,
+so six worker processes per cell accumulated waiting to be reaped. The real cost was not the
+hang but that `build_cache` wrote its npz only after **all** cells finished, so the kill
+discarded thirteen completed inference passes. Fixed both: persistent workers off with the
+loader deleted after each pass, and the cache flushed after every cell. Turning persistent
+workers off tripled per-cell time from ~16 s to ~45 s, which is the right trade for a script
+that is run once and must not lose its work.
+
+**Chose.**
+- *Equal-mass binning is primary, equal-width is the check.* On a confidence distribution
+  piled up near 1.0, equal-width crowds the samples into the few bins nearest the mode —
+  half the data lands in about 8 bins out of 100 — so its `N` axis does not mean what it
+  says. Equal-mass guarantees every level is populated. Both are reported; they agree.
+- *The within-level AUROC is reported alongside the curve, not just the curve.* Without it
+  a flat result would be indistinguishable from a quantiser that does nothing, and the
+  identity turns "the curve went down" into "the structure destroyed was signal".
+- *Count confidences were cached too, doubling the inference.* It buys the only comparison
+  that separates "how finely" from "what": membrane held at count's own resolution.
+- *`quantise_to_levels` charges each value to the midpoint of its mass, not its upper edge.*
+  Under heavy ties the upper-edge rule collapses a value holding a large share of the mass
+  into its neighbour and loses a level that genuinely exists. Both rules survived the first
+  round of mutation testing; the midpoint rule needed a test built specifically to separate
+  them, which is now `test_equal_mass_does_not_collapse_a_heavy_tie_into_the_level_above_it`.
+- *`NOTES.md`'s Status section was rewritten.* It still claimed model, training and
+  calibration code were "not yet written", which stopped being true nine sessions ago.
+
+**Open.**
+- *Why the ranking reverses is still unexplained.* One candidate is eliminated, which is
+  progress but not an answer. The next candidate — that a count is invariant to how far
+  above threshold each crossing was, and a potential is not — is untested, and it does not
+  obviously explain why the invariance would only pay once the cap stops binding.
+- *The figure bug this data exposed is worth remembering.* Count's level count differs per
+  seed (95, 97, 101 at `T = 6`), so the sweep probes each seed at a resolution the others
+  were never evaluated at. The first version of `figure_quantisation` averaged across
+  whichever seeds happened to have a given `N`, which would have drawn single-seed points
+  as if they were three-seed means. It raised `StopIteration` on the real data rather than
+  drawing something wrong, but only by luck of how the lookup was written.
+- *`results/quantisation_cache.npz` is 30 × 10,000 confidences.* Cheap now; if the study
+  adds datasets or seeds this becomes the pattern that needs a size policy.

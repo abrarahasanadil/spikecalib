@@ -46,6 +46,8 @@ __all__ = [
     "figure_capacity",
     "figure_energy",
     "figure_risk_coverage",
+    "figure_quantisation",
+    "load_quantisation",
     "ALL_FIGURES",
 ]
 
@@ -132,6 +134,11 @@ def load_sweep(path: str) -> list[dict]:
 def load_readout_stats(path: str, dataset: str = "nmnist") -> dict:
     with open(path) as fh:
         return json.load(fh)[dataset]
+
+
+def load_quantisation(path: str) -> list[dict]:
+    with open(path) as fh:
+        return json.load(fh)["rows"]
 
 
 def _by_t(rows, arm):
@@ -392,6 +399,111 @@ def figure_risk_coverage(rows, stats, out_dir, cache_path=None):
     return save(fig, out_dir, "fig7-risk-coverage")
 
 
+def figure_quantisation(rows, stats, out_dir, quantisation_path=None):
+    """Does coarsening the membrane confidence recover the ranking the count readout gets?
+
+    Two rows, because the answer and the reason are different questions. The top row is
+    the measurement: AUROC against the number of confidence levels the membrane signal is
+    reduced to, one panel per ``T``, against two references -- membrane at full precision
+    and the count readout it is being compared with.
+
+    The bottom row is the mechanism. Coarsening is a monotone map, so it can never reorder
+    a pair, only merge pairs into ties that AUROC scores as 0.5. It can therefore raise
+    AUROC only where the structure it destroys was **worse than chance**, and the bottom
+    row plots exactly that quantity against the 0.5 line. A curve sitting above 0.5 says
+    the fine structure is signal and coarsening costs; a curve on 0.5 says the fine
+    structure is uninformative and the level count does not matter.
+
+    The vertical rule marks the count readout's own number of distinct levels: the
+    resolution at which the hypothesis predicts membrane should catch up.
+    """
+    plt = _style()
+    qrows = [r for r in load_quantisation(quantisation_path) if r["scheme"] == "equal-mass"]
+    Ts = sorted({r["timesteps"] for r in qrows})
+
+    # squeeze=False keeps the 2-D indexing valid when the sweep is run over a single T.
+    fig, axes = plt.subplots(2, len(Ts), figsize=(3.05 * len(Ts), 6.4), sharey="row",
+                             squeeze=False)
+    fig.subplots_adjust(wspace=0.12, hspace=0.34)
+
+    for col, T in enumerate(Ts):
+        top, bottom = axes[0][col], axes[1][col]
+        cell = [r for r in qrows if r["timesteps"] == T]
+        seeds = sorted({r["seed"] for r in cell})
+        # Only the resolutions every seed was evaluated at. The sweep additionally probes
+        # each seed at its OWN count level count, and those differ between seeds (95, 97
+        # and 101 at T = 6), so averaging at such a point would average over one seed.
+        counted = {n for n in (r["count_n_distinct"] for r in cell)}
+        grid = sorted({r["n_levels_requested"] for r in cell if r["n_levels_requested"]}
+                      - counted)
+
+        def stack(key):
+            return np.array([[next(r[key] for r in cell
+                                   if r["seed"] == s and r["n_levels_requested"] == n)
+                              for n in grid] for s in seeds], dtype=float)
+
+        auroc, within = stack("auroc"), stack("auroc_within")
+        full = float(np.mean([r["auroc"] for r in cell if r["n_levels_requested"] is None]))
+        count_auroc = float(np.mean([r["count_auroc"] for r in cell]))
+        n_count = float(np.mean(sorted(counted)))
+
+        for ax in (top, bottom):
+            ax.set_xscale("log")
+            # A band, not a rule: count's level count is a per-seed quantity.
+            ax.axvspan(min(counted), max(counted), color=INK_SOFT, alpha=0.14, lw=0, zorder=1)
+            ax.axvline(n_count, color=INK_SOFT, lw=1.0, ls=(0, (4, 3)), zorder=1)
+        top.axhline(full, color=PALETTE["violet"], lw=1.4, ls=(0, (1, 2)), zorder=2)
+        top.axhline(count_auroc, color=PALETTE["orange"], lw=1.4, ls=(0, (5, 3)), zorder=2)
+        top.fill_between(grid, auroc.min(0), auroc.max(0), color=PALETTE["blue"],
+                         alpha=0.16, lw=0, zorder=3)
+        top.plot(grid, auroc.mean(0), "-o", color=PALETTE["blue"], ms=4.5, mec=SURFACE,
+                 mew=1.2, zorder=4)
+
+        bottom.axhline(0.5, color=INK_SOFT, lw=1.2, zorder=2)
+        bottom.fill_between(grid, within.min(0), within.max(0), color=PALETTE["aqua"],
+                            alpha=0.18, lw=0, zorder=3)
+        bottom.plot(grid, within.mean(0), "-o", color=PALETTE["aqua"], ms=4.5, mec=SURFACE,
+                    mew=1.2, zorder=4)
+
+        top.set_title(f"$T$ = {T}", fontsize=10.5, color=INK, pad=16)
+        for ax in (top, bottom):
+            ax.set_xlabel("confidence levels $N$", fontsize=9)
+        # The rule needs naming once per panel; it moves with T, so it cannot go in a legend.
+        top.annotate(f"count: {n_count:.0f}", xy=(n_count, 1.005),
+                     xycoords=("data", "axes fraction"), ha="center", fontsize=8,
+                     color=INK_SOFT)
+
+    axes[0][0].set_ylabel("AUROC of the coarsened signal")
+    axes[1][0].set_ylabel("AUROC within a level")
+    for col in range(1, len(Ts)):
+        for row in (0, 1):
+            axes[row][col].tick_params(labelleft=False)
+
+    # Direct labels on the two references, placed once, on the panel with the most room.
+    ref = axes[0][0]
+    xr = ref.get_xlim()[1]
+    for value, colour, text in (
+        (float(np.mean([r["auroc"] for r in qrows
+                        if r["timesteps"] == Ts[0] and r["n_levels_requested"] is None])),
+         PALETTE["violet"], "membrane, full precision"),
+        (float(np.mean([r["count_auroc"] for r in qrows if r["timesteps"] == Ts[0]])),
+         PALETTE["orange"], "count readout"),
+    ):
+        ref.annotate(text, xy=(xr, value), xytext=(-4, 4), textcoords="offset points",
+                     ha="right", fontsize=8, color=colour, path_effects=_halo(), zorder=6)
+    axes[0][-1].annotate("membrane, coarsened", xy=(0.97, 0.06), xycoords="axes fraction",
+                         ha="right", fontsize=8, color=PALETTE["blue"], path_effects=_halo())
+    # Left edge: the within-level curve is at its highest there, so the label sits clear
+    # of it at every T. On the right it lands on the curve as it approaches chance.
+    axes[1][0].annotate("chance", xy=(0.03, 0.5), xycoords=("axes fraction", "data"),
+                        xytext=(0, 5), textcoords="offset points", ha="left", fontsize=8,
+                        color=INK_SOFT, path_effects=_halo())
+
+    fig.suptitle("Coarsening the membrane signal does not recover count's ranking, and the "
+                 "bottom row says why", fontsize=10.5, color=INK, y=0.98)
+    return save(fig, out_dir, "fig8-quantisation")
+
+
 ALL_FIGURES = (
     figure_ceiling,
     figure_loss_floor,
@@ -400,4 +512,5 @@ ALL_FIGURES = (
     figure_capacity,
     figure_energy,
     figure_risk_coverage,
+    figure_quantisation,
 )

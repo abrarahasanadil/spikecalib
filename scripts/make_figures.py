@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Regenerate every figure for the site, as SVG and PNG.
 
-Reads only cached artifacts -- ``results/sweep_nmnist.csv`` and
-``results/readout_stats.json`` -- so redrawing a plot never re-runs a model. If the
-readout cache is missing, build it with ``scripts/extract_readout_stats.py``.
+Reads only cached artifacts -- ``results/sweep_nmnist.csv``, ``results/readout_stats.json``
+and, for two figures, their own caches -- so redrawing a plot never re-runs a model. Each
+missing cache is reported with the command that builds it.
 """
 
 from __future__ import annotations
@@ -38,18 +38,29 @@ def main() -> int:
     stats = load_readout_stats(args.stats, args.dataset)
     print(f"  {len(rows):,} sweep rows, {len(stats)} timestep settings")
 
+    # Two figures read a cached artifact of their own rather than the sweep; each is
+    # skipped with the command that builds it rather than failing the whole run.
+    extra = {
+        "figure_risk_coverage": ("cache_path", "selective_cache.npz",
+                                 "python scripts/extend_sweep_selective.py"),
+        "figure_quantisation": ("quantisation_path", "quantisation_test.json",
+                                "python scripts/quantisation_test.py"),
+    }
+    drawn = 0
     for fn in ALL_FIGURES:
-        if fn.__name__ == "figure_risk_coverage":
-            cache = os.path.join(REPO_ROOT, "results", "selective_cache.npz")
-            if not os.path.exists(cache):
-                print(f"  {fn.__name__:<26} -> skipped (run scripts/extend_sweep_selective.py)")
+        if fn.__name__ in extra:
+            kwarg, filename, hint = extra[fn.__name__]
+            path = os.path.join(REPO_ROOT, "results", filename)
+            if not os.path.exists(path):
+                print(f"  {fn.__name__:<26} -> skipped (run {hint})")
                 continue
-            paths = fn(rows, stats, args.out, cache_path=cache)
+            paths = fn(rows, stats, args.out, **{kwarg: path})
         else:
             paths = fn(rows, stats, args.out)
+        drawn += 1
         names = ", ".join(os.path.basename(p) for p in paths)
         print(f"  {fn.__name__:<26} -> {names}")
-    print(f"\n  wrote {len(ALL_FIGURES) * 2} files to {os.path.relpath(args.out, REPO_ROOT)}")
+    print(f"\n  wrote {drawn * 2} files to {os.path.relpath(args.out, REPO_ROOT)}")
     return 0
 
 

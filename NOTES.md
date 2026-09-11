@@ -503,7 +503,10 @@ the per-readout selective metrics.
 `T` in {2, 4}.** From `T = 6` upward the count readout separates correct from incorrect
 predictions *better* — AUROC 0.9842 against 0.9710 at `T = 6`, and AURC roughly half.
 Calibration and ranking are different properties, and the readout that wins one does not
-automatically win the other.
+automatically win the other. Why the ranking reverses is a separate question, taken up
+under "Why membrane ranks worse at high `T`" below: the first candidate explanation —
+that the count readout's coarseness is denoising its confidence — was tested and
+falsified, and the reversal is still unexplained.
 
 So the claim is **not** "membrane readout is better". It is:
 
@@ -522,6 +525,114 @@ readout is real-valued and almost every sample has its own confidence. A practit
 needs to deploy at a specific coverage can do so with a membrane readout and cannot with a
 count readout at low `T`. That is a separate consequence of the same choice from the
 calibration one, and it points the same way at low `T`.
+
+## Why membrane ranks worse at high `T`: it is not quantisation
+
+Membrane calibrates better wherever the ceiling binds and *ranks* worse from `T = 6`
+upward. Nothing in the ceiling argument predicts that, and it was left open. The first
+candidate explanation is attractive because it needs no new mechanism: a spike count is a
+thresholded membrane signal, thresholding discards information, and if what it discards is
+noise then the count readout is getting a free denoiser. Once `T` is large enough for the
+count to have the levels it needs to express the ordering, discarding would be pure gain,
+while membrane keeps the variance the count threw away.
+
+### What the test had to show
+
+The test coarsens the *saved* membrane confidences — no retraining — to `N` ordered levels
+for `N` in {5, 10, 20, 50, 100, 200, 500, 1000, full}, and recomputes AUROC and AURC at
+each. Equal-mass binning is primary, so that every one of the `N` levels is actually
+populated; equal-width is reported as a check. Under both, samples sharing a confidence
+always share a level, because splitting them would invent an ordering the model never
+expressed.
+
+The arithmetic makes the prediction exact rather than impressionistic. Coarsening is a
+monotone, non-injective map: it cannot reorder a pair, only merge pairs into ties, and
+AUROC scores a tie as 0.5. So, with `W` the fraction of correct/incorrect pairs merged and
+`A` the pooled AUROC *within* levels at full precision:
+
+    AUROC(coarsened) − AUROC(full) = W × (0.5 − A)
+
+That is an identity, not an approximation, and it is asserted in the tests on three
+constructed regimes. It says coarsening can only help where `A < 0.5` — where the fine
+structure is actively **worse than chance** at ordering correct from incorrect. The
+hypothesis, stated exactly, is `A < 0.5`. If instead `A ≈ 0.5` the fine detail is merely
+uninformative and AUROC is flat in `N`; if `A > 0.5` it is signal and coarsening costs.
+
+**Predicted signature if the hypothesis holds:** AUROC rises as `N` falls from full, peaks
+somewhere in the tens or low hundreds, then falls once the binning is too coarse to carry
+the ordering — with the peak near count's own level count at that `T`.
+
+### The signature does not appear at any `T` or any seed
+
+`[MEASURED]` `scripts/quantisation_test.py`, 2026-09-11, N-MNIST, 5 `T` × 3 seeds,
+membrane AUROC by level count, mean over seeds:
+
+| `T` | N=5 | N=10 | N=20 | N=50 | N=100 | N=200 | N=500 | N=1000 | full | count |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 2 | 0.8970 | 0.9413 | 0.9587 | 0.9648 | 0.9654 | 0.9658 | 0.9659 | 0.9659 | **0.9659** | 0.9205 |
+| 4 | 0.8999 | 0.9476 | 0.9675 | 0.9759 | 0.9768 | 0.9771 | 0.9772 | 0.9772 | **0.9772** | 0.9735 |
+| 6 | 0.8939 | 0.9403 | 0.9604 | 0.9691 | 0.9705 | 0.9710 | 0.9710 | 0.9710 | **0.9710** | 0.9842 |
+| 8 | 0.9008 | 0.9497 | 0.9687 | 0.9759 | 0.9768 | 0.9770 | 0.9772 | 0.9772 | **0.9772** | 0.9837 |
+| 10 | 0.9020 | 0.9483 | 0.9683 | 0.9754 | 0.9768 | 0.9772 | 0.9773 | 0.9773 | **0.9773** | 0.9863 |
+
+AUROC **rises monotonically with `N` and saturates at full precision**, at every `T` and
+every seed. There is no interior peak anywhere in the grid. The curve is not flat in `N`
+either, which is a stronger refutation than the flat case anticipated: coarsening does not
+fail to help, it actively **costs**, and the cost grows as the binning gets coarser.
+
+Coarsening did nudge AUROC up in 10 of 15 cells, and the number is the point: **the
+largest gain anywhere is +0.000073** (`T = 6`, seed 1, `N = 200`). The deficit it would
+have to close at `T = 6` is 0.0132. It is **180 times too small**, and the sign flutter
+across cells is what floating-point noise around zero looks like. Equal-width binning
+agrees: its best gain anywhere is +0.0013, still an order of magnitude short, and it is
+worse than equal-mass everywhere the two can be compared.
+
+### Why, from the identity
+
+`[MEASURED]` the within-level AUROC, mean over seeds and `T`, against the fraction of
+correct/incorrect pairs each resolution merges:
+
+| N | pairs merged | within-level AUROC |
+|---|---|---|
+| 5 | 19.06% | 0.8935 |
+| 10 | 9.01% | 0.8137 |
+| 20 | 4.16% | 0.7158 |
+| 50 | 1.53% | 0.5996 |
+| 100 | 0.75% | 0.5633 |
+| 200 | 0.37% | 0.5269 |
+| 500 | 0.14% | 0.5230 |
+| 1000 | 0.07% | 0.5049 |
+
+**The fine structure of the membrane confidence is signal, not noise, at every resolution
+that merges a meaningful number of pairs.** At `N = 5`, where a fifth of all pairs are
+merged, the detail being destroyed orders correct from incorrect at AUROC 0.89. Of 266
+measured points, 24 fall below 0.5 — all at `N ≥ 200`, where under 1% of pairs are merged,
+so the largest AUROC shift any of them could produce is 0.0013. There is no resolution at
+which membrane's extra precision is misleading.
+
+### What this rules in, not just out
+
+Coarsening membrane to **count's own level count** is the sharpest form of the comparison,
+and it separates "how finely" from "what":
+
+| `T` | membrane at count's N | membrane, full | count | gap to count |
+|---|---|---|---|---|
+| 2 | 0.9367 | 0.9659 | 0.9204 | **+0.0164** |
+| 4 | 0.9745 | 0.9772 | 0.9735 | +0.0009 |
+| 6 | 0.9705 | 0.9710 | 0.9842 | **−0.0138** |
+| 8 | 0.9771 | 0.9772 | 0.9837 | −0.0067 |
+| 10 | 0.9773 | 0.9773 | 0.9863 | −0.0091 |
+
+At `T = 2` membrane restricted to count's nine or ten levels **still beats count** by
+0.0164. At `T = 6` membrane given count's ninety-odd levels is **still 0.0138 behind**.
+Held at identical resolution the two readouts rank differently in both directions, so the
+difference cannot be resolution.
+
+**Conclusion: quantisation is not the mechanism.** The remaining explanation is that the
+two readouts rank *different quantities*. A count is a sum of thresholded events, so it is
+invariant to how far above threshold each crossing was; the membrane potential is not.
+Whether that invariance is what helps at high `T` — and why it would only help once the cap
+stops binding — is untested. It is the next question, and this result does not answer it.
 
 ## Why the count readout exists
 
@@ -840,6 +951,12 @@ added.
 
 ## Status
 
-Design fixed; implementation in progress. Data acquisition and environment verification
-are implemented for N-MNIST at `T = 10`. Model, training, and calibration code are not
-yet written. A preprint is in preparation.
+Implemented and run on N-MNIST: data acquisition, splits, model, training, both ECE
+estimators, all four calibrators, bootstrap intervals, selective prediction, and the
+figures. The main sweep (5 `T` × 3 seeds × 4 calibrators), the readout experiment
+(3 readouts × 5 `T` × 3 seeds) and the quantisation test have all completed, and their
+outcomes are recorded above beneath the predictions that preceded them.
+
+Not implemented: DVS-Gesture and CIFAR10-DVS, which raise `NotImplementedError` at the
+loader. The single-dataset limitation is now the study's largest. A preprint is in
+preparation.
