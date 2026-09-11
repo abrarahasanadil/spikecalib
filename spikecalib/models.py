@@ -30,6 +30,7 @@ figure number until checked against the paper.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -40,6 +41,10 @@ from spikingjelly.activation_based import functional, layer, neuron, surrogate
 from .datasets import DatasetSpec
 
 __all__ = [
+    "READOUTS",
+    "readout_ceiling",
+    "min_timesteps",
+    "readout_weights",
     "ModelConfig",
     "SpikingClassifier",
     "build_model",
@@ -63,6 +68,71 @@ E_MAC_JOULES = 4.6e-12  # J per multiply-accumulate
 # polarity channels. Confirmed by the frame shape (T, 2, H, W) that SpikingJelly produces;
 # see the [MEASURED] N-MNIST frame shape in SOURCES.md.
 EVENT_POLARITY_CHANNELS = 2
+
+
+READOUTS = ("count", "weighted-count", "membrane")
+
+
+def readout_weights(timesteps: int) -> list[float]:
+    """Weights for the weighted-count readout, ``w_t = 2(t+1)/(T+1)``.
+
+    [DERIVED] They sum to ``2(1+...+T)/(T+1) = T``, so weighted-count has **exactly the
+    same attainable maximum as count** while taking far more distinct values. That is the
+    point of it: count is capped and coarse, weighted-count is capped and fine, membrane is
+    neither. Comparing all three separates "confidence is bounded" from "confidence is
+    coarse", which the count readout confounds.
+    """
+    return [2.0 * (t + 1) / (timesteps + 1) for t in range(timesteps)]
+
+
+def readout_ceiling(readout: str, timesteps: int, n_classes: int) -> Optional[float]:
+    """Largest confidence each readout can express. ``None`` means unbounded.
+
+    [DERIVED] For any readout whose per-class score is bounded above by ``m`` and below by
+    0, the extreme score vector is ``[m, 0, ..., 0]`` and the softmax ceiling is
+    ``e^m / (e^m + C - 1)``. Count and weighted-count both have ``m = T``. The membrane
+    readout is a real-valued potential with no upper bound, so no finite ceiling exists and
+    the supremum is 1.
+    """
+    if readout == "membrane":
+        return None
+    if readout not in ("count", "weighted-count"):
+        raise ValueError(f"unknown readout {readout!r}; expected one of {READOUTS}")
+    m = float(timesteps)
+    return float(math.exp(m) / (math.exp(m) + n_classes - 1))
+
+
+def min_timesteps(n_classes: int, target_accuracy: float) -> float:
+    """Smallest ``T`` at which a model of this accuracy can express calibrated confidence.
+
+    The ceiling is descriptive; this is the same fact made prescriptive. A model whose
+    accuracy exceeds ``ceiling(T, C)`` cannot emit a confidence equal to its own
+    correctness rate -- it is forced into underconfidence by the readout, whatever it
+    learns. So the design question is: given ``C`` classes and a target accuracy ``a``,
+    how many timesteps are needed before calibrated confidence is even *reachable*?
+
+    [DERIVED], closed form::
+
+        ceiling(T, C) = e^T / (e^T + C - 1) >= a
+        e^T >= a (e^T + C - 1)
+        e^T (1 - a) >= a (C - 1)
+        T >= ln( (C - 1) a / (1 - a) )
+
+    so ``T_min = ln((C - 1) * a / (1 - a))``.
+
+    Returns a real number. A physical simulation needs ``ceil(T_min)`` timesteps, and the
+    result can be negative when the target is easy relative to the class count, meaning
+    even ``T = 1`` suffices. ``a >= 1`` has no solution: no finite ``T`` reaches confidence
+    1, because the ceiling approaches it only asymptotically.
+    """
+    if not (0.0 < target_accuracy < 1.0):
+        raise ValueError(
+            f"target_accuracy must lie strictly in (0, 1); got {target_accuracy}. "
+            f"No finite T reaches confidence 1 -- the ceiling approaches it asymptotically."
+        )
+    if n_classes < 2:
+        raise ValueError(f"n_classes must be at least 2; got {n_classes}")
+    return float(math.log((n_classes - 1) * target_accuracy / (1.0 - target_accuracy)))
 
 
 @dataclass(frozen=True)
@@ -96,10 +166,19 @@ class ModelConfig:
     # source carries the formula but no citation. See SOURCES.md "To verify" item 9.
     surrogate_alpha: float = 2.0
     detach_reset: bool = True
+    # [DESIGN] Which aggregation turns the output layer's activity into class scores.
+    # Only this changes between readouts -- every layer up to and including the final
+    # Linear -> BatchNorm1d is identical, because changing anything else would confound
+    # the comparison the readout experiment exists to make.
+    readout: str = "count"
 
     @property
     def n_blocks(self) -> int:
         return len(self.channels)
+
+    def __post_init__(self):
+        if self.readout not in READOUTS:
+            raise ValueError(f"unknown readout {self.readout!r}; expected one of {READOUTS}")
 
 
 @dataclass
@@ -267,9 +346,25 @@ class SpikingClassifier(nn.Module):
             self._lif(),
             layer.Linear(cfg.hidden, self.n_classes, bias=False),
             layer.SeqToANNContainer(nn.BatchNorm1d(self.n_classes)),
-            self._lif(output_layer=True),  # its spikes ARE the logits, once summed over T
         ]
+        # Everything above is IDENTICAL for all three readouts. The stack ends at the
+        # final BatchNorm1d, and only what follows differs -- for count and weighted-count
+        # an output LIF whose spikes are aggregated, for membrane a non-spiking integrator.
+        #
+        # The output neuron is appended to the SAME `net` Sequential rather than wrapped in
+        # a second module, so parameter names stay `net.0…net.N` and checkpoints trained
+        # before the readout option existed still load unchanged. Renaming would have
+        # orphaned fifteen trained models for no benefit.
+        self.readout = cfg.readout
+        if cfg.readout != "membrane":
+            blocks.append(self._lif(output_layer=True))
         self.net = nn.Sequential(*blocks)
+        # Not persistent: the weights are derived from T, so putting them in the state dict
+        # would add a key that older checkpoints lack and break strict loading.
+        self.register_buffer(
+            "_w", torch.tensor(readout_weights(self.timesteps), dtype=torch.float32).view(-1, 1, 1),
+            persistent=False,
+        )
         functional.set_step_mode(self, step_mode="m")
 
     def _lif(self, output_layer: bool = False) -> neuron.LIFNode:
@@ -283,18 +378,57 @@ class SpikingClassifier(nn.Module):
             detach_reset=self.cfg.detach_reset,
         )
 
-    def spike_train(self, x: torch.Tensor) -> torch.Tensor:
-        """Output-layer spikes, shape ``[T, N, n_classes]``, values in {0, 1}."""
+    def _check(self, x: torch.Tensor) -> None:
         if x.dim() != 5:
             raise ValueError(f"expected [T, N, C, H, W], got shape {tuple(x.shape)}")
         if x.shape[0] != self.timesteps:
             raise ValueError(
                 f"model was built for T={self.timesteps} but input has {x.shape[0]} steps"
             )
+
+    def spike_train(self, x: torch.Tensor) -> torch.Tensor:
+        """Output-layer spikes, shape ``[T, N, n_classes]``, values in {0, 1}.
+
+        Only defined for the spiking readouts. The membrane readout has no output spikes
+        by construction, and pretending otherwise would hide the difference the experiment
+        is measuring.
+        """
+        if self.readout == "membrane":
+            raise RuntimeError(
+                "the membrane readout has no output spike train; it integrates the "
+                "pre-threshold potential instead"
+            )
+        self._check(x)
         return self.net(x)
 
+    def membrane_trace(self, x: torch.Tensor) -> torch.Tensor:
+        """Non-spiking LIF potential of the output layer at every step, ``[T, N, C]``.
+
+        Same charge equation as every other neuron in the network, ``v += (z - v) / tau``,
+        with the threshold comparison and the reset removed. Nothing fires, so the
+        potential accumulates freely and the readout is real-valued and unbounded -- which
+        is exactly the property being tested against the count readout's hard cap.
+        """
+        self._check(x)
+        z = self.net(x)
+        v = torch.zeros_like(z[0])
+        out = []
+        for t in range(z.shape[0]):
+            v = v + (z[t] - v) / self.cfg.tau
+            out.append(v)
+        return torch.stack(out, dim=0)
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Per-class spike counts, shape ``[N, n_classes]``.
+        """Per-class class scores, shape ``[N, n_classes]``, aggregated per the readout.
+
+        - ``count``: sum of output spikes over ``T``. Integer-valued in ``[0, T]``.
+        - ``weighted-count``: ``Σ_t w_t s_t`` with weights summing to ``T``. Real-valued,
+          same maximum as count, many more attainable levels.
+        - ``membrane``: final potential of a non-spiking LIF integrator. Real-valued and
+          unbounded.
+
+        The docstring below describes the count readout specifically, which is the study's
+        default and the only one whose output is integral.
 
         Returns a **float** tensor with exactly integral values in ``[0, T]``. Float is
         forced by autograd; the integrality is the property the study depends on and is
@@ -304,12 +438,27 @@ class SpikingClassifier(nn.Module):
         convention: the caller resets, once per batch. :func:`spikecalib.train.predict_counts`
         does it explicitly, and a test demonstrates that omitting it changes the counts.
         """
-        return self.spike_train(x).sum(dim=0)
+        if self.readout == "membrane":
+            return self.membrane_trace(x)[-1]
+        spikes = self.spike_train(x)
+        if self.readout == "weighted-count":
+            return (spikes * self._w.to(spikes.dtype)).sum(dim=0)
+        return spikes.sum(dim=0)
 
     @torch.no_grad()
     def count_spikes(self, x: torch.Tensor) -> torch.Tensor:
-        """Per-class spike counts as a true ``int64`` tensor. Inference only."""
+        """Per-class spike counts as a true ``int64`` tensor. Count readout only."""
+        if self.readout != "count":
+            raise RuntimeError(
+                f"count_spikes is only meaningful for the count readout; this model uses "
+                f"{self.readout!r}, whose output is real-valued"
+            )
         return self.forward(x).round().to(torch.int64)
+
+    @property
+    def ceiling(self) -> Optional[float]:
+        """Largest confidence this readout can express, or ``None`` if unbounded."""
+        return readout_ceiling(self.readout, self.timesteps, self.n_classes)
 
 
 def build_model(spec: DatasetSpec, timesteps: int, cfg: Optional[ModelConfig] = None) -> SpikingClassifier:

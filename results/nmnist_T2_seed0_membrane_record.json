@@ -1,0 +1,99 @@
+{
+  "seed": 0,
+  "eval_seed": 0,
+  "dataset": "nmnist",
+  "timesteps": 2,
+  "split_fingerprint": "e524beccace851af",
+  "epochs_requested": 50,
+  "epochs_run": 11,
+  "best_val_accuracy": 0.9842,
+  "final_val_accuracy": 0.9824,
+  "final_val_tie_rate": 0.0076,
+  "best_epoch": 5,
+  "early_stopped": true,
+  "lr": 0.001,
+  "batch_size": 128,
+  "device": "mps",
+  "n_parameters": 1070868,
+  "seconds": 124.44762802124023,
+  "mps_nondeterministic": true,
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 0.5784476146888733,
+      "val_accuracy": 0.9648,
+      "val_tie_rate": 0.0286
+    },
+    {
+      "epoch": 1,
+      "train_loss": 0.2840186259126663,
+      "val_accuracy": 0.9706,
+      "val_tie_rate": 0.0164
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.18566334672927856,
+      "val_accuracy": 0.9784,
+      "val_tie_rate": 0.015
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.13193421747207643,
+      "val_accuracy": 0.9822,
+      "val_tie_rate": 0.01
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.10153766304254531,
+      "val_accuracy": 0.9778,
+      "val_tie_rate": 0.0098
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.07851768287181854,
+      "val_accuracy": 0.9842,
+      "val_tie_rate": 0.0088
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.060681422576904294,
+      "val_accuracy": 0.9832,
+      "val_tie_rate": 0.0062
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.05230329971849918,
+      "val_accuracy": 0.9836,
+      "val_tie_rate": 0.0076
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.04392588245391846,
+      "val_accuracy": 0.9828,
+      "val_tie_rate": 0.0056
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.03884555835723877,
+      "val_accuracy": 0.982,
+      "val_tie_rate": 0.0098
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.03427714001148939,
+      "val_accuracy": 0.9824,
+      "val_tie_rate": 0.0076
+    }
+  ],
+  "model_config": {
+    "channels": [
+      32,
+      64
+    ],
+    "hidden": 256,
+    "tau": 2.0,
+    "v_threshold": 1.0,
+    "surrogate_alpha": 2.0,
+    "readout": "membrane"
+  }
+}

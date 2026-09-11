@@ -322,6 +322,130 @@ calibrator preference. Whether it does on DVS-Gesture, where the calibration spl
 roughly 330 samples rather than 5,000 and isotonic's per-level estimates are far noisier,
 is untested and is now the more interesting question.
 
+## Pre-registered prediction 2, recorded 2026-09-11
+
+**Written before the readout experiment was run, and before any alternative-readout model
+existed.** Not to be revised afterwards.
+
+### The question
+
+The ceiling `e^T / (e^T + C - 1)` follows from applying a softmax to integer spike counts
+bounded by `T`. But **softmax-over-spike-counts is a choice of readout, not a property of
+spiking networks.** If the cap is an artifact of that choice, the study changes character:
+from "here is a limitation of low-`T` SNNs" to "here is a limitation of one readout, and
+here is the fix". That is the most consequential experiment in the study, so the
+prediction is recorded first.
+
+### Three readouts, identical network
+
+Only the final aggregation differs. Every layer up to and including the last
+`Linear → BatchNorm1d` is the same; changing anything else would confound the comparison.
+
+| Readout | Aggregation | Attainable maximum | Derived ceiling | Granularity |
+|---|---|---|---|---|
+| **count** (current) | sum of output spikes over `T` | `T` | `e^T / (e^T + C - 1)` = **0.4509** at `T=2, C=10` | `T + 1` levels per class |
+| **weighted-count** | `Σ_t w_t s_t`, `w_t = 2(t+1)/(T+1)` | `T` (weights sum to `T`) | **identical**, 0.4509 at `T=2` | up to `2^T` levels per class |
+| **membrane** | final potential of a non-spiking LIF integrator | unbounded | **none**; supremum is 1 | continuous |
+
+`[DERIVED]` The weighted-count weights are chosen so `Σ_t w_t = 2·(1+…+T)/(T+1) = T`,
+giving it the **same cap as count but a far finer attainable set**. That separates two
+confounded properties: is the problem that confidence is *capped*, or that it is *coarse*?
+Count is capped and coarse; weighted-count is capped and fine; membrane is neither.
+
+### The prediction
+
+1. **Membrane readout removes the cap and most of the uncalibrated error.** At `T = 2`,
+   membrane should reach confidences far above 0.4509, and its uncalibrated ECE should be
+   **dramatically lower** than count's 0.5386 at comparable test accuracy. If so, the
+   ceiling is a readout artifact and the study reports a fix, not just a limitation.
+2. **Weighted-count stays near count.** It shares the cap, so if the cap is what matters
+   its uncalibrated ECE at `T = 2` should remain near 0.5, despite being far
+   finer-grained. If instead it lands near membrane, the problem was coarseness rather
+   than the bound.
+3. **Failure mode that would be more interesting.** If membrane shows the *same* severe
+   underconfidence at `T = 2`, the effect is not a readout artifact at all — it is
+   something deeper about directly-trained SNNs at low `T`, and that is a stronger result
+   than the fix.
+
+### Falsification
+
+The prediction is wrong if membrane's uncalibrated ECE at `T = 2` is within a factor of
+two of count's, at comparable accuracy. It is also wrong, in the opposite direction, if
+weighted-count matches membrane rather than count — that would mean granularity, not the
+bound, was doing the work, and the ceiling framing would need rewriting.
+
+### Connection to the literature, stated in advance
+
+The SNN literature reports **over**confidence as the characteristic failure. This study
+measures the **opposite** at low `T`. If membrane readout removes the cap *and* restores
+overconfidence, then both observations are the same phenomenon seen through different
+readouts, and the apparent contradiction dissolves. That connection is to be **tested**,
+not asserted, and it is written here before the data exists so that a positive result
+cannot be constructed after the fact.
+
+### Outcome of prediction 2, recorded 2026-09-11 after the run
+
+The prediction above is left exactly as written. This records what happened.
+`[MEASURED]` `scripts/readout_experiment.py`, seed 0, 2026-09-11, N-MNIST, 15 runs
+(3 readouts x 5 timesteps), identical architecture throughout.
+
+| `T` | readout | test acc | cap | max conf | conf − acc | ECE (ew) | levels |
+|---|---|---|---|---|---|---|---|
+| 2 | count | 0.9852 | 0.4509 | 0.4509 | **−0.5387** | **0.5387** | 10 |
+| 2 | weighted-count | 0.9854 | 0.4509 | 0.4509 | **−0.5381** | **0.5381** | 17 |
+| 2 | membrane | 0.9851 | none | **0.9976** | **−0.0333** | **0.0333** | 9,994 |
+| 4 | count | 0.9886 | 0.8585 | 0.8585 | −0.1461 | 0.1463 | 37 |
+| 4 | weighted-count | 0.9880 | 0.8585 | 0.8585 | −0.1438 | 0.1440 | 164 |
+| 4 | membrane | 0.9873 | none | 1.0000 | −0.0024 | 0.0048 | 10,000 |
+| 10 | count | 0.9899 | 0.9996 | 0.9996 | −0.0007 | 0.0028 | 339 |
+| 10 | weighted-count | 0.9881 | 0.9996 | 0.9996 | +0.0004 | 0.0031 | 3,254 |
+| 10 | membrane | 0.9909 | none | 1.0000 | −0.0017 | 0.0025 | 10,000 |
+
+**Prediction 1 held.** Membrane readout removes the cap — observed maximum confidence
+0.9976 against the count readout's 0.4509 — and cuts uncalibrated ECE at `T = 2` by
+**16.2x**, from 0.5387 to 0.0333, at indistinguishable accuracy (0.9851 against 0.9852).
+The falsification threshold was "within a factor of two"; the result is eight times clear
+of it.
+
+**Prediction 2 held, and it is the sharper of the two.** Weighted-count has the *same cap*
+as count and 1.7x more attainable levels at `T = 2`, and its ECE is 0.5381 against count's
+0.5387 — a difference of 0.0006. At `T = 6` it has 7x more levels and still tracks count.
+**Granularity buys nothing; the bound is doing all the work.** That distinction was the
+reason for constructing the weighted readout, and it is what licenses calling the effect a
+*ceiling* rather than a *quantisation* effect.
+
+**The readouts converge once the ceiling stops binding.** At `T = 10` all three land
+between 0.0025 and 0.0031, because the cap (0.9996) is no longer below the accuracy. The
+effect is present only where the bound binds, which is the strongest available evidence
+that the bound is the mechanism.
+
+**So the ceiling is a property of the readout, not of spiking networks.** The study now
+reports a limitation *and* a fix: at low `T`, use a membrane readout. The cost is that the
+output is no longer an integer spike count, which matters for neuromorphic hardware that
+transmits spikes rather than potentials — that trade is real and is not evaluated here.
+
+### The connection to prior work: tested, and it does not hold
+
+The prediction above said that if membrane removes the cap **and restores overconfidence**,
+then the literature's overconfidence reports and this study's underconfidence measurement
+would be the same phenomenon seen through different readouts, and the contradiction would
+dissolve. That was to be tested rather than asserted.
+
+**It was tested. It does not hold.** `[MEASURED]` membrane readout is *under*confident at
+**0 of 5** timestep settings: −0.0333, −0.0024, −0.0005, −0.0016, −0.0017 at
+`T` = 2, 4, 6, 8, 10. Removing the cap collapses the magnitude of the miscalibration by a
+factor of sixteen but **does not flip its sign**. The single positive value anywhere in the
+experiment is weighted-count at `T = 10`, at +0.0004, which is negligible.
+
+So the disagreement with the literature on the *sign* of SNN miscalibration is **not**
+explained by the readout choice, and the tidy resolution is unavailable. What can be said
+is narrower and still useful: the *magnitude* of the underconfidence this study reports is
+almost entirely a readout artifact, and once the readout is changed the residual
+miscalibration is small in both directions. Why the prior reports find overconfidence where
+this finds near-zero remains unexplained, and the most likely candidates — different
+timestep regimes, converted rather than directly-trained networks, harder tasks where
+accuracy is far from the ceiling — are untested here.
+
 ## Scope
 
 A multi-dataset benchmark. One dataset is an anecdote; the claim is about a mechanism
@@ -350,8 +474,12 @@ dropping the inconvenient dataset, and any dataset that is run is reported.
 The study claims novelty over none of the following. Each is cited, and the difference
 is stated rather than implied.
 
-**All four references in this section are `[UNVERIFIED]`.** They were supplied in the
-project brief and have not been checked against primary documents in this repository.
+**Every reference in this section is `[UNVERIFIED]`.** The original four were supplied in
+the project brief; three more were added on 2026-09-11 against the study's final claims —
+Atarashi et al. on learned probability bounds, Sun & Bohte on anytime inference, and
+"Agreeing to Stop" on latency-adaptive stopping. None has been checked against a primary
+document in this repository. `SOURCES.md` carries what each does, how this study differs,
+and what specifically must be confirmed.
 Authors, titles, venues and years must be confirmed before the paper cites any of them;
 see `SOURCES.md`, "To verify" items 3–6.
 
@@ -377,6 +505,41 @@ outputs to confidences is changed. The two are complementary rather than competi
 producing coverage guarantees for early exit. Conformal methods target set-valued
 coverage; this study targets scalar confidence calibration measured by ECE. Related
 problem, different quantity.
+
+## The sign of the miscalibration: a disagreement with the literature
+
+**The SNN literature reports overconfidence as the characteristic calibration failure.
+This study measures the opposite.**
+
+`[MEASURED]` `scripts/run_sweep.py`, seed 0–2, 2026-09-10: mean confidence minus accuracy
+is **−0.5390 at `T = 2`** and **−0.1437 at `T = 4`** on N-MNIST. That is severe
+*under*confidence, and it is not a training artifact — it is forced by the
+attainable-confidence ceiling, which at `T = 2` with 10 classes is 0.4509 against a test
+accuracy of 0.9850. No reachable output could have been correctly confident.
+
+"Agreeing to Stop" (Simeone group) uses the **same readout** — softmax over spike counts —
+and states that SNNs are poorly calibrated and overconfident. That is a direct disagreement
+on the sign, using the same construction.
+
+**This is reported as a contradiction of the received position, carefully.** The difference
+is most likely **regime**, not error in the prior reports:
+
+- **Timestep count.** The ceiling only binds while accuracy exceeds it. At `T = 8` and
+  `T = 10` this study's own models sit *below* the ceiling and the residual miscalibration
+  is ordinary overconfidence. Work at higher `T`, or on tasks where accuracy is lower,
+  would see overconfidence and would be right to report it.
+- **Readout.** The bound is a property of softmax-over-spike-counts. Work using a membrane
+  potential, a voting layer, or an ANN-to-SNN converted network with real-valued outputs
+  has no such cap. Whether this is the whole explanation is tested directly in the readout
+  experiment.
+- **Training regime.** These are directly trained SNNs; much of the calibration literature
+  concerns converted networks.
+
+Both positions are stated so a reader can judge. What this study can defend is narrow and
+specific: **at low `T`, with a spike-count readout, on a task where accuracy exceeds the
+ceiling, the miscalibration is underconfidence and it is structural.** It does not claim
+that SNNs are underconfident in general, and it does not claim the overconfidence reports
+are wrong.
 
 ## Correctness rules
 

@@ -86,6 +86,52 @@ Skatchkovsky & Simeone on SNN overconfidence; "Knowing When to Stop" on conforma
 prediction for SNN early exit. These appear in `NOTES.md` "Prior work" exactly as
 supplied. None has been checked against a primary source in this repository.
 
+### Added 2026-09-11, against the study's final claims
+
+The claims changed during the work. What is claimed now is the attainable-confidence
+ceiling, the cross-entropy floor it implies, and a **null result** on calibrator choice —
+not the original isotonic hypothesis. These are the references a reviewer of *those*
+claims will raise.
+
+**Atarashi, Oyama, Arai & Kashima (2026). "Probability Bounding: Post-Hoc Calibration via
+Box-Constrained Softmax." arXiv:2506.10572, February 2026.** `[UNVERIFIED]`
+*Status:* taken from the abstract; **not read in full**. Must be read before the preprint
+ships, because it is the closest prior work to the ceiling claim and the distinction below
+depends on details the abstract may not settle.
+*What it does:* post-hoc calibration that **learns** lower and upper bounds on output
+probabilities through a box-constrained softmax.
+*Distinction, which a reviewer who knows this paper will ask for:* their bounds are
+**learned parameters fitted to the outputs of a general ANN** — a modelling choice, tunable,
+and imposed to improve calibration. The ceiling in this study is **structural**: it is not
+fitted, not adjustable, and not a design decision. It follows arithmetically from applying
+a softmax to integer spike counts bounded by `T`, and the trained models saturate it to
+within 4e-13. The two are near-opposites in kind — one is a bound put *onto* a model, the
+other a bound the readout *already has*. Where they may genuinely meet is that a learned
+box constraint could in principle be used to *correct* the structural ceiling, which is a
+direction this study does not pursue.
+
+**Sun & Bohte. "Direct Training Needs Regularisation: Anytime Optimal Inference Spiking
+Neural Network." arXiv:2405.00699.** `[UNVERIFIED]`
+*What it does:* applies a cutoff on the softmax output over event-based datasets, for
+anytime inference in directly-trained SNNs.
+*Distinction:* the setting overlaps closely — directly trained, event data, softmax over
+the output — but the object is a **stopping rule**, not the calibration of the confidence
+itself. This study fixes the network and the timestep count and asks only whether the
+confidence is correctly scaled. The overlap makes this the reference most likely to have
+already observed the ceiling in passing, which is a reason to read it before claiming the
+observation is new.
+
+**"Agreeing to Stop: Reliable Latency-Adaptive Decision Making via Ensembles of Spiking
+Neural Networks" (Simeone group).** `[UNVERIFIED]`
+*What it does:* uses the softmax over spike counts as a confidence signal for
+latency-adaptive stopping, and states that SNNs are poorly calibrated and **overconfident**.
+*Distinction, and a direct disagreement on the sign:* it uses the **same readout this study
+uses** — softmax over spike counts — and reports the opposite direction of miscalibration.
+See "The sign of the miscalibration" in `NOTES.md`. This study measures mean confidence
+minus accuracy of **−0.539 at T = 2**, severe *under*confidence, and attributes it to the
+attainable-confidence ceiling. The disagreement is most likely one of regime rather than of
+fact, and is reported as such rather than as a correction.
+
 ---
 
 ## Derivations
@@ -211,6 +257,16 @@ primary document.
 10. **DVS-Gesture 1,176 / 288 split counts.** Read from SpikingJelly's docstring, not yet
     reproduced by building the dataset in this repository. Verify on first build.
 11. **CIFAR10-DVS 10,000 sample count.** Same: from SpikingJelly's docstring, not built.
-12. **Adam `lr = 1e-3` for this model.** Not a citation issue but an unjustified constant:
+12. **Atarashi et al., arXiv:2506.10572.** Read in full. Confirm the authors, the date,
+    and specifically whether the learned box constraint is ever applied to a readout with a
+    structural bound. The distinction drawn above rests on the abstract alone.
+13. **Sun & Bohte, arXiv:2405.00699.** Read in full. Check whether the attainable-confidence
+    ceiling, or any equivalent bound on softmax-over-spike-counts, is already noted there.
+    If it is, this study's first claim is a re-derivation and must say so.
+14. **"Agreeing to Stop" (Simeone group).** Confirm authors, venue and year. Establish the
+    regime in which overconfidence was measured — timestep count, readout, whether directly
+    trained or converted — because the comparison with this study's underconfidence result
+    is only meaningful once those are known.
+15. **Adam `lr = 1e-3` for this model.** Not a citation issue but an unjustified constant:
     no tuning has been done, and no evidence exists that it is appropriate for a
     surrogate-gradient SNN at low `T`.

@@ -33,6 +33,13 @@
       </span>
       <input type="range" id="c-slider" min="2" max="100" step="1" value="10">
     </label>
+    <label class="field" for="a-slider">
+      <span class="field-top">
+        <span class="field-label">Target accuracy</span>
+        <span class="field-value">a = <span id="a-value">0.95</span></span>
+      </span>
+      <input type="range" id="a-slider" min="0.50" max="0.999" step="0.001" value="0.95">
+    </label>
     <div class="preset-row">
       <button type="button" class="chip" data-preset="2,10" aria-pressed="true">N-MNIST, 10 classes</button>
       <button type="button" class="chip" data-preset="2,11" aria-pressed="false">DVS-Gesture, 11 classes</button>
@@ -120,6 +127,12 @@
         <span class="readout-value" id="out-floor">0.7966</span></div>
       <div class="readout-row"><span class="readout-label">Binds above accuracy</span>
         <span class="readout-value" id="out-bind">45.1%</span></div>
+      <div class="readout-row"><span class="readout-label">Minimum T for target accuracy</span>
+        <span class="readout-value" id="out-tmin">6</span></div>
+    </div>
+    <div class="verdict" id="design-rule">
+      <span class="lamp" aria-hidden="true"></span>
+      <p><span class="tag">design rule</span><span id="design-text"></span></p>
     </div>
     <p class="hint">ceiling = e<sup>T</sup> / (e<sup>T</sup> + C − 1), the softmax of the
       extreme count vector [T, 0, …, 0]. The floor is −ln(ceiling): cross-entropy cannot go
@@ -245,6 +258,91 @@
       manipulation the mechanism named. The advantage was flat and near zero across all of it.
     </p>
 
+    <h3>The ceiling is a property of the readout, not of spiking networks</h3>
+    <p>
+      Softmax-over-spike-counts is a <em>choice</em>. The same architecture was trained with
+      three different final aggregations — only the aggregation differs, every layer up to
+      the last BatchNorm is identical — to find out whether the cap is intrinsic or an
+      artifact of that choice.
+    </p>
+    <div class="scroll" style="margin:12px 0">
+      <table>
+        <thead><tr><th style="cursor:default">T</th><th style="cursor:default">readout</th>
+          <th style="cursor:default">test acc</th><th style="cursor:default">cap</th>
+          <th style="cursor:default">max conf</th><th style="cursor:default">conf − acc</th>
+          <th style="cursor:default">ECE</th><th style="cursor:default">levels</th></tr></thead>
+        <tbody>
+          <tr><td class="k">2</td><td class="k">count</td><td>0.9852</td><td>0.4509</td><td>0.4509</td><td>−0.5387</td><td>0.5387</td><td>10</td></tr>
+          <tr><td class="k">2</td><td class="k">weighted-count</td><td>0.9854</td><td>0.4509</td><td>0.4509</td><td>−0.5381</td><td>0.5381</td><td>17</td></tr>
+          <tr><td class="k">2</td><td class="k">membrane</td><td>0.9851</td><td>none</td><td>0.9976</td><td>−0.0333</td><td>0.0333</td><td>9,994</td></tr>
+          <tr><td class="k">10</td><td class="k">count</td><td>0.9899</td><td>0.9996</td><td>0.9996</td><td>−0.0007</td><td>0.0028</td><td>339</td></tr>
+          <tr><td class="k">10</td><td class="k">membrane</td><td>0.9909</td><td>none</td><td>1.0000</td><td>−0.0017</td><td>0.0025</td><td>10,000</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      A membrane readout — the final potential of a non-spiking integrator — removes the cap
+      and cuts uncalibrated ECE at T = 2 by <strong>16.2&times;</strong>, from 0.5387 to
+      0.0333, at indistinguishable accuracy. The weighted-count readout is the control that
+      makes this interpretable: it shares the cap exactly but has 1.7&times; more attainable
+      levels, and its ECE is 0.5381 against count's 0.5387. <strong>Granularity buys
+      nothing; the bound does all the work.</strong> By T = 10, where the cap no longer sits
+      below the accuracy, all three readouts converge to 0.0025–0.0031.
+    </p>
+    <p style="color:var(--ink-3)">
+      The cost is that the output is no longer an integer spike count, which matters for
+      neuromorphic hardware that transmits spikes rather than potentials. That trade-off is
+      real and is not evaluated here.
+    </p>
+
+    <h3>Selective prediction: the readout limits what can be deployed</h3>
+    <p>
+      Risk-coverage asks what fraction of samples can be acted on at a given error rate.
+      Samples sharing a confidence cannot be ordered against each other, so coverage steps
+      only at boundaries between distinct levels. At T = 2 that gives <strong>10 achievable
+      operating points across 10,000 test samples</strong>, and <strong>no operating point
+      at any coverage reaches 99.9% accuracy</strong>. At T = 4 the same target is met at
+      93.4% coverage. A practitioner at T = 2 cannot choose an arbitrary operating point.
+    </p>
+    <p style="color:var(--ink-3)">
+      Calibration cannot change this for top-label calibrators, which are monotone in
+      confidence and so cannot reorder samples. One-vs-rest isotonic is the exception: it
+      recalibrates every class probability and renormalises, so it is not a function of the
+      top-label confidence, and it reorders — Kendall τ 0.28 against the raw ranking at
+      T = 2, with AURC five times worse (0.0117 against 0.0023). It should not be used when
+      the downstream task is selective prediction.
+    </p>
+
+    <h3>The sign of the miscalibration disagrees with the literature</h3>
+    <p>
+      The SNN literature reports <strong>over</strong>confidence as the characteristic
+      calibration failure, and "Agreeing to Stop" says so using the <em>same readout this
+      study uses</em>. This study measures the opposite: mean confidence minus accuracy is
+      <strong>−0.5390 at T = 2</strong> and −0.1437 at T = 4. That is severe
+      <strong>under</strong>confidence, and it is structural — the ceiling at T = 2 is
+      0.4509 against a test accuracy of 0.9850, so no reachable output could have been
+      correctly confident.
+    </p>
+    <p style="color:var(--ink-3)">
+      This is reported as a contradiction of the received position, carefully. The
+      difference is most likely regime rather than error in the prior reports. The ceiling
+      binds only while accuracy exceeds it — at T = 8 and T = 10 this study's own models sit
+      below it and show ordinary overconfidence. Work at higher T, on harder tasks, with a
+      membrane or voting readout, or on converted rather than directly-trained networks
+      would see overconfidence and be right to report it. What this study defends is narrow:
+      at low T, with a spike-count readout, on a task where accuracy exceeds the ceiling,
+      the miscalibration is underconfidence and it is forced.
+    </p>
+    <p>
+      One tidy resolution was available and was <strong>tested and rejected</strong>. If
+      removing the cap restored overconfidence, both observations would be the same
+      phenomenon seen through different readouts. It does not: the membrane readout is
+      underconfident at <strong>0 of 5</strong> timestep settings (−0.0333, −0.0024,
+      −0.0005, −0.0016, −0.0017). Removing the cap collapses the magnitude sixteenfold but
+      does not flip the sign. The disagreement with the literature is therefore not
+      explained by the readout, and remains open.
+    </p>
+
     <h3>A note on energy</h3>
     <p>
       The case for spiking networks is energy, so the sweep records a SynOps proxy. The
@@ -262,9 +360,43 @@
   <section class="panel c5">
     <h3>Related work</h3>
     <p class="chart-note" style="margin-top:0">This study claims novelty over none of the
-      following. <span class="unver">All four references are unverified.</span></p>
+      following. <span class="unver">All seven references are unverified.</span></p>
     <div class="prose">
 <div class="cite">
+      <h4>Probability Bounding: Post-Hoc Calibration via Box-Constrained Softmax</h4>
+      <p class="venue">Atarashi, Oyama, Arai &amp; Kashima, arXiv:2506.10572, 2026 &nbsp;<span class="unver">unverified — abstract only</span></p>
+      <p>Post-hoc calibration that <em>learns</em> lower and upper bounds on output
+        probabilities through a box-constrained softmax.</p>
+      <p class="diff"><b>This study differs</b> in what the bound is. Theirs is a learned,
+        tunable parameter fitted to a general ANN's outputs and imposed to improve
+        calibration. The ceiling here is structural: not fitted, not adjustable, and
+        saturated to within 4e-13 by every trained model. One is a bound put onto a model;
+        the other is a bound the readout already has.</p>
+    </div>
+
+    <div class="cite">
+      <h4>Direct Training Needs Regularisation: Anytime Optimal Inference SNN</h4>
+      <p class="venue">Sun &amp; Bohte, arXiv:2405.00699 &nbsp;<span class="unver">unverified</span></p>
+      <p>Applies a cutoff on the softmax output over event-based datasets, for anytime
+        inference in directly-trained SNNs.</p>
+      <p class="diff"><b>This study differs</b> in object: theirs is a stopping rule, this
+        fixes the network and the timestep count and asks only whether the confidence is
+        correctly scaled. The settings overlap closely enough that this is the reference
+        most likely to have already noted the ceiling in passing.</p>
+    </div>
+
+    <div class="cite">
+      <h4>Agreeing to Stop: Latency-Adaptive Decisions via Ensembles of SNNs</h4>
+      <p class="venue">Simeone group &nbsp;<span class="unver">unverified</span></p>
+      <p>Uses softmax over spike counts as a confidence signal for latency-adaptive
+        stopping, and states that SNNs are poorly calibrated and <strong>overconfident</strong>.</p>
+      <p class="diff"><b>This study disagrees on the sign</b>, using the same readout. Mean
+        confidence minus accuracy here is −0.539 at T = 2: severe underconfidence, forced by
+        the ceiling. The difference is most likely regime — low T, accuracy above the
+        ceiling — rather than the prior reports being wrong.</p>
+    </div>
+
+    <div class="cite">
       <h4>Dynamic Confidence</h4>
       <p class="venue">Li, Jones &amp; Furber, ICCV 2023</p>
       <p>

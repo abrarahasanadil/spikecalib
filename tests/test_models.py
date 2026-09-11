@@ -268,3 +268,81 @@ def test_synops_addition_merges_per_layer_entries():
     total = a + b
     assert total.per_layer["net.0"].mac == pytest.approx(6.0)
     assert total.per_layer["net.0"].calls == 2
+
+
+# ---------------------------------------------------------------------------------------
+# The bound, inverted into a design rule
+# ---------------------------------------------------------------------------------------
+
+
+def test_min_timesteps_inverts_the_ceiling_exactly():
+    """T_min is the exact crossing point, verified against the forward function."""
+    from spikecalib.models import min_timesteps, readout_ceiling
+
+    for C in (2, 10, 11, 100, 1000):
+        for a in (0.5, 0.8, 0.9, 0.95, 0.99, 0.999):
+            t = min_timesteps(C, a)
+            # at T_min the ceiling equals the target, to floating-point precision
+            assert readout_ceiling("count", t, C) == pytest.approx(a, abs=1e-12)
+            # a hair below and the ceiling is short of the target; a hair above and it clears
+            assert readout_ceiling("count", t - 1e-6, C) < a
+            assert readout_ceiling("count", t + 1e-6, C) > a
+
+
+def test_min_timesteps_matches_a_brute_force_search():
+    from spikecalib.models import min_timesteps, readout_ceiling
+
+    for C in (10, 100):
+        for a in (0.8, 0.95, 0.99):
+            t = min_timesteps(C, a)
+            grid = np.linspace(max(t - 2, 0.01), t + 2, 20001)
+            first = grid[[readout_ceiling("count", g, C) >= a for g in grid]][0]
+            assert first == pytest.approx(t, abs=2e-4)
+
+
+def test_min_timesteps_grows_with_both_classes_and_target():
+    from spikecalib.models import min_timesteps
+
+    assert min_timesteps(100, 0.9) > min_timesteps(10, 0.9)
+    assert min_timesteps(10, 0.99) > min_timesteps(10, 0.9)
+
+
+def test_min_timesteps_can_be_negative_when_the_target_is_easy():
+    """Two classes at 60% needs less than one timestep; the rule should say so."""
+    from spikecalib.models import min_timesteps
+
+    assert min_timesteps(2, 0.6) < 1.0
+
+
+def test_min_timesteps_rejects_unreachable_targets():
+    from spikecalib.models import min_timesteps
+
+    for bad in (0.0, 1.0, 1.5, -0.2):
+        with pytest.raises(ValueError, match="strictly in"):
+            min_timesteps(10, bad)
+    with pytest.raises(ValueError, match="at least 2"):
+        min_timesteps(1, 0.9)
+
+
+def test_readout_ceiling_is_none_only_for_membrane():
+    from spikecalib.models import READOUTS, readout_ceiling
+
+    assert readout_ceiling("membrane", 2, 10) is None
+    for r in READOUTS:
+        if r != "membrane":
+            assert readout_ceiling(r, 2, 10) == pytest.approx(0.45085306, abs=1e-7)
+
+
+def test_weighted_count_shares_the_cap_but_not_the_granularity():
+    """The design point of the weighted readout: same bound, finer attainable set."""
+    from spikecalib.models import readout_ceiling, readout_weights
+
+    for T in (2, 4, 6, 8, 10):
+        w = readout_weights(T)
+        assert sum(w) == pytest.approx(float(T), abs=1e-9), "weights must sum to T"
+        assert readout_ceiling("weighted-count", T, 10) == readout_ceiling("count", T, 10)
+        # count reaches T + 1 distinct per-class values; weighted reaches more
+        sums = {0.0}
+        for wt in w:
+            sums |= {x + wt for x in sums}
+        assert len(sums) > T + 1

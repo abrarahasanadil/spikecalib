@@ -39,7 +39,14 @@ def main() -> int:
     print(f"  {len(rows):,} sweep rows, {len(stats)} timestep settings")
 
     for fn in ALL_FIGURES:
-        paths = fn(rows, stats, args.out)
+        if fn.__name__ == "figure_risk_coverage":
+            cache = os.path.join(REPO_ROOT, "results", "selective_cache.npz")
+            if not os.path.exists(cache):
+                print(f"  {fn.__name__:<26} -> skipped (run scripts/extend_sweep_selective.py)")
+                continue
+            paths = fn(rows, stats, args.out, cache_path=cache)
+        else:
+            paths = fn(rows, stats, args.out)
         names = ", ".join(os.path.basename(p) for p in paths)
         print(f"  {fn.__name__:<26} -> {names}")
     print(f"\n  wrote {len(ALL_FIGURES) * 2} files to {os.path.relpath(args.out, REPO_ROOT)}")

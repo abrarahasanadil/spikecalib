@@ -45,6 +45,7 @@ __all__ = [
     "figure_paired_difference",
     "figure_capacity",
     "figure_energy",
+    "figure_risk_coverage",
     "ALL_FIGURES",
 ]
 
@@ -333,6 +334,64 @@ def figure_energy(rows, stats, out_dir):
     return save(fig, out_dir, "fig6-energy")
 
 
+def figure_risk_coverage(rows, stats, out_dir, cache_path=None):
+    """Risk against coverage for all five T, with the quantisation left visible as steps.
+
+    Drawn as a step function on purpose. A spike-count readout has few distinct confidence
+    values, samples sharing one cannot be ordered against each other, and so coverage can
+    only change at a boundary between levels. Joining the points with a smooth line would
+    draw operating points that do not exist.
+
+    Two panels because one cannot do the job: at 98.5% accuracy the risk is essentially
+    zero below 90% coverage, so a single full-range panel compresses every interesting
+    difference into the last tenth of the axis. The right panel is that tenth.
+    """
+    plt = _style()
+    cache = np.load(cache_path)
+
+    from .selective import risk_coverage
+
+    Ts = sorted({int(k.split("|")[0]) for k in cache.files})
+    shades = [PALETTE["blue"], PALETTE["orange"], PALETTE["aqua"], PALETTE["violet"], "#8a8f94"]
+    series = []
+    for colour, T in zip(shades, Ts):
+        key = f"{T}|0|uncalibrated"
+        if key + "|conf" not in cache:
+            continue
+        series.append((T, colour, risk_coverage(cache[key + "|conf"], cache[key + "|correct"])))
+
+    fig, axes = plt.subplots(1, 2, figsize=(10.0, 4.2))
+    fig.subplots_adjust(wspace=0.26)
+    for ax, (lo, hi), title in zip(
+        axes, [(0.0, 1.02), (0.90, 1.005)],
+        ["full range", "the last tenth, where the differences live"],
+    ):
+        # Drawn high-T first so the sparse low-T markers land on top and stay visible.
+        for T, colour, rc in reversed(series):
+            m = rc.coverage >= lo - 1e-9
+            ax.step(rc.coverage[m], rc.risk[m], where="post", color=colour, lw=1.8,
+                    label=f"T = {T}  ({rc.n_levels} points)" if ax is axes[0] else None)
+            ax.plot(rc.coverage[m], rc.risk[m], "o", color=colour,
+                    ms=6 if T == 2 else 3.2, mec=SURFACE, mew=1.1,
+                    zorder=5 if T == 2 else 3)
+        ax.set_xlim(lo, hi)
+        ax.set_xlabel("coverage — fraction of samples acted on")
+        ax.set_title(title, fontsize=10, color=INK_SOFT, pad=8)
+    axes[0].set_ylabel("risk — error rate on the selected samples")
+    axes[0].legend(loc="upper left", fontsize=8.5)
+
+    # Name the finding rather than leaving the reader to count markers.
+    t2 = next((rc for T, _c, rc in series if T == 2), None)
+    if t2 is not None:
+        axes[1].annotate(
+            f"T = 2 offers {t2.n_levels} operating points\nacross {t2.n_samples:,} samples",
+            xy=(0.915, axes[1].get_ylim()[1] * 0.82), fontsize=8.5, color=PALETTE["blue"])
+
+    fig.suptitle("Coverage is not continuous: every marker is an achievable operating point",
+                 fontsize=10.5, color=INK, y=1.02)
+    return save(fig, out_dir, "fig7-risk-coverage")
+
+
 ALL_FIGURES = (
     figure_ceiling,
     figure_loss_floor,
@@ -340,4 +399,5 @@ ALL_FIGURES = (
     figure_paired_difference,
     figure_capacity,
     figure_energy,
+    figure_risk_coverage,
 )

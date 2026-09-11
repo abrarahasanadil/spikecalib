@@ -114,12 +114,21 @@
 
   var ceilingOf = function (T, C) { return Math.exp(T) / (Math.exp(T) + C - 1); };
 
+  /* The bound, inverted. ceiling(T,C) >= a  <=>  T >= ln((C-1)a/(1-a)).
+     Descriptive becomes prescriptive: given a class count and a target accuracy, the
+     smallest T at which calibrated confidence is even reachable. */
+  var minTimesteps = function (C, a) { return Math.log((C - 1) * a / (1 - a)); };
+
   var hero = {
     T: 2, C: 10,
     tEl: document.getElementById("t-slider"),
     cEl: document.getElementById("c-slider"),
     tOut: document.getElementById("t-value"),
     cOut: document.getElementById("c-value"),
+    aEl: document.getElementById("a-slider"),
+    aOut: document.getElementById("a-value"),
+    tminOut: document.getElementById("out-tmin"),
+    designText: document.getElementById("design-text"),
     ceilOut: document.getElementById("out-ceiling"),
     floorOut: document.getElementById("out-floor"),
     bindOut: document.getElementById("out-bind"),
@@ -201,6 +210,21 @@
     hero.floorOut.textContent = (-Math.log(ceil)).toFixed(4);
     hero.bindOut.textContent = (ceil * 100).toFixed(1) + "%";
 
+    var a = +hero.aEl.value;
+    hero.aOut.textContent = a.toFixed(3);
+    fillTrack(hero.aEl);
+    var tmin = minTimesteps(hero.C, a);
+    var tminCeil = Math.max(1, Math.ceil(tmin));
+    hero.tminOut.textContent = tmin <= 0 ? "< 1" : String(tminCeil);
+    hero.designText.textContent =
+      "To reach " + (a * 100).toFixed(1) + "% accuracy with " + hero.C +
+      " classes and still be able to express it, a spike-count readout needs T \u2265 " +
+      tminCeil + " (exactly " + tmin.toFixed(3) + "). " +
+      (hero.T >= tmin
+        ? "The current T = " + hero.T + " is sufficient."
+        : "The current T = " + hero.T + " is not: its ceiling is " +
+          (ceilingOf(hero.T, hero.C) * 100).toFixed(1) + "%.");
+
     hero.verdict.textContent =
       "At T = " + hero.T + " with " + hero.C + " classes, a model above " +
       (ceil * 100).toFixed(1) + "% accuracy cannot be correctly confident: no reachable " +
@@ -209,7 +233,7 @@
     drawCeiling();
   }
 
-  [hero.tEl, hero.cEl].forEach(function (input) {
+  [hero.tEl, hero.cEl, hero.aEl].forEach(function (input) {
     input.addEventListener("input", updateHero);
   });
   Array.prototype.forEach.call(document.querySelectorAll("[data-preset]"), function (btn) {

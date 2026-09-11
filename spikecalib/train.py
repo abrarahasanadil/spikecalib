@@ -43,6 +43,7 @@ __all__ = [
     "set_seed",
     "train",
     "predict_counts",
+    "predict_outputs",
     "to_time_first",
     "resolve_device",
 ]
@@ -293,6 +294,54 @@ def train(
         seconds=time.time() - started,
         mps_nondeterministic=(device.type == "mps"),
         history=history,
+    )
+
+
+@torch.no_grad()
+def predict_outputs(
+    model: SpikingClassifier,
+    loader: Iterable,
+    device: Optional[torch.device] = None,
+    *,
+    count_synops: bool = True,
+) -> tuple[np.ndarray, np.ndarray, SynOps]:
+    """Raw readout scores for a split, as float64, plus the SynOps from those passes.
+
+    The general form of :func:`predict_counts`. Only the count readout produces integers;
+    weighted-count and membrane are real-valued, and rounding them would destroy exactly
+    the property the readout experiment is measuring.
+
+    Neuron state is reset before every batch, for the reason given in
+    :func:`predict_counts`.
+    """
+    device = device or resolve_device()
+    model = model.to(device)
+    model.eval()
+
+    counter = SynOpsCounter(model) if count_synops else None
+    if counter is not None:
+        counter.attach()
+
+    scores: list[np.ndarray] = []
+    labels_out: list[np.ndarray] = []
+    try:
+        for frames, labels in loader:
+            functional.reset_net(model)
+            x = to_time_first(frames.float()).to(device)
+            # Move to CPU before widening: MPS has no float64, so casting on device
+            # raises rather than silently degrading.
+            scores.append(model(x).cpu().numpy().astype(np.float64))
+            labels_out.append(np.asarray(labels).astype(np.int64))
+            if counter is not None:
+                counter.add_samples(int(np.asarray(labels).size))
+    finally:
+        if counter is not None:
+            counter.detach()
+
+    return (
+        np.concatenate(scores, axis=0),
+        np.concatenate(labels_out, axis=0),
+        counter.totals if counter is not None else SynOps(),
     )
 
 
