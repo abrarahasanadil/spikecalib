@@ -944,6 +944,80 @@ two-block architecture fit unchanged so the `C = 101` comparison differs from th
 one in the class count and the data alone. Pooling cannot affect the ceiling, which contains
 neither resolution nor anything downstream of it.
 
+## Pre-registered prediction 4, recorded 2026-09-11
+
+Written before any competitor count was measured. The target is the one quantity the C
+axis left unexplained: at `C = 101, T = 6` the theoretical ceiling is 0.8014, accuracy is
+0.6427 so the ceiling is **slack**, and yet `conf − acc` is **−0.1534**.
+
+### The conditional ceiling
+
+The theoretical ceiling is the softmax of the extreme count vector `[T, 0, ..., 0]`, which
+assumes **every one of the `C − 1` competitors is silent for all `T` steps**. That is a
+worst case for the denominator and it is what makes the bound loose: with 100 competitors,
+assuming all of them silent is a strong assumption.
+
+Conditioning on what the competitors actually do gives, for one sample whose non-winning
+classes hold counts `c_j`:
+
+    ceiling_cond = e^T / (e^T + Σ_{j ≠ winner} e^{c_j})
+
+which is the largest confidence that sample could have expressed **if its winner had fired
+at every step**, holding its competitors where they actually were. Setting every `c_j = 0`
+recovers `e^T/(e^T + C − 1)` exactly, so the theoretical ceiling is the special case, not a
+different quantity. In the grouped form the task states it, with `k` competitors at count
+`c` and the rest at zero, it is `e^T / (e^T + k·e^c + (C − 1 − k))`.
+
+### Why this is a live hypothesis and not a guess
+
+`[DERIVED]` The denominator's sensitivity to competitor activity scales with `C − 1`, so the
+same per-competitor activity costs eleven times more confidence at `C = 101` than at
+`C = 10`. Evaluated a priori, before measuring anything:
+
+| mean competitor count | ceiling at `C = 101`, `T = 6` | ceiling at `C = 10`, `T = 6` |
+|---|---|---|
+| 0 (the theoretical assumption) | 0.8014 | 0.9782 |
+| 0.5 | 0.7099 | 0.9645 |
+| 1.0 | 0.5974 | 0.9428 |
+| 2.0 | 0.3532 | 0.8585 |
+
+So a mean competitor count around 1 would push the `C = 101` ceiling **below** the measured
+accuracy of 0.6427 and account for the entire residual, while the same activity at `C = 10`
+would move the ceiling by only 0.035.
+
+### The prediction
+
+1. **The conditional ceiling accounts for most of the `C = 101, T = 6` residual** — more
+   than half of the 0.1534 gap between accuracy and mean confidence.
+2. **The conditional and theoretical ceilings nearly coincide at `C = 10`** — within 0.05 of
+   each other at `T = 6` — which is why the simple bound sufficed there and does not here.
+3. The gap between them at `C = 101, T = 6` will exceed 0.15.
+
+### Falsification
+
+Define the share of the residual that attainability forces as
+`min(1, max(0, accuracy − ceiling_cond) / (accuracy − mean_conf))`.
+
+- **Wrong if that share is below 0.5** at `C = 101, T = 6`, which means a mean conditional
+  ceiling above **0.5660**. In that case the residual is not an attainability effect and is
+  genuine miscalibration — the more interesting negative result, because it would leave the
+  study's largest unexplained quantity still unexplained and rule out the tidiest
+  explanation for it.
+- **Also wrong, in the opposite direction, if the conditional ceiling at `C = 10, T = 6`
+  sits more than 0.05 below the theoretical one.** That would mean the simple bound was
+  always the wrong object and the `C = 10` results were reported against a bound that
+  happened to be loose there too, rather than one that was nearly tight.
+
+### What it would not establish
+
+Even if the prediction holds entirely, the conditional ceiling is **not** a bound the study
+can claim in the way the theoretical one is. The theoretical ceiling is a property of the
+readout, fixed by `T` and `C` before any model exists. The conditional ceiling is measured
+*from the model's own outputs*, so "the model is as confident as it could be given how it
+distributed its spikes" is close to circular: a model that spread its spikes differently
+would face a different bound. It explains the residual as an attainability effect rather
+than a calibration failure; it does not predict the residual from first principles.
+
 ## Why the count readout exists
 
 The readout experiment shows the cap is avoidable, which makes it easy to read this study
