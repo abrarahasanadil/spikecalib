@@ -2,10 +2,20 @@
 """Dataset acquisition for SpikeCalib.
 
 Dataset-agnostic from the start: a registry holds the per-dataset configuration, and the
-acquisition path is selected from it. N-MNIST is implemented; DVS-Gesture and
-CIFAR10-DVS are registered with their metadata but raise NotImplementedError on
-acquisition, so the interface exists without untested download code sitting in the
-repository pretending to work.
+acquisition path is selected from it. N-MNIST and N-Caltech101 are implemented;
+DVS-Gesture and CIFAR10-DVS are registered with their metadata but raise
+NotImplementedError on acquisition, so the interface exists without untested download code
+sitting in the repository pretending to work.
+
+Two acquisition shapes exist because two dataset shapes do. N-MNIST ships an official
+train/test split, so SpikingJelly builds two objects and each cache is verified against its
+own count. N-Caltech101 does not: it is one flat folder of 8,709 samples, SpikingJelly's
+class takes no ``train`` argument, and the study defines its own split (see NOTES.md). Its
+acquisition also skips SpikingJelly's ``download/`` gate deliberately -- that gate demands
+four files including two readmes the loader never opens, and only one of the four is
+published at a stable direct URL. The archive is verified against SpikingJelly's own MD5
+and handed to SpikingJelly's own ``create_events_np_files``, so nothing about the
+conversion is reimplemented here.
 
 Model sizing is configuration, never hardcoded (see NOTES.md): spatial size and class
 count differ across the three datasets, and this registry is where those numbers live.
@@ -447,6 +457,111 @@ def ensure_cache_or_clear(path: str, expected: Optional[int], label: str) -> boo
     return False
 
 
+def acquire_flat(spec: DatasetSpec, root: str, timesteps: int, keep_archive: bool) -> dict:
+    """Acquire a dataset that ships no train/test split, as one flat cache.
+
+    The archive is verified against the MD5 SpikingJelly publishes for it, read at runtime
+    rather than hardcoded, so if upstream revises the hash this follows. The conversion
+    from raw binary to ``events_np`` is SpikingJelly's own static method; only the fetching
+    and the cache verification live here.
+    """
+    sj_class = spec.load_class()
+    download_root = os.path.join(root, "download")
+    extract_root = os.path.join(root, "extract")
+    events_root = os.path.join(root, "events_np")
+    frames_root = os.path.join(root, spec.frames_dir(timesteps))
+    build_log = os.path.join(root, "build.log")
+
+    section("Cache state")
+    events_ok = ensure_cache_or_clear(events_root, spec.n_samples, "events_np")
+    frames_ok = ensure_cache_or_clear(frames_root, spec.n_samples, spec.frames_dir(timesteps))
+
+    if not events_ok:
+        section("Archive")
+        os.makedirs(download_root, exist_ok=True)
+        archive = os.path.join(download_root, spec.mirror.archive_name)
+        want_md5 = next(
+            (m for n, _u, m in sj_class.resource_url_md5() if n == spec.mirror.archive_name),
+            None,
+        )
+        if want_md5 is None:
+            raise RuntimeError(
+                f"{spec.mirror.archive_name} is not in {spec.class_name}.resource_url_md5(); "
+                f"the mirror's archive name no longer matches what SpikingJelly expects."
+            )
+        if os.path.exists(archive) and md5_of(archive) == want_md5:
+            print(f"  {spec.mirror.archive_name}: present and MD5-verified; reusing")
+        else:
+            if os.path.exists(archive):
+                print(f"  {spec.mirror.archive_name}: MD5 mismatch; refetching")
+                os.remove(archive)
+            print(f"  SpikingJelly downloadable(): {sj_class.downloadable()}")
+            print(f"  fetching from the mirror: {spec.mirror.description}")
+            print(f"    {spec.mirror.url}")
+            download_to(spec.mirror.url, archive, spec.mirror.approx_bytes)
+            got = md5_of(archive)
+            if got != want_md5:
+                raise RuntimeError(
+                    f"{spec.mirror.archive_name} MD5 {got} does not match SpikingJelly's "
+                    f"{want_md5}. The mirror is not serving the archive upstream expects."
+                )
+            print("  MD5 matches SpikingJelly's published hash for this archive")
+
+        section("Extraction")
+        top = os.path.join(extract_root, "Caltech101")
+        if os.path.isdir(top):
+            print(f"  {os.path.relpath(top, root)}/ already present; reusing")
+        else:
+            os.makedirs(extract_root, exist_ok=True)
+            started = time.time()
+            with zipfile.ZipFile(archive) as z:
+                z.extractall(extract_root)
+            print(f"  extracted in {time.time() - started:,.0f}s")
+        prune_macos_metadata(root)
+
+        section("Conversion to events_np")
+        print("  using SpikingJelly's own create_events_np_files; this takes a few minutes")
+        os.makedirs(events_root, exist_ok=True)
+        started = time.time()
+        with open(build_log, "a") as log:
+            with contextlib.redirect_stdout(log), macos_metadata_free_listdir():
+                sj_class.create_events_np_files(extract_root, events_root)
+        print(f"  converted in {time.time() - started:,.0f}s")
+
+    section(f"Building the frame cache (T={timesteps})")
+    print(f"  SpikingJelly's per-file chatter goes to {os.path.relpath(build_log, REPO_ROOT)}")
+    prune_macos_metadata(root)
+    started = time.time()
+    with open(build_log, "a") as log:
+        log.write(f"\n===== build {time.strftime('%Y-%m-%d %H:%M:%S')} T={timesteps} =====\n")
+        with contextlib.redirect_stdout(log), macos_metadata_free_listdir():
+            ds = sj_class(root=root, data_type="frame", frames_number=timesteps,
+                          split_by="number")
+    print(f"  built in {time.time() - started:,.1f}s")
+    removed = prune_macos_metadata(root)
+    if removed:
+        print(f"  pruned {removed} macOS metadata entries recreated during the build")
+
+    section("Post-construction assertions")
+    got = len(ds)
+    if got != spec.n_samples:
+        raise SystemExit(
+            f"  FAIL: {spec.display_name} built {got:,} samples, expected "
+            f"{spec.n_samples:,}. A truncated cache produces plausible calibration numbers "
+            f"on the wrong data, so this is fatal rather than a warning."
+        )
+    print(f"  sample count: {got:,} as expected")
+    n_classes = len(set(ds.targets))
+    if n_classes != spec.n_classes:
+        raise SystemExit(
+            f"  FAIL: found {n_classes} classes, registry says {spec.n_classes}. A stray "
+            f"metadata directory read as a class would shift every label."
+        )
+    print(f"  class count : {n_classes} as expected")
+    return {"download": download_root, "extract": extract_root,
+            "events_np": events_root, "frames": frames_root}
+
+
 def acquire_nmnist(spec: DatasetSpec, root: str, timesteps: int, keep_archive: bool) -> dict:
     sj_class = spec.load_class()
 
@@ -654,7 +769,8 @@ def main() -> int:
     print(f"  data root : {root}")
     print(f"  free disk : {human(free_bytes(root))}")
 
-    paths = acquire_nmnist(spec, root, args.timesteps, args.keep_archive)
+    acquire = acquire_flat if spec.defines_own_test_split else acquire_nmnist
+    paths = acquire(spec, root, args.timesteps, args.keep_archive)
     report_disk(root, paths, spec, args.timesteps)
 
     section("Result")

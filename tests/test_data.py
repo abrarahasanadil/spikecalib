@@ -18,6 +18,8 @@ import numpy as np
 import pytest
 
 from spikecalib.data import (
+    make_train_test_split,
+    make_dataset_splits,
     CARVED_SPLITS,
     InsufficientSamplesError,
     SplitOverlapError,
@@ -373,3 +375,155 @@ def test_nmnist_registry_split_sizes_are_the_documented_ones():
     spec = DATASETS["nmnist"]
     assert (spec.n_val_per_class, spec.n_cal_per_class) == (500, 500)
     assert spec.n_val == 5_000 and spec.n_cal == 5_000
+
+
+# ---------------------------------------------------------------------------------------
+# Datasets that must define their own train/test split
+# ---------------------------------------------------------------------------------------
+
+
+def caltech_like_labels():
+    """Class sizes with Caltech101's shape: a few huge classes, a long tail of tiny ones.
+
+    The real distribution runs from about 31 samples to about 800. What matters for the
+    split code is that both extremes are present, because a scheme tuned for the mean
+    breaks at one end or the other.
+    """
+    sizes = [800, 467, 435] + [90] * 40 + [50] * 40 + [31] * 18
+    labels = np.concatenate([np.full(n, c) for c, n in enumerate(sizes)])
+    return labels, sizes
+
+
+def caltech_like_spec(**overrides):
+    base = dict(
+        key="fake101", display_name="Fake-101", module="m", class_name="C",
+        n_classes=101, spatial=(180, 240), n_train=None, n_test=None,
+        n_val_per_class=3, n_cal_per_class=10, sj_downloadable=False, implemented=True,
+        test_fraction=0.20, test_floor=6,
+    )
+    base.update(overrides)
+    return DatasetSpec(**base)
+
+
+def test_proportional_test_split_scales_with_class_size_and_respects_the_floor():
+    """The reason the split is proportional: fixed counts cannot serve 31 and 800 at once."""
+    labels, sizes = caltech_like_labels()
+    spec = caltech_like_spec()
+    train_pool, test = make_train_test_split(labels, spec, seed=0)
+
+    per_class = np.bincount(labels[test], minlength=spec.n_classes)
+    assert per_class[0] == 160, "the 800-sample class should give 20%"
+    assert per_class[-1] == 6, "the 31-sample class should hit the floor, not 20%"
+    # Monotone in class size: a bigger class never contributes fewer test samples.
+    order = np.argsort(sizes)[::-1]
+    assert list(per_class[order]) == sorted(per_class[order], reverse=True)
+
+
+def test_every_class_survives_the_test_split_with_enough_left_for_val_cal_and_train():
+    labels, _ = caltech_like_labels()
+    spec = caltech_like_spec()
+    train_pool, test = make_train_test_split(labels, spec, seed=0)
+    remaining = np.bincount(labels[train_pool], minlength=spec.n_classes)
+    assert remaining.min() >= spec.n_val_per_class + spec.n_cal_per_class + 1
+    # And make_splits must then actually succeed on that pool.
+    splits = make_splits(labels[train_pool], spec, seed=0, n_test=test.size)
+    assert splits.val.size == spec.n_val
+    assert splits.cal.size == spec.n_cal
+
+
+def test_train_test_split_partitions_the_dataset_exactly():
+    labels, _ = caltech_like_labels()
+    train_pool, test = make_train_test_split(labels, caltech_like_spec(), seed=0)
+    assert np.intersect1d(train_pool, test).size == 0
+    assert train_pool.size + test.size == labels.size
+    assert np.array_equal(np.union1d(train_pool, test), np.arange(labels.size))
+
+
+def test_train_test_split_is_reproducible_and_seed_dependent():
+    labels, _ = caltech_like_labels()
+    spec = caltech_like_spec()
+    a = make_train_test_split(labels, spec, seed=0)
+    b = make_train_test_split(labels, spec, seed=0)
+    c = make_train_test_split(labels, spec, seed=1)
+    assert np.array_equal(a[1], b[1]), "same seed must give byte-identical indices"
+    assert not np.array_equal(a[1], c[1]), "a different seed must give a different split"
+    # Sizes are seed-independent even though membership is not.
+    assert a[1].size == c[1].size
+
+
+def test_a_class_too_small_to_survive_the_split_is_refused_loudly():
+    """Silently dropping a class would corrupt the calibration set without a symptom."""
+    labels = np.concatenate([np.full(100, c) for c in range(100)] + [np.full(9, 100)])
+    spec = caltech_like_spec()
+    with pytest.raises(InsufficientSamplesError, match="class 100"):
+        make_train_test_split(labels, spec, seed=0)
+
+
+def test_carving_a_test_set_from_a_dataset_that_ships_one_is_refused():
+    labels = np.concatenate([np.full(50, c) for c in range(10)])
+    with pytest.raises(ValueError, match="official train/test split"):
+        make_train_test_split(labels, DATASETS["nmnist"], seed=0)
+
+
+def test_ncaltech101_registry_entry_matches_the_documented_design():
+    spec = DATASETS["ncaltech101"]
+    assert spec.n_classes == 101, "C = 101 is the entire point of this dataset"
+    assert spec.spatial == (180, 240)
+    assert spec.defines_own_test_split
+    assert (spec.test_fraction, spec.test_floor) == (0.20, 6)
+    assert (spec.n_val_per_class, spec.n_cal_per_class) == (3, 10)
+    assert spec.n_train is None and spec.n_test is None, "no official split to verify against"
+    assert spec.mirror is not None and not spec.sj_downloadable
+
+
+def test_ceiling_at_101_classes_is_far_more_binding_than_at_10():
+    """The measurement this dataset exists to make."""
+    from spikecalib.models import readout_ceiling
+
+    assert readout_ceiling("count", 2, 101) == pytest.approx(0.068806, abs=1e-6)
+    assert readout_ceiling("count", 2, 10) == pytest.approx(0.450853, abs=1e-6)
+    # More classes always lowers the ceiling at fixed T.
+    for T in (2, 6, 10):
+        assert readout_ceiling("count", T, 101) < readout_ceiling("count", T, 10)
+
+
+def test_flat_dataset_splits_all_index_one_space_and_never_overlap():
+    """The leak this guards against is invisible to the ordinary disjointness check.
+
+    For a dataset with an official split, ``test`` addresses a different object, so train
+    and test sharing an integer is meaningless. For a flat dataset they address the same
+    rows, and a collision would evaluate on training data while every existing assertion
+    stayed green.
+    """
+    labels, _ = caltech_like_labels()
+    spec = caltech_like_spec()
+    splits = make_dataset_splits(labels, spec, seed=0)
+
+    pools = [splits.train, splits.val, splits.cal, splits.test]
+    everything = np.concatenate(pools)
+    assert everything.size == labels.size, "the four splits must partition the dataset"
+    assert np.array_equal(np.sort(everything), np.arange(labels.size)), "no gaps, no repeats"
+    for i, a in enumerate(pools):
+        for b in pools[i + 1:]:
+            assert np.intersect1d(a, b).size == 0
+
+    # Stratification survives the round trip through the flat index space.
+    assert np.bincount(labels[splits.val], minlength=101).min() == spec.n_val_per_class
+    assert np.bincount(labels[splits.cal], minlength=101).min() == spec.n_cal_per_class
+
+
+def test_make_dataset_splits_delegates_for_datasets_that_ship_a_split():
+    labels = np.concatenate([np.full(1200, c) for c in range(10)])
+    spec = DATASETS["nmnist"]
+    a = make_dataset_splits(labels, spec, seed=0, n_test=10_000)
+    b = make_splits(labels, spec, seed=0, n_test=10_000)
+    assert a.fingerprint == b.fingerprint
+
+
+def test_flat_dataset_splits_are_reproducible():
+    labels, _ = caltech_like_labels()
+    spec = caltech_like_spec()
+    assert (make_dataset_splits(labels, spec, seed=0).fingerprint
+            == make_dataset_splits(labels, spec, seed=0).fingerprint)
+    assert (make_dataset_splits(labels, spec, seed=0).fingerprint
+            != make_dataset_splits(labels, spec, seed=1).fingerprint)

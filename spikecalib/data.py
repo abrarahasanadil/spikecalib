@@ -51,6 +51,8 @@ __all__ = [
     "load_dataset",
     "training_labels",
     "make_splits",
+    "make_train_test_split",
+    "make_dataset_splits",
     "assert_disjoint",
     "save_splits",
     "load_splits",
@@ -132,6 +134,14 @@ def load_dataset(name: str, timesteps: int, root: str):
         )
     sj_class = spec.load_class()
     common = dict(root=dataset_root, data_type="frame", frames_number=timesteps, split_by="number")
+    if spec.defines_own_test_split:
+        # No official split, so SpikingJelly's class takes no ``train`` argument and there
+        # is exactly one object. Both halves are that same object; which samples belong to
+        # which split is carried entirely by the index arrays from
+        # :func:`make_dataset_splits`, whose ``test`` indexes this same flat space.
+        # Returning it twice keeps every caller's ``(train_set, test_set)`` shape working.
+        flat = sj_class(**common)
+        return flat, flat
     return sj_class(train=True, **common), sj_class(train=False, **common)
 
 
@@ -148,6 +158,78 @@ def training_labels(train_set) -> np.ndarray:
             "dataset exposes no .targets; cannot read labels without loading every sample"
         )
     return np.asarray(targets, dtype=np.int64)
+
+
+def make_train_test_split(
+    labels: Sequence[int] | np.ndarray, spec: DatasetSpec, seed: int
+) -> tuple[np.ndarray, np.ndarray]:
+    """Define a train/test split for a dataset that has no official one.
+
+    Returns ``(train_pool, test)`` as index arrays into the single flat dataset. The
+    train pool is what :func:`make_splits` then carves val and cal out of; the test set is
+    never touched again.
+
+    **Proportional per class, with a floor**, rather than a fixed count per class. The
+    fixed-count scheme the other datasets use assumes classes of comparable size. Caltech101
+    does not oblige: its smallest class holds about 31 samples and its largest about 800, so
+    a per-class holdout big enough to be useful on the large classes would consume the small
+    ones entirely, and one small enough for the small classes would waste most of the large
+    ones. Each class therefore contributes ``max(test_floor, round(test_fraction * n))``.
+
+    The floor exists because a proportional split alone would give the smallest class six
+    test samples at 20% and fewer still if a smaller class appeared; below that a per-class
+    accuracy is not a measurement at all.
+
+    Reproducibility: ``numpy.random.default_rng(seed)`` only, like :func:`make_splits`, and
+    the class loop runs in ascending class order so the result depends on the seed and
+    nothing else.
+    """
+    labels = np.asarray(labels, dtype=np.int64)
+    if labels.ndim != 1:
+        raise ValueError(f"labels must be 1-D, got shape {labels.shape}")
+    if not spec.defines_own_test_split:
+        raise ValueError(
+            f"{spec.display_name} ships an official train/test split, so carving one "
+            f"would discard it. Use the dataset's own train/test objects instead."
+        )
+
+    rng = np.random.default_rng(seed)
+    train_parts: list[np.ndarray] = []
+    test_parts: list[np.ndarray] = []
+
+    for cls in range(spec.n_classes):
+        cls_idx = np.flatnonzero(labels == cls)
+        available = cls_idx.size
+        if available == 0:
+            raise InsufficientSamplesError(
+                f"{spec.display_name}: class {cls} has no samples at all. The registry "
+                f"says this dataset has {spec.n_classes} classes; the cache disagrees."
+            )
+        n_test = max(int(spec.test_floor), int(round(spec.test_fraction * available)))
+        # Every class must keep enough to supply val, cal and at least one training sample
+        # once make_splits runs on what is left.
+        needed_after = spec.n_val_per_class + spec.n_cal_per_class + 1
+        if available - n_test < needed_after:
+            raise InsufficientSamplesError(
+                f"{spec.display_name}: class {cls} has {available:,} samples; holding out "
+                f"{n_test:,} for test leaves {available - n_test:,}, but val + cal + at "
+                f"least one training sample needs {needed_after:,}. Lower test_fraction, "
+                f"test_floor, n_val_per_class or n_cal_per_class for this dataset in "
+                f"spikecalib/datasets.py."
+            )
+        shuffled = rng.permutation(cls_idx)
+        test_parts.append(shuffled[:n_test])
+        train_parts.append(shuffled[n_test:])
+
+    train_pool = np.sort(np.concatenate(train_parts)).astype(np.int64)
+    test = np.sort(np.concatenate(test_parts)).astype(np.int64)
+    if np.intersect1d(train_pool, test).size:
+        raise SplitOverlapError("train pool and test set overlap")
+    if train_pool.size + test.size != labels.size:
+        raise SplitOverlapError(
+            f"split lost samples: {train_pool.size:,} + {test.size:,} != {labels.size:,}"
+        )
+    return train_pool, test
 
 
 def make_splits(
@@ -226,6 +308,58 @@ def make_splits(
         test=np.arange(n_test, dtype=np.int64),
     )
     assert_disjoint(splits)
+    return splits
+
+
+def make_dataset_splits(
+    labels: Sequence[int] | np.ndarray,
+    spec: DatasetSpec,
+    seed: int,
+    n_test: Optional[int] = None,
+) -> SplitIndices:
+    """The one entry point for splits, whatever shape the dataset comes in.
+
+    Datasets with an official train/test split get :func:`make_splits` directly: ``labels``
+    are the training set's and ``test`` indexes the separate test object.
+
+    Datasets without one get a study-defined split first. ``labels`` are then the *whole*
+    dataset's, :func:`make_train_test_split` holds out a test set, val and cal are carved
+    from what remains, and **every returned array indexes the same flat dataset** -- which
+    is the object :func:`load_dataset` returns for both halves in that case.
+
+    Using this rather than calling :func:`make_splits` directly is what stops a caller from
+    silently treating a flat dataset's ``test`` indices as if they addressed a separate
+    object, which would sample the wrong rows without raising anything.
+    """
+    labels = np.asarray(labels, dtype=np.int64)
+    if not spec.defines_own_test_split:
+        return make_splits(labels, spec, seed=seed, n_test=n_test)
+
+    train_pool, test = make_train_test_split(labels, spec, seed)
+    # Carve val/cal out of the training pool, then lift the positions back into the flat
+    # index space. make_splits works in the pool's own 0..n-1 coordinates.
+    carved = make_splits(labels[train_pool], spec, seed=seed, n_test=test.size)
+    splits = SplitIndices(
+        dataset=spec.key,
+        seed=seed,
+        n_val_per_class=spec.n_val_per_class,
+        n_cal_per_class=spec.n_cal_per_class,
+        train=np.sort(train_pool[carved.train]).astype(np.int64),
+        val=np.sort(train_pool[carved.val]).astype(np.int64),
+        cal=np.sort(train_pool[carved.cal]).astype(np.int64),
+        test=test,
+    )
+    assert_disjoint(splits)
+    # The test set shares an index space with the carved splits here, which it does not for
+    # datasets that ship their own, so the overlap check above cannot see it. Check it.
+    for name in CARVED_SPLITS:
+        overlap = np.intersect1d(getattr(splits, name), splits.test)
+        if overlap.size:
+            raise SplitOverlapError(
+                f"{spec.display_name}: {overlap.size:,} samples appear in both {name} and "
+                f"test. For a dataset with no official split these share an index space, "
+                f"so this is a real leak, not a false alarm."
+            )
     return splits
 
 
