@@ -1,0 +1,161 @@
+{
+  "seed": 0,
+  "eval_seed": 0,
+  "dataset": "ncaltech101",
+  "timesteps": 10,
+  "split_fingerprint": "17e6b35480e6d410",
+  "epochs_requested": 50,
+  "epochs_run": 21,
+  "best_val_accuracy": 0.570957095709571,
+  "final_val_accuracy": 0.5676567656765676,
+  "final_val_tie_rate": 0.1617161716171617,
+  "best_epoch": 15,
+  "early_stopped": true,
+  "lr": 0.001,
+  "batch_size": 32,
+  "device": "mps",
+  "n_parameters": 464074,
+  "seconds": 329.4878017902374,
+  "mps_nondeterministic": true,
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 3.0469713306359534,
+      "val_accuracy": 0.22112211221122113,
+      "val_tie_rate": 0.39933993399339934
+    },
+    {
+      "epoch": 1,
+      "train_loss": 2.0389408230739385,
+      "val_accuracy": 0.3234323432343234,
+      "val_tie_rate": 0.28052805280528054
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.513779581499724,
+      "val_accuracy": 0.40924092409240925,
+      "val_tie_rate": 0.3201320132013201
+    },
+    {
+      "epoch": 3,
+      "train_loss": 1.194161481346222,
+      "val_accuracy": 0.39933993399339934,
+      "val_tie_rate": 0.22442244224422442
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.9548021719402587,
+      "val_accuracy": 0.43234323432343236,
+      "val_tie_rate": 0.28052805280528054
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.7603996719705118,
+      "val_accuracy": 0.44884488448844884,
+      "val_tie_rate": 0.2739273927392739
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.6346534906784721,
+      "val_accuracy": 0.5148514851485149,
+      "val_tie_rate": 0.21782178217821782
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.5117272909956009,
+      "val_accuracy": 0.47854785478547857,
+      "val_tie_rate": 0.19471947194719472
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.45065846405646637,
+      "val_accuracy": 0.49504950495049505,
+      "val_tie_rate": 0.1848184818481848
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.3926014638975985,
+      "val_accuracy": 0.5478547854785478,
+      "val_tie_rate": 0.19801980198019803
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.32747602466985365,
+      "val_accuracy": 0.5148514851485149,
+      "val_tie_rate": 0.2145214521452145
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.2871552733174052,
+      "val_accuracy": 0.5445544554455446,
+      "val_tie_rate": 0.19141914191419143
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.26292314434435243,
+      "val_accuracy": 0.5148514851485149,
+      "val_tie_rate": 0.16831683168316833
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.23236943564737142,
+      "val_accuracy": 0.5115511551155115,
+      "val_tie_rate": 0.2145214521452145
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.20124391657453483,
+      "val_accuracy": 0.5676567656765676,
+      "val_tie_rate": 0.20132013201320131
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.19391426459866698,
+      "val_accuracy": 0.570957095709571,
+      "val_tie_rate": 0.19801980198019803
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.18807680049379427,
+      "val_accuracy": 0.5412541254125413,
+      "val_tie_rate": 0.19141914191419143
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.17750759905077013,
+      "val_accuracy": 0.5412541254125413,
+      "val_tie_rate": 0.16501650165016502
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.162705859806498,
+      "val_accuracy": 0.5511551155115512,
+      "val_tie_rate": 0.15181518151815182
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.14667667122771894,
+      "val_accuracy": 0.5478547854785478,
+      "val_tie_rate": 0.19801980198019803
+    },
+    {
+      "epoch": 20,
+      "train_loss": 0.1448180141868969,
+      "val_accuracy": 0.5676567656765676,
+      "val_tie_rate": 0.1617161716171617
+    }
+  ],
+  "model_config": {
+    "channels": [
+      32,
+      64,
+      128,
+      128
+    ],
+    "hidden": 256,
+    "tau": 2.0,
+    "v_threshold": 1.0,
+    "surrogate_alpha": 2.0,
+    "readout": "count"
+  }
+}

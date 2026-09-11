@@ -280,6 +280,64 @@
   </div></section>
 
   <section class="panel c12"><div class="prose wide">
+<h3>The C axis: 101 classes, where the ceiling stops explaining things</h3>
+    <p>
+      The ceiling e<sup>T</sup>/(e<sup>T</sup>+C−1) has two variables and every measurement
+      above varies only T. N-Caltech101 has <strong>101 classes</strong>, where the T = 2
+      ceiling is <strong>0.068806</strong> rather than 0.450853 — an order of magnitude more
+      binding. 18 runs: two readouts, three timestep settings, three seeds, all stopping on
+      the patience rule.
+    </p>
+    <div class="scroll" style="margin:12px 0">
+      <table id="caxis-table"></table>
+    </div>
+    <p class="chart-note">Mean over three seeds, rendered from
+      <code>results/caltech_experiment.json</code>. "binds" counts the seeds whose accuracy
+      exceeds the ceiling — a ceiling forces underconfidence only while it does.</p>
+    <p>
+      <strong>The formula holds.</strong> The bound was respected in 9 of 9 runs, and at
+      T = 2 and T = 6 the models saturate it to 2.4&times;10<sup>−14</sup> and
+      3.8&times;10<sup>−13</sup> — the same one-part-in-10<sup>13</sup> as at C = 10. At
+      T = 10 the observed maximum sits 1.5&times;10<sup>−3</sup> <em>below</em> the ceiling
+      instead of on it, and that is not a failure: reaching the bound needs a sample whose
+      count vector is [T, 0, …, 0], meaning all 100 other classes silent at every step. Easy
+      at C = 10, not at C = 101. <strong>Validity and tightness are different properties</strong>
+      and only the first is claimed here.
+    </p>
+    <p>
+      <strong>The important result is where it stops binding.</strong> At T = 2 the ceiling
+      binds in 3 of 3 seeds and accounts for <strong>97.1%</strong> of uncalibrated ECE, just
+      as it accounted for 99.2% on N-MNIST. At T = 6 accuracy is 0.6427 against a ceiling of
+      0.8014 — comfortably below it, so nothing is forced — and the readout is
+      <strong>still underconfident by 0.1534</strong>, fifty times N-MNIST's ECE at the same
+      T. On N-MNIST the regime where the ceiling stopped binding was also one where almost no
+      error remained, so the two explanations could not be told apart. Here they come apart,
+      and a large miscalibration is left that <strong>the ceiling does not explain at
+      all</strong>. That is a limitation of this study's central claim, and only varying C
+      could expose it.
+    </p>
+    <p>
+      <strong>Where the cap is severe it costs accuracy, not just calibration.</strong> At
+      T = 2 the uncapped accumulator beats the count readout by <strong>12.8 accuracy
+      points</strong> — in every seed (+15.2, +9.6, +13.7). At C = 10 the same comparison was
+      worth 0.1 points and the readouts were indistinguishable. The cross-entropy floor is
+      2.68 nats here against 0.80 at C = 10, so the objective is dominated by a target the
+      model cannot reach. Above T = 2 it reverses and count wins by about 4 points, so this
+      belongs to the binding regime rather than to the readout.
+    </p>
+    <p>
+      <strong>This is also the first genuinely uncertain regime the study has sampled</strong>
+      — accuracy 0.43 to 0.66 against N-MNIST's 0.99 — and in it the sign of the
+      miscalibration finally turns over. The <em>count</em> readout is overconfident at
+      T = 10 (+0.0344, 3 of 3 seeds), the first time anywhere in this study, and the
+      accumulator is overconfident in 9 of 9 runs. <strong>The disagreement with the
+      literature is a regime difference.</strong> Underconfidence is what a capped readout
+      does where the cap binds; take away either condition and this study measures
+      overconfidence too.
+    </p>
+  </div></section>
+
+  <section class="panel c12"><div class="prose wide">
 <h3>The leak explains about half of it — the threshold explains the rest</h3>
     <p>
       With quantisation ruled out, the next candidate needed no new mechanism either. The
@@ -804,16 +862,18 @@ python scripts/export_dashboard_data.py</pre>
 <h3>Limitations</h3>
     <ul>
       <li>
-        <strong>One dataset.</strong> Everything here is N-MNIST. DVS-Gesture matters most
+        <strong>Two datasets, not four.</strong> N-MNIST and N-Caltech101. DVS-Gesture matters most
         of the two not yet run: its calibration split is roughly 330 samples against
         N-MNIST's 5,000, so isotonic's per-level estimates would be an order of magnitude
         noisier. The conclusion that the calibrators tie is established only where the
         calibration set is large.
       </li>
       <li>
-        <strong>No genuinely uncertain regime was sampled.</strong> All fifteen models
-        reached roughly 0.99 test accuracy. Differences between calibration methods may only
-        emerge where a model is actually unsure, and this sweep never put one there.
+        <strong>The calibrator comparison saw no genuinely uncertain regime.</strong> All
+        fifteen models in that sweep reached roughly 0.99 test accuracy, and differences
+        between calibration methods may only emerge where a model is actually unsure.
+        N-Caltech101 does supply that regime at 0.43–0.66 accuracy, but no calibrators have
+        been fitted there, so this is now a gap in coverage rather than in available data.
       </li>
       <li>
         <strong>The energy constants are unverified.</strong> E<sub>AC</sub> = 0.9 pJ and
@@ -827,29 +887,55 @@ python scripts/export_dashboard_data.py</pre>
         timestep settings on one dataset. None should be extrapolated.
       </li>
       <li>
-        <strong>The number of classes is fixed at 10.</strong> The ceiling
-      e<sup>T</sup>/(e<sup>T</sup>+C−1) and T<sub>min</sub> are general in C, but every
-      measurement here was taken at C = 10. How the crossover moves with C is untested.
-    </p>
-    <p>
-      <strong>One architecture.</strong> Every readout comparison uses the same trunk —
-      channels (32, 64), hidden 256. Nothing here separates a property of the readout from a
-      property of this network.
-    </p>
-    <p>
-      <strong>The high-T ranking deficit is unexplained.</strong> From T = 6 up the membrane
-      readout ranks worse than count (AUROC 0.9710 against 0.9842 at T = 6) and no mechanism
-      accounts for it. Quantisation was tested and ruled out. It is observed, not diagnosed.
-    </p>
-    <p>
-      <strong>Membrane's calibration at T = 2 is highly seed-dependent.</strong> ECE is
-      0.0290 ± 0.0153 across three seeds — 0.0085, 0.0333 and 0.0451, a fivefold range —
-      while count's is 0.5386 ± 0.0004. Removing the cap removes a <em>deterministic</em>
-      error and exposes an ordinary, <em>variable</em> one. The cause is not investigated,
-      and three seeds is too few to characterise it.
-    </p>
-    <p>
-      <strong>Binned ECE is a biased estimator.</strong> It averages absolute gaps, so
+        <strong>The number of classes was fixed at 10 until this session.</strong> The
+        ceiling e<sup>T</sup>/(e<sup>T</sup>+C−1) and T<sub>min</sub> are general in C, and
+        N-Caltech101 now tests C = 101. Two values of C is still two points: nothing here
+        establishes how the crossover moves with C in general.
+      </li>
+      <li>
+        <strong>The residual miscalibration at C = 101 is unexplained.</strong> At T = 6 the
+        ceiling does not bind — accuracy 0.6427 against 0.8014 — and the readout is still
+        underconfident by 0.1534. The ceiling accounts for none of that and nothing else here
+        accounts for it either. It is the study's largest unexplained quantity and it sits
+        directly beneath its central claim.
+      </li>
+      <li>
+        <strong>Only two readouts were run at C = 101.</strong> Count and accumulator.
+        Whether the leak result and the granularity result transfer to 101 classes is
+        untested, and was skipped for time rather than for a reason.
+      </li>
+      <li>
+        <strong>No calibrators have been fitted on N-Caltech101.</strong> The null result on
+        calibrator choice remains a C = 10, 0.99-accuracy finding. A 1,010-sample calibration
+        set across 101 classes — about 10 per class — is exactly the regime where it might
+        break, and one-vs-rest isotonic should not be trusted there at all.
+      </li>
+      <li>
+        <strong>N-Caltech101 frames are pooled 4&times; to 45&times;60.</strong> That makes
+        the grid tractable and lets N-MNIST's architecture fit unchanged, so the C comparison
+        varies only the class count and the data. No comparison against 2&times; or native
+        resolution was run, so nothing establishes the result is insensitive to it. It cannot
+        affect the ceiling, which contains no spatial term.
+      </li>
+      <li>
+        <strong>One architecture.</strong> Every readout comparison uses the same trunk —
+        channels (32, 64), hidden 256. Nothing here separates a property of the readout from
+        a property of this network.
+      </li>
+      <li>
+        <strong>The high-T ranking deficit is only half explained.</strong> From T = 6 up the
+        membrane readout ranks worse than count (AUROC 0.9710 against 0.9842 at T = 6).
+        Quantisation was tested and ruled out; the leak accounts for about half. The
+        remainder is attributed to the output threshold and has no mechanism.
+      </li>
+      <li>
+        <strong>Membrane's calibration at T = 2 is highly seed-dependent.</strong> ECE is
+        0.0290 ± 0.0153 across three seeds — 0.0085, 0.0333 and 0.0451, a fivefold range —
+        while count's is 0.5386 ± 0.0004. Removing the leak collapses that spread 77-fold,
+        which identifies the cause but does not characterise it at three seeds.
+      </li>
+      <li>
+        <strong>Binned ECE is a biased estimator.</strong> It averages absolute gaps, so
         sampling noise becomes positive error, and the bias depends on bin occupancy. That
         makes raw ECE only loosely comparable across <em>T</em>, which is a further reason the
         headline comparison is a paired difference at fixed <em>T</em>.

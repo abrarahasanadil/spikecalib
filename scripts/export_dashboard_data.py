@@ -168,6 +168,7 @@ def main() -> int:
 
     readout_rows = optional("readout_experiment.json")
     quantisation_rows = optional("quantisation_test.json")
+    caltech_rows = optional("caltech_experiment.json")
 
     payload = {
         "dataset": spec.key,
@@ -176,6 +177,7 @@ def main() -> int:
         "n_bins": args.bins,
         "readout": readout_rows,
         "quantisation": quantisation_rows,
+        "caltech": caltech_rows,
         "measured": [
             {
                 "T": int(t),
@@ -199,7 +201,8 @@ def main() -> int:
     size = os.path.getsize(args.out) / 1024
     print(f"\n  wrote {os.path.relpath(args.out, REPO_ROOT)}  ({size:,.0f} KiB, "
           f"{len(rel)} reliability curves, {len(readout_rows or [])} readout rows, "
-          f"{len(quantisation_rows or [])} quantisation rows)")
+          f"{len(quantisation_rows or [])} quantisation rows, "
+          f"{len(caltech_rows or [])} C-axis rows)")
 
     # Two figures are drawn by matplotlib, not in the browser. They live in figures/,
     # which is outside the published site root, so they are copied in.

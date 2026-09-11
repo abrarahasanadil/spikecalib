@@ -542,6 +542,9 @@
     if (n) { var sec = n.closest("section"); if (sec) sec.hidden = true; }
   }
   function fmt(v, d) { return (v < 0 ? "\u2212" : "") + Math.abs(v).toFixed(d); }
+  // Signed: where the SIGN is the result -- conf - acc is under- vs overconfidence -- an
+  // unmarked positive reads as "no sign shown" rather than "positive".
+  function signed(v, d) { return (v < 0 ? "\u2212" : "+") + Math.abs(v).toFixed(d); }
 
   var READOUT_ORDER = ["count", "weighted-count", "membrane", "accumulator"];
   var READOUT_LABEL = {
@@ -570,14 +573,15 @@
         var g = rows.filter(function (r) { return r.timesteps === T && r.readout === ro; });
         if (!g.length) return;
         function col(k) { return g.map(function (r) { return r[k]; }); }
-        function cell(k, d) {
+        function cell(k, d, showSign) {
           var v = col(k), m = mean(v), s = sd(v);
-          return "<td>" + fmt(m, d) + (v.length > 1 ? ' <span class="sd">\u00b1' +
-            Math.abs(s).toFixed(d) + "</span>" : "") + "</td>";
+          return "<td>" + (showSign ? signed(m, d) : fmt(m, d)) +
+            (v.length > 1 ? ' <span class="sd">\u00b1' + Math.abs(s).toFixed(d) + "</span>"
+                          : "") + "</td>";
         }
         html += '<tr><td class="k">' + T + '</td><td class="k">' + (READOUT_LABEL[ro] || ro) +
           '</td><td class="k">' + g.length + "</td>" +
-          cell("test_accuracy", 4) + cell("mean_conf_minus_acc", 4) +
+          cell("test_accuracy", 4) + cell("mean_conf_minus_acc", 4, true) +
           cell("ece_equal_width", 4) + cell("auroc", 4) + cell("aurc", 5) +
           "<td>" + Math.round(mean(col("n_achievable_coverage_levels"))).toLocaleString() +
           "</td></tr>";
@@ -647,6 +651,40 @@
     host.innerHTML = html + "</tbody>";
   }
 
+  function renderCaxis() {
+    var host = document.getElementById("caxis-table");
+    if (!host) return;
+    var rows = window.SPIKECALIB.caltech;
+    if (!rows || !rows.length) { hide("caxis-table"); return; }
+    var Ts = [], seen = {};
+    rows.forEach(function (r) { if (!seen[r.timesteps]) { seen[r.timesteps] = 1; Ts.push(r.timesteps); } });
+    Ts.sort(function (a, b) { return a - b; });
+    var html = "<thead><tr>" +
+      ["T", "readout", "ceiling", "observed max", "test acc", "binds?", "conf \u2212 acc",
+       "ECE (equal-width)", "AUROC"]
+        .map(function (t) { return '<th scope="col" style="cursor:default">' + t + "</th>"; })
+        .join("") + "</tr></thead><tbody>";
+    Ts.forEach(function (T) {
+      ["count", "accumulator"].forEach(function (ro) {
+        var g = rows.filter(function (r) { return r.timesteps === T && r.readout === ro; });
+        if (!g.length) return;
+        function avg(k) { return mean(g.map(function (r) { return r[k]; })); }
+        var d = g[0].ceiling_derived;
+        var binds = g.filter(function (r) { return r.ceiling_binds; }).length;
+        html += '<tr><td class="k">' + T + '</td><td class="k">' +
+          (ro === "accumulator" ? "accumulator (uncapped)" : "count (capped)") + "</td>" +
+          "<td>" + (d === null ? "none" : d.toFixed(6)) + "</td>" +
+          "<td>" + avg("max_confidence_observed").toFixed(6) + "</td>" +
+          "<td>" + avg("test_accuracy").toFixed(4) + "</td>" +
+          "<td>" + (d === null ? "\u2014" : binds + "/" + g.length) + "</td>" +
+          "<td>" + signed(avg("mean_conf_minus_acc"), 4) + "</td>" +
+          "<td>" + avg("ece_equal_width").toFixed(4) + "</td>" +
+          "<td>" + avg("auroc").toFixed(4) + "</td></tr>";
+      });
+    });
+    host.innerHTML = html + "</tbody>";
+  }
+
   function renderQuantisation() {
     var host = document.getElementById("quant-within-table");
     if (!host) return;
@@ -687,6 +725,7 @@
   renderReadoutTable();
   renderSelectiveTable();
   renderQuantisation();
+  renderCaxis();
   render();
   window.addEventListener("resize", function () { drawCeiling(); render(); });
 })();

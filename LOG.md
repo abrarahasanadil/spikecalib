@@ -1098,3 +1098,100 @@ watching. It now merges by `(readout, T, seed)` and reports how many rows it kep
   investigated.
 - *The audit checked numbers against artifacts, not prose against prose.* Claims that are
   wrong without containing a number would not have been caught.
+
+---
+
+## 2026-09-11 — The C axis: the ceiling holds at 101 classes, and stops explaining things where it stops binding
+
+**Did.** Brought N-Caltech101 into the study to vary the ceiling's second argument. Added
+the registry entry, a study-defined train/test split, frame pooling, an in-memory frame
+cache, and `scripts/caltech_experiment.py`. Ran 18 runs: 2 readouts × 3 `T` × 3 seeds.
+
+**Ran.** `pytest -q` → **195 passed** (up from 179).
+Download 3.72 GiB from Mendeley; `events_np` in 140 s; frame caches at `T` in {2, 6, 10}
+in about 30 s each; the 18-run grid in roughly 1.5 h. All 18 stopped on the patience rule
+between 14 and 40 epochs against a 50 cap, so no comparison is confounded by convergence.
+
+**Two premises in the task were wrong and had to be corrected first.**
+SpikingJelly *cannot* download N-Caltech101 — `downloadable()` returns False and
+`resource_url_md5()` gives the homepage, not files. This is the N-MNIST situation, not the
+CIFAR10-DVS one. The Mendeley mirror was used instead, and its file matches **both** the
+published SHA-256 **and** SpikingJelly's own MD5, which is a stronger provenance check than
+the repository had for N-MNIST. Separately, the ceiling at `C = 101, T = 2` is 0.068806,
+not 0.0687.
+
+**Found: the ceiling holds at 101 classes, and "valid" is not "saturated".**
+The bound was respected in **9 of 9** count runs. At `T` in {2, 6} the models saturate it to
+2.4e-14 and 3.8e-13 — the same one-part-in-10^13 as at `C = 10`. At `T = 10` the observed
+maximum sits **1.5e-3 below** the bound rather than on it. That is not a failure: reaching
+the ceiling requires a sample whose count vector is `[T, 0, ..., 0]`, meaning all 100 other
+classes silent for all 10 steps, which is easy at `C = 10` and not at `C = 101`. The
+temptation to report `|derived − observed| = 2.35e-03` as a deviation was real and would
+have been wrong; the signed check is what matters and it was added.
+
+**Found: the ceiling explains the error where it binds and none of it where it does not.**
+This is the result that matters and only the C axis could produce it. At `T = 2` the ceiling
+binds in 3/3 seeds and accounts for **97.1%** of uncalibrated ECE, mirroring N-MNIST's 99.2%.
+At `T = 6` accuracy is 0.6427 against a ceiling of 0.8014 — it does **not** bind, nothing is
+forced — and the readout is **still underconfident by 0.1534**, an ECE fifty times N-MNIST's
+at the same `T`. On N-MNIST the regime where the ceiling stopped binding was also a regime
+where almost no error was left, so the two explanations were indistinguishable. At `C = 101`
+they come apart, and a large residual miscalibration is left with no account of it.
+
+**Found: where the cap is severe it costs accuracy, not just calibration.**
+At `T = 2`, the non-leaky accumulator beats count by **+0.1282 accuracy**, in every seed
+(+0.1515, +0.0959, +0.1372). At `C = 10` the same comparison was worth 0.1 points. The
+cross-entropy floor is 2.6765 nats at `C = 101, T = 2` against 0.7966 at `C = 10`, so the
+objective is dominated by a target the model cannot reach. Above `T = 2` this reverses and
+count wins by about 4 points, so it is a property of the binding regime, not of the readout.
+
+**Found: the first genuinely uncertain regime, and the first overconfident count readout.**
+Accuracy spans 0.4323–0.6561 (mean 0.5880) against N-MNIST's 0.9842–0.9914, which closes a
+standing limitation. In that regime the **count** readout is overconfident at `T = 10`
+(+0.0344, 3/3 seeds) — the first time in the study — and the accumulator is overconfident in
+**9 of 9** runs. The disagreement with the literature is therefore a regime difference:
+underconfidence is what a capped readout does where the cap binds, and removing either
+condition produces overconfidence here too.
+
+**Broke: three times, each caught by a check rather than by luck.**
+- *The 18-run grid projected to 124 hours* at native 180×240. Measured, not assumed. Fixed
+  by pooling 4× and by holding the cache in RAM, after measuring that training was **85%
+  disk** — 27 ms/sample of I/O against ~5 ms/sample of computation. Epoch time at `T = 2`
+  fell from about 3 minutes to 5 seconds and the grid to under two hours.
+- *The pooling transform was a closure and `DataLoader` workers could not receive it.*
+  macOS spawns workers, the transform is pickled to reach them, and a local function is not
+  picklable. It failed at worker start-up with an error naming the closure, not the cause.
+  It is a class now, with a test that pickles it.
+- *A scratch script named `timeit.py` shadowed the stdlib module torch imports*, producing a
+  circular-import error inside `torch.distributed` that had nothing to do with the code.
+
+**Chose.**
+- *Frames are average-pooled 4× to 45×60.* The honest first reason is compute. The better
+  reason is that at 45×60 N-MNIST's own two-block `(32, 64)` architecture fits unchanged, so
+  the `C = 101` comparison differs from the `C = 10` one in the class count and the data and
+  nothing else; at native resolution it would also differ in depth and parameter count.
+  Pooling cannot touch the ceiling, which contains neither resolution nor anything
+  downstream, and it lowers accuracy, which makes "does it bind" harder to satisfy.
+- *Average pooling, not max.* A frame is an event count per pixel, so the mean is the local
+  event rate; max would report the busiest pixel and discard the rest.
+- *The test split is proportional with a floor, not a fixed per-class count.* The dataset
+  runs from 31 samples to 800 and no fixed count serves both ends. Val and cal stay fixed
+  per class so that every class reaches the calibration set whatever its size.
+- *`create_events_np_files` is SpikingJelly's own.* Only fetching and verification are
+  local. The `download/` gate was skipped deliberately: it demands four files including two
+  readmes the loader never opens, and only one of the four is published at a stable URL.
+
+**Open.**
+- *The residual underconfidence at `C = 101, T = 6` has no explanation.* 0.1534 with the
+  ceiling slack. This is now the study's largest unexplained quantity and it sits directly
+  under its central claim.
+- *Only count and accumulator were run here.* Membrane and weighted-count at `C = 101` would
+  say whether the leak and the granularity results also transfer, and they were skipped for
+  time, not for a reason.
+- *Calibrators have not been run on N-Caltech101 at all.* The null result on calibrator
+  choice is still a `C = 10`, 0.99-accuracy result, and the 1,010-sample calibration set
+  across 101 classes is exactly the regime where it might break.
+- *`T` in {2, 6, 10} only*, against five settings on N-MNIST, so the crossover cannot be
+  located as precisely here.
+- *Pooling by 4 is untested as a choice.* No comparison against 2× or native was run, so
+  nothing establishes that the result is insensitive to it.

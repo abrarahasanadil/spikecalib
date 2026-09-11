@@ -661,6 +661,10 @@ invariant to how far above threshold each crossing was; the membrane potential i
 Whether that invariance is what helps at high `T` — and why it would only help once the cap
 stops binding — is untested. It is the next question, and this result does not answer it.
 
+*(The C axis adds one constraint on any answer: at `C = 101` the accumulator loses to count
+on accuracy by 4 points at `T` in {6, 10}, the same direction as its ranking deficit at
+`C = 10`. Whatever the threshold is doing, it is not specific to ten classes.)*
+
 ## Pre-registered prediction 3, recorded 2026-09-11
 
 Written before the non-leaky readout was trained. Two explanations for the high-`T`
@@ -817,6 +821,122 @@ The accumulator is not free. Test accuracy is 0.9879 ± 0.0009 at `T = 10` again
 0.2 points at high `T`, though it is *higher* than count at `T = 2` (0.9861 against 0.9850).
 Nothing here recommends replacing the count readout at high `T`: count still ranks best,
 still costs least, and is what the hardware exposes.
+
+## The C axis: N-Caltech101 at 101 classes
+
+The ceiling `e^T/(e^T + C − 1)` has two variables and until now only `T` had been varied.
+Every measurement in the study was at `C = 10`, which left the formula half tested and made
+the central claim rest on a single value of its second argument. N-Caltech101 has **101
+classes**, where the `T = 2` ceiling is **0.068806** against 0.450853 at `C = 10`.
+
+`[MEASURED]` `scripts/caltech_experiment.py`, 2026-09-11, 18 runs: 2 readouts × 3 `T` × 3
+seeds. All 18 stopped on the patience rule between 14 and 40 epochs against a 50 cap, so
+nothing below is confounded by unequal convergence.
+
+### The ceiling holds, and the distinction between *valid* and *saturated* matters
+
+| `T` | derived ceiling | observed max (mean) | max abs deviation | saturated? |
+|---|---|---|---|---|
+| 2 | 0.068806 | 0.068806 | 2.36e-14 | yes, to float precision |
+| 6 | 0.801362 | 0.801362 | 3.83e-13 | yes, to float precision |
+| 10 | 0.995481 | 0.993992 | 2.35e-03 | **no** |
+
+**The bound was respected in 9 of 9 count runs**, and at `T` in {2, 6} the models saturate
+it to the same precision they did at `C = 10` — one part in `10^13`. The formula is not
+wrong at 101 classes.
+
+At `T = 10` the observed maximum sits 1.5e-3 *below* the ceiling rather than on it. That is
+not a failure and must not be reported as one: the ceiling is an **upper bound**, and
+reaching it requires some test sample to produce the extreme count vector `[T, 0, ..., 0]`
+— one class firing at every step while **all 100 others stay silent for all 10 steps**. At
+`C = 10` that is easy and every run achieved it. At `C = 101` it is not, so the bound stops
+being tight. Validity and tightness are different properties and only the first is a claim
+this study makes.
+
+### Where it binds, and the discovery that the residual is not small
+
+A ceiling forces underconfidence only while accuracy exceeds it.
+
+| `T` | ceiling | test accuracy | binds? | `conf − acc` | ECE (ew) |
+|---|---|---|---|---|---|
+| 2 | 0.068806 | 0.4543 | **3/3 seeds** | −0.3969 | 0.3969 |
+| 6 | 0.801362 | 0.6427 | 0/3 | −0.1534 | 0.1539 |
+| 10 | 0.995481 | 0.6435 | 0/3 | **+0.0344** | 0.0442 |
+
+At `T = 2` the ceiling binds hard and accounts for **97.1%** of uncalibrated ECE — the same
+story as `C = 10`, where it accounted for 99.2%.
+
+**At `T = 6` it does not bind, and the study's `C = 10` intuition fails.** On N-MNIST, once
+accuracy fell below the ceiling the miscalibration collapsed to 0.0029. Here accuracy is
+0.6427 against a ceiling of 0.8014 — comfortably below it, so nothing is forced — and the
+readout is **still underconfident by 0.1534**, an ECE fifty times N-MNIST's at the same `T`.
+So:
+
+> **The ceiling explains the miscalibration where it binds and explains none of it where it
+> does not.** At `C = 10` that was invisible, because the regime where it stopped binding was
+> also a regime where almost no error remained. At `C = 101` a large error remains and the
+> ceiling has nothing to say about it.
+
+This is a limitation of the study's central claim that only the C axis could expose, and it
+is the most important thing on this page.
+
+### The cap costs accuracy, not only calibration
+
+`[MEASURED]` Accuracy, accumulator minus count, per seed:
+
+| `T` | count | accumulator | gap |
+|---|---|---|---|
+| 2 | 0.4543 | **0.5825** | **+0.1282** (+0.1515, +0.0959, +0.1372) |
+| 6 | 0.6427 | 0.5976 | −0.0452 |
+| 10 | 0.6435 | 0.6072 | −0.0364 |
+
+At `T = 2`, removing the cap is worth **12.8 accuracy points**, in every seed. At `C = 10`
+the same comparison was worth 0.1 points — the readouts were indistinguishable. The
+difference is the severity of the bound: the cross-entropy floor at `C = 101, T = 2` is
+**2.6765 nats** against 0.7966 at `C = 10`, so the objective cannot be reduced below a value
+that dominates the gradient signal, and the model is optimising against a target it cannot
+reach.
+
+**So the ceiling is not only a calibration artifact. Where it is severe it is a capacity
+limit on learning itself.** Nothing at `C = 10` showed this, because 0.4509 was never severe
+enough to matter for accuracy. Above `T = 2` the effect reverses and count wins by 4 points,
+so this is a property of the binding regime and not of the readout.
+
+### The first genuinely uncertain regime, and the first overconfident count readout
+
+Accuracy across all 18 runs spans **0.4323 to 0.6561, mean 0.5880**, against N-MNIST's
+0.9842–0.9914. The standing limitation that "no genuinely uncertain regime was sampled" is
+now addressed.
+
+Two sign results follow from it:
+
+- **The count readout is overconfident at `T = 10`**, `conf − acc = +0.0344`, positive in
+  3 of 3 seeds. This is the first time in the study that a count readout is overconfident,
+  and it is the direction the SNN literature reports.
+- **The accumulator is overconfident everywhere**: +0.0816, +0.1843, +0.2254 at
+  `T` = 2, 6, 10, positive in 9 of 9 runs. That confirms at `C = 101` what was only a lead
+  at `C = 10`.
+
+Together these sharpen the disagreement with the literature considerably. Underconfidence is
+what a *capped* readout does in a regime where the cap binds. Take away either condition —
+raise `T` until the cap is slack, or remove the cap — and this study measures overconfidence
+too. The disagreement was a regime difference, and the C axis is what made it visible.
+
+### What the split is
+
+No official train/test split exists, so the study defines one: **proportional per class at
+20% with a floor of 6**, seeded, saved to `results/ncaltech101_T*_seed*_split.npz`, and
+reproduced by `make_dataset_splits`. Sizes: **train 5,654 / val 303 / cal 1,010 / test
+1,742**, partitioning all 8,709 samples. Fixed per-class holdouts are used for val (3) and
+cal (10) so every class reaches the calibration set; the test split is proportional because
+the dataset runs from 31 samples in its smallest class to 800 in its largest and no fixed
+count serves both.
+
+Frames are average-pooled 4× to 45×60 before the model sees them, which is recorded in the
+registry rather than hidden: it makes the 18-run grid tractable, and it lets N-MNIST's own
+two-block architecture fit unchanged so the `C = 101` comparison differs from the `C = 10`
+one in the class count and the data alone. Pooling cannot affect the ceiling, which contains
+neither resolution nor anything downstream of it.
 
 ## Why the count readout exists
 
@@ -975,8 +1095,16 @@ is most likely **regime**, not error in the prior reports:
   `conf − acc` for the count readout is −0.0065 at `T = 8` (all three seeds negative) and
   −0.0008 at `T = 10` (two negative, one +0.0002). What the ceiling stops forcing is simply
   not replaced by anything this study can resolve. Work at higher `T`, or on tasks where
-  accuracy is lower, may well see overconfidence; this study does not, and cannot claim it
-  does. *(Corrected 2026-09-11: this bullet previously asserted that the residual at `T = 8`
+  accuracy is lower, may well see overconfidence; this study does not on N-MNIST, and
+  cannot claim it does there.
+
+  **Updated 2026-09-11 by the C axis, which settles this.** On N-Caltech101, where accuracy
+  is 0.64 rather than 0.99, the *count* readout is overconfident at `T = 10` — `conf − acc`
+  = +0.0344, positive in 3 of 3 seeds — and the accumulator is overconfident at every `T`
+  measured, 9 of 9 runs. So the prediction in this bullet was right: a harder task does show
+  overconfidence with the same readout. The disagreement with the literature is a **regime**
+  difference, not a contradiction, and underconfidence is specifically what a capped readout
+  does where the cap binds. *(Corrected 2026-09-11: this bullet previously asserted that the residual at `T = 8`
   and `T = 10` "is ordinary overconfidence", which the artifact contradicts.)*
 - **Readout.** The bound is a property of softmax-over-spike-counts. Work using a membrane
   potential, a voting layer, or an ANN-to-SNN converted network with real-valued outputs
@@ -1149,9 +1277,14 @@ figures. The main sweep (5 `T` × 3 seeds × 4 calibrators), the readout experim
 outcomes are recorded above beneath the predictions that preceded them.
 
 Four readouts exist — count, weighted-count, membrane (leaky) and accumulator
-(non-leaky) — with 54 readout runs recorded: all four at `T` in {2, 6, 10} and the first
-three at all five timestep settings.
+(non-leaky) — with 54 readout runs recorded on N-MNIST: all four at `T` in {2, 6, 10} and
+the first three at all five timestep settings.
+
+**Two datasets are now implemented and run.** N-Caltech101 adds the C axis at 101 classes,
+with 18 runs at `T` in {2, 6, 10} × 3 seeds × {count, accumulator}. It also supplies the
+first genuinely uncertain accuracy regime in the study, 0.43–0.66 against N-MNIST's 0.99.
 
 Not implemented: DVS-Gesture and CIFAR10-DVS, which raise `NotImplementedError` at the
-loader. The single-dataset limitation is now the study's largest. A preprint is in
+loader. DVS-Gesture remains the interesting one — its ~330-sample calibration split is the
+regime where the calibrator null result could plausibly break. A preprint is in
 preparation.

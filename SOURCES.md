@@ -88,6 +88,20 @@ supplied. None has been checked against a primary source in this repository.
 
 ### Added 2026-09-11, against the study's final claims
 
+**N-Caltech101 (Orchard, Jayawant, Cohen & Thakor).** The C axis. `[LIT]` for the dataset
+itself; the copy used here is the Mendeley Data mirror, `doi:10.17632/cy6cvx3ryv.1`,
+version 1. `Caltech101.zip` is 3,989,375,649 bytes with SHA-256
+`c70d387facd67f38f04a6f0afc4b1181416f2610cb924afa1f16fed99f7ebb9f`, and its MD5 matches the
+hash SpikingJelly publishes for the same file exactly, so the mirror is serving the archive
+upstream expects. `[MEASURED]` 8,709 samples in 101 class directories, class sizes 31
+(`inline_skate`) to 800 (`airplanes`), median 59 — counted from the extracted tree rather
+than taken from a paper.
+
+*Not verified:* the dataset homepage states 101 categories as "100 classes plus one
+background class", with the duplicate `Faces_easy` excluded. The class *semantics* have not
+been checked against the Caltech101 original, and nothing in this study depends on them —
+only on the count, which was measured.
+
 The claims changed during the work. What is claimed now is the attainable-confidence
 ceiling, the cross-entropy floor it implies, and a **null result** on calibrator choice —
 not the original isotonic hypothesis. These are the references a reviewer of *those*
@@ -179,6 +193,21 @@ The two-value example then gives equal-width ECE `|0.5 - 0.83| = 0.33` and equal
 constant drive of 1.5, the membrane potential follows `0.75 -> 1.125` (fire, reset to 0)
 `-> 0.75`. Step 1 must be silent and step 2 must fire, which is what makes the check
 sensitive to a comparator broken in either direction. *Used in:* `scripts/check_env.py`.
+
+**Ceiling and loss floor at 101 classes.** Same arithmetic, second argument varied.
+`e^2/(e^2 + 100) = 0.068806` against `e^2/(e^2 + 9) = 0.450853`, and the cross-entropy floor
+`-ln(ceiling)` is `2.6765` nats against `0.7966`. At `T = 6`, 0.801362 and 0.2214 nats; at
+`T = 10`, 0.995481 and 0.0045 nats. *Used in:* `NOTES.md` "The C axis",
+`scripts/caltech_experiment.py`, and asserted by
+`test_ceiling_at_101_classes_is_far_more_binding_than_at_10`.
+
+**Why the ceiling is saturated at some (T, C) and not others.** Reaching the ceiling needs a
+test sample whose count vector is exactly `[T, 0, ..., 0]`: one class firing at every step
+and **every one of the other `C - 1` classes silent at every step**. That is easy at `C = 10`
+and was achieved in all 15 N-MNIST runs; at `C = 101, T = 10` it was not, so the observed
+maximum sits 1.5e-3 below the bound. The bound is an upper bound, so this is slackness, not
+violation, and the two must not be reported as the same thing. *Used in:* `NOTES.md`
+"The ceiling holds, and the distinction between valid and saturated matters".
 
 **Leaky-integrator weights and the effective evidence window.** The non-spiking readout
 uses `v_t = v_(t-1) + (z_t - v_(t-1))/tau`, which rearranges to
