@@ -201,6 +201,17 @@ sensitive to a comparator broken in either direction. *Used in:* `scripts/check_
 `scripts/caltech_experiment.py`, and asserted by
 `test_ceiling_at_101_classes_is_far_more_binding_than_at_10`.
 
+**The conditional ceiling.** `ceiling_cond = e^T / (e^T + sum_{j != winner} e^{c_j})`, the
+largest confidence a sample could express if its winner fired at every step while its
+competitors stayed where they were. Setting every `c_j = 0` gives
+`e^T / (e^T + (C - 1))`, so the theoretical ceiling is its all-silent special case and not a
+separate quantity; this identity is asserted by
+`test_all_competitors_silent_recovers_the_theoretical_ceiling_exactly`. **It is a
+descriptive bound, not a derived one:** it is computed from a trained model's own outputs,
+so it explains what a particular model could have done and predicts nothing about what any
+model must do. *Used in:* `NOTES.md` "Pre-registered prediction 4" and its outcome,
+`spikecalib/conditional.py`.
+
 **Why the ceiling is saturated at some (T, C) and not others.** Reaching the ceiling needs a
 test sample whose count vector is exactly `[T, 0, ..., 0]`: one class firing at every step
 and **every one of the other `C - 1` classes silent at every step**. That is easy at `C = 10`

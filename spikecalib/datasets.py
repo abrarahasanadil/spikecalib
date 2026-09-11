@@ -191,11 +191,14 @@ DATASETS: dict[str, DatasetSpec] = {
         # machine, which projects to roughly 124 hours for the 18-run grid -- five days of
         # continuous training for one axis of one figure. Pooling by 4 makes it tractable.
         #
-        # Confound removal, which is the better reason. At 45x60 the SAME two-block
-        # (32, 64) architecture N-MNIST uses fits without modification, so the C = 101
-        # comparison differs from the C = 10 one in the class count and the data and in
-        # nothing else. At native resolution it would also differ in depth and in parameter
-        # count, and no reader could tell which difference produced the result.
+        # A confound-removal argument was also made and it did NOT survive contact with
+        # what was actually run. The intent: at 45x60, N-MNIST's own two-block (32, 64)
+        # architecture fits without modification, so the C = 101 comparison would differ in
+        # the class count and the data alone. The runs in fact used four blocks,
+        # (32, 64, 128, 128) -- scripts/caltech_experiment.py was written before the pooling
+        # decision and was never updated -- so the comparison is confounded with depth and
+        # parameter count after all. Corrected 2026-09-11. Pooling stands on the compute
+        # argument; the confound is real and is recorded as a hazard below.
         #
         # This cannot affect the ceiling claim. e^T/(e^T + C - 1) contains neither the
         # spatial resolution nor anything downstream of it. It lowers accuracy, which makes
@@ -253,9 +256,11 @@ DATASETS: dict[str, DatasetSpec] = {
             "class, not the average.",
             "180x240 is 37 times N-MNIST's pixel count, and at native resolution the "
             "18-run grid projects to ~124 hours. Frames are average-pooled by 4 to 45x60 "
-            "at load time, which also lets N-MNIST's own two-block architecture fit "
-            "unchanged. Resolution cannot affect the ceiling, which depends only on T "
-            "and C.",
+            "at load time. Resolution cannot affect the ceiling, which depends only on "
+            "T and C.",
+            "The runs use four conv blocks, (32, 64, 128, 128), against N-MNIST's two "
+            "(32, 64), so the C = 10 against C = 101 comparison is confounded with depth "
+            "and parameter count. Matching them would require a re-run.",
             "The calibration split is ~1,010 samples across 101 classes, so one-vs-rest "
             "isotonic has roughly 10 positives per class and should not be trusted here.",
             "Accuracy will be far below N-MNIST's 0.99. That is the point -- it is the "

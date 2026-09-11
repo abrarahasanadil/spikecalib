@@ -685,6 +685,46 @@
     host.innerHTML = html + "</tbody>";
   }
 
+  function renderConditional() {
+    var host = document.getElementById("conditional-table");
+    if (!host) return;
+    var rows = window.SPIKECALIB.conditional;
+    if (!rows || !rows.length) { hide("conditional-table"); return; }
+    var keys = [];
+    rows.forEach(function (r) {
+      var k = r.dataset + "|" + r.timesteps;
+      if (keys.indexOf(k) < 0) keys.push(k);
+    });
+    keys.sort(function (a, b) {
+      var A = a.split("|"), B = b.split("|");
+      return A[0] === B[0] ? (+A[1]) - (+B[1]) : (A[0] < B[0] ? -1 : 1);
+    });
+    var html = "<thead><tr>" +
+      ["dataset", "C", "T", "accuracy", "mean conf", "theoretical", "share", "conditional",
+       "share", "gap"]
+        .map(function (t) { return '<th scope="col" style="cursor:default">' + t + "</th>"; })
+        .join("") + "</tr></thead><tbody>";
+    keys.forEach(function (k) {
+      var g = rows.filter(function (r) { return r.dataset + "|" + r.timesteps === k; });
+      function avg(f) { return mean(g.map(f)); }
+      var res = avg(function (r) { return r.residual; });
+      var cond = avg(function (r) { return r.conditional_ceiling_mean; });
+      var acc = avg(function (r) { return r.test_accuracy; });
+      var hot = (g[0].dataset === "ncaltech101" && g[0].timesteps === 6);
+      html += "<tr" + (hot ? ' style="font-weight:600"' : "") + '><td class="k">' +
+        (g[0].dataset === "ncaltech101" ? "N-Caltech101" : "N-MNIST") + '</td><td class="k">' +
+        g[0].n_classes + '</td><td class="k">' + g[0].timesteps + "</td>" +
+        "<td>" + acc.toFixed(4) + "</td>" +
+        "<td>" + avg(function (r) { return r.mean_confidence; }).toFixed(4) + "</td>" +
+        "<td>" + avg(function (r) { return r.theoretical_ceiling; }).toFixed(4) + "</td>" +
+        "<td>" + (avg(function (r) { return r.share_explained_theoretical; }) * 100).toFixed(0) + "%</td>" +
+        "<td>" + cond.toFixed(4) + "</td>" +
+        "<td>" + (avg(function (r) { return r.share_explained_conditional; }) * 100).toFixed(0) + "%</td>" +
+        "<td>" + avg(function (r) { return r.ceiling_gap_theo_minus_cond; }).toFixed(4) + "</td></tr>";
+    });
+    host.innerHTML = html + "</tbody>";
+  }
+
   function renderQuantisation() {
     var host = document.getElementById("quant-within-table");
     if (!host) return;
@@ -726,6 +766,7 @@
   renderSelectiveTable();
   renderQuantisation();
   renderCaxis();
+  renderConditional();
   render();
   window.addEventListener("resize", function () { drawCeiling(); render(); });
 })();

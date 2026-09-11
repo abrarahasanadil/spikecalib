@@ -1195,3 +1195,92 @@ condition produces overconfidence here too.
   located as precisely here.
 - *Pooling by 4 is untested as a choice.* No comparison against 2× or native was run, so
   nothing establishes that the result is insensitive to it.
+
+---
+
+## 2026-09-11 — The conditional ceiling refines the bound and does not rescue the C=101 residual
+
+**Did.** Added `spikecalib/conditional.py`, `tests/test_conditional.py` and
+`scripts/conditional_ceiling.py`. Measured the competitor distribution on both datasets,
+computed the ceiling conditional on it, and tested a pre-registered prediction about whether
+it explains the `C = 101, T = 6` residual. No training: count vectors were read from the
+already-trained count models.
+
+**Ran.** `pytest -q` → **212 passed** (up from 195).
+`scripts/conditional_ceiling.py` → 24 cells, a few minutes.
+
+**Found: the competitor distribution is skewed, and the mean hides it.**
+At `C = 101, T = 6`, 81.6% of competitor slots hold zero, 12.1% hold one, 4.1% hold two,
+and the tail reaches six. The single loudest competitor carries 14.7% of the entire softmax
+denominator at `T = 6` and 25.6% at `T = 10`. Competitor activity grows with `T`: 8.6, 16.4
+and 24.9 of 100 classes firing at `T` = 2, 6, 10. At `C = 10` the competitors are nearly
+silent by comparison — 0.1 of 9 firing at `T = 2`, 1.5 at `T = 10`.
+
+**Found: part 2 of the prediction held, and it explains the study's own history.**
+Theoretical minus conditional ceiling is **at most 0.0067 at any `T` on N-MNIST**, against
+up to **0.1210** at `C = 101` — a 26-fold difference at `T = 6`. With nine competitors that
+are silent 95–99% of the time, the extreme vector `[T, 0, ..., 0]` is nearly reachable and
+the simple bound is nearly tight. That is why fourteen sessions of `C = 10` work never
+needed the refinement.
+
+**Found: part 1 was falsified, and that is the result.**
+The prediction said the conditional ceiling would account for more than half the `T = 6`
+residual and named its own threshold: wrong if the mean conditional ceiling exceeded 0.5660.
+Measured **0.6804** — *above* the accuracy of 0.6427 — in all three seeds (0.6571, 0.6812,
+0.7029). It accounts for **0%**. Given exactly the competitor patterns these models produced
+they could have averaged 0.68 confidence and averaged 0.49, leaving **0.19 of headroom
+unused**. The `C = 101, T = 6` residual is **genuine miscalibration, not an attainability
+effect**, and the tidiest explanation for the study's largest unexplained quantity is gone.
+Part 3 missed in the same direction: predicted gap above 0.15, measured 0.1210.
+
+**Found: the refinement is still worth having.** It is never looser than the theoretical
+bound and raises the explained share wherever the ceiling binds — 99.6% against 97.1% at
+`C = 101, T = 2`, and 61.7% against 44.5% at `C = 10, T = 6`.
+
+**Broke: a false claim from the previous session, caught by this session's code.**
+`scripts/conditional_ceiling.py` failed to load the N-Caltech101 weights, and the reason was
+that **the C = 101 runs used four conv blocks `(32, 64, 128, 128)`, not N-MNIST's two
+`(32, 64)`**. `CHANNELS` was set in `caltech_experiment.py` before the 4× pooling decision
+was made, and the confound-removal argument built on that decision — written into the
+registry, `NOTES.md`, the dashboard and a commit message — was never checked against it.
+The claim that the `C = 10` vs `C = 101` comparison "differs in the class count and the data
+and nothing else" was false when written.
+
+Corrected in all four places with a dated note. The ceiling verification is untouched, since
+the formula has no architectural term, but the *size* of the `T = 6` residual can no longer
+be attributed to `C` alone until the architectures are matched. The conditional-ceiling
+conclusion does survive it, because that bound is computed from each model's own outputs and
+asks only whether *that* model could have been more confident.
+
+Two things made this visible rather than permanent: the script loaded weights strictly, and
+it did so against an architecture it had hardcoded. A hardcoded value that happened to match
+would have been worse than one that did not — it would have loaded silently and measured the
+wrong thing. The script now reads `model_config` from each run's own record.
+
+**Chose.**
+- *The winner is replaced by `T`, not kept at its observed count.* The question the
+  conditional ceiling answers is what a sample **could** have expressed, so the winner is set
+  to its maximum and only the competitors are held at their measured values.
+- *The distribution is reported, not just the mean.* The denominator is a sum of
+  exponentials and is dominated by its largest terms; two configurations with identical mean
+  competitor count give materially different ceilings, which is asserted in a test.
+- *`residual_share_explained` clips at 1 rather than allowing 130%.* A ceiling below the
+  observed mean confidence is a contradiction and should be caught by the caller, not
+  smuggled through as a percentage above 100.
+- *The conditional ceiling is documented as an analysis tool, not a second derived result.*
+  The theoretical ceiling is fixed before a model exists and predicts; this one is measured
+  from a model's own spikes and only explains.
+
+**Open.**
+- *The `C = 101, T = 6` residual is now positively established as genuine miscalibration*
+  and has no mechanism. Ruling out attainability makes it a sharper question, not a smaller
+  one.
+- *Whether the residual's size is a `C` effect or a depth effect is undetermined* until
+  `C = 101` is re-run with `(32, 64)`. About 1.5 hours; not done.
+- *An assertion in the first version of `test_conditional.py` claimed the confidence cost
+  scales 11× with `C − 1`.* It does not: the denominator sensitivity does, but the ceiling
+  saturates, and the measured cost ratio is about 5.8×. The same overstatement is in
+  prediction 4's rationale, where it is left as written with a note, since the prediction's
+  thresholds did not depend on it.
+- *Nothing here tests a conditional ceiling at `C` between 10 and 101*, so the claim that it
+  converges on the theoretical bound as `C` falls rests on two points.

@@ -314,7 +314,9 @@
       error remained, so the two explanations could not be told apart. Here they come apart,
       and a large miscalibration is left that <strong>the ceiling does not explain at
       all</strong>. That is a limitation of this study's central claim, and only varying C
-      could expose it.
+      could expose it. The obvious rescue — that the theoretical bound is too generous
+      because it assumes all 100 competitors silent — was pre-registered as a prediction and
+      <strong>falsified</strong>; see the panel below.
     </p>
     <p>
       <strong>Where the cap is severe it costs accuracy, not just calibration.</strong> At
@@ -334,6 +336,65 @@
       literature is a regime difference.</strong> Underconfidence is what a capped readout
       does where the cap binds; take away either condition and this study measures
       overconfidence too.
+    </p>
+  </div></section>
+
+  <section class="panel c12"><div class="prose wide">
+<h3>A conditional ceiling does not rescue the C = 101 residual</h3>
+    <p>
+      The theoretical ceiling assumes the extreme count vector [T, 0, …, 0] — every one of
+      the C−1 competitors silent for all T steps. At ten classes that is nearly free. At a
+      hundred and one it is a strong assumption, and the obvious rescue for the unexplained
+      T = 6 residual is that a bound conditioned on <em>real</em> competitor activity would
+      bind after all:
+    </p>
+    <p style="text-align:center;font-family:var(--mono);font-size:13px">
+      ceiling<sub>cond</sub> = e<sup>T</sup> / (e<sup>T</sup> + Σ<sub>j≠winner</sub>
+      e<sup>c<sub>j</sub></sup>)
+    </p>
+    <p>
+      Setting every c<sub>j</sub> = 0 recovers the theoretical ceiling exactly, so this is a
+      refinement of the same quantity rather than a rival to it.
+      <span class="tag">pre-registered</span> The prediction — that it would account for most
+      of the residual, and that it would coincide with the theoretical bound at C = 10 — was
+      recorded and committed before any competitor count was measured.
+    </p>
+    <div class="scroll" style="margin:12px 0">
+      <table id="conditional-table"></table>
+    </div>
+    <p class="chart-note">Mean over seeds, rendered from
+      <code>results/conditional_ceiling.json</code>. "share" is the fraction of the
+      accuracy-minus-confidence gap that each ceiling forces.</p>
+    <p>
+      <strong>The half about C = 10 held.</strong> There the two ceilings differ by at most
+      0.0067 at any T — with nine competitors silent 95–99% of the time the extreme vector is
+      nearly reachable, so the simple bound was nearly tight. At C = 101 the gap is up to
+      <strong>26 times larger</strong>. That is exactly why the study never needed the
+      refinement before and does now.
+    </p>
+    <p>
+      <strong>The half that mattered was falsified.</strong> At C = 101, T = 6 the
+      conditional ceiling is <strong>0.6804 — above the accuracy of 0.6427</strong>, in all
+      three seeds, against a pre-registered falsification threshold of 0.5660. It accounts for
+      <strong>0%</strong> of the residual. Nothing forced these models to be underconfident:
+      given exactly the competitor patterns they produced they could have averaged 0.68
+      confidence, and averaged 0.49. <strong>They left 0.19 of headroom unused.</strong> The
+      residual is genuine miscalibration and the tidiest explanation for it is gone.
+    </p>
+    <p>
+      The measured competitor distribution is why the refinement is real but insufficient. At
+      C = 101, T = 6, 81.6% of competitor slots hold zero, 12.1% hold one, and the tail
+      reaches six; the single loudest competitor carries 14.7% of the whole denominator. That
+      is enough to move the bound from 0.8014 to 0.6804 and not enough to reach 0.6427.
+    </p>
+    <p>
+      One caveat on what this kind of bound can claim. The theoretical ceiling is fixed by T
+      and C before a model exists, so it <em>predicts</em>. The conditional ceiling is
+      computed from a model's own spikes, so it only <em>explains</em> — a model that
+      distributed its spikes differently would face a different bound. It earns a place as an
+      analysis tool, not as a second derived result. It also means this conclusion survives
+      the architecture confound noted above: whatever produced the residual, the models
+      demonstrably had room to be more confident and were not.
     </p>
   </div></section>
 
@@ -911,11 +972,19 @@ python scripts/export_dashboard_data.py</pre>
         break, and one-vs-rest isotonic should not be trusted there at all.
       </li>
       <li>
-        <strong>N-Caltech101 frames are pooled 4&times; to 45&times;60.</strong> That makes
-        the grid tractable and lets N-MNIST's architecture fit unchanged, so the C comparison
-        varies only the class count and the data. No comparison against 2&times; or native
-        resolution was run, so nothing establishes the result is insensitive to it. It cannot
-        affect the ceiling, which contains no spatial term.
+        <strong>The C = 10 against C = 101 comparison is confounded with depth.</strong>
+        The N-Caltech101 runs use four conv blocks (32, 64, 128, 128), 464k parameters,
+        against N-MNIST's two blocks and 1,071k — the experiment script set its channels
+        before the pooling decision and was never updated to match the argument built on it.
+        The ceiling verification is untouched, since the formula has no architectural term,
+        but the larger T = 6 residual at C = 101 cannot be attributed to the class count
+        alone until the architectures are matched.
+      </li>
+      <li>
+        <strong>N-Caltech101 frames are pooled 4&times; to 45&times;60</strong> to make the
+        grid tractable. No comparison against 2&times; or native resolution was run, so
+        nothing establishes the result is insensitive to it. It cannot affect the ceiling,
+        which contains no spatial term.
       </li>
       <li>
         <strong>One architecture.</strong> Every readout comparison uses the same trunk —

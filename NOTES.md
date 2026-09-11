@@ -880,6 +880,13 @@ So:
 This is a limitation of the study's central claim that only the C axis could expose, and it
 is the most important thing on this page.
 
+**Tested and still unexplained.** The obvious rescue is that the *theoretical* ceiling is too
+generous — it assumes all 100 competitors silent — and that a ceiling conditioned on real
+competitor activity would bind after all. That was pre-registered as prediction 4 and
+**falsified**: the conditional ceiling at `T = 6` is 0.6804, *above* the accuracy of 0.6427,
+so these models had 0.19 of unused headroom. The residual is genuine miscalibration. See
+"Outcome of prediction 4".
+
 ### The cap costs accuracy, not only calibration
 
 `[MEASURED]` Accuracy, accumulator minus count, per seed:
@@ -939,10 +946,28 @@ the dataset runs from 31 samples in its smallest class to 800 in its largest and
 count serves both.
 
 Frames are average-pooled 4× to 45×60 before the model sees them, which is recorded in the
-registry rather than hidden: it makes the 18-run grid tractable, and it lets N-MNIST's own
-two-block architecture fit unchanged so the `C = 101` comparison differs from the `C = 10`
-one in the class count and the data alone. Pooling cannot affect the ceiling, which contains
-neither resolution nor anything downstream of it.
+registry rather than hidden: it makes the 18-run grid tractable. Pooling cannot affect the
+ceiling, which contains neither resolution nor anything downstream of it.
+
+**Correction, 2026-09-11.** This paragraph originally also claimed that pooling let
+N-MNIST's own two-block `(32, 64)` architecture fit unchanged, so that the `C = 101`
+comparison differed from the `C = 10` one "in the class count and the data alone". **That is
+false.** The runs used **four** blocks, `(32, 64, 128, 128)` with 464,074 parameters, against
+N-MNIST's two blocks and 1,070,868 — `scripts/caltech_experiment.py` set `CHANNELS` before
+the pooling decision was made and was never updated to match the argument built on it. The
+comparison is therefore confounded with depth and parameter count.
+
+What this does and does not touch:
+
+- **The ceiling verification is unaffected.** `e^T/(e^T + C − 1)` contains no architectural
+  term, and the bound was respected in 9 of 9 runs and saturated to 1e-13 where reachable.
+  That result holds whatever the trunk was.
+- **The T = 6 residual is now less cleanly attributable.** 0.1534 of underconfidence at
+  `C = 101` against 0.0272 at `C = 10` was read as a C effect; part of it could be a depth or
+  capacity effect. Establishing it as a C effect requires re-running `C = 101` with `(32, 64)`
+  — about 1.5 hours — and that has not been done.
+- **The accuracy comparison between readouts is unaffected**, since count and accumulator
+  share the same trunk within N-Caltech101.
 
 ## Pre-registered prediction 4, recorded 2026-09-11
 
@@ -985,6 +1010,13 @@ So a mean competitor count around 1 would push the `C = 101` ceiling **below** t
 accuracy of 0.6427 and account for the entire residual, while the same activity at `C = 10`
 would move the ceiling by only 0.035.
 
+*(Note added 2026-09-11, after the run. The sentence above saying the same per-competitor
+activity "costs eleven times more confidence" at `C = 101` is imprecise: 11× is the ratio of
+**denominator** sensitivities, `(C − 1)` against `(C − 1)`, but the ceiling saturates as the
+denominator grows, so the confidence cost ratio is about **5.8×** at these values. The table
+in this section was computed correctly and none of the predictions or thresholds depended on
+the misstated ratio, so the prediction stands as written. Recorded rather than edited.)*
+
 ### The prediction
 
 1. **The conditional ceiling accounts for most of the `C = 101, T = 6` residual** — more
@@ -1017,6 +1049,90 @@ readout, fixed by `T` and `C` before any model exists. The conditional ceiling i
 distributed its spikes" is close to circular: a model that spread its spikes differently
 would face a different bound. It explains the residual as an attainability effect rather
 than a calibration failure; it does not predict the residual from first principles.
+
+## Outcome of prediction 4, recorded 2026-09-11 after the run
+
+`[MEASURED]` `scripts/conditional_ceiling.py`, 24 cells, no training. The prediction above
+is unedited.
+
+### The competitor distribution
+
+| dataset | `T` | competitors | mean count | mean # firing | % firing | mean loudest | Σe^c |
+|---|---|---|---|---|---|---|---|
+| N-Caltech101 | 2 | 100 | 0.097 | 8.6 | 8.6% | 1.43 | 119.7 |
+| N-Caltech101 | 6 | 100 | 0.237 | 16.4 | 16.4% | 3.01 | 198.3 |
+| N-Caltech101 | 10 | 100 | 0.408 | 24.9 | 24.9% | 4.27 | 423.2 |
+| N-MNIST | 2 | 9 | 0.006 | 0.1 | 0.6% | 0.05 | 9.1 |
+| N-MNIST | 6 | 9 | 0.064 | 0.4 | 4.6% | 0.45 | 11.1 |
+| N-MNIST | 10 | 9 | 0.245 | 1.5 | 17.0% | 1.37 | 21.6 |
+
+The distribution is heavily skewed, which is why it is reported rather than its mean: at
+`C = 101, T = 6`, **81.6% of competitor slots hold zero**, 12.1% hold one, 4.1% hold two,
+and the tail reaches six. The single loudest competitor carries 14.7% of the whole
+denominator sum at `T = 6` and 25.6% at `T = 10`, so "mean competitor count" understates
+what the softmax actually sees.
+
+### Part 2 held, and it explains why the simple bound sufficed at `C = 10`
+
+`[MEASURED]` Theoretical minus conditional ceiling:
+
+| `T` | `C = 101` | `C = 10` | ratio |
+|---|---|---|---|
+| 2 | 0.0100 | 0.0026 | 3.8× |
+| 6 | **0.1210** | **0.0047** | **25.9×** |
+| 10 | 0.0140 | 0.0006 | 24.7× |
+
+At `C = 10` the two ceilings differ by **at most 0.0067 at any `T`**, far inside the 0.05
+the prediction allowed. With nine competitors that are silent 95–99% of the time, the
+extreme vector is nearly reachable and the simple bound is nearly tight. At `C = 101` the
+gap is up to 26 times larger. **The prediction's account of why `C = 10` never needed the
+refinement is correct.**
+
+The refinement also improves the accounting wherever the ceiling does bind: at
+`C = 101, T = 2` it explains 99.6% of the residual against the theoretical bound's 97.1%,
+and at `C = 10, T = 6` it explains 61.7% against 44.5%.
+
+### Part 1 is falsified, and that is the result
+
+The prediction said the conditional ceiling would account for **more than half** of the
+`C = 101, T = 6` residual, and named its own falsification threshold: wrong if the mean
+conditional ceiling exceeds **0.5660**.
+
+| seed | accuracy | mean conf | residual | conditional ceiling | share explained |
+|---|---|---|---|---|---|
+| 0 | 0.6372 | 0.4775 | +0.1597 | 0.6571 | **0%** |
+| 1 | 0.6349 | 0.4858 | +0.1491 | 0.6812 | **0%** |
+| 2 | 0.6561 | 0.5048 | +0.1513 | 0.7029 | **0%** |
+
+**The conditional ceiling is 0.6804, which sits 0.0377 *above* the accuracy of 0.6427.**
+Every seed exceeds the 0.5660 threshold. Nothing forced these models to be underconfident:
+given exactly the competitor configurations they produced, they could have expressed a mean
+confidence of 0.68 and expressed 0.49 instead. **They left 0.1910 of headroom unused.**
+
+> **The `C = 101, T = 6` residual is genuine miscalibration, not an attainability effect.**
+> The tidiest available explanation is ruled out, and the study's largest unexplained
+> quantity stays unexplained.
+
+Part 3 also missed, in the same direction: the predicted gap of more than 0.15 at
+`C = 101, T = 6` measured **0.1210**.
+
+### Why this conclusion survives the architecture confound
+
+The `C = 101` runs used four conv blocks against N-MNIST's two (see the correction under
+"The C axis"), so whether the *size* of the residual is a `C` effect or a depth effect is
+open. **This result does not depend on which.** The conditional ceiling is computed from
+each model's own output distribution, so it asks only whether *that* model could have been
+more confident than it was. It could. Whatever produced the residual, attainability did not.
+
+### What the conditional ceiling is good for
+
+It is a strictly better descriptive bound than the theoretical one — never looser, up to
+0.12 tighter at 101 classes, and it raises the explained share wherever the ceiling binds.
+It is **not** a claim of the same kind. The theoretical ceiling is fixed by `T` and `C`
+before a model exists and therefore predicts; the conditional ceiling is measured from a
+model's own spikes and therefore only explains. A model that distributed its spikes
+differently would face a different conditional bound. It belongs in the paper as an
+analysis tool, not as a second derived result.
 
 ## Why the count readout exists
 
