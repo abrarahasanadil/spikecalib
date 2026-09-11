@@ -8,7 +8,11 @@ readout differs, because changing anything else would confound the comparison.
   count            sum of output spikes over T. Integer, capped at T.
   weighted-count   sum of w_t * s_t with weights summing to T. Real-valued, SAME cap,
                    far finer grained -- this separates "capped" from "coarse".
-  membrane         final potential of a non-spiking LIF integrator. Real-valued, uncapped.
+  membrane         final potential of a non-spiking LIF integrator. Real-valued, uncapped,
+                   and leaky: a one-step half-life, so it reads mostly the last two steps.
+  accumulator      the same integrator with the leak removed. Uncapped, and weights every
+                   step equally as count does -- so it differs from count only by the
+                   threshold, and from membrane only by the leak.
 
 The prediction was recorded in NOTES.md on 2026-09-11, before this script was run.
 
@@ -45,7 +49,7 @@ from spikecalib.train import (  # noqa: E402
     TrainConfig, predict_outputs, resolve_device, set_seed, train,
 )
 
-READOUTS = ("count", "weighted-count", "membrane")
+READOUTS = ("count", "weighted-count", "membrane", "accumulator")
 
 
 def paths(out_dir, key, timesteps, seed, readout):
@@ -172,10 +176,24 @@ def main() -> int:
                       f"AUROC {d['auroc']:.4f}  AURC {sel['aurc']:.5f}  "
                       f"ops {sel['n_achievable_coverage_levels']:>5}", flush=True)
 
+    # Merge rather than overwrite. Running a subset -- one readout, three of the five T --
+    # used to replace the whole file with just those rows, which would have silently
+    # discarded the 45-row comparison the moment anyone added a fourth readout.
     path = os.path.join(args.out, "readout_experiment.json")
+    keyed = {}
+    if os.path.exists(path):
+        for row in json.load(open(path))["rows"]:
+            keyed[(row["readout"], row["timesteps"], row["seed"])] = row
+    kept = len(keyed)
+    for row in rows:
+        keyed[(row["readout"], row["timesteps"], row["seed"])] = row
+    merged = [keyed[k] for k in sorted(keyed, key=lambda k: (k[1], k[2], k[0]))]
     with open(path, "w") as fh:
-        json.dump({"dataset": spec.key, "n_classes": spec.n_classes, "rows": rows}, fh, indent=2)
-    print(f"\n  wrote {os.path.relpath(path, REPO_ROOT)}  ({len(rows)} rows)")
+        json.dump({"dataset": spec.key, "n_classes": spec.n_classes, "rows": merged},
+                  fh, indent=2)
+    print(f"\n  wrote {os.path.relpath(path, REPO_ROOT)}  "
+          f"({len(merged)} rows: {len(rows)} from this run, {len(merged) - len(rows)} kept "
+          f"from {kept} already on disk)")
     return 0
 
 

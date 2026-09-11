@@ -521,6 +521,158 @@
       (state.sortDir > 0 ? ", ascending." : ", descending.");
   }
 
+  /* ---------- artifact-driven tables ----------
+
+     These render from window.SPIKECALIB.readout and .quantisation, which are copied
+     verbatim out of results/readout_experiment.json and results/quantisation_test.json by
+     scripts/export_dashboard_data.py. Nothing here carries a number of its own: that is
+     how the page previously came to state a membrane advantage measured on one seed as
+     though it held across three. A section whose artifact is missing hides itself.
+  */
+
+  function mean(xs) { var t = 0, i; for (i = 0; i < xs.length; i++) t += xs[i]; return t / xs.length; }
+  function sd(xs) {
+    if (xs.length < 2) return 0;
+    var m = mean(xs), t = 0, i;
+    for (i = 0; i < xs.length; i++) t += (xs[i] - m) * (xs[i] - m);
+    return Math.sqrt(t / xs.length);
+  }
+  function hide(id) {
+    var n = document.getElementById(id);
+    if (n) { var sec = n.closest("section"); if (sec) sec.hidden = true; }
+  }
+  function fmt(v, d) { return (v < 0 ? "\u2212" : "") + Math.abs(v).toFixed(d); }
+
+  var READOUT_ORDER = ["count", "weighted-count", "membrane", "accumulator"];
+  var READOUT_LABEL = {
+    "count": "count", "weighted-count": "weighted-count",
+    "membrane": "membrane (leaky)", "accumulator": "accumulator (non-leaky)"
+  };
+
+  function renderReadoutTable() {
+    var host = document.getElementById("readout-table");
+    if (!host) return;
+    var rows = window.SPIKECALIB.readout;
+    if (!rows || !rows.length) { hide("readout-table"); return; }
+
+    var Ts = [], seen = {};
+    rows.forEach(function (r) { if (!seen[r.timesteps]) { seen[r.timesteps] = 1; Ts.push(r.timesteps); } });
+    Ts.sort(function (a, b) { return a - b; });
+
+    var html = "<thead><tr>" +
+      ["T", "readout", "seeds", "test acc", "conf \u2212 acc", "ECE (equal-width)",
+       "AUROC", "AURC", "operating points"]
+        .map(function (t) { return '<th scope="col" style="cursor:default">' + t + "</th>"; })
+        .join("") + "</tr></thead><tbody>";
+
+    Ts.forEach(function (T) {
+      READOUT_ORDER.forEach(function (ro) {
+        var g = rows.filter(function (r) { return r.timesteps === T && r.readout === ro; });
+        if (!g.length) return;
+        function col(k) { return g.map(function (r) { return r[k]; }); }
+        function cell(k, d) {
+          var v = col(k), m = mean(v), s = sd(v);
+          return "<td>" + fmt(m, d) + (v.length > 1 ? ' <span class="sd">\u00b1' +
+            Math.abs(s).toFixed(d) + "</span>" : "") + "</td>";
+        }
+        html += '<tr><td class="k">' + T + '</td><td class="k">' + (READOUT_LABEL[ro] || ro) +
+          '</td><td class="k">' + g.length + "</td>" +
+          cell("test_accuracy", 4) + cell("mean_conf_minus_acc", 4) +
+          cell("ece_equal_width", 4) + cell("auroc", 4) + cell("aurc", 5) +
+          "<td>" + Math.round(mean(col("n_achievable_coverage_levels"))).toLocaleString() +
+          "</td></tr>";
+      });
+    });
+    host.innerHTML = html + "</tbody>";
+
+    // The crossover, stated from the data rather than asserted in prose.
+    var lines = [];
+    Ts.forEach(function (T) {
+      function m(ro, k) {
+        var g = rows.filter(function (r) { return r.timesteps === T && r.readout === ro; });
+        return g.length ? mean(g.map(function (r) { return r[k]; })) : null;
+      }
+      var ce = m("count", "ece_equal_width"), me = m("membrane", "ece_equal_width");
+      var ca = m("count", "auroc"), ma = m("membrane", "auroc");
+      var cr = m("count", "aurc"), mr = m("membrane", "aurc");
+      if (ce === null || me === null) return;
+      lines.push("<tr><td class=\"k\">" + T + "</td><td>" + (me < ce ? "membrane" : "count") +
+        "</td><td>" + (ma > ca ? "membrane" : "count") + "</td><td>" +
+        (mr < cr ? "membrane" : "count") + "</td></tr>");
+    });
+    var cross = document.getElementById("readout-crossover");
+    if (cross) {
+      cross.innerHTML = "<thead><tr><th style=\"cursor:default\">T</th>" +
+        "<th style=\"cursor:default\">better ECE</th>" +
+        "<th style=\"cursor:default\">better AUROC</th>" +
+        "<th style=\"cursor:default\">better AURC</th></tr></thead><tbody>" +
+        lines.join("") + "</tbody>";
+    }
+  }
+
+  function renderSelectiveTable() {
+    var host = document.getElementById("selective-table");
+    if (!host) return;
+    var rows = window.SPIKECALIB.readout;
+    if (!rows || !rows.length) { hide("selective-table"); return; }
+    var Ts = [], seen = {};
+    rows.forEach(function (r) { if (!seen[r.timesteps]) { seen[r.timesteps] = 1; Ts.push(r.timesteps); } });
+    Ts.sort(function (a, b) { return a - b; });
+    var html = "<thead><tr>" +
+      ["T", "readout", "operating points", "AURC", "oracle AURC", "coverage at risk \u2264 1%",
+       "coverage at risk \u2264 0.1%"]
+        .map(function (t) { return '<th scope="col" style="cursor:default">' + t + "</th>"; })
+        .join("") + "</tr></thead><tbody>";
+    Ts.forEach(function (T) {
+      READOUT_ORDER.forEach(function (ro) {
+        var g = rows.filter(function (r) { return r.timesteps === T && r.readout === ro; });
+        if (!g.length) return;
+        function avg(k) {
+          var v = g.map(function (r) { return r[k]; }).filter(function (x) { return x !== null && x !== undefined; });
+          return v.length ? mean(v) : null;
+        }
+        function pct(k) {
+          var v = avg(k), n = g.filter(function (r) { return r[k] !== null && r[k] !== undefined; }).length;
+          if (v === null) return "<td>none</td>";
+          return "<td>" + (v * 100).toFixed(1) + "%" +
+            (n < g.length ? ' <span class="sd">' + n + "/" + g.length + " seeds</span>" : "") + "</td>";
+        }
+        html += '<tr><td class="k">' + T + '</td><td class="k">' + (READOUT_LABEL[ro] || ro) +
+          "</td><td>" + Math.round(avg("n_achievable_coverage_levels")).toLocaleString() +
+          "</td><td>" + avg("aurc").toFixed(5) +
+          "</td><td>" + avg("aurc_optimal").toFixed(5) + "</td>" +
+          pct("coverage_at_risk_0p01") + pct("coverage_at_risk_0p001") + "</tr>";
+      });
+    });
+    host.innerHTML = html + "</tbody>";
+  }
+
+  function renderQuantisation() {
+    var host = document.getElementById("quant-within-table");
+    if (!host) return;
+    var rows = (window.SPIKECALIB.quantisation || []).filter(function (r) {
+      return r.scheme === "equal-mass" && r.n_levels_requested !== null;
+    });
+    if (!rows.length) { hide("quant-within-table"); return; }
+    var GRID = [5, 10, 20, 50, 100, 200, 500, 1000];
+    var html = "<thead><tr>" +
+      ["levels N", "pairs merged", "AUROC within a level", "verdict"]
+        .map(function (t) { return '<th scope="col" style="cursor:default">' + t + "</th>"; })
+        .join("") + "</tr></thead><tbody>";
+    GRID.forEach(function (n) {
+      var g = rows.filter(function (r) { return r.n_levels_requested === n; });
+      if (!g.length) return;
+      var merged = mean(g.map(function (r) { return r.pair_fraction_merged; }));
+      var within = mean(g.map(function (r) { return r.auroc_within; }));
+      html += '<tr><td class="k">' + n + "</td><td>" + (merged * 100).toFixed(2) + "%</td><td>" +
+        within.toFixed(4) + "</td><td>" +
+        (within > 0.52 ? "signal \u2014 merging it costs"
+                       : within < 0.48 ? "noise \u2014 merging it pays" : "uninformative") +
+        "</td></tr>";
+    });
+    host.innerHTML = html + "</tbody>";
+  }
+
   /* ---------- render ---------- */
 
   function render() {
@@ -532,6 +684,9 @@
   }
 
   updateHero();
+  renderReadoutTable();
+  renderSelectiveTable();
+  renderQuantisation();
   render();
   window.addEventListener("resize", function () { drawCeiling(); render(); });
 })();

@@ -8,6 +8,12 @@ aggregate ECE; a reliability diagram needs, per bin, the sample count, the mean 
 and the observed accuracy. Those are recomputed here from the saved weights, once, and
 cached.
 
+**The page must not carry numbers of its own.** Every figure the page states in prose or
+a table is rendered from this payload at runtime, so a result that changes in ``results/``
+changes on the page the next time this script runs. Hardcoding a number into
+``index.html`` is how the page went stale before: it kept stating a membrane advantage
+that three seeds had already qualified.
+
 **``fetch()`` is blocked under ``file://``.** A page that loaded the CSV over fetch would
 work when served and silently fail when opened from disk. So the CSV text is embedded
 verbatim in a ``<script>``-loadable file and parsed by the page at runtime. The page still
@@ -24,6 +30,7 @@ import contextlib
 import io
 import json
 import os
+import shutil
 import sys
 
 import numpy as np
@@ -148,11 +155,27 @@ def main() -> int:
     with open(os.path.join(args.results, "readout_stats.json")) as fh:
         stats = json.load(fh)[spec.key]
 
+    # The result artifacts the page renders tables from. Each is optional so a checkout
+    # that has not run every experiment still produces a working page; the page hides the
+    # corresponding section rather than showing an empty table.
+    def optional(name, key="rows"):
+        path = os.path.join(args.results, name)
+        if not os.path.exists(path):
+            print(f"  {name} absent -- the page will hide that section")
+            return None
+        with open(path) as fh:
+            return json.load(fh)[key]
+
+    readout_rows = optional("readout_experiment.json")
+    quantisation_rows = optional("quantisation_test.json")
+
     payload = {
         "dataset": spec.key,
         "display_name": spec.display_name,
         "n_classes": spec.n_classes,
         "n_bins": args.bins,
+        "readout": readout_rows,
+        "quantisation": quantisation_rows,
         "measured": [
             {
                 "T": int(t),
@@ -175,7 +198,21 @@ def main() -> int:
         fh.write("window.SPIKECALIB = " + json.dumps(payload) + ";\n")
     size = os.path.getsize(args.out) / 1024
     print(f"\n  wrote {os.path.relpath(args.out, REPO_ROOT)}  ({size:,.0f} KiB, "
-          f"{len(rel)} reliability curves)")
+          f"{len(rel)} reliability curves, {len(readout_rows or [])} readout rows, "
+          f"{len(quantisation_rows or [])} quantisation rows)")
+
+    # Two figures are drawn by matplotlib, not in the browser. They live in figures/,
+    # which is outside the published site root, so they are copied in.
+    figs = os.path.join(os.path.dirname(args.out), "figures")
+    os.makedirs(figs, exist_ok=True)
+    copied = []
+    for name in ("fig7-risk-coverage", "fig8-quantisation"):
+        for ext in ("svg", "png"):
+            src = os.path.join(REPO_ROOT, "figures", f"{name}.{ext}")
+            if os.path.exists(src):
+                shutil.copyfile(src, os.path.join(figs, f"{name}.{ext}"))
+                copied.append(f"{name}.{ext}")
+    print(f"  copied {len(copied)} figure files into {os.path.relpath(figs, REPO_ROOT)}")
     return 0
 
 

@@ -258,6 +258,30 @@ input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.12); }
 .well { background: var(--screen); border-radius: var(--r-panel); box-shadow: var(--well); padding: 10px 12px 6px; }
 .well svg { display: block; width: 100%; height: auto; max-width: 100%; overflow: visible; }
 .chart-note { margin: 9px 2px 2px; font-size: 12.5px; color: var(--ink-3); line-height: 1.5; }
+
+/* Figures rendered by matplotlib rather than drawn in the browser.
+
+   These are paper figures: their palette was validated against a LIGHT chart surface, and
+   re-stepping it for this dark page would invalidate that validation. So they keep their
+   own surface and are framed as inset documents rather than recoloured. The inset shadow
+   and the muted border stop a bright rectangle from floating unattached on the dark ground.
+
+   Width is capped because a five-panel figure stretched to full panel width on a 1920px
+   monitor renders its axis labels larger than the body text around it. */
+.fig { margin: 16px 0 4px; padding: 0; }
+.fig img {
+  display: block; width: 100%; max-width: 1180px; margin: 0 auto;
+  border-radius: 10px; background: #fcfcfb;
+  border: 1px solid var(--edge-soft);
+  box-shadow: 0 10px 28px -18px rgba(0,0,0,.9);
+}
+.fig figcaption {
+  margin: 10px auto 0; max-width: 1180px;
+  font-size: 12.5px; color: var(--ink-3); line-height: 1.55;
+}
+/* Standard deviations ride alongside a mean and must not compete with it. */
+.sd { font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
 .chart-note b { color: var(--ink-2); font-weight: 600; }
 
 .legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 2px 0; font-size: 12.5px; color: var(--ink-2); }

@@ -284,10 +284,12 @@ Mean equal-width ECE over 3 seeds:
 | 8 | 0.0072 | 0.0028 | 0.0031 | +0.0003 |
 | 10 | 0.0029 | 0.0026 | 0.0028 | +0.0002 |
 
-**The letter of the prediction is falsified; its substance holds.** Fourteen of the
-fifteen paired-bootstrap intervals straddle zero, and of the two that do not, one favours
-temperature (`T = 2`, seed 1) and one favours isotonic (`T = 6`, seed 0, CI
-[−0.0024, −0.0003]). The prediction said the interval would straddle zero at *every* `T`,
+**The letter of the prediction is falsified; its substance holds.** **Thirteen** of the
+fifteen paired-bootstrap intervals straddle zero. Two do not: one favours temperature
+(`T = 2`, seed 1, CI [+0.0006, +0.0044]) and one favours isotonic (`T = 6`, seed 0, CI
+[−0.0024, −0.0003]). *(Corrected 2026-09-11: this paragraph previously said "fourteen of
+the fifteen" in the same sentence as "the two that do not", which cannot both be true. The
+artifact has always said two are resolvable.)* The prediction said the interval would straddle zero at *every* `T`,
 and at `T = 6` it did not, so the prediction as stated is wrong. But one resolvable result
 in fifteen at a 95% level is what multiple comparisons produce on their own — the expected
 count under no true difference is about 0.75 — and it does not survive as evidence of an
@@ -431,18 +433,41 @@ then the literature's overconfidence reports and this study's underconfidence me
 would be the same phenomenon seen through different readouts, and the contradiction would
 dissolve. That was to be tested rather than asserted.
 
-**It was tested. It does not hold.** `[MEASURED]` The membrane readout remains
-**underconfident at all five** timestep settings and is **overconfident at none** of them:
-mean confidence minus accuracy is −0.0333, −0.0024, −0.0005, −0.0016 and −0.0017 at
-`T` = 2, 4, 6, 8 and 10. Removing the cap shrinks the underconfidence by a factor of
-sixteen but **never reverses it**. The single positive value anywhere in the
-experiment is weighted-count at `T = 10`, at +0.0004, which is negligible.
+**It was tested. It does not hold** — though at three seeds the result is more qualified
+than at one, and the qualification is recorded here rather than smoothed over.
+
+`[MEASURED]` The membrane readout's **mean** confidence stays below its accuracy at every
+timestep setting: −0.0289, −0.0010, −0.0013, −0.0036 and −0.0008 at `T` = 2, 4, 6, 8 and
+10, averaged over three seeds. But **only at `T = 2` is that gap larger than the spread
+between seeds.** From `T = 4` up the individual seeds straddle zero, and six of the 45
+cells in the experiment are positive:
+
+| readout | `T` | seed | `conf − acc` |
+|---|---|---|---|
+| membrane | 4 | 2 | +0.0020 |
+| membrane | 8 | 2 | +0.0009 |
+| membrane | 10 | 2 | +0.0020 |
+| weighted-count | 10 | 0 | +0.0004 |
+| weighted-count | 10 | 1 | +0.0003 |
+| count | 10 | 2 | +0.0002 |
+
+At `T = 2`, where the cap binds hardest, all three membrane seeds are underconfident and
+removing the cap shrinks the gap by 11.9× to 63.7×. That is the one regime where the
+comparison with the literature is unambiguous.
+
+*(Corrected 2026-09-11. This paragraph previously read "underconfident at all five timestep
+settings and overconfident at none", gave seed 0's five values as though they were the
+experiment's, said the shrinkage was "a factor of sixteen" — seed 0's 16.2× — and asserted
+that "the single positive value anywhere in the experiment" was weighted-count at `T = 10`.
+Three seeds had been run when that was written; only one had been read. The pre-registered
+prediction above is untouched.)*
 
 So the disagreement with the literature on the *sign* of SNN miscalibration is **not**
 explained by the readout choice, and the tidy resolution is unavailable. What can be said
 is narrower and still useful: the *magnitude* of the underconfidence this study reports is
 almost entirely a readout artifact, and once the readout is changed the residual
-miscalibration is small in both directions. Why the prior reports find overconfidence where
+miscalibration is small and **not consistently signed** — at `T ≥ 4` this study cannot
+resolve its direction at all. Why the prior reports find overconfidence where
 this finds near-zero remains unexplained, and the most likely candidates — different
 timestep regimes, converted rather than directly-trained networks, harder tasks where
 accuracy is far from the ceiling — are untested here.
@@ -841,8 +866,10 @@ problem, different quantity.
 **The SNN literature reports overconfidence as the characteristic calibration failure.
 This study measures the opposite.**
 
-`[MEASURED]` `scripts/run_sweep.py`, seed 0–2, 2026-09-10: mean confidence minus accuracy
-is **−0.5390 at `T = 2`** and **−0.1437 at `T = 4`** on N-MNIST. That is severe
+`[MEASURED]` `scripts/run_sweep.py`, seeds 0–2, 2026-09-10: mean confidence minus
+accuracy is **−0.5386 at `T = 2`** and **−0.1446 at `T = 4`** on N-MNIST, averaged over the
+three seeds. *(Corrected 2026-09-11: the figures previously given here, −0.5390 and −0.1437,
+were seed 2's, labelled as though they covered seeds 0–2.)* That is severe
 *under*confidence, and it is not a training artifact — it is forced by the
 attainable-confidence ceiling, which at `T = 2` with 10 classes is 0.4509 against a test
 accuracy of 0.9850. No reachable output could have been correctly confident.
@@ -855,9 +882,14 @@ on the sign, using the same construction.
 is most likely **regime**, not error in the prior reports:
 
 - **Timestep count.** The ceiling only binds while accuracy exceeds it. At `T = 8` and
-  `T = 10` this study's own models sit *below* the ceiling and the residual miscalibration
-  is ordinary overconfidence. Work at higher `T`, or on tasks where accuracy is lower,
-  would see overconfidence and would be right to report it.
+  `T = 10` this study's own models sit *below* the ceiling, and the structural
+  underconfidence duly disappears — but it does **not** turn into overconfidence. Measured
+  `conf − acc` for the count readout is −0.0065 at `T = 8` (all three seeds negative) and
+  −0.0008 at `T = 10` (two negative, one +0.0002). What the ceiling stops forcing is simply
+  not replaced by anything this study can resolve. Work at higher `T`, or on tasks where
+  accuracy is lower, may well see overconfidence; this study does not, and cannot claim it
+  does. *(Corrected 2026-09-11: this bullet previously asserted that the residual at `T = 8`
+  and `T = 10` "is ordinary overconfidence", which the artifact contradicts.)*
 - **Readout.** The bound is a property of softmax-over-spike-counts. Work using a membrane
   potential, a voting layer, or an ANN-to-SNN converted network with real-valued outputs
   has no such cap. Whether this is the whole explanation is tested directly in the readout
