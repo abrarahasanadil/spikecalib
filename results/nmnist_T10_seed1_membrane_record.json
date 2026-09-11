@@ -1,0 +1,93 @@
+{
+  "seed": 1,
+  "eval_seed": 0,
+  "dataset": "nmnist",
+  "timesteps": 10,
+  "split_fingerprint": "4f693d12682b2b57",
+  "epochs_requested": 50,
+  "epochs_run": 10,
+  "best_val_accuracy": 0.9882,
+  "final_val_accuracy": 0.987,
+  "final_val_tie_rate": 0.0044,
+  "best_epoch": 4,
+  "early_stopped": true,
+  "lr": 0.001,
+  "batch_size": 128,
+  "device": "mps",
+  "n_parameters": 1070868,
+  "seconds": 503.93253087997437,
+  "mps_nondeterministic": true,
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 0.16864687863826752,
+      "val_accuracy": 0.981,
+      "val_tie_rate": 0.0104
+    },
+    {
+      "epoch": 1,
+      "train_loss": 0.06405744771957397,
+      "val_accuracy": 0.9822,
+      "val_tie_rate": 0.0092
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.042465245871543884,
+      "val_accuracy": 0.9838,
+      "val_tie_rate": 0.0076
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.03041617595076561,
+      "val_accuracy": 0.9836,
+      "val_tie_rate": 0.0072
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.023582400173544883,
+      "val_accuracy": 0.9882,
+      "val_tie_rate": 0.004
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.017761927006244658,
+      "val_accuracy": 0.984,
+      "val_tie_rate": 0.0082
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.017003542609214783,
+      "val_accuracy": 0.9846,
+      "val_tie_rate": 0.006
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.013720451038479804,
+      "val_accuracy": 0.9864,
+      "val_tie_rate": 0.0044
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.012630434886217116,
+      "val_accuracy": 0.9874,
+      "val_tie_rate": 0.005
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.009500267581194639,
+      "val_accuracy": 0.987,
+      "val_tie_rate": 0.0044
+    }
+  ],
+  "model_config": {
+    "channels": [
+      32,
+      64
+    ],
+    "hidden": 256,
+    "tau": 2.0,
+    "v_threshold": 1.0,
+    "surrogate_alpha": 2.0,
+    "readout": "membrane"
+  }
+}

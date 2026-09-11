@@ -447,6 +447,82 @@ this finds near-zero remains unexplained, and the most likely candidates — dif
 timestep regimes, converted rather than directly-trained networks, harder tasks where
 accuracy is far from the ceiling — are untested here.
 
+## Readout comparison at three seeds, and what it changes
+
+`[MEASURED]` `scripts/readout_experiment.py --seeds 0 1 2`, 2026-09-11, N-MNIST, 45 runs
+(3 readouts x 5 timesteps x 3 seeds). Mean +- sd across seeds.
+
+| `T` | readout | test acc | conf − acc | ECE (ew) | AUROC | AURC | operating points |
+|---|---|---|---|---|---|---|---|
+| 2 | count | 0.9850±0.0005 | −0.5386±0.0004 | 0.5386±0.0004 | 0.9204±0.0042 | 0.00236±0.00005 | 9±1 |
+| 2 | weighted-count | 0.9851±0.0006 | −0.5385±0.0008 | 0.5385±0.0008 | 0.9030±0.0110 | 0.00289±0.00046 | 17±0 |
+| 2 | **membrane** | 0.9851±0.0006 | **−0.0289±0.0153** | **0.0290±0.0153** | **0.9659±0.0045** | **0.00072±0.00016** | **9998±3** |
+| 4 | count | 0.9887±0.0009 | −0.1446±0.0011 | 0.1447±0.0012 | 0.9735±0.0025 | 0.00048±0.00001 | 37±2 |
+| 4 | **membrane** | 0.9872±0.0002 | **−0.0010±0.0021** | **0.0038±0.0009** | **0.9772±0.0008** | **0.00040±0.00001** | 10000±0 |
+| 6 | count | 0.9902±0.0004 | −0.0272±0.0011 | 0.0273±0.0011 | **0.9842±0.0010** | **0.00021±0.00002** | 98±2 |
+| 6 | membrane | 0.9891±0.0008 | −0.0013±0.0007 | **0.0031±0.0002** | 0.9710±0.0034 | 0.00046±0.00007 | 10000±0 |
+| 8 | count | 0.9898±0.0010 | −0.0065±0.0011 | 0.0072±0.0004 | **0.9837±0.0014** | **0.00022±0.00001** | 221±23 |
+| 8 | membrane | 0.9882±0.0005 | −0.0036±0.0048 | **0.0054±0.0035** | 0.9772±0.0009 | 0.00035±0.00002 | 10000±0 |
+| 10 | count | 0.9908±0.0006 | −0.0008±0.0009 | **0.0029±0.0005** | **0.9863±0.0012** | **0.00017±0.00001** | 372±27 |
+| 10 | membrane | 0.9890±0.0014 | −0.0008±0.0021 | 0.0039±0.0010 | 0.9773±0.0043 | 0.00033±0.00009 | 10000±0 |
+
+### The membrane advantage at `T = 2` survives, with a wide spread
+
+Per-seed ratios of count ECE to membrane ECE at `T = 2`: **16.2x, 11.9x, 63.5x** — minimum
+11.9x, mean 30.5x. Every seed clears the factor-of-two falsification threshold by a wide
+margin, so the finding is not an artifact of seed 0.
+
+But the **spread is large and must be reported**: membrane ECE at `T = 2` is
+0.0290 ± 0.0153 across seeds — 0.0085, 0.0333 and 0.0451, a fivefold range. Count's is
+0.5386 ± 0.0004, which is almost perfectly stable. Removing the cap removes a *deterministic*
+error and exposes an ordinary, *variable* one. The headline "16.2x" from the seed-0 run is
+therefore the middle of a wide distribution, and the paper should quote the range.
+
+### Three of fifteen cells contradict the pattern, and they are all at high `T`
+
+Membrane is **worse** than count at `(T=8, seed 1)`, `(T=10, seed 1)` and `(T=10, seed 2)`.
+Reported rather than averaged away. All three are at timestep settings where the ceiling no
+longer binds — at `T = 10` the cap is 0.9996 against an accuracy of 0.9908 — so there is no
+structural error left for the membrane readout to remove, and it is simply a different model
+with ordinary variance. At `T = 10` the **mean** also favours count, 0.0029 against 0.0039.
+
+### Membrane is NOT strictly dominant, and the recommendation narrows accordingly
+
+This is the result that changes the advice, and it only appeared with the extra seeds and
+the per-readout selective metrics.
+
+| `T` | better ECE | better AUROC | better AURC |
+|---|---|---|---|
+| 2 | membrane | **membrane** (0.9659 vs 0.9204) | **membrane** (0.00072 vs 0.00236) |
+| 4 | membrane | **membrane** (0.9772 vs 0.9735) | **membrane** (0.00040 vs 0.00048) |
+| 6 | membrane | **count** (0.9842 vs 0.9710) | **count** (0.00021 vs 0.00046) |
+| 8 | membrane | **count** (0.9837 vs 0.9772) | **count** (0.00022 vs 0.00035) |
+| 10 | **count** | **count** (0.9863 vs 0.9773) | **count** (0.00017 vs 0.00033) |
+
+**Membrane calibrates better wherever the ceiling binds, and ranks better only at
+`T` in {2, 4}.** From `T = 6` upward the count readout separates correct from incorrect
+predictions *better* — AUROC 0.9842 against 0.9710 at `T = 6`, and AURC roughly half.
+Calibration and ranking are different properties, and the readout that wins one does not
+automatically win the other.
+
+So the claim is **not** "membrane readout is better". It is:
+
+> Where the ceiling binds — accuracy above `e^T/(e^T + C − 1)`, which for 10 classes means
+> `T ≤ 4` — a membrane readout removes a large structural calibration error and also ranks
+> at least as well. Above that point the cap is inert, the count readout ranks better, and
+> there is no reason to change it.
+
+`T_min` is exactly the test for which regime you are in.
+
+### The second deployment consequence: operating points
+
+Count gives **9 ± 1** achievable selective-prediction operating points at `T = 2` across
+10,000 test samples. Membrane gives **9,998 ± 3** — effectively a continuum, since the
+readout is real-valued and almost every sample has its own confidence. A practitioner who
+needs to deploy at a specific coverage can do so with a membrane readout and cannot with a
+count readout at low `T`. That is a separate consequence of the same choice from the
+calibration one, and it points the same way at low `T`.
+
 ## Why the count readout exists
 
 The readout experiment shows the cap is avoidable, which makes it easy to read this study

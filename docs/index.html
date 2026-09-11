@@ -228,38 +228,58 @@
 <h3>The ceiling is a property of the readout, not of spiking networks</h3>
     <p>
       Softmax-over-spike-counts is a <em>choice</em>. The same architecture was trained with
-      three different final aggregations — only the aggregation differs, every layer up to
-      the last BatchNorm is identical — to find out whether the cap is intrinsic or an
-      artifact of that choice.
+      three final aggregations — only the aggregation differs, every layer up to the last
+      BatchNorm is identical — across five timestep settings and three seeds, 45 runs.
     </p>
     <div class="scroll" style="margin:12px 0">
       <table>
         <thead><tr><th style="cursor:default">T</th><th style="cursor:default">readout</th>
-          <th style="cursor:default">test acc</th><th style="cursor:default">cap</th>
-          <th style="cursor:default">max conf</th><th style="cursor:default">conf − acc</th>
-          <th style="cursor:default">ECE</th><th style="cursor:default">levels</th></tr></thead>
+          <th style="cursor:default">test acc</th><th style="cursor:default">conf − acc</th>
+          <th style="cursor:default">ECE</th><th style="cursor:default">AUROC</th>
+          <th style="cursor:default">AURC</th><th style="cursor:default">operating points</th></tr></thead>
         <tbody>
-          <tr><td class="k">2</td><td class="k">count</td><td>0.9852</td><td>0.4509</td><td>0.4509</td><td>−0.5387</td><td>0.5387</td><td>10</td></tr>
-          <tr><td class="k">2</td><td class="k">weighted-count</td><td>0.9854</td><td>0.4509</td><td>0.4509</td><td>−0.5381</td><td>0.5381</td><td>17</td></tr>
-          <tr><td class="k">2</td><td class="k">membrane</td><td>0.9851</td><td>none</td><td>0.9976</td><td>−0.0333</td><td>0.0333</td><td>9,994</td></tr>
-          <tr><td class="k">10</td><td class="k">count</td><td>0.9899</td><td>0.9996</td><td>0.9996</td><td>−0.0007</td><td>0.0028</td><td>339</td></tr>
-          <tr><td class="k">10</td><td class="k">membrane</td><td>0.9909</td><td>none</td><td>1.0000</td><td>−0.0017</td><td>0.0025</td><td>10,000</td></tr>
+          <tr><td class="k">2</td><td class="k">count</td><td>0.9850</td><td>−0.5386</td><td>0.5386</td><td>0.9204</td><td>0.00236</td><td>9</td></tr>
+          <tr><td class="k">2</td><td class="k">weighted-count</td><td>0.9851</td><td>−0.5385</td><td>0.5385</td><td>0.9030</td><td>0.00289</td><td>17</td></tr>
+          <tr><td class="k">2</td><td class="k">membrane</td><td>0.9851</td><td>−0.0289</td><td>0.0290</td><td>0.9659</td><td>0.00072</td><td>9,998</td></tr>
+          <tr><td class="k">6</td><td class="k">count</td><td>0.9902</td><td>−0.0272</td><td>0.0273</td><td>0.9842</td><td>0.00021</td><td>98</td></tr>
+          <tr><td class="k">6</td><td class="k">membrane</td><td>0.9891</td><td>−0.0013</td><td>0.0031</td><td>0.9710</td><td>0.00046</td><td>10,000</td></tr>
+          <tr><td class="k">10</td><td class="k">count</td><td>0.9908</td><td>−0.0008</td><td>0.0029</td><td>0.9863</td><td>0.00017</td><td>372</td></tr>
+          <tr><td class="k">10</td><td class="k">membrane</td><td>0.9890</td><td>−0.0008</td><td>0.0039</td><td>0.9773</td><td>0.00033</td><td>10,000</td></tr>
         </tbody>
       </table>
     </div>
     <p>
-      A membrane readout — the final potential of a non-spiking integrator — removes the cap
-      and cuts uncalibrated ECE at T = 2 by <strong>16.2&times;</strong>, from 0.5387 to
-      0.0333, at indistinguishable accuracy. The weighted-count readout is the control that
-      makes this interpretable: it shares the cap exactly but has 1.7&times; more attainable
-      levels, and its ECE is 0.5381 against count's 0.5387. <strong>Granularity buys
-      nothing; the bound does all the work.</strong> By T = 10, where the cap no longer sits
-      below the accuracy, all three readouts converge to 0.0025–0.0031.
+      At T = 2 a membrane readout removes the cap and cuts uncalibrated ECE by
+      <strong>11.9&times; to 63.5&times;</strong> depending on seed (mean 30.5&times;), at
+      indistinguishable accuracy. The weighted-count control is what makes this
+      interpretable: it shares the cap exactly but has roughly twice the attainable levels,
+      and its ECE is 0.5385 against count's 0.5386. <strong>Granularity buys nothing; the
+      bound does all the work.</strong>
     </p>
-    <p style="color:var(--ink-3)">
-      The cost is that the output is no longer an integer spike count, which matters for
-      neuromorphic hardware that transmits spikes rather than potentials. That trade-off is
-      real and is not evaluated here.
+    <p>
+      The spread matters and is reported rather than averaged away. Membrane ECE at T = 2 is
+      0.0290 ± 0.0153 across seeds — 0.0085, 0.0333, 0.0451 — while count's is
+      0.5386 ± 0.0004. Removing the cap removes a <em>deterministic</em> error and exposes an
+      ordinary, <em>variable</em> one. Three of fifteen (T, seed) cells have membrane worse
+      than count, all at T ≥ 8 where the cap no longer binds.
+    </p>
+    <p>
+      <strong>Membrane is not strictly dominant.</strong> It calibrates better wherever the
+      ceiling binds, but it ranks better only at T = 2 and T = 4. From T = 6 upward the count
+      readout separates correct from incorrect predictions <em>better</em> — AUROC 0.9842
+      against 0.9710 at T = 6, with roughly half the AURC. Calibration and ranking are
+      different properties and the readout that wins one does not automatically win the
+      other.
+    </p>
+    <p>
+      The recommendation is therefore narrow. Where the ceiling binds — accuracy above
+      e<sup>T</sup>/(e<sup>T</sup>+C−1), which for 10 classes means T ≤ 4 — a membrane
+      readout removes a large structural error and ranks at least as well. Above that the cap
+      is inert, count ranks better, and there is no reason to change it.
+      <strong>T<sub>min</sub> is exactly the test for which regime you are in.</strong>
+      A second consequence points the same way at low T: count gives 9 achievable selective
+      operating points at T = 2 across 10,000 samples, membrane gives 9,998 — effectively a
+      continuum.
     </p>
   </div></section>
 

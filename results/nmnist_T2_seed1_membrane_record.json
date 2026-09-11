@@ -1,0 +1,93 @@
+{
+  "seed": 1,
+  "eval_seed": 0,
+  "dataset": "nmnist",
+  "timesteps": 2,
+  "split_fingerprint": "4f693d12682b2b57",
+  "epochs_requested": 50,
+  "epochs_run": 10,
+  "best_val_accuracy": 0.9834,
+  "final_val_accuracy": 0.9812,
+  "final_val_tie_rate": 0.0076,
+  "best_epoch": 4,
+  "early_stopped": true,
+  "lr": 0.001,
+  "batch_size": 128,
+  "device": "mps",
+  "n_parameters": 1070868,
+  "seconds": 109.00803422927856,
+  "mps_nondeterministic": true,
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 0.581248640537262,
+      "val_accuracy": 0.967,
+      "val_tie_rate": 0.0268
+    },
+    {
+      "epoch": 1,
+      "train_loss": 0.28919728963851926,
+      "val_accuracy": 0.976,
+      "val_tie_rate": 0.0152
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.18677800207138062,
+      "val_accuracy": 0.977,
+      "val_tie_rate": 0.0152
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.13229967831134795,
+      "val_accuracy": 0.9774,
+      "val_tie_rate": 0.009
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.09928289998531342,
+      "val_accuracy": 0.9834,
+      "val_tie_rate": 0.0076
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.07760686602592469,
+      "val_accuracy": 0.9814,
+      "val_tie_rate": 0.0088
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.06312595261573792,
+      "val_accuracy": 0.9802,
+      "val_tie_rate": 0.007
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.0530578002679348,
+      "val_accuracy": 0.9816,
+      "val_tie_rate": 0.0072
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.04406883393406868,
+      "val_accuracy": 0.983,
+      "val_tie_rate": 0.0064
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.0390712284886837,
+      "val_accuracy": 0.9812,
+      "val_tie_rate": 0.0076
+    }
+  ],
+  "model_config": {
+    "channels": [
+      32,
+      64
+    ],
+    "hidden": 256,
+    "tau": 2.0,
+    "v_threshold": 1.0,
+    "surrogate_alpha": 2.0,
+    "readout": "membrane"
+  }
+}
