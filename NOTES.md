@@ -925,9 +925,15 @@ too. The disagreement was a regime difference, and the C axis is what made it vi
 ### What the split is
 
 No official train/test split exists, so the study defines one: **proportional per class at
-20% with a floor of 6**, seeded, saved to `results/ncaltech101_T*_seed*_split.npz`, and
-reproduced by `make_dataset_splits`. Sizes: **train 5,654 / val 303 / cal 1,010 / test
-1,742**, partitioning all 8,709 samples. Fixed per-class holdouts are used for val (3) and
+20% with a floor of 6**, seeded, and written to `results/ncaltech101_T*_seed*_split.npz`.
+Sizes: **train 5,654 / val 303 / cal 1,010 / test 1,742**, partitioning all 8,709 samples.
+
+Those `.npz` files are not committed — `results/*.npz` is ignored, as it is for N-MNIST —
+and they do not need to be. `make_dataset_splits` regenerates them byte-identically from
+the seed alone, which is verified: seeds 0, 1 and 2 reproduce fingerprints `17e6b35480e6d410`,
+`0087190fd7fba8ef` and `65947f632bdb55cc`, and **every row in
+`results/caltech_experiment.json` carries the fingerprint of the split that produced it**.
+A result can therefore prove which split it came from rather than assert it. Fixed per-class holdouts are used for val (3) and
 cal (10) so every class reaches the calibration set; the test split is proportional because
 the dataset runs from 31 samples in its smallest class to 800 in its largest and no fixed
 count serves both.
