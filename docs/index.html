@@ -231,8 +231,9 @@
 <h3>The ceiling is a property of the readout, not of spiking networks</h3>
     <p>
       Softmax-over-spike-counts is a <em>choice</em>. The same architecture was trained with
-      three final aggregations — only the aggregation differs, every layer up to the last
-      BatchNorm is identical — across five timestep settings and three seeds, 45 runs.
+      four final aggregations — only the aggregation differs, every layer up to the last
+      BatchNorm is identical — across up to five timestep settings and three seeds,
+      54 runs.
     </p>
     <div class="scroll" style="margin:12px 0">
       <table id="readout-table"></table>
@@ -275,6 +276,78 @@
       A second consequence points the same way at low T: count gives 9 achievable selective
       operating points at T = 2 across 10,000 samples, membrane gives 9,998 — effectively a
       continuum.
+    </p>
+  </div></section>
+
+  <section class="panel c12"><div class="prose wide">
+<h3>The leak explains about half of it — the threshold explains the rest</h3>
+    <p>
+      With quantisation ruled out, the next candidate needed no new mechanism either. The
+      membrane readout uses the network's own charge equation, v += (z − v)/τ with τ = 2, so
+      it <strong>leaks with a half-life of exactly one step</strong>: the input k steps before
+      the end enters the final potential with weight 0.5&nbsp;×&nbsp;0.5<sup>k</sup>. Its
+      effective evidence window is far shorter than T, and it does not grow with T.
+    </p>
+    <div class="scroll" style="margin:12px 0">
+      <table>
+        <thead><tr><th style="cursor:default">T</th>
+          <th style="cursor:default">leaky membrane — share of weight on the last 2 steps</th>
+          <th style="cursor:default">count — same share</th></tr></thead>
+        <tbody>
+          <tr><td class="k">2</td><td><strong>100.0%</strong></td><td><strong>100.0%</strong></td></tr>
+          <tr><td class="k">6</td><td>76.2%</td><td>33.3%</td></tr>
+          <tr><td class="k">10</td><td>75.1%</td><td>20.0%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      <strong>At T = 2 the two readouts integrate over exactly the same window</strong>, and
+      that is the regime where membrane wins. By T = 6 they have come apart, and that is where
+      it starts losing. So the test was a fourth readout: an <strong>accumulator</strong>,
+      v += z, the same non-spiking integrator with the leak removed and every step weighted
+      equally. It differs from count <em>only</em> by the output threshold, and from membrane
+      <em>only</em> by the leak — which separates two explanations that were confounded.
+    </p>
+    <p>
+      <span class="tag">pre-registered</span> The prediction and its falsification condition
+      were recorded in NOTES.md and committed before the first accumulator model was trained.
+      It said the prediction fails if the accumulator's AUROC deficit against count stays more
+      than half the leaky membrane's — 0.0066 at T = 6, 0.0045 at T = 10.
+    </p>
+    <p>
+      <strong>Both halves of the answer are reported because the prediction contains both.</strong>
+      The stated falsification condition is not met, so the prediction stands: the deficit is
+      <strong>0.0061 at T = 6</strong> and <strong>0.0035 at T = 10</strong>, closing
+      <strong>53%</strong> and <strong>62%</strong> of the membrane gap. But its headline
+      wording said the accumulator should "match or beat count", and it does not — count ranks
+      better in <strong>every seed at both timestep settings</strong>, 0 of 6. The leak is the
+      largest single mechanism found and it is not the only one. About 40% of the deficit
+      survives its removal, and since an accumulator and a count differ only by the threshold,
+      that residue belongs to the thresholding itself.
+    </p>
+    <p>
+      <strong>The part of the prediction that was wrong turned out to be the most useful.</strong>
+      It said accumulator and membrane should be close at T = 2. On ranking they are, 0.9698
+      against 0.9659. On calibration they are not: ECE is <strong>0.0031 ± 0.0002</strong>
+      against membrane's <strong>0.0290 ± 0.0153</strong>. Removing the leak drops the mean
+      ninefold and the seed-to-seed spread <strong>77-fold</strong>, to tighter than count's.
+      That answers a question this study had left open — why membrane's calibration at T = 2
+      swings so widely between seeds. A leaky integrator at T = 2 is reading essentially the
+      final step, so its calibration rides on whatever that one step produced.
+    </p>
+    <p>
+      One unpredicted result bears on the disagreement with the literature. The accumulator is
+      the <strong>first readout measured here that is consistently overconfident</strong>:
+      conf − acc is +0.0032 at T = 6 and +0.0047 at T = 10, positive in 3 of 3 seeds at both.
+      Every other readout is underconfident or unsigned. That does not resolve the
+      disagreement, but it narrows it — an uncapped, non-leaky readout at T ≥ 6 is mildly
+      overconfident, which is the direction the literature reports. The magnitude is under half
+      a percentage point on one architecture and one dataset, so it is a lead, not a finding.
+    </p>
+    <p>
+      None of this recommends changing the readout at high T. The accumulator costs about 0.2
+      points of accuracy at T = 10 (0.9879 against count's 0.9908), count still ranks best
+      there, and count is what the hardware exposes.
     </p>
   </div></section>
 
@@ -541,6 +614,14 @@
       the readout: an uncapped readout is still underconfident there. Above T = 4 this study
       cannot resolve the sign at all — a weaker statement than seed 0 alone supported, and
       the honest one.
+    </p>
+    <p>
+      <strong>One readout does show the literature's direction.</strong> The non-leaky
+      accumulator is mildly but consistently <em>over</em>confident at T ≥ 6 — conf − acc
+      +0.0032 and +0.0047, positive in 3 of 3 seeds at both. So an uncapped readout that also
+      integrates over the full window lands on the side the literature reports, while the
+      capped and the leaky ones do not. That is a lead worth following on a second dataset,
+      not a resolution: the magnitude is under half a percentage point, on one architecture.
     </p>
   </div></section>
 

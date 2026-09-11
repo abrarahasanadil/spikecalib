@@ -993,3 +993,108 @@ that is run once and must not lose its work.
   drawing something wrong, but only by luck of how the lookup was written.
 - *`results/quantisation_cache.npz` is 30 × 10,000 confidences.* Cheap now; if the study
   adds datasets or seeds this becomes the pattern that needs a size policy.
+
+---
+
+## 2026-09-11 — The leak explains half the ranking deficit; auditing the dashboard found thirteen defects
+
+**Did.** Three things. Added a non-leaky `accumulator` readout and used it to test whether
+the membrane integrator's leak is what costs it its ranking at high `T`. Regenerated the
+dashboard payload and audited every number on the page against the artifacts. Corrected
+what the audit found, in both the page and `NOTES.md`.
+
+**Ran.** `pytest -q` → **179 passed** (up from 174).
+`scripts/readout_experiment.py --readouts accumulator --timesteps 2 6 10 --seeds 0 1 2`
+→ exit **0**, 9 runs, ~2.5 h, merged to 54 rows.
+`scripts/export_dashboard_data.py` → `docs/data.js`, 310 KiB.
+Rendered-page audit under headless Chromium at 1680px and 400px.
+
+**Found: the membrane readout leaks hard, and the leak was measurable before any model ran.**
+`v += (z − v)/tau` with `tau = 2` gives per-step retention 0.5 — a half-life of **exactly one
+step**. The input `k` steps before the end enters with weight `0.5 × 0.5^k`. At `T = 2` the
+leaky window and the count window **coincide exactly** (both 100% on the last two steps); by
+`T = 6` membrane puts 76% there against count's 33%. That coincidence with the observed
+crossover is what made the hypothesis worth testing rather than guessing.
+
+**Found: the leak accounts for about half the deficit, and the prediction passes its own test
+while failing its own headline.** Both were written down, so both are reported. The stated
+falsification condition — deficit staying above half membrane's, 0.0066 at `T = 6` and
+0.0045 at `T = 10` — is not met: measured **0.0061** and **0.0035**, closing **53%** and
+**62%**. But the headline said the accumulator should "match or beat count", and it does not:
+count ranks better in **every seed at both settings**, 0 of 6. Since an accumulator and a
+count differ *only* by the output threshold, the surviving ~40% belongs to the thresholding.
+
+**Found: the wrong part of the prediction was the most useful part.** It said accumulator and
+membrane should be close at `T = 2`. On ranking they are (0.9698 against 0.9659). On
+calibration they are not: ECE **0.0031 ± 0.0002** against **0.0290 ± 0.0153**. Removing the
+leak drops the mean ninefold and the seed spread **77-fold**. That answers the open question
+from the previous session about why membrane's `T = 2` calibration swings so widely — a leaky
+integrator at `T = 2` is reading essentially the final step.
+
+**Found: the first consistently overconfident readout in the study.** The accumulator's
+`conf − acc` is +0.0032 at `T = 6` and +0.0047 at `T = 10`, positive in 3 of 3 seeds at both.
+Recorded as a lead on the literature disagreement, not a finding: the magnitude is under half
+a percentage point, on one architecture and one dataset.
+
+**Found: thirteen defects on the dashboard, most of them the same mistake.**
+A number measured on seed 0, written before the other two seeds existed, never revisited.
+
+Wrong arithmetic:
+- "14 of 15" paired-bootstrap intervals straddle zero. It is **13 of 15**. `NOTES.md` said
+  "fourteen of the fifteen" and "the two that do not" in a single sentence; the page dropped
+  the second resolvable result altogether. The two that resolve point in *opposite*
+  directions, which strengthens the null reading.
+- Training loss plateaus "between 0.0086 and 0.0141" above the floor. Measured across
+  fifteen runs: **0.0072 to 0.0182**. Neither endpoint was right.
+- "At `T = 8` and `T = 10` the residual miscalibration is ordinary overconfidence." It is
+  not: `conf − acc` is −0.0065 at `T = 8`, negative at all three seeds. Twice on the page,
+  once in `NOTES.md`.
+
+Claims the three-seed run had already superseded:
+- "The membrane readout is underconfident at all five timestep settings and overconfident at
+  none." **Six of the 45 cells are positive.** This one is uncomfortable: the wording was
+  edited two sessions ago and *verified on the rendered page*, but only the rendering was
+  checked, never the substance against the data that already existed.
+- "The single positive `conf − acc` anywhere in the experiment." There were six.
+
+Seven single-seed numbers restated as means with spread: count `conf − acc` at `T` = 2 and 4,
+membrane `conf − acc` at all five `T`, the "sixteenfold" shrinkage (11.9×–63.7×), one-vs-rest
+AURC "five times worse" (6.3×), operating points at `T = 2` (10 → about 9), and coverage at
+risk 0.1% at `T = 4`.
+
+**Broke: `readout_experiment.py` would have destroyed the 45-row artifact.** It wrote
+`results/readout_experiment.json` with only the rows from the current run. Running one readout
+over three of the five `T` — exactly what this session needed — would have replaced the whole
+comparison with nine rows. Caught because the first launch was killed within seconds for this
+reason; the file was intact and git had it anyway, but the next person would not have been
+watching. It now merges by `(readout, T, seed)` and reports how many rows it kept.
+
+**Chose.**
+- *The accumulator is `v += z`, a plain sum, not a mean.* A sum is the exact analogue of the
+  count readout, which is also a sum. That makes the pair differ by the threshold and nothing
+  else, which is the only reason the residual deficit can be attributed at all.
+- *The page no longer holds its own numbers.* The readout, crossover, selective and
+  quantisation tables render from `window.SPIKECALIB`, copied verbatim out of the result JSON
+  by the export script. Hardcoding is how the page came to state a one-seed result as the
+  study's, and no amount of care would have stopped it recurring.
+- *The figures keep their light surface on a dark page.* Their palette was validated against
+  a light chart surface; re-stepping it for the dark ground would invalidate that validation.
+  They are framed as inset documents instead.
+- *`NOTES.md` corrections are dated and say what they replace* rather than being silently
+  overwritten. The pre-registered predictions themselves are untouched, including the ones
+  that turned out wrong.
+
+**Open.**
+- *Roughly 40% of the high-`T` ranking deficit is still unexplained*, and it is now pinned to
+  the output threshold specifically — an accumulator and a count differ by nothing else. Why
+  thresholding should *help* ranking is not obvious and is the next question.
+- *The accumulator's mild overconfidence at `T ≥ 6` is one architecture on one dataset.*
+  If it survives a second dataset it is the most direct evidence this study could offer on
+  the sign disagreement.
+- *`tau = 2.0` was never tuned*, and the leak result makes it load-bearing rather than
+  incidental: a different `tau` would move the effective window and probably the crossover.
+  Nothing here establishes that `tau = 2` is a sensible default, only what it does.
+- *The accumulator costs about 0.2 accuracy points at `T = 10`* and that was not predicted or
+  investigated.
+- *The audit checked numbers against artifacts, not prose against prose.* Claims that are
+  wrong without containing a number would not have been caught.

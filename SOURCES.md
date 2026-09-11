@@ -180,6 +180,19 @@ constant drive of 1.5, the membrane potential follows `0.75 -> 1.125` (fire, res
 `-> 0.75`. Step 1 must be silent and step 2 must fire, which is what makes the check
 sensitive to a comparator broken in either direction. *Used in:* `scripts/check_env.py`.
 
+**Leaky-integrator weights and the effective evidence window.** The non-spiking readout
+uses `v_t = v_(t-1) + (z_t - v_(t-1))/tau`, which rearranges to
+`v_t = (1 - 1/tau) v_(t-1) + (1/tau) z_t`. Unrolling it, the input `k` steps before the end
+enters the final potential with weight `(1/tau)(1 - 1/tau)^k`. At `tau = 2` that is
+`0.5 x 0.5^k`: per-step retention 0.5, half-life exactly 1 step, exponential time constant
+`-1/ln(0.5) = 1.443` steps. The share of the final potential contributed by the last two
+steps is `(w_0 + w_1) / sum_k w_k` = 100.0% at `T = 2`, 76.2% at `T = 6`, 75.1% at `T = 10`,
+against `2/T` for the count readout, which weights every step equally. The `accumulator`
+readout sets the leak to zero, `v_t = v_(t-1) + z_t`, giving every step weight 1.
+*Used in:* `NOTES.md` "Pre-registered prediction 3", `spikecalib/models.py`
+`potential_trace`, and asserted by
+`test_membrane_leaks_with_a_one_step_half_life_and_the_accumulator_does_not`.
+
 **Tie-break sampling tolerance.** 4,000 exact two-way ties resolved uniformly gives a
 binomial share with standard deviation `sqrt(0.25/4000) = 0.0079`, so the `0.45 < p <
 0.55` window in the test is over six standard deviations wide and cannot fail by chance.
@@ -217,7 +230,12 @@ is engineering judgement recorded in `LOG.md`, not a citation.
 - Synthetic generator parameters: `p_hi = 0.75`, `p_lo = 0.15`, `noise = 0.20`,
   `noise_lo = 0.02`, `noise_hi = 0.45`. Chosen to produce visible miscalibration; not
   tuned and not meaningful outside the synthetic check.
-- LIF `tau = 2.0`, `v_threshold = 1.0`. Conventional defaults, not tuned.
+- LIF `tau = 2.0`, `v_threshold = 1.0`. Conventional defaults, not tuned. **`tau` became
+  load-bearing on 2026-09-11**: it sets the membrane readout's effective evidence window,
+  which the leak experiment shows accounts for about half the high-`T` ranking deficit. A
+  different `tau` would move that window and probably the crossover. Nothing in this
+  repository establishes `tau = 2` as a sensible default; the experiments only measure what
+  it does. See To verify.
 - Adam learning rate `1e-3`. The Adam default. **Not tuned for this model or dataset**;
   see To verify.
 - Bootstrap resamples: 1,000. Conventional; no source.
@@ -278,3 +296,9 @@ primary document.
 17. **Adam `lr = 1e-3` for this model.** Not a citation issue but an unjustified constant:
     no tuning has been done, and no evidence exists that it is appropriate for a
     surrogate-gradient SNN at low `T`.
+18. **LIF `tau = 2.0` as a readout parameter.** Also not a citation issue. It was adopted as
+    a conventional neuron default, but the leak experiment of 2026-09-11 shows it sets the
+    membrane readout's evidence window — half-life one step — and therefore drives a result
+    the study now reports. No sweep over `tau` has been run. Until one is, every statement
+    about the membrane readout is a statement about `tau = 2` specifically, and the paper
+    must say so rather than describing "a membrane readout" in general.

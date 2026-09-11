@@ -529,9 +529,11 @@ the per-readout selective metrics.
 predictions *better* — AUROC 0.9842 against 0.9710 at `T = 6`, and AURC roughly half.
 Calibration and ranking are different properties, and the readout that wins one does not
 automatically win the other. Why the ranking reverses is a separate question, taken up
-under "Why membrane ranks worse at high `T`" below: the first candidate explanation —
-that the count readout's coarseness is denoising its confidence — was tested and
-falsified, and the reversal is still unexplained.
+below in two sections. The first candidate explanation — that the count readout's
+coarseness is denoising its confidence — was tested and falsified. The second — that the
+membrane integrator's **leak** shortens its evidence window — was tested and accounts for
+**about half** of the deficit at `T = 6` and **62%** at `T = 10`. What survives the removal
+of the leak is attributable to the output threshold itself, and is not yet explained.
 
 So the claim is **not** "membrane readout is better". It is:
 
@@ -729,6 +731,92 @@ count is invariant to how far above threshold each crossing was, and a potential
 Also wrong, in the opposite direction, if the accumulator loses membrane's `T = 2`
 calibration advantage, which would mean the leak was doing load-bearing work at low `T`
 that the ceiling argument did not account for.
+
+## Outcome of prediction 3, recorded 2026-09-11 after the run
+
+`[MEASURED]` `scripts/readout_experiment.py --readouts accumulator --timesteps 2 6 10
+--seeds 0 1 2`, 9 runs, 2026-09-11. The prediction above is unedited.
+
+| `T` | readout | test acc | `conf − acc` | ECE (ew) | AUROC | AURC |
+|---|---|---|---|---|---|---|
+| 2 | count | 0.9850 | −0.5386 | 0.5386 | 0.9204 | 0.00236 |
+| 2 | membrane (leaky) | 0.9851 | −0.0289 | 0.0290 ± 0.0153 | 0.9659 | 0.00072 |
+| 2 | **accumulator** | 0.9861 | **+0.0000** | **0.0031 ± 0.0002** | 0.9698 | 0.00059 |
+| 6 | count | 0.9902 | −0.0272 | 0.0273 | **0.9842** | **0.00021** |
+| 6 | membrane (leaky) | 0.9891 | −0.0013 | 0.0031 | 0.9710 | 0.00046 |
+| 6 | **accumulator** | 0.9888 | **+0.0032** | 0.0042 | 0.9781 | 0.00032 |
+| 10 | count | 0.9908 | −0.0008 | 0.0029 | **0.9863** | **0.00017** |
+| 10 | membrane (leaky) | 0.9890 | −0.0008 | 0.0039 | 0.9773 | 0.00033 |
+| 10 | **accumulator** | 0.9879 | **+0.0047** | 0.0050 | 0.9828 | 0.00029 |
+
+### The prediction passes its own test and fails its own headline
+
+These two statements are both true and they were both in the prediction, so both are
+reported:
+
+- **The stated falsification condition is not met, so the prediction stands.** It said the
+  prediction was wrong if the accumulator's AUROC deficit against count remained *more than
+  half* the leaky membrane's, and named the thresholds 0.0066 at `T = 6` and 0.0045 at
+  `T = 10`. Measured: **0.0061 at `T = 6`** and **0.0035 at `T = 10`**. Removing the leak
+  closes **53%** of the deficit at `T = 6` and **62%** at `T = 10`. Both clear the bar, the
+  `T = 6` one narrowly.
+- **The headline wording is not satisfied.** It said the accumulator "should match or beat
+  count at `T = 6` and `T = 10`". It does not. Count ranks better in **every seed at both
+  timestep settings** — 0/6 wins. The gap narrows and does not close.
+
+So the leak is **a** mechanism, and the largest single one identified, but it is not the
+whole mechanism. Roughly 40% of the deficit survives with the leak removed, and that
+residue is what the remaining explanation has to account for: an accumulator and a count
+differ *only* by the output threshold, both weighting every step equally, so whatever is
+left is attributable to the thresholding itself.
+
+Part 2 of the prediction held cleanly: the accumulator beats the leaky membrane on AUROC at
+`T = 6` and `T = 10` in **3 of 3 seeds each**.
+
+### Part 3 was wrong, and being wrong is the most useful thing here
+
+Part 3 said accumulator and membrane should be *close* at `T = 2`, because their windows
+nearly coincide there. On ranking they are: AUROC 0.9698 against 0.9659. **On calibration
+they are not close at all, and the difference answers a question left open by the previous
+session.**
+
+| `T = 2` | ECE per seed | mean | sd |
+|---|---|---|---|
+| count | 0.5387, 0.5380, 0.5390 | 0.5386 | 0.0004 |
+| membrane (leaky) | 0.0333, 0.0451, 0.0085 | 0.0290 | **0.0153** |
+| accumulator | 0.0032, 0.0028, 0.0033 | **0.0031** | **0.0002** |
+
+The open question was *why membrane's `T = 2` ECE is so seed-variable* — a fivefold range —
+when count's is stable to 0.0004. **The leak is the answer.** Removing it drops the mean
+ECE ninefold and the standard deviation **77-fold**, to a spread narrower than count's. A
+leaky integrator at `T = 2` is reading essentially the final step, so its calibration rides
+on whatever that one step happened to produce; an accumulator averages the evidence and the
+seed dependence disappears with it.
+
+### An unpredicted result that bears on the literature disagreement
+
+`[MEASURED]` The accumulator is the **first readout in this study that is consistently
+overconfident**:
+
+| `T` | `conf − acc` per seed | positive in |
+|---|---|---|
+| 2 | −0.0015, +0.0001, +0.0014 | 2 of 3 |
+| 6 | +0.0022, +0.0028, +0.0046 | **3 of 3** |
+| 10 | +0.0047, +0.0042, +0.0051 | **3 of 3** |
+
+Every other readout measured here is underconfident or unsigned. This does not resolve the
+disagreement with the literature, but it narrows it usefully: **an uncapped, non-leaky
+readout at `T ≥ 6` is mildly overconfident**, which is the direction the SNN calibration
+literature reports. The magnitude is small — under half a percentage point — and one
+architecture on one dataset cannot carry the claim. It is recorded as a lead, not a finding.
+
+### What this costs
+
+The accumulator is not free. Test accuracy is 0.9879 ± 0.0009 at `T = 10` against count's
+0.9908 ± 0.0006, and 0.9888 against 0.9902 at `T = 6` — a consistent shortfall of about
+0.2 points at high `T`, though it is *higher* than count at `T = 2` (0.9861 against 0.9850).
+Nothing here recommends replacing the count readout at high `T`: count still ranks best,
+still costs least, and is what the hardware exposes.
 
 ## Why the count readout exists
 
@@ -1059,6 +1147,10 @@ estimators, all four calibrators, bootstrap intervals, selective prediction, and
 figures. The main sweep (5 `T` × 3 seeds × 4 calibrators), the readout experiment
 (3 readouts × 5 `T` × 3 seeds) and the quantisation test have all completed, and their
 outcomes are recorded above beneath the predictions that preceded them.
+
+Four readouts exist — count, weighted-count, membrane (leaky) and accumulator
+(non-leaky) — with 54 readout runs recorded: all four at `T` in {2, 6, 10} and the first
+three at all five timestep settings.
 
 Not implemented: DVS-Gesture and CIFAR10-DVS, which raise `NotImplementedError` at the
 loader. The single-dataset limitation is now the study's largest. A preprint is in

@@ -1,0 +1,99 @@
+{
+  "seed": 0,
+  "eval_seed": 0,
+  "dataset": "nmnist",
+  "timesteps": 10,
+  "split_fingerprint": "e524beccace851af",
+  "epochs_requested": 50,
+  "epochs_run": 11,
+  "best_val_accuracy": 0.9896,
+  "final_val_accuracy": 0.9876,
+  "final_val_tie_rate": 0.0044,
+  "best_epoch": 5,
+  "early_stopped": true,
+  "lr": 0.001,
+  "batch_size": 128,
+  "device": "mps",
+  "n_parameters": 1070868,
+  "seconds": 545.1946148872375,
+  "mps_nondeterministic": true,
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 0.13810264779448508,
+      "val_accuracy": 0.977,
+      "val_tie_rate": 0.011
+    },
+    {
+      "epoch": 1,
+      "train_loss": 0.042316072666049004,
+      "val_accuracy": 0.9804,
+      "val_tie_rate": 0.0126
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.027519151602983474,
+      "val_accuracy": 0.9832,
+      "val_tie_rate": 0.0068
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.02238150568947196,
+      "val_accuracy": 0.9812,
+      "val_tie_rate": 0.006
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.018100072850584983,
+      "val_accuracy": 0.987,
+      "val_tie_rate": 0.008
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.01499735666424036,
+      "val_accuracy": 0.9896,
+      "val_tie_rate": 0.0046
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.013322944661080837,
+      "val_accuracy": 0.9868,
+      "val_tie_rate": 0.006
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.012497859155088662,
+      "val_accuracy": 0.9884,
+      "val_tie_rate": 0.0036
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.011726877887099982,
+      "val_accuracy": 0.9892,
+      "val_tie_rate": 0.0032
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.011429829265996814,
+      "val_accuracy": 0.9884,
+      "val_tie_rate": 0.0036
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.011659806559421122,
+      "val_accuracy": 0.9876,
+      "val_tie_rate": 0.0044
+    }
+  ],
+  "model_config": {
+    "channels": [
+      32,
+      64
+    ],
+    "hidden": 256,
+    "tau": 2.0,
+    "v_threshold": 1.0,
+    "surrogate_alpha": 2.0,
+    "readout": "accumulator"
+  }
+}
