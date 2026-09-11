@@ -42,6 +42,7 @@ from .datasets import DatasetSpec
 
 __all__ = [
     "READOUTS",
+    "POTENTIAL_READOUTS",
     "readout_ceiling",
     "min_timesteps",
     "readout_weights",
@@ -70,7 +71,11 @@ E_MAC_JOULES = 4.6e-12  # J per multiply-accumulate
 EVENT_POLARITY_CHANNELS = 2
 
 
-READOUTS = ("count", "weighted-count", "membrane")
+READOUTS = ("count", "weighted-count", "membrane", "accumulator")
+
+#: Readouts that integrate a potential instead of aggregating output spikes. These get no
+#: output LIF, have no spike train, and are unbounded above.
+POTENTIAL_READOUTS = ("membrane", "accumulator")
 
 
 def readout_weights(timesteps: int) -> list[float]:
@@ -94,7 +99,7 @@ def readout_ceiling(readout: str, timesteps: int, n_classes: int) -> Optional[fl
     readout is a real-valued potential with no upper bound, so no finite ceiling exists and
     the supremum is 1.
     """
-    if readout == "membrane":
+    if readout in POTENTIAL_READOUTS:
         return None
     if readout not in ("count", "weighted-count"):
         raise ValueError(f"unknown readout {readout!r}; expected one of {READOUTS}")
@@ -347,16 +352,17 @@ class SpikingClassifier(nn.Module):
             layer.Linear(cfg.hidden, self.n_classes, bias=False),
             layer.SeqToANNContainer(nn.BatchNorm1d(self.n_classes)),
         ]
-        # Everything above is IDENTICAL for all three readouts. The stack ends at the
+        # Everything above is IDENTICAL for all four readouts. The stack ends at the
         # final BatchNorm1d, and only what follows differs -- for count and weighted-count
-        # an output LIF whose spikes are aggregated, for membrane a non-spiking integrator.
+        # an output LIF whose spikes are aggregated, for membrane and accumulator a
+        # non-spiking integrator that differs only in whether it leaks.
         #
         # The output neuron is appended to the SAME `net` Sequential rather than wrapped in
         # a second module, so parameter names stay `net.0…net.N` and checkpoints trained
         # before the readout option existed still load unchanged. Renaming would have
         # orphaned fifteen trained models for no benefit.
         self.readout = cfg.readout
-        if cfg.readout != "membrane":
+        if cfg.readout not in POTENTIAL_READOUTS:
             blocks.append(self._lif(output_layer=True))
         self.net = nn.Sequential(*blocks)
         # Not persistent: the weights are derived from T, so putting them in the state dict
@@ -389,34 +395,53 @@ class SpikingClassifier(nn.Module):
     def spike_train(self, x: torch.Tensor) -> torch.Tensor:
         """Output-layer spikes, shape ``[T, N, n_classes]``, values in {0, 1}.
 
-        Only defined for the spiking readouts. The membrane readout has no output spikes
-        by construction, and pretending otherwise would hide the difference the experiment
-        is measuring.
+        Only defined for the spiking readouts. The potential readouts have no output
+        spikes by construction, and pretending otherwise would hide the difference the
+        experiment is measuring.
         """
-        if self.readout == "membrane":
+        if self.readout in POTENTIAL_READOUTS:
             raise RuntimeError(
-                "the membrane readout has no output spike train; it integrates the "
+                f"the {self.readout} readout has no output spike train; it integrates the "
                 "pre-threshold potential instead"
             )
         self._check(x)
         return self.net(x)
 
-    def membrane_trace(self, x: torch.Tensor) -> torch.Tensor:
-        """Non-spiking LIF potential of the output layer at every step, ``[T, N, C]``.
+    def potential_trace(self, x: torch.Tensor, *, leak: bool = True) -> torch.Tensor:
+        """Non-spiking potential of the output layer at every step, ``[T, N, C]``.
 
-        Same charge equation as every other neuron in the network, ``v += (z - v) / tau``,
-        with the threshold comparison and the reset removed. Nothing fires, so the
-        potential accumulates freely and the readout is real-valued and unbounded -- which
-        is exactly the property being tested against the count readout's hard cap.
+        With ``leak=True`` this is the same charge equation as every other neuron in the
+        network, ``v += (z - v) / tau``, with the threshold comparison and the reset
+        removed. Nothing fires, so the potential is real-valued and unbounded -- which is
+        the property being tested against the count readout's hard cap.
+
+        **The leak is not incidental, and it is what ``leak=False`` exists to isolate.**
+        Expanding the recurrence, the input ``k`` steps before the end enters the final
+        potential with weight ``(1/tau)(1 - 1/tau)^k``. At the default ``tau = 2`` that is
+        ``0.5 * 0.5^k``: a half-life of exactly one step, and **75% of the final potential
+        comes from the last two steps at any T >= 6**. The count readout, by contrast,
+        weights every step equally at ``1/T``. So the two readouts do not merely differ in
+        boundedness -- at large ``T`` they integrate over very different windows, and at
+        ``T = 2`` their windows coincide exactly.
+
+        With ``leak=False`` the recurrence becomes ``v += z``, a pure accumulator: every
+        step carries weight 1, the same *equal* weighting the count readout uses. That
+        makes it the control that separates two confounded explanations. An accumulator and
+        a count differ **only** by the output threshold; an accumulator and a leaky
+        membrane differ **only** by the leak.
         """
         self._check(x)
         z = self.net(x)
         v = torch.zeros_like(z[0])
         out = []
         for t in range(z.shape[0]):
-            v = v + (z[t] - v) / self.cfg.tau
+            v = v + ((z[t] - v) / self.cfg.tau if leak else z[t])
             out.append(v)
         return torch.stack(out, dim=0)
+
+    def membrane_trace(self, x: torch.Tensor) -> torch.Tensor:
+        """The leaky potential trace. Retained as the name the earlier experiments used."""
+        return self.potential_trace(x, leak=True)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Per-class class scores, shape ``[N, n_classes]``, aggregated per the readout.
@@ -424,8 +449,10 @@ class SpikingClassifier(nn.Module):
         - ``count``: sum of output spikes over ``T``. Integer-valued in ``[0, T]``.
         - ``weighted-count``: ``Σ_t w_t s_t`` with weights summing to ``T``. Real-valued,
           same maximum as count, many more attainable levels.
-        - ``membrane``: final potential of a non-spiking LIF integrator. Real-valued and
-          unbounded.
+        - ``membrane``: final potential of a non-spiking LIF integrator. Real-valued,
+          unbounded, and **leaky** -- weighted towards the most recent steps.
+        - ``accumulator``: the same integrator with the leak removed. Unbounded, and
+          weights every step equally, as the count readout does.
 
         The docstring below describes the count readout specifically, which is the study's
         default and the only one whose output is integral.
@@ -438,8 +465,8 @@ class SpikingClassifier(nn.Module):
         convention: the caller resets, once per batch. :func:`spikecalib.train.predict_counts`
         does it explicitly, and a test demonstrates that omitting it changes the counts.
         """
-        if self.readout == "membrane":
-            return self.membrane_trace(x)[-1]
+        if self.readout in POTENTIAL_READOUTS:
+            return self.potential_trace(x, leak=self.readout == "membrane")[-1]
         spikes = self.spike_train(x)
         if self.readout == "weighted-count":
             return (spikes * self._w.to(spikes.dtype)).sum(dim=0)

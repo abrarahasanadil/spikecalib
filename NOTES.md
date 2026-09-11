@@ -634,6 +634,77 @@ invariant to how far above threshold each crossing was; the membrane potential i
 Whether that invariance is what helps at high `T` — and why it would only help once the cap
 stops binding — is untested. It is the next question, and this result does not answer it.
 
+## Pre-registered prediction 3, recorded 2026-09-11
+
+Written before the non-leaky readout was trained. Two explanations for the high-`T`
+ranking deficit were confounded until now, and this separates them.
+
+### The measurement that motivates it
+
+`[MEASURED]` The membrane readout uses the same charge equation as every other neuron,
+`v += (z - v)/tau`, with `tau = 2.0`. Expanding the recurrence, the input `k` steps before
+the end enters the final potential with weight `(1/tau)(1 - 1/tau)^k = 0.5 × 0.5^k`.
+
+| property | value |
+|---|---|
+| per-step retention `1 - 1/tau` | 0.5 |
+| half-life | **exactly 1 step** |
+| exponential time constant | 1.443 steps |
+
+So the readout **leaks, and leaks hard**. The share of the final potential contributed by
+the last two steps, against the count readout, which weights every step equally at `1/T`:
+
+| `T` | leaky membrane, last 2 steps | count, last 2 steps |
+|---|---|---|
+| 2 | **100.0%** | **100.0%** |
+| 6 | 76.2% | 33.3% |
+| 10 | 75.1% | 20.0% |
+
+**At `T = 2` the two readouts integrate over exactly the same window.** By `T = 6` they
+have come apart, and membrane is reading essentially the last two steps whatever `T` is.
+That coincides with the observed crossover, which is what makes leak a live hypothesis
+rather than a guess.
+
+### The hypothesis
+
+The membrane readout's effective evidence window is shorter than `T`. At low `T` there is
+little history to discard, so the leak costs nothing and membrane's freedom from the cap
+wins. At high `T` the count integrates all `T` steps equally while the potential is
+dominated by recent input, so count ranks better.
+
+### The control
+
+A fourth readout, `accumulator`: the same non-spiking integrator with the leak removed,
+`v += z`. Every step carries equal weight, as in count. Everything else — every layer up to
+and including the final `BatchNorm1d`, the training settings, the splits — is identical.
+
+This is the control that separates the two confounded explanations, because:
+
+- **accumulator vs count** differ *only* by the output threshold (both weight steps equally);
+- **accumulator vs membrane** differ *only* by the leak (both are unthresholded).
+
+### The prediction
+
+1. If leak is the mechanism, the accumulator should **match or beat count at `T = 6` and
+   `T = 10` on AUROC and AURC**, while keeping membrane's calibration advantage at `T = 2`.
+2. The accumulator should beat the leaky membrane at `T = 6` and `T = 10`. If the leak is
+   what costs membrane its ranking, removing it must recover something.
+3. At `T = 2` accumulator and membrane should be close, since the windows nearly coincide
+   there and the leak has almost nothing to discard.
+
+### Falsification
+
+Wrong if the accumulator still ranks below count at `T = 6` and `T = 10` — specifically if
+its AUROC deficit against count remains more than half the leaky membrane's deficit
+(membrane is 0.0132 behind at `T = 6` and 0.0090 at `T = 10`, so "more than half" means a
+remaining deficit above 0.0066 and 0.0045 respectively). In that case the leak is not the
+explanation and the difference is something about *what the two quantities measure* — a
+count is invariant to how far above threshold each crossing was, and a potential is not.
+
+Also wrong, in the opposite direction, if the accumulator loses membrane's `T = 2`
+calibration advantage, which would mean the leak was doing load-bearing work at low `T`
+that the ceiling argument did not account for.
+
 ## Why the count readout exists
 
 The readout experiment shows the cap is avoidable, which makes it easy to read this study

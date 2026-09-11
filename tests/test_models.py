@@ -324,12 +324,13 @@ def test_min_timesteps_rejects_unreachable_targets():
         min_timesteps(1, 0.9)
 
 
-def test_readout_ceiling_is_none_only_for_membrane():
-    from spikecalib.models import READOUTS, readout_ceiling
+def test_readout_ceiling_is_none_exactly_for_the_potential_readouts():
+    from spikecalib.models import POTENTIAL_READOUTS, READOUTS, readout_ceiling
 
-    assert readout_ceiling("membrane", 2, 10) is None
     for r in READOUTS:
-        if r != "membrane":
+        if r in POTENTIAL_READOUTS:
+            assert readout_ceiling(r, 2, 10) is None
+        else:
             assert readout_ceiling(r, 2, 10) == pytest.approx(0.45085306, abs=1e-7)
 
 
@@ -346,3 +347,108 @@ def test_weighted_count_shares_the_cap_but_not_the_granularity():
         for wt in w:
             sums |= {x + wt for x in sums}
         assert len(sums) > T + 1
+
+
+
+# ---------------------------------------------------------------------------------------
+# The accumulator readout: a membrane with the leak removed
+# ---------------------------------------------------------------------------------------
+
+
+def _fixed_trunk(model, z):
+    """Replace the network with one that emits a preset ``[T, N, C]`` regardless of input.
+
+    The readouts are defined by what they do to the trunk's output, so pinning the trunk is
+    what makes the integration weights measurable rather than inferred.
+    """
+    import torch.nn as nn
+
+    class Fixed(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.z = z
+
+        def forward(self, _x):
+            return self.z
+
+    model.net = Fixed()
+    return model
+
+
+def _readout_model(readout, timesteps=6):
+    from spikecalib.datasets import get_spec
+    from spikecalib.models import ModelConfig, build_model
+
+    return build_model(get_spec("nmnist"), timesteps,
+                       ModelConfig(channels=(8, 8), hidden=16, readout=readout))
+
+
+def test_membrane_leaks_with_a_one_step_half_life_and_the_accumulator_does_not():
+    """The measurement Task 1 turns on: how far back each readout actually looks.
+
+    The leaky membrane's weight on the input ``k`` steps before the end is
+    ``(1/tau)(1 - 1/tau)^k``; at the default ``tau = 2`` that halves every step. The
+    accumulator weights every step at 1. This is the difference the non-leaky control
+    exists to isolate, so it is asserted rather than assumed from the charge equation.
+    """
+    T = 6
+    dummy = torch.zeros(T, 1, 2, 34, 34)
+    for k in range(T):
+        z = torch.zeros(T, 1, 10)
+        z[T - 1 - k, 0, 0] = 1.0
+        leaky = _fixed_trunk(_readout_model("membrane", T), z)
+        flat = _fixed_trunk(_readout_model("accumulator", T), z)
+        assert float(leaky(dummy)[0, 0]) == pytest.approx(0.5 * 0.5 ** k, abs=1e-6)
+        assert float(flat(dummy)[0, 0]) == pytest.approx(1.0, abs=1e-6)
+
+
+def test_leaky_membrane_puts_three_quarters_of_its_weight_on_the_last_two_steps():
+    """Stated as a share because that is the form the hypothesis is about.
+
+    At ``T = 2`` the leaky window and the count window coincide exactly -- both are "the
+    whole run" -- which is the regime where membrane wins. By ``T = 6`` they have come
+    apart, which is where it starts losing.
+    """
+    tau = 2.0
+    for T, expected in ((2, 1.0), (6, 0.7619), (10, 0.7507)):
+        w = np.array([(1 / tau) * (1 - 1 / tau) ** k for k in range(T)])
+        leaky_share = w[:2].sum() / w.sum()
+        count_share = 2 / T  # count weights every step equally
+        assert leaky_share == pytest.approx(expected, abs=1e-4)
+        if T == 2:
+            assert leaky_share == pytest.approx(count_share), "windows coincide at T = 2"
+        else:
+            assert leaky_share > 2 * count_share, "windows diverge sharply by T = 6"
+
+
+def test_accumulator_is_the_plain_sum_and_differs_from_count_only_by_the_threshold():
+    """Why this readout is the right control.
+
+    An accumulator and a count both weight every step equally; they differ only in whether
+    the per-step contribution passes through a threshold. An accumulator and a leaky
+    membrane are both unthresholded; they differ only in the leak. Two confounded
+    explanations, separated by one model.
+    """
+    T = 6
+    dummy = torch.zeros(T, 1, 2, 34, 34)
+    z = torch.randn(T, 4, 10)
+    flat = _fixed_trunk(_readout_model("accumulator", T), z)
+    assert torch.allclose(flat(dummy), z.sum(dim=0), atol=1e-6)
+
+
+def test_potential_readouts_have_no_spike_train():
+    from spikecalib.models import POTENTIAL_READOUTS
+
+    for readout in POTENTIAL_READOUTS:
+        model = _readout_model(readout, 4)
+        with pytest.raises(RuntimeError, match="no output spike train"):
+            model.spike_train(torch.zeros(4, 1, 2, 34, 34))
+
+
+def test_accumulator_shares_the_trunk_so_membrane_checkpoints_load_into_it():
+    """Same parameters, different aggregation -- the property the comparison depends on."""
+    membrane = _readout_model("membrane", 4)
+    accumulator = _readout_model("accumulator", 4)
+    assert [n for n, _ in membrane.named_parameters()] == \
+           [n for n, _ in accumulator.named_parameters()]
+    accumulator.load_state_dict(membrane.state_dict())
