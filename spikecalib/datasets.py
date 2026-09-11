@@ -63,6 +63,12 @@ class DatasetSpec:
     # carry it. This is what a cache is verified against -- the defence against
     # SpikingJelly accepting a truncated directory is the same either way.
     n_samples: Optional[int] = None
+    # Frames are average-pooled by this integer factor at load time, so ``spatial`` is the
+    # size the MODEL sees and ``native_spatial`` the size on disk. None means no pooling and
+    # the two are equal. Pooling is a compute decision, never a modelling one: it cannot
+    # touch the attainable-confidence ceiling, which depends only on T and C.
+    spatial_downsample: Optional[int] = None
+    native_spatial: Optional[tuple[int, int]] = None
     notes: str = ""
     hazards: tuple[str, ...] = field(default_factory=tuple)
 
@@ -178,9 +184,25 @@ DATASETS: dict[str, DatasetSpec] = {
         # formula takes as C, and it is the whole point of the dataset here -- every other
         # measurement in the study is at C = 10.
         n_classes=101,
-        # Native ATIS resolution. 37x the pixel count of N-MNIST's 34x34, which is why
-        # this dataset needs more pooling blocks than two; see hazards.
-        spatial=(180, 240),
+        # The size the MODEL sees: native 180x240 average-pooled by 4. Two reasons, and
+        # the first is the honest one.
+        #
+        # Compute. At native resolution a four-block model needs about 73 ms/sample on this
+        # machine, which projects to roughly 124 hours for the 18-run grid -- five days of
+        # continuous training for one axis of one figure. Pooling by 4 makes it tractable.
+        #
+        # Confound removal, which is the better reason. At 45x60 the SAME two-block
+        # (32, 64) architecture N-MNIST uses fits without modification, so the C = 101
+        # comparison differs from the C = 10 one in the class count and the data and in
+        # nothing else. At native resolution it would also differ in depth and in parameter
+        # count, and no reader could tell which difference produced the result.
+        #
+        # This cannot affect the ceiling claim. e^T/(e^T + C - 1) contains neither the
+        # spatial resolution nor anything downstream of it. It lowers accuracy, which makes
+        # the "does the ceiling bind" question harder rather than easier.
+        spatial=(45, 60),
+        native_spatial=(180, 240),
+        spatial_downsample=4,
         # No official train/test split: the dataset is one flat folder of 8,709 samples.
         # n_train/n_test are therefore None, and the study defines its own split below.
         n_train=None,
@@ -229,9 +251,11 @@ DATASETS: dict[str, DatasetSpec] = {
             "Severely class-imbalanced -- about 31 samples in the smallest class against "
             "800 in the largest. Fixed per-class holdouts must be sized for the smallest "
             "class, not the average.",
-            "180x240 is 37 times N-MNIST's pixel count. Two pooling blocks would leave a "
-            "45x60x64 feature map and a 44M-parameter first Linear, so this dataset needs "
-            "four blocks; model sizing is per-dataset configuration.",
+            "180x240 is 37 times N-MNIST's pixel count, and at native resolution the "
+            "18-run grid projects to ~124 hours. Frames are average-pooled by 4 to 45x60 "
+            "at load time, which also lets N-MNIST's own two-block architecture fit "
+            "unchanged. Resolution cannot affect the ceiling, which depends only on T "
+            "and C.",
             "The calibration split is ~1,010 samples across 101 classes, so one-vs-rest "
             "isotonic has roughly 10 positives per class and should not be trusted here.",
             "Accuracy will be far below N-MNIST's 0.99. That is the point -- it is the "

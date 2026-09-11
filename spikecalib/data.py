@@ -36,6 +36,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import time
 from dataclasses import dataclass
 from itertools import combinations
 from typing import Optional, Sequence
@@ -53,6 +54,9 @@ __all__ = [
     "make_splits",
     "make_train_test_split",
     "make_dataset_splits",
+    "AveragePool",
+    "InMemoryFrames",
+    "materialise",
     "assert_disjoint",
     "save_splits",
     "load_splits",
@@ -117,6 +121,111 @@ class SplitIndices:
         return h.hexdigest()[:16]
 
 
+class AveragePool:
+    """Average-pool each frame by an integer factor, as a picklable callable.
+
+    A closure would be simpler and cannot be used: ``DataLoader`` workers are spawned on
+    macOS, the transform is pickled to reach them, and a local function is not picklable.
+    That fails at worker start-up with an error naming the closure rather than the cause,
+    so this is a class on purpose.
+
+    Average rather than max: a frame here is an event *count* per pixel, so averaging a
+    kxk block preserves the local event rate, while max would report the busiest pixel and
+    discard the rest.
+
+    The output size is checked against what the registry says the model sees. A silent
+    mismatch would surface as a shape error deep inside the first Linear layer, or not at
+    all if it happened to be compatible.
+    """
+
+    def __init__(self, factor: int, expected: tuple[int, int], display_name: str):
+        self.factor = int(factor)
+        self.expected = tuple(expected)
+        self.display_name = display_name
+
+    def __call__(self, frames):
+        import torch
+        import torch.nn.functional as F
+
+        x = torch.as_tensor(frames, dtype=torch.float32)
+        # Frames arrive as [T, C, H, W]; avg_pool2d treats the leading axes as batch.
+        pooled = F.avg_pool2d(x, kernel_size=self.factor, stride=self.factor)
+        got = tuple(pooled.shape[-2:])
+        if got != self.expected:
+            raise ValueError(
+                f"{self.display_name}: pooling {tuple(x.shape[-2:])} by {self.factor} gave "
+                f"{got}, but the registry says the model sees {self.expected}. Fix "
+                f"spatial, native_spatial or spatial_downsample in spikecalib/datasets.py."
+            )
+        return pooled
+
+
+class InMemoryFrames:
+    """A whole frame cache held in RAM, as a drop-in for the on-disk dataset.
+
+    Measured on N-Caltech101: reading and pooling frames costs about 27 ms/sample against
+    roughly 5 ms/sample of actual computation, so **training is 85% disk**. Reading each
+    epoch re-pays that cost for data that never changes. The pooled dataset is small enough
+    to hold outright -- 188 MB at ``T = 2`` and 940 MB at ``T = 10`` in float16 -- so it is
+    read once and served from memory afterwards.
+
+    float16 rather than float32 because a pooled frame is a mean of small integer event
+    counts; the values are exactly representable and the storage halves. Samples are
+    returned as float32, which is what the model consumes.
+
+    Exposes ``targets`` so :func:`training_labels` keeps working unchanged.
+    """
+
+    def __init__(self, frames, targets):
+        self.frames = frames
+        self.targets = list(int(t) for t in targets)
+
+    def __len__(self) -> int:
+        return len(self.targets)
+
+    def __getitem__(self, i):
+        return self.frames[i].float(), self.targets[i]
+
+
+def materialise(dataset, *, batch_size: int = 64, num_workers: int = 4, label: str = ""):
+    """Read a frame dataset once into an :class:`InMemoryFrames`.
+
+    Uses a ``DataLoader`` purely to parallelise the read; the result is a single contiguous
+    tensor. Worth doing whenever a dataset is small enough to fit and will be iterated more
+    than a couple of times, which is every training run.
+    """
+    import torch
+    from torch.utils.data import DataLoader
+
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=False,
+                        num_workers=num_workers, persistent_workers=False)
+    chunks, labels = [], []
+    started = time.time()
+    for frames, y in loader:
+        chunks.append(torch.as_tensor(frames).to(torch.float16))
+        labels.append(torch.as_tensor(y))
+    frames = torch.cat(chunks, dim=0)
+    targets = torch.cat(labels, dim=0).numpy()
+    mib = frames.numel() * frames.element_size() / (1024 ** 2)
+    if label:
+        print(f"  materialised {label}: {frames.shape[0]:,} samples, "
+              f"{tuple(frames.shape[1:])} each, {mib:,.0f} MiB, "
+              f"{time.time() - started:,.0f}s", flush=True)
+    return InMemoryFrames(frames, targets)
+
+
+def _downsample_transform(spec: DatasetSpec):
+    """The frame transform for this dataset, or ``None`` when no pooling is configured.
+
+    Pooling is applied at load time rather than baked into the cache, so the cache stays
+    the dataset as distributed and the pooling factor stays a visible parameter rather than
+    an invisible property of some files on disk.
+    """
+    if spec.spatial_downsample in (None, 1):
+        return None
+    return AveragePool(spec.spatial_downsample, spec.spatial, spec.display_name)
+
+
 def load_dataset(name: str, timesteps: int, root: str):
     """Load the train and test halves of a dataset from its built frame cache.
 
@@ -133,7 +242,8 @@ def load_dataset(name: str, timesteps: int, root: str):
             f"    python scripts/fetch_data.py --dataset {spec.key} --timesteps {timesteps}"
         )
     sj_class = spec.load_class()
-    common = dict(root=dataset_root, data_type="frame", frames_number=timesteps, split_by="number")
+    common = dict(root=dataset_root, data_type="frame", frames_number=timesteps,
+                  split_by="number", transform=_downsample_transform(spec))
     if spec.defines_own_test_split:
         # No official split, so SpikingJelly's class takes no ``train`` argument and there
         # is exactly one object. Both halves are that same object; which samples belong to

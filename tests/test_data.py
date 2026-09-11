@@ -20,6 +20,10 @@ import pytest
 from spikecalib.data import (
     make_train_test_split,
     make_dataset_splits,
+    training_labels,
+    AveragePool,
+    InMemoryFrames,
+    materialise,
     CARVED_SPLITS,
     InsufficientSamplesError,
     SplitOverlapError,
@@ -468,7 +472,13 @@ def test_carving_a_test_set_from_a_dataset_that_ships_one_is_refused():
 def test_ncaltech101_registry_entry_matches_the_documented_design():
     spec = DATASETS["ncaltech101"]
     assert spec.n_classes == 101, "C = 101 is the entire point of this dataset"
-    assert spec.spatial == (180, 240)
+    # spatial is what the MODEL sees; native_spatial is what is on disk. The gap is the
+    # 4x average pooling, and conflating the two would size the model wrongly.
+    assert spec.native_spatial == (180, 240)
+    assert spec.spatial == (45, 60)
+    assert spec.spatial_downsample == 4
+    assert tuple(n // spec.spatial_downsample for n in spec.native_spatial) == spec.spatial
+    assert spec.n_samples == 8_709
     assert spec.defines_own_test_split
     assert (spec.test_fraction, spec.test_floor) == (0.20, 6)
     assert (spec.n_val_per_class, spec.n_cal_per_class) == (3, 10)
@@ -527,3 +537,84 @@ def test_flat_dataset_splits_are_reproducible():
             == make_dataset_splits(labels, spec, seed=0).fingerprint)
     assert (make_dataset_splits(labels, spec, seed=0).fingerprint
             != make_dataset_splits(labels, spec, seed=1).fingerprint)
+
+
+# ---------------------------------------------------------------------------------------
+# Frame pooling and the in-memory cache
+# ---------------------------------------------------------------------------------------
+
+
+def test_average_pool_reduces_spatial_size_and_preserves_the_event_rate():
+    """Average, not max: a frame is an event count per pixel, so the mean is the rate."""
+    import torch
+
+    pool = AveragePool(4, (45, 60), "Fake")
+    frames = torch.zeros(2, 2, 180, 240)
+    frames[0, 0, :4, :4] = torch.tensor([[4.0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
+    out = pool(frames)
+    assert out.shape == (2, 2, 45, 60)
+    # Four events in one pixel of a 4x4 block average to 4/16.
+    assert out[0, 0, 0, 0].item() == pytest.approx(4.0 / 16.0)
+    # Total event mass is preserved up to the pooling factor, which max-pooling would not do.
+    assert out.sum().item() == pytest.approx(frames.sum().item() / 16.0)
+
+
+def test_average_pool_refuses_a_size_the_registry_does_not_expect():
+    """A silent mismatch would surface deep inside the first Linear, or not at all."""
+    import torch
+
+    pool = AveragePool(4, (45, 60), "Fake")
+    with pytest.raises(ValueError, match="the registry says the model sees"):
+        pool(torch.zeros(2, 2, 128, 128))
+
+
+def test_average_pool_is_picklable_so_dataloader_workers_can_receive_it():
+    """A closure is not, and it fails at worker start-up naming the closure, not the cause."""
+    import pickle
+
+    import torch
+
+    pool = AveragePool(4, (45, 60), "Fake")
+    revived = pickle.loads(pickle.dumps(pool))
+    assert torch.equal(revived(torch.ones(2, 2, 180, 240)), pool(torch.ones(2, 2, 180, 240)))
+
+
+def test_materialise_round_trips_every_sample_and_keeps_targets():
+    import torch
+
+    class Disk:
+        def __init__(self):
+            self.targets = [i % 7 for i in range(40)]
+
+        def __len__(self):
+            return 40
+
+        def __getitem__(self, i):
+            return torch.full((2, 2, 5, 6), float(i)), self.targets[i]
+
+    mem = materialise(Disk(), batch_size=8, num_workers=0)
+    assert isinstance(mem, InMemoryFrames)
+    assert len(mem) == 40
+    assert mem.targets == [i % 7 for i in range(40)]
+    for i in (0, 17, 39):
+        x, y = mem[i]
+        assert x.dtype is torch.float32, "samples are served as float32"
+        assert torch.equal(x, torch.full((2, 2, 5, 6), float(i)))
+        assert y == i % 7
+    assert mem.frames.dtype is torch.float16, "storage halves in float16"
+
+
+def test_materialised_dataset_still_answers_training_labels():
+    import torch
+
+    class Disk:
+        targets = [3, 1, 4, 1, 5]
+
+        def __len__(self):
+            return 5
+
+        def __getitem__(self, i):
+            return torch.zeros(2, 2, 4, 4), self.targets[i]
+
+    mem = materialise(Disk(), batch_size=2, num_workers=0)
+    assert list(training_labels(mem)) == [3, 1, 4, 1, 5]
