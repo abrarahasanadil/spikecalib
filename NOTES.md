@@ -431,10 +431,11 @@ then the literature's overconfidence reports and this study's underconfidence me
 would be the same phenomenon seen through different readouts, and the contradiction would
 dissolve. That was to be tested rather than asserted.
 
-**It was tested. It does not hold.** `[MEASURED]` membrane readout is *under*confident at
-**0 of 5** timestep settings: −0.0333, −0.0024, −0.0005, −0.0016, −0.0017 at
-`T` = 2, 4, 6, 8, 10. Removing the cap collapses the magnitude of the miscalibration by a
-factor of sixteen but **does not flip its sign**. The single positive value anywhere in the
+**It was tested. It does not hold.** `[MEASURED]` The membrane readout remains
+**underconfident at all five** timestep settings and is **overconfident at none** of them:
+mean confidence minus accuracy is −0.0333, −0.0024, −0.0005, −0.0016 and −0.0017 at
+`T` = 2, 4, 6, 8 and 10. Removing the cap shrinks the underconfidence by a factor of
+sixteen but **never reverses it**. The single positive value anywhere in the
 experiment is weighted-count at `T = 10`, at +0.0004, which is negligible.
 
 So the disagreement with the literature on the *sign* of SNN miscalibration is **not**
@@ -445,6 +446,77 @@ miscalibration is small in both directions. Why the prior reports find overconfi
 this finds near-zero remains unexplained, and the most likely candidates — different
 timestep regimes, converted rather than directly-trained networks, harder tasks where
 accuracy is far from the ceiling — are untested here.
+
+## Why the count readout exists
+
+The readout experiment shows the cap is avoidable, which makes it easy to read this study
+as saying the field has been doing something obviously wrong. It has not, and a paper that
+implies otherwise will read as naive. There are real reasons to sum spikes, and they are
+not all dissolved by the result.
+
+### 1. Spikes are the communication primitive; potentials are not
+
+In event-driven neuromorphic hardware the thing that crosses a core or chip boundary is a
+spike event. A per-class count is then obtained by an **accumulator at the destination**:
+one integer per class, incremented when an event arrives, costing no traffic beyond the
+events already being sent. Membrane potential is internal compartment state. Exporting it
+means moving a real value per neuron per timestep, dense and continuous, which is precisely
+the traffic that event-driven architectures exist to avoid. `[DERIVED]` from the
+architecture of event-driven systems in general; the specific per-chip claims below are
+`[UNVERIFIED]`.
+
+### 2. Counts are monotone; potentials are not
+
+This is the sharpest argument and it survives the experiment. A spike count is
+**non-decreasing in `T`**: once class `c` has reached `k` spikes it can never fall below
+`k`. A stopping rule built on it is therefore stable — a threshold crossing is final.
+
+A leaky membrane potential is **not monotone**. It decays between inputs and can fall back
+below a threshold it previously crossed, so a stopping rule on it can un-fire. `[DERIVED]`
+from the LIF update `v ← v + (z − v)/tau`, which is a contraction toward `z` and decreases
+whenever `z < v`.
+
+Anytime inference and early exit need a quantity that updates each timestep and behaves
+predictably as evidence accumulates, and the Dynamic Confidence and SpikeCP line of work
+depends on exactly that. So even where a membrane readout is available, a system that must
+stop early may still want counts — and then the cap applies and `T_min` is the right tool.
+
+### 3. What the hardware actually exposes — `[UNVERIFIED]`
+
+**Nothing in this section has been confirmed against primary documentation, and it must be
+before the preprint ships.** Recorded as the belief being relied on, so it can be checked.
+
+- **Intel Loihi.** Believed to keep membrane voltage as per-compartment state that the host
+  API can probe, while inter-core communication is spike-only. If so, membrane readout is
+  available in a host-in-the-loop setting but not as a native on-chip routed quantity.
+  *To verify:* whether compartment voltage is readable at inference time without a host
+  round-trip, and at what cost.
+- **SpiNNaker.** Simulates neurons in software on ARM cores, so membrane potential is a
+  variable in memory and is recordable through PyNN. Recording it for many neurons is
+  believed to be bandwidth-limited in a way that spike recording is not.
+  *To verify:* whether that bandwidth limit binds at the output layer only, which is all
+  this readout needs — ten to a thousand neurons, not the whole network.
+
+That last point matters and cuts in this study's favour: the membrane readout needs the
+potential of the **output layer only**, which is `C` values per timestep, not the whole
+network. A dense-readout objection scaled to an entire network may not apply to ten
+neurons.
+
+### 4. The recommendation, with its scope
+
+- **Where a membrane readout is available** — simulation, GPU or CPU inference, or hardware
+  that exposes output-layer compartment state — the cap is avoidable and **should be
+  avoided**. It costs 16x in uncalibrated ECE at `T = 2` for nothing.
+- **Where only spike events leave the chip**, the cap is a hard constraint, not a design
+  error. `T_min = ln((C − 1)a/(1 − a))` then gives the timestep budget: 10 classes at 95%
+  accuracy needs `T ≥ 6`, and no amount of calibration changes that.
+- **Where early exit is required**, counts may be preferable regardless, because they are
+  monotone and a stopping rule on them is stable. The cap is then the price of that
+  property, and it should be paid knowingly.
+
+The study's contribution here is not "use membrane" but **"the cap is a property of a
+choice, the choice has real reasons behind it, and if you make it you can compute what it
+costs you in timesteps."**
 
 ## Scope
 

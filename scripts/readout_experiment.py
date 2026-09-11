@@ -40,6 +40,7 @@ from spikecalib.calibration import (  # noqa: E402
 from spikecalib.data import load_dataset, make_splits, training_labels  # noqa: E402
 from spikecalib.datasets import get_spec  # noqa: E402
 from spikecalib.models import ModelConfig, build_model, readout_ceiling  # noqa: E402
+from spikecalib.selective import selective_summary  # noqa: E402
 from spikecalib.train import (  # noqa: E402
     TrainConfig, predict_outputs, resolve_device, set_seed, train,
 )
@@ -132,6 +133,12 @@ def main() -> int:
                 d = discrimination(conf, correct)
                 derived = readout_ceiling(readout, timesteps, spec.n_classes)
 
+                # Selective prediction per readout: this is what decides the
+                # recommendation. Calibrating better is worth less than ranking better,
+                # and the number of achievable operating points is a second, independent
+                # deployment consequence of the same readout choice.
+                sel = selective_summary(conf, correct)
+
                 row = {
                     "readout": readout, "timesteps": timesteps, "seed": seed,
                     "status": trained,
@@ -147,6 +154,13 @@ def main() -> int:
                     "n_distinct": int(np.unique(quantise_confidence(conf)).size),
                     "auroc": d["auroc"],
                     "tie_rate": tie_rate(scores),
+                    "aurc": sel["aurc"],
+                    "aurc_optimal": sel["aurc_optimal"],
+                    "aurc_excess_normalised": sel["aurc_excess_normalised"],
+                    "n_achievable_coverage_levels": sel["n_achievable_coverage_levels"],
+                    "coverage_at_risk_0p01": sel.get("coverage_at_risk_0p01"),
+                    "coverage_at_risk_0p005": sel.get("coverage_at_risk_0p005"),
+                    "coverage_at_risk_0p001": sel.get("coverage_at_risk_0p001"),
                     "seconds": time.time() - t0,
                 }
                 rows.append(row)
@@ -155,7 +169,8 @@ def main() -> int:
                       f"cap {cap:<7} max {row['max_confidence_observed']:.4f}  "
                       f"conf-acc {row['mean_conf_minus_acc']:+.4f}  "
                       f"ECEew {m.ece_equal_width:.4f}  levels {row['n_distinct']:>5}  "
-                      f"AUROC {d['auroc']:.4f}", flush=True)
+                      f"AUROC {d['auroc']:.4f}  AURC {sel['aurc']:.5f}  "
+                      f"ops {sel['n_achievable_coverage_levels']:>5}", flush=True)
 
     path = os.path.join(args.out, "readout_experiment.json")
     with open(path, "w") as fh:

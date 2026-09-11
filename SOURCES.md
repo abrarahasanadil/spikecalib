@@ -267,6 +267,14 @@ primary document.
     regime in which overconfidence was measured — timestep count, readout, whether directly
     trained or converted — because the comparison with this study's underconfidence result
     is only meaningful once those are known.
-15. **Adam `lr = 1e-3` for this model.** Not a citation issue but an unjustified constant:
+15. **Intel Loihi compartment-state access.** Confirm from Intel's documentation whether
+    membrane voltage is readable at inference time, whether that requires a host round-trip,
+    and what it costs. `NOTES.md` "Why the count readout exists" relies on the belief that
+    it is probe-only and that inter-core traffic is spike-only.
+16. **SpiNNaker membrane recording bandwidth.** Confirm from the SpiNNaker/PyNN
+    documentation whether recording membrane potential is bandwidth-limited, and critically
+    whether that limit binds for an output layer of ten to a thousand neurons — which is all
+    a membrane readout needs — or only for whole-network recording.
+17. **Adam `lr = 1e-3` for this model.** Not a citation issue but an unjustified constant:
     no tuning has been done, and no evidence exists that it is appropriate for a
     surrogate-gradient SNN at low `T`.

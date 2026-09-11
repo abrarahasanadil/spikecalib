@@ -409,11 +409,14 @@
       var A = a.split("|"), B = b.split("|");
       return (+A[0] - +B[0]) || (+A[1] - +B[1]) || (ARM_ORDER.indexOf(A[2]) - ARM_ORDER.indexOf(B[2]));
     });
-    var CAP = 6, shown = keys.slice(0, CAP);
+    /* Two at a size where the bins can actually be read, rather than six that
+       cannot. The filters choose which two. */
+    var CAP = 2, shown = keys.slice(0, CAP);
     document.getElementById("reliability-count").textContent =
       keys.length <= CAP
         ? keys.length + " diagram" + (keys.length === 1 ? "" : "s") + " shown."
-        : "Showing " + CAP + " of " + keys.length + " selected combinations. Narrow the filters to see others.";
+        : "Showing " + CAP + " of " + keys.length + " selected combinations, at a size where the "
+          + "bins are readable. Narrow the filters to choose which.";
 
     shown.forEach(function (key) {
       var parts = key.split("|");
@@ -427,7 +430,7 @@
       wrap.appendChild(box); wrap.appendChild(cap);
       host.appendChild(wrap);
 
-      var c = chart(box, 320, 240, { l: 36, r: 12, t: 10, b: 30 });
+      var c = chart(box, 460, 330, { l: 44, r: 14, t: 12, b: 34 });
       graticule(c, 5, 5);
       var X = function (v) { return c.ix(v, 0, 1); };
       var Y = function (v) { return c.iy(v, 0, 1); };

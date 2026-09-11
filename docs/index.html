@@ -91,17 +91,18 @@
       confidence the readout can express is capped, and at <em>T</em>&nbsp;=&nbsp;2 that cap
       sits far below the model's own accuracy. Post-hoc calibration removes almost all of the
       resulting error — expected calibration error falls from 0.5386 at <em>T</em>&nbsp;=&nbsp;2
-      to roughly 0.002 at <em>T</em>&nbsp;=&nbsp;2. Which calibrator does the removing does not
-      matter: temperature scaling and isotonic regression are statistically indistinguishable
+      to 0.0018 after calibration at the same <em>T</em>, and the uncalibrated error is only
+      0.0029 by <em>T</em>&nbsp;=&nbsp;10 once the cap stops binding. Which calibrator does
+      the removing does not matter: temperature scaling and isotonic regression are statistically indistinguishable
       in 14 of 15 runs across five timestep settings and three seeds.
     </p>
   </header>
 
-  <div class="band"><span class="idx">01</span><h2>Live metrics</h2>
+  <div class="band"><h2>Live metrics</h2>
     <p class="sub">computed from sweep.csv for the current filter</p></div>
   <div class="tiles c12" id="tiles"></div>
 
-  <div class="band"><span class="idx">02</span><h2>The ceiling instrument</h2>
+  <div class="band"><h2>The ceiling instrument</h2>
     <p class="sub">derived arithmetic, not measurement</p></div>
 
   <section class="panel c7">
@@ -144,7 +145,7 @@
     </div>
   </section>
 
-  <div class="band"><span class="idx">03</span><h2>Sweep results</h2>
+  <div class="band"><h2>Sweep results</h2>
     <p class="sub">15 runs, five timestep settings, three seeds</p></div>
 
   <section class="panel c6">
@@ -180,10 +181,10 @@
       none is drawn here; read the small markers as suggestive only.</p>
   </section>
 
-  <div class="band"><span class="idx">04</span><h2>Findings</h2></div>
+  <div class="band"><h2>Findings</h2>
+    <p class="sub">N-MNIST, five timestep settings, three seeds</p></div>
 
-  <section class="panel c7">
-    <div class="prose">
+  <section class="panel c6"><div class="prose">
 <h3>The ceiling accounts for almost all uncalibrated error at low T</h3>
     <p>
       At <em>T</em> = 2 with 10 classes the ceiling is 0.4509, and the trained models
@@ -207,8 +208,10 @@
       reachable, and the small residual error is ordinary overconfidence with a different
       cause. The ceiling explanation applies only where the ceiling binds.
     </p>
+  </div></section>
 
-    <h3>The same bound is a floor on the training loss</h3>
+  <section class="panel c6"><div class="prose">
+<h3>The same bound is a floor on the training loss</h3>
     <p>
       Cross-entropy on spike-count logits cannot fall below −ln(ceiling): 0.7966 at
       <em>T</em> = 2 against 0.0004 at <em>T</em> = 10. The observed plateaus sit between
@@ -219,8 +222,95 @@
       fixes for a problem that does not exist. Convergence here is judged on validation
       accuracy, never on loss.
     </p>
+  </div></section>
 
-    <h3>Which calibrator you use does not matter</h3>
+  <section class="panel c12"><div class="prose wide">
+<h3>The ceiling is a property of the readout, not of spiking networks</h3>
+    <p>
+      Softmax-over-spike-counts is a <em>choice</em>. The same architecture was trained with
+      three different final aggregations — only the aggregation differs, every layer up to
+      the last BatchNorm is identical — to find out whether the cap is intrinsic or an
+      artifact of that choice.
+    </p>
+    <div class="scroll" style="margin:12px 0">
+      <table>
+        <thead><tr><th style="cursor:default">T</th><th style="cursor:default">readout</th>
+          <th style="cursor:default">test acc</th><th style="cursor:default">cap</th>
+          <th style="cursor:default">max conf</th><th style="cursor:default">conf − acc</th>
+          <th style="cursor:default">ECE</th><th style="cursor:default">levels</th></tr></thead>
+        <tbody>
+          <tr><td class="k">2</td><td class="k">count</td><td>0.9852</td><td>0.4509</td><td>0.4509</td><td>−0.5387</td><td>0.5387</td><td>10</td></tr>
+          <tr><td class="k">2</td><td class="k">weighted-count</td><td>0.9854</td><td>0.4509</td><td>0.4509</td><td>−0.5381</td><td>0.5381</td><td>17</td></tr>
+          <tr><td class="k">2</td><td class="k">membrane</td><td>0.9851</td><td>none</td><td>0.9976</td><td>−0.0333</td><td>0.0333</td><td>9,994</td></tr>
+          <tr><td class="k">10</td><td class="k">count</td><td>0.9899</td><td>0.9996</td><td>0.9996</td><td>−0.0007</td><td>0.0028</td><td>339</td></tr>
+          <tr><td class="k">10</td><td class="k">membrane</td><td>0.9909</td><td>none</td><td>1.0000</td><td>−0.0017</td><td>0.0025</td><td>10,000</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      A membrane readout — the final potential of a non-spiking integrator — removes the cap
+      and cuts uncalibrated ECE at T = 2 by <strong>16.2&times;</strong>, from 0.5387 to
+      0.0333, at indistinguishable accuracy. The weighted-count readout is the control that
+      makes this interpretable: it shares the cap exactly but has 1.7&times; more attainable
+      levels, and its ECE is 0.5381 against count's 0.5387. <strong>Granularity buys
+      nothing; the bound does all the work.</strong> By T = 10, where the cap no longer sits
+      below the accuracy, all three readouts converge to 0.0025–0.0031.
+    </p>
+    <p style="color:var(--ink-3)">
+      The cost is that the output is no longer an integer spike count, which matters for
+      neuromorphic hardware that transmits spikes rather than potentials. That trade-off is
+      real and is not evaluated here.
+    </p>
+  </div></section>
+
+  <section class="panel c12"><div class="prose wide"><div class="two-col">
+<h3>Why the count readout exists</h3>
+    <p>
+      The cap being avoidable makes it easy to read this study as saying the field has been
+      doing something obviously wrong. It has not. There are real reasons to sum spikes, and
+      the result does not dissolve all of them.
+    </p>
+    <p>
+      <strong>Spikes are the communication primitive; potentials are not.</strong> In
+      event-driven hardware the thing that crosses a core boundary is a spike event. A
+      per-class count is then an accumulator at the destination — one integer per class,
+      incremented on arrival, costing no traffic beyond the events already being sent.
+      Membrane potential is internal compartment state, and exporting it means a real value
+      per neuron per timestep: dense, continuous, and exactly the traffic these
+      architectures exist to avoid.
+    </p>
+    <p>
+      <strong>Counts are monotone; potentials are not.</strong> This is the sharpest
+      argument and it survives the experiment. A spike count never decreases in T, so a
+      threshold crossing is final and a stopping rule on it is stable. A leaky membrane
+      potential decays between inputs and can fall back below a threshold it already
+      crossed, so a stopping rule on it can un-fire. Anytime inference and early exit — the
+      Dynamic Confidence and SpikeCP line — depend on that stability. Even where a membrane
+      readout is available, a system that must stop early may still want counts.
+    </p>
+    <p class="unverified-note">
+      <strong>What the hardware exposes has not been confirmed.</strong> Intel Loihi is
+      believed to keep membrane voltage as per-compartment state that a host API can probe
+      while inter-core communication stays spike-only; SpiNNaker simulates neurons in
+      software, so potential is recordable but believed bandwidth-limited. Neither has been
+      checked against primary documentation and both are listed in SOURCES.md to verify.
+      One point cuts in this study's favour: a membrane readout needs the output layer only
+      — C values per timestep, not the whole network — so a dense-readout objection scaled
+      to an entire network may not apply to ten neurons.
+    </p>
+    <p>
+      <strong>The recommendation, with its scope.</strong> Where a membrane readout is
+      available — simulation, GPU or CPU inference, hardware exposing output-layer state —
+      the cap is avoidable and should be avoided; it costs 16&times; in uncalibrated ECE at
+      T = 2 for nothing. Where only spike events leave the chip, the cap is a hard
+      constraint rather than a design error, and T<sub>min</sub> gives the timestep budget.
+      Where early exit is required, counts may be preferable regardless, and the cap is the
+      price of monotonicity — which should be paid knowingly.
+    </p>
+  </div></div></section>
+
+  <section class="panel c6"><div class="prose">
+<h3>Which calibrator you use does not matter</h3>
     <p>
       The study was designed around a hypothesis: that isotonic regression should beat
       temperature scaling by a margin that <em>grows</em> as <em>T</em> falls, because a
@@ -257,45 +347,10 @@
       from 583 samples per level at <em>T</em> = 2 to 18 at <em>T</em> = 10 — exactly the
       manipulation the mechanism named. The advantage was flat and near zero across all of it.
     </p>
+  </div></section>
 
-    <h3>The ceiling is a property of the readout, not of spiking networks</h3>
-    <p>
-      Softmax-over-spike-counts is a <em>choice</em>. The same architecture was trained with
-      three different final aggregations — only the aggregation differs, every layer up to
-      the last BatchNorm is identical — to find out whether the cap is intrinsic or an
-      artifact of that choice.
-    </p>
-    <div class="scroll" style="margin:12px 0">
-      <table>
-        <thead><tr><th style="cursor:default">T</th><th style="cursor:default">readout</th>
-          <th style="cursor:default">test acc</th><th style="cursor:default">cap</th>
-          <th style="cursor:default">max conf</th><th style="cursor:default">conf − acc</th>
-          <th style="cursor:default">ECE</th><th style="cursor:default">levels</th></tr></thead>
-        <tbody>
-          <tr><td class="k">2</td><td class="k">count</td><td>0.9852</td><td>0.4509</td><td>0.4509</td><td>−0.5387</td><td>0.5387</td><td>10</td></tr>
-          <tr><td class="k">2</td><td class="k">weighted-count</td><td>0.9854</td><td>0.4509</td><td>0.4509</td><td>−0.5381</td><td>0.5381</td><td>17</td></tr>
-          <tr><td class="k">2</td><td class="k">membrane</td><td>0.9851</td><td>none</td><td>0.9976</td><td>−0.0333</td><td>0.0333</td><td>9,994</td></tr>
-          <tr><td class="k">10</td><td class="k">count</td><td>0.9899</td><td>0.9996</td><td>0.9996</td><td>−0.0007</td><td>0.0028</td><td>339</td></tr>
-          <tr><td class="k">10</td><td class="k">membrane</td><td>0.9909</td><td>none</td><td>1.0000</td><td>−0.0017</td><td>0.0025</td><td>10,000</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>
-      A membrane readout — the final potential of a non-spiking integrator — removes the cap
-      and cuts uncalibrated ECE at T = 2 by <strong>16.2&times;</strong>, from 0.5387 to
-      0.0333, at indistinguishable accuracy. The weighted-count readout is the control that
-      makes this interpretable: it shares the cap exactly but has 1.7&times; more attainable
-      levels, and its ECE is 0.5381 against count's 0.5387. <strong>Granularity buys
-      nothing; the bound does all the work.</strong> By T = 10, where the cap no longer sits
-      below the accuracy, all three readouts converge to 0.0025–0.0031.
-    </p>
-    <p style="color:var(--ink-3)">
-      The cost is that the output is no longer an integer spike count, which matters for
-      neuromorphic hardware that transmits spikes rather than potentials. That trade-off is
-      real and is not evaluated here.
-    </p>
-
-    <h3>Selective prediction: the readout limits what can be deployed</h3>
+  <section class="panel c6"><div class="prose">
+<h3>Selective prediction: the readout limits what can be deployed</h3>
     <p>
       Risk-coverage asks what fraction of samples can be acted on at a given error rate.
       Samples sharing a confidence cannot be ordered against each other, so coverage steps
@@ -312,8 +367,10 @@
       T = 2, with AURC five times worse (0.0117 against 0.0023). It should not be used when
       the downstream task is selective prediction.
     </p>
+  </div></section>
 
-    <h3>The sign of the miscalibration disagrees with the literature</h3>
+  <section class="panel c7"><div class="prose">
+<h3>The sign of the miscalibration disagrees with the literature</h3>
     <p>
       The SNN literature reports <strong>over</strong>confidence as the characteristic
       calibration failure, and "Agreeing to Stop" says so using the <em>same readout this
@@ -336,14 +393,17 @@
     <p>
       One tidy resolution was available and was <strong>tested and rejected</strong>. If
       removing the cap restored overconfidence, both observations would be the same
-      phenomenon seen through different readouts. It does not: the membrane readout is
-      underconfident at <strong>0 of 5</strong> timestep settings (−0.0333, −0.0024,
-      −0.0005, −0.0016, −0.0017). Removing the cap collapses the magnitude sixteenfold but
-      does not flip the sign. The disagreement with the literature is therefore not
-      explained by the readout, and remains open.
+      phenomenon seen through different readouts. It does not. The membrane readout stays
+      <strong>underconfident at all five</strong> timestep settings and is
+      <strong>overconfident at none</strong> of them: mean confidence minus accuracy is
+      −0.0333, −0.0024, −0.0005, −0.0016 and −0.0017 at T = 2, 4, 6, 8 and 10. Removing the
+      cap shrinks the underconfidence sixteenfold but never reverses it. The disagreement
+      with the literature is therefore not explained by the readout, and remains open.
     </p>
+  </div></section>
 
-    <h3>A note on energy</h3>
+  <section class="panel c5"><div class="prose">
+<h3>A note on energy</h3>
     <p>
       The case for spiking networks is energy, so the sweep records a SynOps proxy. The
       result complicates that case: the input encoder — the first layer, which receives
@@ -354,14 +414,12 @@
       per-operation energies; it ignores memory traffic, static power and clock, and no claim
       about a physical device follows from it.
     </p>
-      </div>
-  </section>
+  </div></section>
 
-  <section class="panel c5">
-    <h3>Related work</h3>
-    <p class="chart-note" style="margin-top:0">This study claims novelty over none of the
-      following. <span class="unver">All seven references are unverified.</span></p>
-    <div class="prose">
+  <div class="band"><h2>Related work</h2>
+    <p class="sub">this study claims novelty over none of the following; all unverified</p></div>
+
+  <section class="panel c12"><div class="prose wide"><div class="rel-work">
 <div class="cite">
       <h4>Probability Bounding: Post-Hoc Calibration via Box-Constrained Softmax</h4>
       <p class="venue">Atarashi, Oyama, Arai &amp; Kashima, arXiv:2506.10572, 2026 &nbsp;<span class="unver">unverified — abstract only</span></p>
@@ -463,10 +521,9 @@
         "To verify" alongside the Horowitz energy constants, which are in the same state.
       </p>
     </div>
-    </div>
-  </section>
+  </div></div></section>
 
-  <div class="band"><span class="idx">05</span><h2>Reproduce it</h2></div>
+  <div class="band"><h2>Reproduce it</h2></div>
 
   <section class="panel c7">
     <div class="prose">
