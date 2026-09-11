@@ -1134,6 +1134,86 @@ model's own spikes and therefore only explains. A model that distributed its spi
 differently would face a different conditional bound. It belongs in the paper as an
 analysis tool, not as a second derived result.
 
+## Pre-registered prediction 5, recorded 2026-09-11
+
+Written before any matched-architecture model was trained. This is the 2×2 that removes the
+depth confound introduced when N-Caltech101 was run with four conv blocks against N-MNIST's
+two, and it doubles as the alternative-architecture check the study has never had.
+
+### What is actually confounded, and what is not
+
+The distinction matters, and one claim has been described as confounded when it is not:
+
+**Genuinely confounded (cross-dataset, so depth varies with `C`):**
+
+- "The `T = 6` residual is 0.1534 at `C = 101` against 0.0272 at `C = 10`, fifty times
+  larger." Depth differs between those two numbers.
+- "The ceiling explains the error where it binds and none of it where it does not." The
+  `C = 101` half of that comparison is a four-block result and the `C = 10` half a two-block
+  result.
+- The competitor-activity comparison between datasets, and therefore the claim that the
+  conditional ceiling's usefulness grows with `C`.
+
+**Not confounded, but single-architecture:**
+
+- **The +12.8 accuracy gain from removing the cap at `C = 101, T = 2` is not confounded with
+  depth.** Count and accumulator share the same trunk within N-Caltech101, so that comparison
+  was always internally matched. What it lacks is replication at a second depth, which is a
+  weaker charge and is what this run supplies.
+- The falsification of prediction 4. The conditional ceiling is computed from each model's
+  own outputs, so "this model had headroom it did not use" holds for the models measured
+  whatever their depth. Whether it holds for a *different* depth is untested.
+
+**Untouched by any of this:** the ceiling verification itself. `e^T/(e^T + C − 1)` contains
+no architectural term.
+
+### The design
+
+Both architectures on both datasets, `T` in {2, 6}, seeds 0–2, count and accumulator in
+every cell, so the readout comparison is matched as well as the dataset comparison. Two of
+the four quadrants already exist; 24 runs are new.
+
+| | two blocks (32, 64) | four blocks (32, 64, 128, 128) |
+|---|---|---|
+| N-MNIST | exists | **new** |
+| N-Caltech101 | **new** | exists |
+
+### The prediction
+
+1. **The ceiling still holds at `C = 101` with two blocks.** The bound is respected in every
+   run. Saturation is likely but is not predicted: reaching it needs some sample with all 100
+   competitors silent, which is a property of the trained model, not of the formula.
+2. **The accuracy gain from removing the cap at `C = 101, T = 2` survives at both depths**,
+   remaining above +0.05 in each. The mechanism claimed for it — a 2.68-nat cross-entropy
+   floor dominating the gradient — has no architectural term either.
+3. **The `C = 101, T = 6` residual persists at both depths, staying above 0.08** — that is,
+   more than half of the 0.1534 survives a 5.8× change in parameter count. If it instead
+   falls below 0.08 with the larger two-block model, it is substantially a capacity effect
+   and the "C effect" reading of it is wrong.
+4. **The conditional ceiling's explanatory share at `C = 101, T = 6` stays at 0%** under both
+   architectures — the conditional ceiling remains above accuracy, so the residual remains
+   genuine miscalibration rather than an attainability effect.
+
+### Falsification
+
+- **Prediction 1 is wrong** if any run's observed maximum confidence exceeds its derived
+  ceiling by more than float tolerance. This would be the most important negative result in
+  the study and is reported first if it happens.
+- **Prediction 2 is wrong** if the accuracy gain at `C = 101, T = 2` falls below +0.05 at
+  either depth, or reverses sign.
+- **Prediction 3 is wrong** if the `C = 101, T = 6` residual falls below 0.08 with two
+  blocks. That is the outcome that would reattribute the study's largest unexplained quantity
+  from `C` to capacity.
+- **Prediction 4 is wrong** if the conditional ceiling drops below accuracy at
+  `C = 101, T = 6` under either architecture, giving a non-zero share.
+
+### What is suspended until this completes
+
+Every cross-dataset quantitative comparison in "The C axis" and in "Outcome of prediction 4"
+is provisional. They are left in place, unedited, with this section as the pointer: a reader
+should treat the `C = 10` against `C = 101` numbers as unmatched until the table below is
+filled in.
+
 ## Why the count readout exists
 
 The readout experiment shows the cap is avoidable, which makes it easy to read this study
