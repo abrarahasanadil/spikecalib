@@ -399,15 +399,26 @@
       <p>
         <b>Verified 2026-09-12 against primary documents</b>, because these are load-bearing
         in a preprint and several were supplied in a brief rather than read.
+      </p>
+      <p>
         <b>Confirmed:</b> Atarashi et al.; Li, Jones &amp; Furber; and both Chen, Park &amp;
         Simeone papers — authors, titles, venues, years, and the timestep regime each works
-        at. <b>Withdrawn:</b> two references, one an arXiv identifier attributed to the wrong
+        at.
+      </p>
+      <p>
+        <b>Withdrawn:</b> two references, one an arXiv identifier attributed to the wrong
         authors and one that could not be identified at all; <code>SOURCES.md</code> records
-        the evidence for both rather than deleting them. <b>Horowitz:</b> the energy table is <b>Figure 1.1.9</b>, "Rough energy
+        the evidence for both rather than deleting them.
+      </p>
+      <p>
+        <b>Horowitz:</b> the energy table is <b>Figure 1.1.9</b>, "Rough energy
         costs for various operations in 45nm 0.9V" — E<sub>AC</sub> = 0.9 pJ is confirmed as
         the 32-bit float add, but <b>4.6 pJ appears nowhere in the paper</b>. It is the
         multiply-plus-add convention, 0.9 + 3.7, and is now described as a convention rather
-        than cited as a measurement. <b>Loihi and SpiNNaker</b> could not be confirmed and
+        than cited as a measurement.
+      </p>
+      <p>
+        <b>Loihi and SpiNNaker</b> could not be confirmed and
         the strong form of that argument is withdrawn. <code>SOURCES.md</code> carries the
         evidence for each and what remains unverified.
       </p>
@@ -418,6 +429,8 @@
 
   <section class="panel c12">
     <div class="prose wide">
+      <div class="repro-grid">
+        <div>
       <p>Every number on this page comes from artifacts that regenerate from a clean
       checkout. Training on Apple silicon is not bitwise deterministic, so trained weights
       vary slightly at a fixed seed; splits and calibrator fitting are kept on CPU RNG and
@@ -440,7 +453,8 @@ python scripts/run_sweep.py --epochs 50 --patience 5
 <span class="c"># regenerate everything this page reads</span>
 python scripts/extract_readout_stats.py
 python scripts/export_dashboard_data.py</pre>
-
+        </div>
+        <div>
     <div class="scroll panel-table">
       <table>
         <thead><tr><th scope="col" style="cursor:default">Item</th><th scope="col" style="cursor:default">Value</th></tr></thead>
@@ -463,7 +477,8 @@ python scripts/export_dashboard_data.py</pre>
       <code>e524beccace851af</code> used byte-identical splits, so a result can prove which
       split produced it rather than assert it.
     </p>
-
+        </div>
+      </div>
     </div>
   </section>
 
@@ -570,7 +585,7 @@ python scripts/export_dashboard_data.py</pre>
       pre-registered prediction and its outcome. <code>LOG.md</code> is an append-only record
       of how the work was done, including the mistakes. <code>SOURCES.md</code> lists every
       numeric constant with its provenance and everything still to verify.</p>
-    <p>Last updated 2026-09-10.</p>
+    <p id="last-updated">Last updated 2026-09-12.</p>
   </footer>
 
 

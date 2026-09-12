@@ -79,6 +79,25 @@ def test_assets_are_versioned(index: str) -> None:
         assert all(r.startswith("?v=") for r in refs), f"{asset} is referenced unversioned"
 
 
+def test_footer_date_is_generated(index: str, app: str) -> None:
+    """It was hardcoded and two days stale. It now comes from the newest artifact."""
+    assert 'id="last-updated"' in index, "the footer date has no element to render into"
+    assert "D.last_updated" in app, "nothing renders the footer date from the payload"
+    with open(os.path.join(DOCS, "data.js")) as fh:
+        head = fh.read(400_000)
+    for key in ('"last_updated"', '"last_updated_source"', '"n_source_artifacts"'):
+        assert key in head, f"data.js carries no {key}; re-run export_dashboard_data.py"
+
+
+def test_export_records_its_source_artifacts() -> None:
+    """The date is resolved at export time -- a clone rewrites every mtime."""
+    path = os.path.join(os.path.dirname(DOCS), "scripts", "export_dashboard_data.py")
+    with open(path) as fh:
+        src = fh.read()
+    assert "def source(" in src and "sources.append" in src
+    assert "max(sources, key=os.path.getmtime)" in src
+
+
 def test_limitations_are_not_labelled_unverified(index: str) -> None:
     """A limitation is a known gap, which is the opposite of an unverified claim."""
     heading = re.search(r"<h3>Limitations.*?</h3>", index, re.S)

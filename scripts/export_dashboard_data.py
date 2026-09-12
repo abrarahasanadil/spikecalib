@@ -32,6 +32,7 @@ import json
 import os
 import shutil
 import sys
+import time
 
 import numpy as np
 import torch
@@ -150,16 +151,28 @@ def main() -> int:
                 }
             print(f"  T={timesteps:<3} seed={seed}  4 arms binned", flush=True)
 
-    with open(os.path.join(args.results, f"sweep_{spec.key}.csv")) as fh:
+    # Every artifact this payload is built from, so the page can state when the results
+    # it shows were last produced rather than carrying a date somebody has to remember to
+    # edit. Resolved here rather than in the page because a clone rewrites every mtime to
+    # the checkout time -- the answer is only meaningful on the machine that ran the work,
+    # so it is computed at export and frozen into data.js.
+    sources: list[str] = []
+
+    def source(path: str) -> str:
+        if os.path.exists(path):
+            sources.append(path)
+        return path
+
+    with open(source(os.path.join(args.results, f"sweep_{spec.key}.csv"))) as fh:
         csv_text = fh.read()
-    with open(os.path.join(args.results, "readout_stats.json")) as fh:
+    with open(source(os.path.join(args.results, "readout_stats.json"))) as fh:
         stats = json.load(fh)[spec.key]
 
     # The result artifacts the page renders tables from. Each is optional so a checkout
     # that has not run every experiment still produces a working page; the page hides the
     # corresponding section rather than showing an empty table.
     def optional(name, key="rows"):
-        path = os.path.join(args.results, name)
+        path = source(os.path.join(args.results, name))
         if not os.path.exists(path):
             print(f"  {name} absent -- the page will hide that section")
             return None
@@ -172,8 +185,12 @@ def main() -> int:
     conditional_rows = optional("conditional_ceiling.json")
     arch_rows = optional("arch_matched.json")
 
+    newest = max(sources, key=os.path.getmtime)
     payload = {
         "dataset": spec.key,
+        "last_updated": time.strftime("%Y-%m-%d", time.localtime(os.path.getmtime(newest))),
+        "last_updated_source": os.path.relpath(newest, REPO_ROOT),
+        "n_source_artifacts": len(sources),
         "display_name": spec.display_name,
         "n_classes": spec.n_classes,
         "n_bins": args.bins,

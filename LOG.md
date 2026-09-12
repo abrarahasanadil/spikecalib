@@ -1978,3 +1978,81 @@ per width, lowest **5.82:1**, nothing below 4.5:1.
 - *A `c8` card claim runs to 161 characters at 1920.* The hero's container argument applies
   to it exactly: the card is already a panel, so the remedy there is the card's width rather
   than a cap on its text — the T = 80 card is `c8` and could be `c6`.
+
+## 2026-09-12 — The footer date comes from the artifacts; three layout gaps closed
+
+**Did.** Four dashboard items before the paper.
+
+**Ran.** `pytest -q` → **222 passed** (220 plus two new guards). Verified at 1920 and 1440,
+re-checked at 1200, 900 and 400.
+
+**Did: the footer date is generated.** It read "Last updated 2026-09-10" and was two days
+stale, which is the worst kind of wrong number on a page whose whole argument is provenance.
+`export_dashboard_data.py` now records every artifact the payload is built from — the sweep
+CSV, `readout_stats.json` and the five optional result files, seven in all — and writes the
+newest one's date into `data.js` alongside the path it came from. The footer renders from
+that: **"Last updated 2026-09-12, the newest of 7 result artifacts
+(results/conditional_ceiling.json)."** So the line now states a fact that can be checked
+rather than one somebody has to remember to edit.
+
+Resolved at export rather than in the page, because a `git clone` rewrites every mtime to
+the checkout time — the question is only answerable on the machine that ran the work. The
+markup keeps the last exported date as its fallback so the line is never blank if the
+payload is unavailable. `data.js` was patched in place with the identical computation rather
+than regenerated, because a full export re-runs inference over fifteen models; the next
+regeneration produces the same three fields natively, and a test asserts the script still
+computes them.
+
+**Did: the provenance note stops splitting mid-sentence.** Giving the paragraph its own two
+columns fixed the 206-character measure and introduced a worse problem — a single paragraph
+in two columns breaks wherever the column ends, mid-sentence, across the gap. The note is
+five separate statements, so it is now five elements flowing as items, each with
+`break-inside: avoid`, exactly as the citations do. Measured: **5 statements, 0 split across
+the gap** at both widths. The word multiset of the page is unchanged — the split is at
+existing sentence boundaries, no text was rewritten.
+
+**Did: the space under the T = 80 card.** Four stacked tiles come to 509px whatever width
+they are given; the card beside them tops out around 400px. Three splits were measured —
+c7/c5 and c6/c6 and c5/c7 — and they move the mismatch by at most 19px, because the mismatch
+is vertical and the tiles' height is set by their content. So the card stretches to its row
+instead: **0px at both widths**, against 119px and 100px before.
+
+This is the second exception to the rule that nothing on this page stretches, and it is a
+weaker one than `.sweep-rows`, where the gained height becomes table rows. Here it becomes
+whitespace inside the card. Two distributions were tried: `space-between` spreads it across
+every gap and pulls the title away from the number it belongs to, which looked worse; the
+existing auto margin above `.card-fig` keeps the head of the card tight and drops the table
+and button to the bottom edge, where they sit on every other card anyway. **The cost is
+~110px of blank between the claim and the table.** The alternative that avoids it entirely
+is to compact the tiles — caption and badge on one row would save roughly 20px each — and
+that is a markup change to `tile()` rather than a rule, so it was not taken unasked.
+
+**Did: the space beside the Reproduce panel.** The panel is full width because its command
+block and environment table need it, but both were boxes whose content is narrow: the
+commands run to 504px inside a 1,502px box, the table's two key/value columns likewise, and
+the prose beside them stopped at 75ch and left 843px empty. Now a two-column grid — intro
+and commands on the left at the 540px they actually need, environment table and fingerprint
+note on the right — with reading order preserved. The panel went from **952px to 545px
+tall**, and the page from 7.08 to **6.69 screens** at 1920.
+
+One consequence handled: `tbody td` is `white-space: nowrap`, which is right for the sweep
+table's numeric columns and wrong for this one. At 1440 it forced the environment table 33px
+past its column. That table's values are prose, so they wrap here instead of scrolling.
+
+**Verified.** 1920 and 1440, and re-checked at 1200, 900 and 400: zero columns ending with
+more than 150px of empty space, zero citations split, zero provenance statements split, no
+horizontal overflow, no console errors, all eight modals opening to a measured on-screen
+rectangle and closing on Escape. Contrast re-measured against sampled composited pixels: 15
+samples per width, lowest **5.82:1**, nothing below 4.5:1.
+
+**Added.** Two guards in `tests/test_dashboard.py`: that the footer has an element to render
+into and something that renders it from the payload, with `data.js` carrying the three
+fields; and that the export script still records its sources and takes the newest. Mutation-
+checked — reverting the footer to a bare `<p>` fails exactly one test.
+
+**Open.**
+- *The ~110px inside the T = 80 card,* above. Closing it properly means compacting the tile.
+- *`--accent` is still mint outside the rail,* unchanged.
+- *A `c8` card claim runs to 161 characters at 1920,* unchanged. Now that the card stretches,
+  making it `c6` would fix both that and the internal gap in one move — worth doing together
+  rather than separately.

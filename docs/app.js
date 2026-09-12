@@ -853,9 +853,21 @@
 
   /* The interface first -- nothing below is allowed to be able to disable it -- and
      each renderer isolated, so one missing column cannot take the whole page down. */
+  /* The footer used to carry a date somebody had to remember to edit, and it was two days
+     stale. It now states when the newest artifact this page is built from was written,
+     resolved at export time -- a clone rewrites every mtime, so the question is only
+     answerable on the machine that ran the work. The markup keeps the last exported date
+     as its fallback, so the line is never blank if the payload is unavailable. */
+  function renderUpdated() {
+    var el = document.getElementById("last-updated");
+    if (!el || !D.last_updated) return;
+    el.textContent = "Last updated " + D.last_updated + ", the newest of "
+      + D.n_source_artifacts + " result artifacts (" + D.last_updated_source + ").";
+  }
+
   wireModals();
   [updateHero, renderReadoutTable, renderSelectiveTable, renderQuantisation,
-   renderCaxis, renderConditional, renderArch, render].forEach(function (fn) {
+   renderCaxis, renderConditional, renderArch, renderUpdated, render].forEach(function (fn) {
     try { fn(); } catch (err) { console.error("spikecalib: " + fn.name + " failed", err); }
   });
   window.addEventListener("resize", function () {

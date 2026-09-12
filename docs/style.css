@@ -359,6 +359,15 @@ input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.12); }
    four columns empty beside it. They now fill that column, one per row. Below 1200px the
    column is gone, so they fall back to a horizontal row above the cards. */
 .cards .tiles { grid-column: span 4; grid-template-columns: 1fr; align-content: start; }
+/* Four stacked tiles come to 509px whatever width they are given, and the card beside them
+   tops out around 400px, so the row left 100-119px under the card at every split -- c7/c5
+   and c6/c6 were measured and move it by at most 19px, because the mismatch is vertical.
+   The card stretches instead, and the gained height lands in one place. Spreading it with
+   space-between was tried and looked worse: it pulls the title away from the number it
+   belongs to. The existing auto margin above .card-fig keeps the head of the card tight
+   and drops the table and button to the bottom edge, which is where they already sit on
+   every other card. */
+.cards .c8 { align-self: stretch; }
 .cards .tiles .tile-label { min-height: 0; }
 @media (max-width: 1200px) {
   .cards .tiles { grid-column: span 12; order: -1; grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -487,6 +496,20 @@ h3 .pill, h4 .pill { margin-left: var(--s2); vertical-align: 2px; }
 /* ---------- table ---------- */
 
 .panel-table { margin: var(--sp-3) 0; }
+/* The reproduce panel is full width because its command block and environment table need
+   it, but both are boxes whose CONTENT is narrow -- the commands run to 504px inside a
+   1,502px box, and the prose beside them stopped at 75ch and left 843px empty. Commands on
+   the left at the width they actually need, the environment table and the fingerprint note
+   on the right. Reading order is preserved: intro, commands, table, note. */
+.repro-grid { display: grid; grid-template-columns: minmax(0, 540px) minmax(0, 1fr);
+  gap: var(--s6); align-items: start; }
+.repro-grid > div > :first-child { margin-top: 0; }
+.repro-grid .panel-table { margin-top: 0; }
+/* tbody td is nowrap because the sweep table's numeric columns must not wrap. This one is
+   key/value prose -- "50, 5 -- all 15 stopped early (10-21 epochs)" -- so it wraps instead
+   of forcing a 33px horizontal scroll at 1440. */
+.repro-grid tbody td { white-space: normal; }
+@media (max-width: 1000px) { .repro-grid { grid-template-columns: minmax(0, 1fr); } }
 .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--r-panel); border: 1px solid var(--edge-soft); max-height: 560px; overflow-y: auto; }
 table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
 thead th {
@@ -559,9 +582,13 @@ tbody tr:hover td { background: rgba(255,255,255,.03); color: var(--ink); }
    than one more card. Spanning it also stops it taking a column of its own and leaving the
    others short. */
 .rel-work .provenance { column-span: all; max-width: none; margin-top: var(--s1); }
-/* Spanning both columns makes this paragraph 1,502px wide at 1920 -- about 206 characters.
-   It gets its own two columns so the measure matches the citations above it. */
-.rel-work .provenance > p:not(.unver) { columns: 2; column-gap: var(--s6); }
+/* Spanning both columns made this 1,502px wide at 1920 -- about 206 characters -- so it
+   takes two columns of its own. Putting those columns on the paragraph split it mid-sentence
+   across the gap: the note is five separate statements, so they are now five elements that
+   flow as items and each stays whole, exactly as the citations do. */
+.rel-work .provenance { columns: 2; column-gap: var(--s6); }
+.rel-work .provenance .unver { column-span: all; }
+.rel-work .provenance p { break-inside: avoid; }
 /* A citation stays whole. Allowing it to split balanced the columns, but the later
    paragraphs then landed at the top of the next column under a different paper's heading,
    which reads as misattribution -- a worse failure here than an uneven column. */
