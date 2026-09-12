@@ -1483,3 +1483,78 @@ needs a cost model.
 - *Loihi per-timestep state-read cost and SpiNNaker small-layer recording bandwidth.*
 - *The energy figures are "Rough" by their own source*, so the absolute microjoule values on
   the page carry less weight than their uniformity across `T` suggests.
+
+---
+
+## 2026-09-12 — Does the ceiling bind in published work? Read the method section: no, and the reason is the finding
+
+**Did.** Settled the question left open by the verification pass. Li, Jones & Furber report
+94.11% at 4 timesteps on CIFAR-10, and at `C = 10, T = 4` the ceiling is 0.8585 — so if
+their confidence were a softmax over integer spike counts the bound would constrain a
+published ICCV result. Downloaded arXiv:2303.10276v3, extracted the text, and read the
+method and experimental-setup sections rather than inferring from the accuracy number.
+
+**Ran.** No experiments. Text extraction and reading. `pytest -q` → **214 passed**,
+unchanged.
+
+**Found: outcome (b). A real-valued readout. The cap does not apply.**
+Verbatim from their experimental setup:
+
+> "In our experiments, we duplicate QCFS and QFFS by quantizing the activation in ANNs to
+> 2-bit by LSQ in all hidden layers and **keeping the output layer at full precision**. All
+> weights are in full precision. We adopt the soft-reset IF neuron and its variant in SNNs as
+> described in, and **the neurons in the output layer only accumulate input currents**."
+
+The output neurons **integrate but do not fire**, so their logits are accumulated real-valued
+currents at full precision, not integers in `[0, T]`. `e^T/(e^T + C − 1)` does not apply and
+their published numbers are not constrained by it. Their confidence is
+`P_t = max_i e^{z_i/α} / Σ_j e^{z_j/α}` over those accumulated currents.
+
+The reason is worth more than the answer: the output layer is kept at full precision
+**because ANN-to-SNN conversion needs the output precision**. Conversion-based work
+sidesteps the cap as a side effect of a choice made for accuracy, not for calibration.
+
+**Found: the same paragraph independently documents the mirror-image failure.**
+
+> "The outputs of a rate-coded SNN are accumulated spikes or, in some cases that need higher
+> output precision, the membrane potential of integrate-but-not-fire neurons. In both
+> situations, the output logits of SNNs increase with `t` continuously, which causes the
+> **saturated confidence**"
+
+and their Figure 2 caption: *"`P_t` saturates to 100% quickly with time... After introducing
+a scalar regulation parameter `α`, `P_t` is softened."*
+
+An unbounded accumulating readout is **over**confident, saturating towards 1. That is
+precisely what this study measures for its own accumulator — `conf − acc` of +0.0032 at
+`T = 6` and +0.0047 at `T = 10` on N-MNIST, positive in 3 of 3 seeds at both, and +0.08 to
++0.23 at `C = 101`. Two independent lines of work, different datasets, same direction. The
+two readout families have opposite failure modes and the literature has hit both.
+
+Their `α` divides the logits before the softmax, which *is* temperature scaling, and the
+paper calls it that. This study's null result — temperature is entirely adequate — is
+consistent with a published method picking temperature for the uncapped case.
+
+**Chose.**
+- *Extracted the text locally and grepped it rather than trusting a summary.* The first fetch
+  returned a paraphrase that read as if the confidence were computed on "accumulated membrane
+  potentials", which is nearly right but not quotable, and the distinction between "the field
+  does X or Y" and "we do Y" is exactly what the question turned on. The decisive sentence is
+  in the experimental setup, not the method exposition.
+- *The claim in the paper is narrowed rather than dropped.* "The bound constrains published
+  work" is false. "The bound binds in a regime the literature has not published in — a
+  spike-count readout at low `T`" is true, supported, and more useful.
+- *Nothing is claimed about Wu et al., arXiv:2405.00699.* Its abstract mentions a "cutoff
+  based on softmax output" on directly-trained SNNs, which would make it the one remaining
+  candidate, but arXiv serves no HTML for it and it was not read. It stays unverified.
+
+**Open.**
+- *Wu et al.'s readout and timestep counts* — the last reference that reports both a timestep
+  count and a confidence measure, and the only one that could still turn out to be
+  constrained by the ceiling.
+- *No published spike-count result at low `T` has been found.* Whether that is because the
+  combination is rare, or because this study has only checked three papers, is not
+  established — three references is not a survey.
+- *The corroboration runs the other way too:* if an unbounded accumulator saturates to 100%
+  "quickly with time" in their setting, this study's accumulator should become more
+  overconfident as `T` grows. It does at `C = 101` (+0.08, +0.18, +0.23 at `T` = 2, 6, 10)
+  and barely moves at `C = 10`. That contrast is unexplained.

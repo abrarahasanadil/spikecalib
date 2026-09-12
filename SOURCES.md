@@ -388,12 +388,19 @@ open-access listing renders the title with "with" in place of "by"; the arXiv re
 in the conversion category explicitly. Static image data: CIFAR-10 at about 4 timesteps
 falling to ~2.52 with the method, ImageNet at 14 falling to 4.71. It applies **temperature
 scaling** as a post-training calibration step.
-*Note for the paper, not a claim:* this operates at `T` of roughly 2.5-14 with `C = 10` on
-CIFAR-10, which is inside this study's regime, and reports 94.11% accuracy at 4 timesteps
-against a `C = 10, T = 4` ceiling of 0.8585. **If** its readout is a softmax over
-accumulated spike counts, the ceiling would bind there too. The readout description
-available to this verification was ambiguous between accumulated spikes and accumulated
-membrane potential, so this is recorded as a **checkable question**, not a finding.
+*Readout, verified 2026-09-12 in the method section:* **a non-spiking accumulator, not
+spike counts.** Verbatim: *"keeping the output layer at full precision... the neurons in the
+output layer only accumulate input currents."* Confidence is
+`P_t = max_i e^{z_i/alpha} / sum_j e^{z_j/alpha}` over those accumulated currents, where
+dividing by `alpha` is temperature scaling and the paper describes it as such. **The
+attainable-confidence ceiling therefore does not apply to their 94.11%-at-4-timesteps
+result**, and the question raised on 2026-09-12 is closed.
+*What it does corroborate:* the same passage states that with such a readout "the output
+logits of SNNs increase with `t` continuously, which causes the saturated confidence", and
+their Figure 2a shows confidence "saturates to 100% quickly with time". That is the
+mirror-image failure of the ceiling and matches this study's own accumulator measurements
+(`conf - acc` of +0.0032 and +0.0047 at `T` = 6, 10 on N-MNIST; +0.08 to +0.23 at
+`C = 101`).
 
 **3b. Chen, Park & Simeone. "Knowing When to Stop: Delay-Adaptive Spiking Neural Network
 Classifiers with Reliability Guarantees."** arXiv:2305.11322, 18 May 2023 (v4, 29 June
@@ -457,10 +464,15 @@ softened to say what is actually known, and both claims stay `[UNVERIFIED]`.
    the specific arctan form is unattributed here.
 5. **DVS-Gesture 1,176 / 288 split counts.** From SpikingJelly's docstring; not built.
 6. **CIFAR10-DVS 10,000 sample count.** Same.
-7. **Whether "Dynamic Confidence" uses a spike-count or membrane readout**, which decides
-   whether the attainable-confidence ceiling binds in its `T = 4`, `C = 10` setting. The most
-   consequential remaining question, because a positive answer would mean the ceiling already
-   constrains published work.
+7. ~~Whether "Dynamic Confidence" uses a spike-count or membrane readout.~~ **RESOLVED
+   2026-09-12 by reading the method section: a real-valued readout. The ceiling does not
+   apply to their results.** Verbatim from their experimental setup: *"keeping the output
+   layer at full precision... the neurons in the output layer only accumulate input
+   currents."* The output neurons integrate but do not fire, so the logits are accumulated
+   real-valued currents, not integers in `[0, T]`. See `NOTES.md`, "Does the ceiling bind in
+   published work?" — which also records that the same paragraph independently documents the
+   *opposite* failure mode, confidence "saturating to 100%" under an unbounded accumulating
+   readout, corroborating this study's accumulator measurements.
 8. **The AOT-SNN classification paper**, if one exists, and whether temperature scaling is
    its calibration baseline.
 9. **Loihi compartment-state access cost** and **SpiNNaker recording bandwidth for a small

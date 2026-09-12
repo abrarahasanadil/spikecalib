@@ -1339,6 +1339,95 @@ depth with a corrected ratio; the ceiling verification holds at both depths; the
 ceiling result holds at both depths. The one claim that did not survive is the magnitude of
 the `T = 2` accuracy gain, which is now reported as a range across architectures.
 
+## Does the ceiling bind in published work? Resolved: no, and the reason is informative
+
+The verification pass left one consequential question open. Li, Jones & Furber report
+**94.11% accuracy at 4 timesteps on CIFAR-10**, and at `C = 10, T = 4` the
+attainable-confidence ceiling is **0.8585**. If their confidence were a softmax over integer
+spike counts, the bound would constrain a published ICCV result. Their method section was
+read to settle it, rather than inferring anything from the accuracy number.
+
+### Outcome (b): a real-valued readout. The cap does not apply.
+
+`[LIT]` Li, Jones & Furber, arXiv:2303.10276v3, experimental setup, **verbatim**:
+
+> "In our experiments, we duplicate QCFS and QFFS by quantizing the activation in ANNs to
+> 2-bit by LSQ in all hidden layers and **keeping the output layer at full precision**. All
+> weights are in full precision. We adopt the soft-reset IF neuron and its variant in SNNs
+> as described in, and **the neurons in the output layer only accumulate input currents**."
+
+The output neurons **integrate but do not fire**. Their logits are real-valued accumulated
+currents at full precision, not integers in `[0, T]`, so `e^T/(e^T + C − 1)` does not apply
+to them and **their published numbers are not constrained by it**. Their confidence is
+
+    P̂_t = max_i ( e^{z_t^i / α} / Σ_j e^{z_t^j / α} )
+
+with `z_t` those accumulated currents.
+
+**This is the same construction as this study's `accumulator` readout** — a non-spiking
+integrator with no leak — arrived at independently and for a different reason. Theirs comes
+from the standard conversion recipe, which keeps the output layer at full precision
+*because conversion needs the output precision*. So conversion-based work sidesteps the cap
+as a side effect of a choice made for accuracy, not calibration.
+
+### The mirror-image failure mode, documented independently
+
+The same paragraph that rules out the cap corroborates this study's account of what happens
+when the cap is removed. `[LIT]` verbatim:
+
+> "The outputs of a rate-coded SNN are accumulated spikes or, in some cases that need higher
+> output precision, the membrane potential of integrate-but-not-fire neurons. In both
+> situations, the output logits of SNNs increase with `t` continuously, which causes the
+> **saturated confidence** `P̂_t` after applying Softmax to the SNN outputs."
+
+and their Figure 2 caption:
+
+> "a. `P̂_t` **saturates to 100% quickly with time**. b. After introducing a scalar
+> regulation parameter `α`, `P̂_t` is softened."
+
+**An unbounded accumulating readout saturates towards 1 and is overconfident.** That is
+precisely what this study measures for its own accumulator: `conf − acc` of **+0.0032 at
+`T = 6` and +0.0047 at `T = 10`** on N-MNIST, positive in 3 of 3 seeds at both, and **+0.08
+to +0.23** at `C = 101`. Two independent lines of work, two different datasets, same
+direction.
+
+So the two readout families have **opposite** failure modes, and the literature has hit both:
+
+| readout | bound | failure mode | who reports it |
+|---|---|---|---|
+| softmax over spike counts | capped at `e^T/(e^T+C−1)` | **under**confidence where the cap binds | this study, `T ≤ 6` |
+| non-spiking accumulator | unbounded, grows with `t` | **over**confidence, saturating to 1 | Li et al.; this study's accumulator |
+
+### And their fix is temperature scaling
+
+`α` divides the logits before the softmax, which is exactly temperature scaling with
+temperature `α`; the paper says so directly, applying "temperature scaling, a post-training
+calibration algorithm". This study's null result — that calibrator choice does not matter
+and temperature is entirely adequate — is consistent with a published method choosing
+temperature for the uncapped case and finding it sufficient.
+
+### What the paper may now claim, and what it may not
+
+**May claim.** That no verified published result in this study's reference set is
+constrained by the ceiling, and that this is *because of a readout choice* rather than
+because the bound is weak:
+
+- **Li, Jones & Furber** use a full-precision non-spiking accumulator at `T ≈ 2.5–14`. Cap
+  does not apply. `[LIT]` verified in the method section.
+- **Chen, Park & Simeone, "Agreeing to Stop"** use softmax over integer spike counts, so the
+  cap *does* apply in principle — but at `T = 80` it equals 1.0 to double precision and is
+  inert. `[LIT]` verified in the full text.
+
+The ceiling therefore binds in a regime the literature has not published in: a **spike-count
+readout at low `T`**. That is a narrower and more defensible statement than "the bound
+constrains published work", and it is the one the evidence supports.
+
+**May not claim.** That the ceiling constrains any published number. It does not, in either
+verified case. Nor may it claim anything about **Wu et al., arXiv:2405.00699**, whose
+abstract mentions a "cutoff based on softmax output" on directly-trained SNNs but whose
+readout and timestep counts could not be verified — the arXiv HTML is not served for that
+paper and it was not read. It stays in "Still to verify".
+
 ## Why the count readout exists
 
 The readout experiment shows the cap is avoidable, which makes it easy to read this study

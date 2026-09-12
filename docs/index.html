@@ -343,6 +343,62 @@
   </div></section>
 
   <section class="panel c12"><div class="prose wide">
+<h3>Does the ceiling bind in published work? No — and the reason is the finding</h3>
+    <p>
+      Li, Jones &amp; Furber report <strong>94.11% accuracy at 4 timesteps on CIFAR-10</strong>
+      (ICCV 2023). At C = 10, T = 4 the ceiling is <strong>0.8585</strong>. If their
+      confidence were a softmax over integer spike counts, the bound would constrain a
+      published result. Their method section settles it, and nothing here is inferred from
+      the accuracy number.
+    </p>
+    <p>
+      <strong>It does not bind: they use a real-valued readout.</strong> Verbatim from their
+      experimental setup — <em>"keeping the output layer at full precision… the neurons in
+      the output layer only accumulate input currents"</em>. The output neurons integrate but
+      do not fire, so the logits are accumulated real-valued currents rather than integers in
+      [0, T], and e<sup>T</sup>/(e<sup>T</sup>+C−1) simply does not apply to them.
+    </p>
+    <p>
+      That is the same construction as this study's <strong>accumulator</strong> readout,
+      reached independently and for a different reason: conversion keeps the output layer at
+      full precision because conversion needs the precision. <strong>Conversion-based work
+      sidesteps the cap as a side effect of a choice made for accuracy.</strong>
+    </p>
+    <p>
+      <strong>And the same paragraph corroborates the other half of this study.</strong> It
+      states that with such a readout "the output logits of SNNs increase with t
+      continuously, which causes the <em>saturated confidence</em>", and its Figure 2 shows
+      confidence "saturates to 100% quickly with time" before a scalar α — temperature
+      scaling — softens it. An unbounded accumulator is <em>over</em>confident. That is
+      exactly what this study measures for its own accumulator: conf − acc of +0.0032 at
+      T = 6 and +0.0047 at T = 10 on N-MNIST, positive in 3 of 3 seeds at both, and +0.08 to
+      +0.23 at C = 101. Two independent lines of work, two datasets, same direction.
+    </p>
+    <div class="scroll" style="margin:12px 0">
+      <table>
+        <thead><tr><th style="cursor:default">readout</th>
+          <th style="cursor:default">bound</th>
+          <th style="cursor:default">failure mode</th>
+          <th style="cursor:default">reported by</th></tr></thead>
+        <tbody>
+          <tr><td class="k">softmax over spike counts</td><td>capped at e<sup>T</sup>/(e<sup>T</sup>+C−1)</td><td><strong>under</strong>confidence where the cap binds</td><td>this study, T ≤ 6</td></tr>
+          <tr><td class="k">non-spiking accumulator</td><td>unbounded, grows with t</td><td><strong>over</strong>confidence, saturating to 1</td><td>Li et al.; this study's accumulator</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      <strong>So the claim the paper may make is narrower than "the bound constrains
+      published work", and it is the one the evidence supports.</strong> Of the two
+      references verified to report both a timestep count and a confidence measure, neither
+      is constrained: Li et al. use an uncapped readout, and Chen, Park &amp; Simeone do use
+      softmax over integer spike counts but at <strong>T = 80</strong>, where the ceiling is
+      1.0 to double precision and inert. The ceiling binds in a regime the literature has not
+      published in — <strong>a spike-count readout at low T</strong> — which is where this
+      study works.
+    </p>
+  </div></section>
+
+  <section class="panel c12"><div class="prose wide">
 <h3>The same claims at two depths: what replicates and what does not</h3>
     <p>
       N-Caltech101 was run with four conv blocks and N-MNIST with two, so every cross-dataset
@@ -865,11 +921,21 @@
         as soon as the network is confident enough. The setting is ANN-to-SNN conversion on
         static image data, with an ANN as the calibration reference.
       </p>
+      <p>
+        <b>Readout, verified in the method section:</b> a non-spiking accumulator — "keeping
+        the output layer at full precision… the neurons in the output layer only accumulate
+        input currents". So the attainable-confidence ceiling <b>does not apply</b> to their
+        94.11%-at-4-timesteps result, even though T = 4 with C = 10 is squarely in the regime
+        where it would bind for a spike-count readout.
+      </p>
       <p class="diff">
         <b>This study differs</b> on three axes: the networks are directly trained as SNNs
         rather than converted, the data is event data rather than static frames, and the
-        object of study is the calibration method itself rather than a stopping rule built
-        on top of a confidence signal.
+        object of study is the calibration method itself rather than a stopping rule built on
+        top of a confidence signal. But the paper independently reports the
+        <b>mirror image</b> of this study's finding — with an unbounded accumulating readout,
+        confidence "saturates to 100% quickly with time", which they damp with a scalar α
+        that is temperature scaling.
       </p>
     </div>
 
