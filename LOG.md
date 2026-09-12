@@ -2752,3 +2752,69 @@ written earlier today, closed with "Neither is the arbiter" and treated the esti
 disagreement as a caveat on the finding. That was the weaker reading of the same data. Its
 conclusion now points to the addendum. This was analysis rather than a pre-registration, so
 replacing it revises no prediction.
+
+## 2026-09-12 — The paper: every number generated from results/
+
+**Did.** `paper/main.tex` and `paper/refs.bib`, arXiv cs.NE, sole author. **Compiled with
+Tectonic to 9 pages: sections 1–7 end on page 8, and Code and data, Acknowledgements and the
+references fill page 9.**
+
+**How the numbers got in.** `main.tex` types no measured value. `paper/make_numbers.py` reads
+`results/` and writes `paper/numbers.tex` — **216 macros, 204 of them used** — and each
+definition carries a comment naming the artifact it came from. Every line of `main.tex` that
+uses one carries its own source comment, checked mechanically: **0 lines without one**.
+Derived arithmetic (the bound at a given T and C, T_min, the T = 80 cap) is computed there too
+and labelled `[DERIVED]` rather than attributed to a result. The handful of numbers that are
+not results say where they come from instead: `[LIT]` for Horowitz's Figure 1.1.9 and Li et
+al.'s timestep range, `spikecalib/datasets.py` for the 45×60 frames, `spikecalib/train.py` for
+the optimiser. The script asserts the facts the prose depends on — zero violations, the three
+slack cells all at C = 101 and T = 10, an empty intersection of resolvable runs — so a
+changed artifact breaks the build instead of silently falsifying a sentence.
+
+**Two values had to be derived rather than read.** No record stores the early-stopping
+patience. Every one of the 96 records has `epochs_run − best_epoch = 6`, and `best_epoch` is
+0-indexed in `train.py`, so patience is 5 — that is how the macro is computed, and its comment
+says so. And the seed-0 split fingerprint is quoted as seed 0's, because splits differ by seed.
+
+**Where the text departs from the brief, and why.** Each change narrows a claim to what the
+artifacts support.
+- *"Unbounded readouts are overconfident"* became **unbounded accumulating** readouts,
+  overconfident **as T grows**. The leaky membrane readout is unbounded and underconfident
+  (−0.0289 at T = 2). Capped readouts are underconfident **where the cap binds**: the count
+  readout is overconfident, +0.0344, at C = 101, T = 10, where the cap is slack.
+- *"At C = 10 the two ceilings differ by at most 0.0067"* is true of seed means; the worst
+  single seed is 0.0075. Both are stated.
+- *"99.2% and 97.1% of expected calibration error"*: the artifact measures the share of the
+  gap between accuracy and mean confidence. At those two cells that gap equals ECE to four
+  decimals under both estimators, so the abstract says "under either binning estimator".
+  99.2% is the two-block N-MNIST model and 97.1% the four-block N-Caltech101 model; the other
+  depth gives 99.3% and 96.8%, named inline.
+- *"−0.10 to +0.12 on N-MNIST"* is T = 2; the T = 6 values (−0.15, −0.14) are in the table.
+- *The 0.1534 residual* is four blocks; two blocks gives 0.1159.
+- The accuracy range does not appear in the abstract, because the four sentences specified for
+  it do not include it; wherever it appears in the body the dataset and timestep are named.
+
+**Cut to length.** The first build was 10 pages. Removed: the risk-coverage figure, which was
+seed 0 only and restated numbers the text already gives, and a five-number table of shares that
+now reads as a sentence. Figure 1 shrank, margins went to 0.9 in, the bibliography tightened,
+two one-line Limitations paragraphs merged, and one heading shortened to clear the last overfull
+line. Figure 1 is seed 0, drawn from `results/readout_stats.json`, and its caption says so.
+
+**Left for the author.**
+- *Affiliation* is a visible red TODO on page 1.
+- *Guo et al.* is cited as instructed, but SOURCES.md still lists its author list and venue
+  under "Still to verify"; `refs.bib` flags this. The paper relies only on the method
+  attribution and does not attribute the 15-bin default to it.
+- *No year* for SpikingJelly or the N-Caltech101 mirror, because SOURCES.md records none; these
+  are the two remaining BibTeX warnings.
+
+**Found, not fixed — outside the requested files.**
+- *SOURCES.md line 115* still has an older Atarashi et al. entry dated 2026, marked
+  `[UNVERIFIED]` and "not read in full", contradicting the confirmed entry at line 361 (12 June
+  2025, read for the distinction). The paper uses the confirmed state.
+- *The dashboard's energy note* (`docs/index.html`, "between 41% and 65%") matches neither the
+  CSV's per-run range, 41–70%, nor its per-T means, 47–67%. The paper uses 41–70%.
+
+**Tooling.** Tectonic installed via Homebrew. The PDF and build logs are ignored in
+`.gitignore`; the source, the bibliography, the generated `numbers.tex` and its generator are
+tracked, so `tectonic -X compile paper/main.tex` rebuilds the paper from a checkout.

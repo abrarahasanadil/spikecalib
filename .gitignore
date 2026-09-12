@@ -9,3 +9,8 @@ __pycache__/
 .pytest_cache/
 results/*.npz
 results/*_audit.json
+# paper build products: main.tex, refs.bib and the generated numbers.tex are tracked;
+# the PDF and logs are rebuilt with `tectonic -X compile paper/main.tex`
+paper/*.pdf
+paper/*.log
+paper/*.blg
