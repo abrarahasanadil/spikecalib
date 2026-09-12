@@ -1904,3 +1904,77 @@ rectangle and closing on Escape. Also re-checked at 1200, 900 and 400.
   itself, but "green means an improvement delta" is not yet true of the whole page.
 - *A `c8` card claim runs to 161 characters at 1920,* unchanged from the previous entry, and
   the hero now runs to 224.
+
+## 2026-09-12 — Citations stay whole; the hero gets a container instead of a cap
+
+**Did.** Two fixes, both reversing a decision recorded in this log one entry earlier.
+
+**Ran.** `pytest -q` → **220 passed**, unchanged. Verified at 1920 and 1440, re-checked at
+1200, 900 and 400.
+
+**Did: `break-inside: avoid` on the citations, and the short columns filled.** The previous
+entry left citations breakable and recorded the trade-off as decided. It was decided wrong:
+a citation whose later paragraphs land at the top of the next column sits under a different
+paper's heading, and a reader who takes the text at face value attributes a claim to the
+wrong authors. That is a correctness failure in a section whose whole job is attribution.
+Column height is a cosmetic one. The comment that argued the other way is removed rather
+than left contradicting the rule beneath it.
+
+Setting `avoid` alone left 348px of short column at 1920 and 555px at 1440 — worse than the
+150px rule allows, so it could not stand on its own. Five configurations were measured:
+
+| | 1920 | 1440 | 1200 |
+|---|---|---|---|
+| `columns: 310px`, provenance spanning (previous) | 348px | 555px | 84px |
+| `columns: 310px`, provenance in flow | 367px | 301px | 342px |
+| `columns: 3`, provenance spanning | 412px | 555px | 678px |
+| `columns: 3`, provenance in flow | 141px | 301px | 341px |
+| **`columns: 2`, provenance spanning** | **48px** | **64px** | **84px** |
+
+Two columns wins everywhere, and at 1440 the section is *shorter* than it was with splitting
+allowed (867px against 1065px) — the extra height splitting was supposed to buy was never
+there. Final measured state: **0 citations split of 5**, worst short column **27px / 64px /
+84px**. A width-driven column count was the wrong instrument: with five unbreakable items,
+four columns is 1.25 items each and no balancer can do anything with that.
+
+The `.cite` 70ch cap went with it. Inside a 739px column at 1920 it stranded 228px, which is
+the same defect as the hero's — text stopping at an invisible wall. The column is the
+measure now, at most 101 characters at the widest.
+
+**Found, while in there: the provenance note ran 206 characters.** Spanning both columns
+made it 1,502px wide at 1920. My own text-measure harness never flagged it, because for
+anything inside `.rel-work` it compared the element against its own width — always zero
+slack by construction. It now takes two columns of its own so its measure matches the
+citations above it. Also removed: a dead `.rel-work { columns: 320px }` and a duplicate
+`.cite` rule, both overridden and both predating this session.
+
+**Did: the hero gets a container, and the cap is gone for good.** One entry ago the
+instruction was to remove the character cap entirely and let the summary run the full
+masthead; it did, at 224 characters per line at 1920, and that was recorded along with my
+disagreement. **That instruction is now reversed, and the reasoning that resolves it is not
+the one I gave.** I had been arguing about the number and proposing a smaller one; the
+actual defect was never the number. A `max-width` on the text stops the line at a boundary
+the reader cannot see, in the middle of an otherwise empty area — so the paragraph reads as
+broken rather than as measured, and no value of the cap fixes that, which is why 92ch, 82ch
+and none all looked wrong in their own way.
+
+The fix is to give the boundary something to be. The summary now sits in a 900px panel with
+the same surface, border, radius and lift as a card, and the text fills it: **120 characters
+at 1920 and 1560, 114 at 1440, 79 at 1200**. The measure is respected and the right edge is
+a visible edge. The masthead links moved out of the flow above it into the column beside it,
+sized to their content (196px), so they fill the space rather than reserve it; what is left
+past them — 436px at 1920, 76px at 1560, none at 1440 and below — is trailing breathing room
+at the top of the page. Below 1100px the panel goes full width and the links return to a
+row beneath it.
+
+**Verified.** 1920 and 1440: zero columns ending with more than 150px of empty space, zero
+citations split, no horizontal overflow, no console errors, all eight modals opening to a
+measured on-screen rectangle and closing on Escape. Contrast re-measured against sampled
+composited pixels now that the summary sits on a surface rather than the ground: 15 samples
+per width, lowest **5.82:1**, nothing below 4.5:1.
+
+**Open.**
+- *`--accent` is still mint outside the rail,* unchanged from the previous entry.
+- *A `c8` card claim runs to 161 characters at 1920.* The hero's container argument applies
+  to it exactly: the card is already a panel, so the remedy there is the card's width rather
+  than a cap on its text — the T = 80 card is `c8` and could be `c6`.

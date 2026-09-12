@@ -225,9 +225,30 @@ a:hover { color: var(--teal); }
 .masthead-links a { color: var(--ink); }
 .masthead-links a:hover { border-color: var(--accent); color: var(--accent); }
 .masthead-links .pending { color: var(--ink-3); }
-/* No cap: the summary runs the full width of the masthead, as specified. At 1920 that
-   is ~225 characters per line. */
-.lede { max-width: none; color: var(--ink); font-size: 15.5px; line-height: 1.65; margin: var(--s4) 0 0; }
+/* The measure is the panel, not a cap on the text. Uncapped inside the full masthead the
+   summary ran 224 characters at 1920; capping the text instead left it stopping at an
+   invisible wall with empty space to its right. A 900px panel gives the same measure a
+   visible edge, and the links fill the space beside it. */
+.hero {
+  display: grid;
+  /* the links track takes its content width, so it never reserves space it does not use;
+     what is left over past the panel is trailing breathing room, not a stranded column */
+  grid-template-columns: minmax(0, 900px) auto;
+  justify-content: start;
+  gap: var(--s5); align-items: start; margin-top: var(--s4);
+}
+.hero-panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); box-shadow: var(--lift);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  padding: var(--s5) var(--s7);
+}
+.hero .masthead-links { margin: 0; flex-direction: column; align-items: flex-start; gap: var(--s2); }
+@media (max-width: 1100px) {
+  .hero { grid-template-columns: minmax(0, 1fr); }
+  .hero .masthead-links { flex-direction: row; }
+}
+.lede { max-width: none; color: var(--ink); font-size: 15.5px; line-height: 1.65; margin: 0; }
 
 /* ---------- glass panel ---------- */
 
@@ -510,13 +531,6 @@ tbody tr:hover td { background: rgba(255,255,255,.03); color: var(--ink); }
 @media (max-width: 1199px) { .lim-list { columns: 1; } }
 
 .unverified-note { border-left: 2px solid var(--status); padding-left: var(--s3); color: var(--ink-3); }
-/* Masonry, not a grid. These cards differ in height by hundreds of pixels, and in a grid
-   every card in a row is inflated to the tallest -- measured at 1,241px of empty space
-   across the section at 1920px. Multi-column packs them by flow instead, so a short card
-   costs nothing. `columns: 320px` picks the column count from the available width, so it
-   needs no breakpoints of its own and cannot disagree with the panel's. */
-.rel-work { columns: 320px; column-gap: var(--s6); }
-.rel-work .cite { max-width: 70ch; break-inside: avoid; }
 .prose p { margin: 0 0 var(--s3); }
 .prose h3 { margin: var(--s5) 0 var(--s2); font-size: 14.5px; font-weight: 600; color: var(--ink); }
 .prose h3:first-child { margin-top: 0; }
@@ -525,8 +539,18 @@ tbody tr:hover td { background: rgba(255,255,255,.03); color: var(--ink); }
 .prose code { font-family: var(--mono); font-size: 12.5px; background: rgba(255,255,255,.06); padding: var(--s1) var(--s1); border-radius: 3px; color: var(--ink); }
 .prose strong { font-weight: 600; color: var(--ink); }
 
-.rel-work { columns: 310px; column-gap: var(--s6); }
-.cite { padding: var(--s3) 0; border-top: 1px solid var(--rule); max-width: 70ch; break-inside: avoid; }
+/* Masonry, not a grid. These citations differ in height by hundreds of pixels, and in a
+   grid every one in a row is inflated to the tallest -- measured at 1,241px of empty space
+   across the section at 1920px. Multi-column packs them by flow instead.
+
+   Two columns, though, not a width-driven count. With five unbreakable citations, four
+   columns means 1.25 items each and the balancer can do nothing with that: measured at
+   348px of short column at 1920 and 555px at 1440. Two pack 3/2 and come within 48-84px at
+   every width. The 70ch cap goes with it -- inside a 739px column it stranded 228px, and
+   the column is the measure now, at most 101 characters. */
+.rel-work { columns: 2; column-gap: var(--s6); }
+@media (max-width: 700px) { .rel-work { columns: 1; } }
+.cite { padding: var(--s3) 0; border-top: 1px solid var(--rule); max-width: none; break-inside: avoid; }
 /* In column flow the first card of each column sits at the top, so a top border there reads
    as a stray rule. Only the very first card is reliably at a column top, so it alone loses
    the border; the rest keep it as a separator between stacked cards. */
@@ -535,13 +559,13 @@ tbody tr:hover td { background: rgba(255,255,255,.03); color: var(--ink); }
    than one more card. Spanning it also stops it taking a column of its own and leaving the
    others short. */
 .rel-work .provenance { column-span: all; max-width: none; margin-top: var(--s1); }
-/* Balance. Six cards whose heights run 265px to 658px cannot balance across columns while
-   every one of them is unbreakable: the tallest sets the container height and the rest come
-   up short, measured at 322px. So a card MAY break between its paragraphs -- but never
-   between its heading and its text, and never leaving a single line stranded. That is the
-   ordinary multi-column contract and it costs nothing here, because a card is a sequence of
-   paragraphs rather than a unit that must be seen whole. */
-.rel-work .cite { break-inside: auto; }
+/* Spanning both columns makes this paragraph 1,502px wide at 1920 -- about 206 characters.
+   It gets its own two columns so the measure matches the citations above it. */
+.rel-work .provenance > p:not(.unver) { columns: 2; column-gap: var(--s6); }
+/* A citation stays whole. Allowing it to split balanced the columns, but the later
+   paragraphs then landed at the top of the next column under a different paper's heading,
+   which reads as misattribution -- a worse failure here than an uneven column. */
+.rel-work .cite { break-inside: avoid; }
 .rel-work .cite h4,
 .rel-work .cite .venue { break-after: avoid; }
 .rel-work .cite p { break-inside: avoid; orphans: 2; widows: 2; }
