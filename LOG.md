@@ -1818,3 +1818,89 @@ and breaking one trigger id each fail exactly one test.
   argument that ceilings the hero applies here above ~1560px. Left as specified rather than
   capped unasked; a 120-character ceiling on `.card-claim` would close it.
 - *The card faces still carry hardcoded numbers,* unchanged from the previous entry.
+
+## 2026-09-12 — Blue-to-indigo rail, two ground radials, and a correction log moved out of Related work
+
+**Did.** Four of five requested changes; the fifth was already in place. Verified on the
+rendered page at 1920 and 1440.
+
+**Ran.** `pytest -q` → **220 passed**, unchanged. Contrast measured against sampled pixels
+rather than computed from tokens.
+
+**Did: removed the withdrawal card from Related work.** Related work lists related work; the
+correction log belongs in `SOURCES.md`, which carries both entries in full (the wrong arXiv
+identifier at lines 418–430, the unidentifiable Skatchkovsky reference at 431–435). Nothing
+is lost by the deletion. The section subtitle keeps "verified 2026-09-12, two withdrawn" and
+the Provenance paragraph stays. One sentence in that paragraph had to change: it said the
+two withdrawals were "recorded above rather than deleted", which pointed at the card and
+became false the moment it went. It now points at `SOURCES.md`. The `.cite.withdrawn` rules
+and their two comments are removed with it rather than left as dead CSS.
+
+**Found: the Sweep results header already exists and renders.** `index.html:260` carries
+`<div class="band"><h2>Sweep results</h2><p class="sub">15 runs, five timestep settings,
+three seeds</p></div>` — the same markup, class and treatment as Findings, The ceiling
+instrument, Related work and Reproduce it. Measured on the rendered page it is visible at
+both widths: y=2837 at 1920 and y=3024 at 1440, height 26px, `display:flex`,
+`visibility:visible`. All five band headers were enumerated and all five render. I did not
+add a second one. If it is absent in a browser here, the page being served is an older
+`index.html` — the same stale-asset mechanism behind the dead modal buttons last session,
+and the reason the assets now carry `?v=`. A hard reload should settle it.
+
+**Did: removed the character cap on the hero summary.** Third request, and the instruction
+was to remove it rather than compromise, so it is removed: `max-width: none`. Measured, the
+summary now runs **224 characters** per line at 1920, 172 at 1560, 155 at 1440 and 120 at
+1200, and fills its container exactly at every width. My position is unchanged and stated
+here once so it is on the record rather than re-argued: past roughly 120 characters the
+return sweep gets unreliable, and the previous 82ch cap was set to hold the line at 116.
+The instruction overrides it and the cap is gone.
+
+**Did: the rail is blue-to-indigo, not green.** Selected chips take a 135° gradient from
+`--blue` #0A84FF to `--indigo` #5E5CE6 at .36/.24, the 1px `--border-2` edge and the inset
+top highlight. Unselected sit on `--surface` with `--border`. The slider filled track takes
+the same gradient along its own length. Two further pieces of the same control were still
+mint and would have left a green ring and a green number on a blue track: the thumb ring and
+the `.field-value` readout (`T = 2`, `C = 10`, `a = 0.950`), now `--blue` and #7fb4ff. The
+global `--accent` is deliberately untouched — it also paints links, focus rings, the ceiling
+curve and the sort indicator, and repainting those was not asked for.
+
+**Did: two ground radials.** Blue `rgba(10,132,255,.13)`, 1500×820 at 46% −12%, anchored at
+the top behind the masthead; orange `rgba(255,159,10,.075)`, 1000×900 at −4% 82%, low on the
+left behind the rail. Both `background-attachment: fixed`. Sampled off the isolated base
+layer, the blue peaks at #0a1626 (+22 blue on the base) and the orange at #17130f (+13 red),
+falling to exactly #0a0b10 on the right half — present, and under 3% luminance at their
+strongest.
+
+**Verified: no contrast cost anywhere.** Measured, not asserted: each sample's own computed
+colour against the mean of the real composited pixels behind it, with the ink hidden so the
+clip shows only the ground. Rail labels **10.16:1**, the rail's slider readout 9.36:1, rail
+hint 6.78:1, `--text-3` captions **5.94–6.78:1**, selected chip 10.98:1, unselected chip
+8.98:1, hero 16.84:1. Lowest anywhere on the page is 5.88:1. Nothing falls below 4.5:1 at
+either width.
+
+**Two measurement bugs in the contrast harness, both caught before they were believed.**
+The first pass sampled a full-page screenshot, which places a `position: fixed` rail and a
+`background-attachment: fixed` ground wrong — every rail sample read as the flat base
+#0a0b10 and the gradients appeared to do nothing. Re-done per element in viewport
+coordinates. The second pass then read both chip foregrounds as #000000, because the
+ink-hiding override was injected before the computed colours were captured. Colours are now
+captured up front in a single pass. Neither wrong table was reported.
+
+**Found: one citation in Related work splits across a column boundary.** Its later
+paragraphs sit at the top of the next column under an unrelated heading. Not introduced
+here — `.rel-work .cite { break-inside: auto }` is deliberate, from the layout session, and
+removing the sixth citation only changed which one splits. Measured both ways: `avoid`
+gives 0 splits of 5 at both widths but grows the section 116px at 1920 and **209px at
+1440**, which lands as exactly the kind of short column the no-dead-space rule exists to
+prevent. Left as is, because the current setting is the one that respects that rule, and
+recorded here so the trade-off is visible rather than silently chosen.
+
+**Verified.** 1920 and 1440: zero columns ending with more than 150px of empty space, no
+horizontal overflow, no console errors, all eight modals opening to a measured on-screen
+rectangle and closing on Escape. Also re-checked at 1200, 900 and 400.
+
+**Open.**
+- *`--accent` is still mint everywhere outside the rail.* Links, focus rings, the ceiling
+  curve, the sort arrow and `.cite .diff b` all read green. That is consistent within
+  itself, but "green means an improvement delta" is not yet true of the whole page.
+- *A `c8` card claim runs to 161 characters at 1920,* unchanged from the previous entry, and
+  the hero now runs to 224.

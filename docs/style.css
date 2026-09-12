@@ -131,11 +131,13 @@ html { -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
-  /* A single soft radial lift from the upper left, so the ground reads as a lit
-     surface rather than a void. Fixed so it does not travel with the scroll. */
+  /* Two soft radials over the black base: blue anchored at the top behind the masthead,
+     orange low on the left behind the rail. Both are meant to be felt rather than seen --
+     the strongest point of either lifts the ground by under 3% luminance, which is why the
+     --text-3 captions still clear 5.9:1. Fixed, so they do not travel with the scroll. */
   background:
-    radial-gradient(1400px 900px at 18% -8%, rgba(94, 92, 230, .10) 0%, rgba(94, 92, 230, 0) 62%),
-    radial-gradient(900px 700px at 92% 4%, rgba(10, 132, 255, .08) 0%, rgba(10, 132, 255, 0) 55%),
+    radial-gradient(1500px 820px at 46% -12%, rgba(10, 132, 255, .13) 0%, rgba(10, 132, 255, 0) 64%),
+    radial-gradient(1000px 900px at -4% 82%, rgba(255, 159, 10, .075) 0%, rgba(255, 159, 10, 0) 60%),
     var(--bg);
   background-attachment: fixed;
   color: var(--text);
@@ -223,11 +225,9 @@ a:hover { color: var(--teal); }
 .masthead-links a { color: var(--ink); }
 .masthead-links a:hover { border-color: var(--accent); color: var(--accent); }
 .masthead-links .pending { color: var(--ink-3); }
-/* 82ch measures 116 rendered characters in this face -- the ch unit is the advance of
-   "0", which is wider than the average character, so 92ch was already running to 130.
-   The ceiling is the constraint, not the panel width: past ~120 the eye loses its place
-   on the return sweep, and the masthead is wider than that at every desktop size. */
-.lede { max-width: 82ch; color: var(--ink); font-size: 15.5px; line-height: 1.65; margin: var(--s4) 0 0; }
+/* No cap: the summary runs the full width of the masthead, as specified. At 1920 that
+   is ~225 characters per line. */
+.lede { max-width: none; color: var(--ink); font-size: 15.5px; line-height: 1.65; margin: var(--s4) 0 0; }
 
 /* ---------- glass panel ---------- */
 
@@ -263,28 +263,29 @@ a:hover { color: var(--teal); }
 .field { display: block; margin: 0 0 var(--s3); }
 .field-top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s2); margin-bottom: var(--s1); }
 .field-label { font-size: 13px; color: var(--ink-2); }
-.field-value { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+.field-value { font-family: var(--mono); font-size: 13px; color: #7fb4ff; }
 
 input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; background: transparent; cursor: pointer; margin: 0; }
 input[type="range"]::-webkit-slider-runnable-track {
   height: 3px; border-radius: 2px;
-  /* the filled run is a gradient across its own length, not a flat teal bar */
-  background: linear-gradient(90deg, var(--teal), var(--mint)) 0 / var(--fill, 0%) 100% no-repeat,
+  /* the filled run is a gradient across its own length, in the same blue-to-indigo
+     accent the selected chips take */
+  background: linear-gradient(90deg, var(--blue), var(--indigo)) 0 / var(--fill, 0%) 100% no-repeat,
               rgba(255, 255, 255, .11);
 }
 input[type="range"]::-moz-range-track { height: 3px; border-radius: 2px; background: rgba(255,255,255,.11); }
 input[type="range"]::-moz-range-progress {
   height: 3px; border-radius: 2px;
-  background: linear-gradient(90deg, var(--teal), var(--mint));
+  background: linear-gradient(90deg, var(--blue), var(--indigo));
 }
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
   width: 14px; height: 14px; margin-top: -5.5px; border-radius: 50%;
   background: var(--ink); border: 2px solid var(--bg);
-  box-shadow: 0 0 0 1px var(--accent), 0 1px 3px rgba(0,0,0,.6);
+  box-shadow: 0 0 0 1px var(--blue), 0 1px 3px rgba(0,0,0,.6);
   transition: transform 120ms ease;
 }
-input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--ink); border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--accent); }
+input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--ink); border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--blue); }
 input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.12); }
 
 .chips, .preset-row { display: flex; flex-wrap: wrap; gap: var(--s1); }
@@ -296,16 +297,16 @@ input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.12); }
   transition: background 120ms ease, color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
 }
 .chip:hover { color: var(--ink); border-color: var(--border-2); background: var(--surface-2); }
-/* Selected wears the same treatment as a card -- a gradient in the accent, the brighter
-   border, and the inset top highlight -- rather than a flat block of green, which was the
-   one control on the page that belonged to no design system. */
+/* Selected wears the same treatment as a card -- a gradient, the brighter border, and the
+   inset top highlight. The gradient is blue to indigo, not the mint accent: green on this
+   page means an improvement delta and nothing else, so a filter control must not wear it. */
 .chip[aria-pressed="true"] {
-  background: linear-gradient(180deg, rgba(102,212,207,.26), rgba(102,212,207,.10));
-  color: var(--mint);
+  background: linear-gradient(135deg, rgba(10, 132, 255, .36), rgba(94, 92, 230, .24));
+  color: #dbe9ff;
   border-color: var(--border-2);
   box-shadow: var(--hi);
 }
-.chip[aria-pressed="true"]:hover { border-color: rgba(102,212,207,.55); }
+.chip[aria-pressed="true"]:hover { border-color: rgba(120, 170, 255, .62); }
 .chip.mono { font-family: var(--mono); }
 
 /* ---------- readout ---------- */
@@ -446,10 +447,6 @@ h3 .pill, h4 .pill { margin-left: var(--s2); vertical-align: 2px; }
   font-family: var(--mono); font-size: 10px; font-weight: 600;
   letter-spacing: .05em; text-transform: uppercase; margin-right: var(--s2); }
 .ver { color: var(--mint); font-size: 11.5px; }
-/* A withdrawn reference stays on the page rather than vanishing: the record of what was
-   removed and why is the point. Marked by a status rule rather than by colour alone. */
-.cite.withdrawn { border-left: 2px solid var(--status); padding-left: var(--s3); }
-.cite.withdrawn h4 { color: var(--status); }
 
 /* Standard deviations ride alongside a mean and must not compete with it. */
 .sd { font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
@@ -548,9 +545,6 @@ tbody tr:hover td { background: rgba(255,255,255,.03); color: var(--ink); }
 .rel-work .cite h4,
 .rel-work .cite .venue { break-after: avoid; }
 .rel-work .cite p { break-inside: avoid; orphans: 2; widows: 2; }
-/* The withdrawal card carries a status rule down its left edge, which would be cut in half
-   by a column break. It stays whole. */
-.rel-work .cite.withdrawn { break-inside: avoid; }
 .cite h4 { margin: 0 0 var(--s1); font-size: 14px; font-weight: 600; }
 .cite .venue { font-size: 12.5px; color: var(--ink-3); margin: 0 0 var(--s2); }
 .cite p { margin: 0 0 var(--s1); font-size: 13.5px; color: var(--ink-2); }
