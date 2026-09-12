@@ -2132,3 +2132,102 @@ modals opening to a measured on-screen rectangle and closing on Escape. Contrast
   this document, with five recorded outcomes. Left exactly as given, because the instruction
   was not to expand it, and flagged here rather than edited.
 - *`--accent` is still mint outside the rail,* unchanged.
+
+## 2026-09-12 — Modal measure, a segmented control, and an audit that found five stale things
+
+**Did.** Modal prose alignment, the duplicate modal headings, the single-select rail
+controls, and an audit of the record files. The audit findings are reported below and **not
+fixed**, as asked.
+
+**Ran.** `pytest -q` → **222 passed**. Verified at 1920 and 1440.
+
+**Did: option 2, and the measurement that ruled out option 1.** The brief was to narrow the
+modal panel to its prose measure unless that breaks something. Measured first: prose stops at
+**629px** (74ch) inside a **1,030px** body, and the six tables inside these modals want
+**735, 832, 836, 898, 950 and 1,051px**. Narrowing the panel to 629px would put *every one*
+of them into horizontal scroll, and shrink the two figures from 1,209px and 827px to 629px.
+The modals exist to hold the complete tables, so that is the thing that breaks. The prose
+measure is removed instead and the text fills the panel. The cost is a ~158-character line,
+accepted inside modals and nowhere else on the page. One table still scrolls — the 1,051px
+one in m4 — which is the case the brief allowed for.
+
+Verified by opening all eight at both widths and comparing edges: **8 of 8 aligned**, prose
+and tables sharing the same left and right edge to the pixel.
+
+The first version of that check reported two failures, and both were the check being wrong
+rather than the page. It measured every `<p>` in the body, including paragraphs inside a
+`.two-col` block in m4 and a `.pre-reg` callout in m6 — a second column and an indented
+callout are deliberately inset. Narrowed to top-level prose.
+
+**Did: removed the duplicated headings.** Three of eight repeated the header title verbatim
+as the first line of the body with the same pills: **m3, m6, m7**. The other five have
+genuine section headings that differ from the modal title, so those stay. Checked by
+comparing the `<h2>` against the first `.modal-part > h3` on every modal rather than by eye,
+and the only words the page lost are those three headings and their pills.
+
+**Did: a segmented control for the pick-one groups, and it was hiding a bug.** The ECE
+estimator and the instrument preset are both single-select — `state.estimator = v` and one
+`aria-pressed="true"` at a time — while Timesteps, Seed and Calibrator run through
+`toggler()` and are genuine multi-select. They were styled identically.
+
+Both now sit in a joined track with the active option filled, and carry `role="radiogroup"`
+with `role="radio"`/`aria-checked`, so the semantics match the appearance for a screen reader
+too. The ECE pair fits across the rail; the preset's three labels do not fit in 208px, so
+that track runs downwards — still one control, still one choice.
+
+**The restyle exposed a live bug.** `buildChips` updated only the button that was clicked, so
+in a pick-one group the previous selection kept its attribute: clicking equal-mass left
+**both** options reading selected. The filtered data was right the whole time — only the
+control lied. Every button is now re-synced from `get` after any click. Verified: exactly one
+active in each single-select group after clicking, and the multi-select groups still toggle.
+
+**Found (audit, not fixed).**
+
+*NOTES.md Status.* Two datasets and four readouts are both stated correctly, and the six
+experiment scales match their artifacts exactly — 54 readout rows, 48 matched-architecture,
+18 C-axis, all verified against `results/`. Two things are stale:
+- **It opens "Implemented and run on N-MNIST:" and contradicts itself three paragraphs
+  later** with "Two datasets are now implemented and run." The opening sentence predates the
+  C axis and was never updated.
+- **The 96 trained models are not in it.** The count is right — 96 weight files on disk, 66
+  N-MNIST and 30 N-Caltech101 — but it appears only in the dashboard rail, nowhere in NOTES.
+- **The readout comparison is not attributed either way.** Status presents it as this
+  study's, which it is: four readouts, 54 runs, a pre-registered prediction. What is prior
+  work's is narrower — see the dashboard note below — and Status says nothing about it.
+
+*README.md.* Current findings, the two withdrawn citations and the two-dataset count are all
+present and correct. One overclaim:
+- **"Both directions appear in the literature" is contradicted by this repository's own
+  resolved finding.** NOTES has a section titled "Does the ceiling bind in published work?
+  Resolved: no", which establishes that Li, Jones & Furber use a real-valued readout so the
+  cap cannot apply, and `SOURCES.md:173` records prior work reporting "ordinary
+  overconfidence while this study observes structural underconfidence". Only the
+  *overconfident* direction appears in the literature. The underconfident direction is this
+  study's own observation. This sits in the README's headline findings.
+
+*SOURCES.md.* **None of the three references is recorded, and neither are the two
+conventions.** Zero hits anywhere in the repository for hls4ml, arXiv:2606.10008, SFOD or
+arXiv:2403.15192; the only occurrence of snnTorch is an unrelated line in NOTES about its
+loader arriving at the same 1,176 / 288 split, and there is no Tutorial 5 reference.
+"Temperature-in-training convention" and "rate saturation" likewise do not appear. SOURCES.md
+already has a "Still to verify" section and nine `[UNVERIFIED]` tags, which is where they
+would belong. Not added: writing an entry for a document nobody in this repository has read
+is the exact failure the verification pass was run to undo.
+
+*The dashboard.* The readout comparison itself is correctly this study's. But the
+attribution that does exist is in the wrong place:
+- **Card 4 carries a `lit` pill and names no prior work on its face**, and modal m4 refers to
+  "the literature" twice without naming the paper.
+- The actual attribution — that Li, Jones & Furber "independently report the mirror image of
+  this study's finding", an unbounded accumulating readout saturating to 100% which they damp
+  with a scalar α that is temperature scaling — appears **only in Related work, about
+  4,700px further down the page**. A reader of card 4 alone would take the whole thing as
+  this study's discovery.
+
+**Verified.** 1920 and 1440: all eight modals aligned, every card-grid row filling its width,
+zero columns ending with more than 150px of empty space, no horizontal overflow, no console
+errors, all eight modals opening and closing on Escape.
+
+**Open.**
+- *The five audit findings above,* none of them fixed.
+- *`--accent` is still mint outside the rail,* unchanged.

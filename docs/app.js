@@ -242,7 +242,7 @@
       hero.tEl.value = p[0]; hero.cEl.value = p[1];
       updateHero();
       Array.prototype.forEach.call(document.querySelectorAll("[data-preset]"), function (b) {
-        b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+        b.setAttribute("aria-checked", b === btn ? "true" : "false");
       });
     });
   });
@@ -267,21 +267,37 @@
     });
   }
 
-  function buildChips(host, values, labels, get, set) {
+  /* `single` marks a pick-one group: exactly one option is active and clicking another
+     moves the selection rather than adding to it. Those get radio semantics and the
+     segmented track; the multi-select filters keep aria-pressed and separate chips.
+
+     Every button is re-synced from `get` after any click, not just the one clicked. The
+     old code updated only the clicked button, so choosing equal-mass left equal-width
+     still reading aria-pressed="true" and both appeared selected. */
+  function buildChips(host, values, labels, get, set, single) {
     host.textContent = "";
+    if (single) {
+      host.classList.add("segmented");
+      host.setAttribute("role", "radiogroup");
+    }
+    var btns = [];
+    function sync() {
+      btns.forEach(function (b) {
+        b.setAttribute(single ? "aria-checked" : "aria-pressed", get(b.__v) ? "true" : "false");
+      });
+    }
     values.forEach(function (v, i) {
       var b = document.createElement("button");
       b.type = "button";
       b.className = "chip" + (typeof v === "number" ? " mono" : "");
       b.textContent = labels ? labels[i] : v;
-      b.setAttribute("aria-pressed", get(v) ? "true" : "false");
-      b.addEventListener("click", function () {
-        set(v);
-        b.setAttribute("aria-pressed", get(v) ? "true" : "false");
-        render();
-      });
+      b.__v = v;
+      if (single) b.setAttribute("role", "radio");
+      b.addEventListener("click", function () { set(v); sync(); render(); });
+      btns.push(b);
       host.appendChild(b);
     });
+    sync();
   }
 
   function toggler(listName) {
@@ -303,7 +319,7 @@
   buildChips(document.getElementById("filter-est"), ["equal_width", "equal_mass"],
     ["equal-width", "equal-mass"],
     function (v) { return state.estimator === v; },
-    function (v) { state.estimator = v; });
+    function (v) { state.estimator = v; }, true);
 
   /* ---------- tiles ---------- */
 

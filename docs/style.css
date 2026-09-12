@@ -330,6 +330,34 @@ input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.12); }
 .chip[aria-pressed="true"]:hover { border-color: rgba(120, 170, 255, .62); }
 .chip.mono { font-family: var(--mono); }
 
+/* A segmented control, for the rail groups where exactly one option must be active.
+   Timesteps, Seed and Calibrator are genuine multi-select filters -- deselecting one
+   narrows the view -- and they keep separate chips. The ECE estimator and the instrument
+   preset are pick-one: two ways of computing the same metric, and one dataset shape. They
+   were styled identically to the filters, which implied they behaved the same way. Joining
+   them in one track says "pick one" without a line of explanatory text, and the role is
+   radiogroup so it says the same thing to a screen reader. */
+.segmented {
+  display: flex; gap: 0; padding: 3px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+}
+.segmented .chip {
+  flex: 1 1 0; min-width: 0; text-align: center;
+  background: none; box-shadow: none;
+  border: 1px solid transparent;   /* transparent, not none, so the metrics do not shift */
+  border-radius: var(--r-pill); padding: var(--s1) var(--s2);
+}
+.segmented .chip:hover { background: var(--surface-2); border-color: transparent; color: var(--ink); }
+.segmented .chip[aria-checked="true"] {
+  background: linear-gradient(135deg, rgba(10, 132, 255, .36), rgba(94, 92, 230, .24));
+  border-color: var(--border-2); box-shadow: var(--hi); color: #dbe9ff;
+}
+/* Three labels this long do not fit across a 208px rail, so that track runs downwards.
+   A vertical joined track reads as one control and one choice just as a row does. */
+.segmented.stack { flex-direction: column; border-radius: var(--r); gap: 2px; }
+.segmented.stack .chip { text-align: left; border-radius: calc(var(--r) - 5px); }
+
 /* ---------- readout ---------- */
 
 .readout { display: grid; gap: var(--s1); background: var(--rule); border-radius: var(--r-tile); overflow: hidden; }
@@ -754,7 +782,14 @@ dialog.modal::backdrop { background: rgba(4, 6, 10, .66); backdrop-filter: blur(
 .modal-body { overflow-y: auto; max-height: calc(86vh - 92px); padding: var(--s6); }
 .modal-part + .modal-part { margin-top: var(--s7); padding-top: var(--s6); border-top: 1px solid var(--border); }
 .modal-part > h3 { margin: 0 0 var(--s4); font-size: 14px; font-weight: 700; color: var(--text); }
-.modal-body p { margin: 0 0 var(--s3); font-size: 13.5px; line-height: 1.6; color: var(--text-2); max-width: 74ch; }
+/* No measure on modal prose. 74ch stopped paragraphs at 629px inside a 1,030px body while
+   the tables beneath ran the full width, and that mismatch is what read as broken. Narrowing
+   the panel to the prose instead was measured first and is worse: the six tables in these
+   modals want 735 to 1,051px, so every one of them would scroll, and the two figures would
+   drop from 1,209px and 827px to 629px. The modals are where the complete tables live, so
+   the prose gives way rather than the data. The cost is a ~158-character line, accepted
+   here and nowhere else on the page. */
+.modal-body p { margin: 0 0 var(--s3); font-size: 13.5px; line-height: 1.6; color: var(--text-2); }
 .modal-body p strong, .modal-body b { color: var(--text); }
 .modal-body .scroll { margin: var(--s4) 0; }
 .modal-body .fig img { max-width: 100%; }

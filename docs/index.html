@@ -41,10 +41,10 @@
       </span>
       <input type="range" id="a-slider" min="0.50" max="0.999" step="0.001" value="0.95">
     </label>
-    <div class="preset-row">
-      <button type="button" class="chip" data-preset="2,10" aria-pressed="true">N-MNIST, 10 classes</button>
-      <button type="button" class="chip" data-preset="2,11" aria-pressed="false">DVS-Gesture, 11 classes</button>
-      <button type="button" class="chip" data-preset="4,100" aria-pressed="false">CIFAR-100</button>
+    <div class="preset-row segmented stack" role="radiogroup" aria-label="Instrument preset">
+      <button type="button" class="chip" role="radio" data-preset="2,10" aria-checked="true">N-MNIST, 10 classes</button>
+      <button type="button" class="chip" role="radio" data-preset="2,11" aria-checked="false">DVS-Gesture, 11 classes</button>
+      <button type="button" class="chip" role="radio" data-preset="4,100" aria-checked="false">CIFAR-100</button>
     </div>
   </div>
 
@@ -747,7 +747,7 @@ python scripts/export_dashboard_data.py</pre>
     <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
   </div>
   <div class="modal-body">
-<section class="modal-part"><h3>The same bound is a floor on the training loss<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
+<section class="modal-part">
 <p>
       Cross-entropy on spike-count logits cannot fall below −ln(ceiling): 0.7966 at
       <em>T</em> = 2 against 0.0004 at <em>T</em> = 10. The observed plateaus sit between
@@ -1097,7 +1097,7 @@ python scripts/export_dashboard_data.py</pre>
     <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
   </div>
   <div class="modal-body">
-<section class="modal-part"><h3>Which calibrator you use does not matter<span class="pill pill-measured">measured</span></h3>
+<section class="modal-part">
 <p>
       The study was designed around a hypothesis: that isotonic regression should beat
       temperature scaling by a margin that <em>grows</em> as <em>T</em> falls, because a
@@ -1146,7 +1146,7 @@ python scripts/export_dashboard_data.py</pre>
     <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
   </div>
   <div class="modal-body">
-<section class="modal-part"><h3>Selective prediction: the readout limits what can be deployed<span class="pill pill-measured">measured</span></h3>
+<section class="modal-part">
 <p>
       Risk-coverage asks what fraction of samples can be acted on at a given error rate.
       Samples sharing a confidence cannot be ordered against each other, so coverage steps
