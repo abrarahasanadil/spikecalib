@@ -164,26 +164,45 @@ a:hover { color: var(--teal); }
 .rail {
   position: fixed; inset: 0 auto 0 0; width: var(--rail-w);
   overflow-y: auto; overscroll-behavior: contain;
-  padding: var(--s5) var(--s4) var(--s8);
-  background: rgba(6, 9, 13, 0.82);
-  backdrop-filter: blur(20px) saturate(120%);
-  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  padding: var(--s5) var(--s4) var(--s5);
+  /* The same material as the modal rather than a solid slab. The old rgba(6,9,13,.82)
+     passed only 18% of what was behind it, which is also what made the ground gradient
+     invisible under it. */
+  background: rgba(255, 255, 255, .045);
+  backdrop-filter: blur(32px) saturate(170%);
+  -webkit-backdrop-filter: blur(32px) saturate(170%);
   border-right: 1px solid var(--rule);
   z-index: 10;
 }
 .rail-head { padding-bottom: var(--s4); margin-bottom: var(--s4); border-bottom: 1px solid var(--rule); }
 .rail-head .name { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
 .rail-head .what { font-size: 12.5px; color: var(--ink-3); margin-top: var(--s1); line-height: 1.45; }
-.rail-group { margin-bottom: var(--s5); }
-.rail-group > h3 { margin: 0 0 var(--s2); font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
-.rail-group .hint { margin: var(--s2) 0 0; font-size: 12px; color: var(--ink-3); line-height: 1.5; }
 /* The rail used to carry two unrelated control sets -- a derived-arithmetic instrument and
    the filters over measured runs -- each with its own "timesteps" meaning a different
    thing. The instrument now lives beside the chart it drives, so h3 names the one job the
    rail still has and h4 names each control under it. */
-.rail-group > h4 { margin: 0 0 var(--s2); font-size: 11.5px; font-weight: 600;
+/* The rail holds the argument now that the filters live with what they filter. Four short
+   blocks, prose, no lists -- something a reader can take in standing up. */
+.rail-arg { margin-bottom: var(--s4); }
+.rail-arg > h3 { margin: 0 0 var(--s2); font-size: 11.5px; font-weight: 600;
+  color: var(--mint); letter-spacing: .04em; text-transform: uppercase; }
+.rail-arg > p { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--ink-2); }
+.rail-arg > p sup { font-size: .75em; }
+
+/* The filters, in the panel with the table and the chart they narrow. */
+.sweep-controls {
+  display: flex; flex-wrap: wrap; align-items: flex-start;
+  gap: var(--s4) var(--s6);
+}
+.filter-group { min-width: 0; }
+.filter-group > h4 { margin: 0 0 var(--s2); font-size: 11.5px; font-weight: 600;
   color: var(--ink-3); letter-spacing: .04em; text-transform: uppercase; }
-.rail-group:has(> h4) { margin-bottom: var(--s4); }
+/* in the rail the track filled the column, so its segments stretched equally; here there
+   is room, and stretching them broke "equal-width" across two lines */
+.sweep-controls .segmented { flex: 0 0 auto; }
+.sweep-controls .segmented .chip { flex: 0 0 auto; white-space: nowrap; padding: var(--s1) var(--s3); }
+.sweep-controls > .hint { flex: 1 1 260px; margin: 0; align-self: center;
+  font-size: 12px; color: var(--ink-3); line-height: 1.5; max-width: 62ch; }
 
 /* The instrument's controls, in the panel with their output. */
 .instrument-controls {
@@ -204,20 +223,19 @@ a:hover { color: var(--teal); }
 /* The provenance key is a legend: read once, then out of the way. It used to take half the
    rail height, which is why the rail did not fit on a screen. */
 .prov-note {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r-lg); padding: var(--s4) var(--s5);
-  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  margin-top: var(--s3); padding-top: var(--s3);
+  border-top: 1px solid var(--rule);
 }
 .prov-note > summary {
-  cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-2);
-  list-style: none;
+  cursor: pointer; font-size: 11.5px; font-weight: 600; color: var(--ink-3);
+  letter-spacing: .04em; text-transform: uppercase; list-style: none;
 }
 .prov-note > summary::-webkit-details-marker { display: none; }
 .prov-note > summary::before { content: "\25B8\00a0"; color: var(--text-3); }
 .prov-note[open] > summary::before { content: "\25BE\00a0"; }
 .prov-note[open] > summary { margin-bottom: var(--s3); }
-.prov-note .hint { margin: 0 0 var(--s2); font-size: 12.5px; color: var(--ink-3); line-height: 1.5; max-width: 80ch; }
-.prov-note .prov-key { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--s2) var(--s5); }
+.prov-note .hint { margin: 0 0 var(--s3); font-size: 12px; color: var(--ink-3); line-height: 1.5; }
+.prov-note .prov-key { display: flex; flex-direction: column; gap: var(--s2); }
 .rail-sep { height: 1px; background: var(--rule); margin: var(--s1) 0 var(--s5); }
 
 /* ---------- dashboard grid ---------- */

@@ -10,7 +10,7 @@
 </head>
 <body>
 
-<aside class="rail" aria-label="Controls">
+<aside class="rail" aria-label="What this study argues">
  <div class="rail-inner">
   <div class="rail-head">
     <div class="name">SpikeCalib</div>
@@ -20,31 +20,52 @@
 
   <div class="rail-sep"></div>
 
-  <div class="rail-group">
-    <h3>Filter the runs</h3>
-    <p class="hint">These four narrow the live metrics and the sweep table below. They do
-    not change the findings, which are study-wide.</p>
+  <div class="rail-arg">
+    <h3>The question</h3>
+    <p>Confidence in a deployed spiking network is only useful if it is trustworthy. At low
+      timestep counts these models are reported to be badly calibrated, and the received view
+      treats that as a training problem.</p>
   </div>
-  <div class="rail-group">
-    <h4>Timesteps</h4>
-    <div class="chips" id="filter-t"></div>
+  <div class="rail-arg">
+    <h3>The claim</h3>
+    <p>It is not a training problem. Reading a network by counting spikes caps how confident
+      it can ever be, at e<sup>T</sup>/(e<sup>T</sup>&nbsp;+&nbsp;C&minus;1). Where a model's
+      accuracy exceeds that cap, no reachable output could have been correctly confident.</p>
   </div>
-  <div class="rail-group">
-    <h4>Seed</h4>
-    <div class="chips" id="filter-seed"></div>
+  <div class="rail-arg">
+    <h3>What was hard</h3>
+    <p>The cap has to be separated from the things it is confounded with &mdash; output
+      resolution, network depth, class count, the choice of calibrator. Each needed its own
+      control: a weighted-count readout with the same cap but twice the resolution; both
+      architectures on both datasets; a prediction registered before any calibrator was
+      fitted.</p>
   </div>
-  <div class="rail-group">
-    <h4>Calibrator</h4>
-    <div class="chips" id="filter-arm"></div>
-  </div>
-  <div class="rail-group">
-    <h4>ECE estimator</h4>
-    <div class="chips" id="filter-est"></div>
-    <p class="hint">Both are reported everywhere in this study. With discrete confidences
-    they can disagree by a factor of two, and picking one would change the ranking.</p>
+  <div class="rail-arg">
+    <h3>What it establishes</h3>
+    <p>The cap held in every one of 24 measured cells, saturated to float precision. Where it
+      bites it accounts for 99.2% and 97.1% of the error before calibration; where it does not
+      bite it accounts for none. The readout family, not the network, sets the direction of
+      the failure. Which calibration method is used does not matter.</p>
   </div>
 
-</div>
+  <details class="prov-note">
+    <summary>Provenance key</summary>
+<p class="hint">Every claim on this page is tagged by where it came from. The
+    distinction matters more than usual here, because the study's central result is
+    arithmetic and its supporting results are not.</p>
+    <div class="prov-key">
+      <div class="row"><span class="pill pill-derived">derived</span>
+        <span><b>Arithmetic.</b> True before any model existed.</span></div>
+      <div class="row"><span class="pill pill-measured">measured</span>
+        <span><b>A run in this repository.</b> Reproducible from a seed.</span></div>
+      <div class="row"><span class="pill pill-lit">lit</span>
+        <span><b>A verified primary source.</b> Read, not taken from a brief.</span></div>
+      <div class="row"><span class="pill pill-warn">unverified</span>
+        <span><b>Not confirmed.</b> Stated as a belief, never as evidence.</span></div>
+      <div class="row"><span class="pill pill-bad">withdrawn</span>
+        <span><b>Removed on verification.</b> Kept visible rather than deleted.</span></div>
+    </div>
+  </details>
  </div>
 </aside>
 
@@ -250,7 +271,29 @@
 
   <div class="band"><h2>Sweep results</h2>
     <p class="sub">filtered &mdash; 15 runs over five timestep settings and three seeds,
-    narrowed by the rail</p></div>
+    narrowed by these controls</p></div>
+
+  <section class="panel c12 sweep-controls">
+    <div class="filter-group">
+      <h4>Timesteps</h4>
+      <div class="chips" id="filter-t"></div>
+    </div>
+    <div class="filter-group">
+      <h4>Seed</h4>
+      <div class="chips" id="filter-seed"></div>
+    </div>
+    <div class="filter-group">
+      <h4>Calibrator</h4>
+      <div class="chips" id="filter-arm"></div>
+    </div>
+    <div class="filter-group">
+      <h4>ECE estimator</h4>
+      <div class="chips" id="filter-est"></div>
+    </div>
+    <p class="hint">These narrow the live metrics above and the table below. Both ECE
+      estimators are reported everywhere in this study: with discrete confidences they can
+      disagree by a factor of two, and picking one would change the ranking.</p>
+  </section>
 
   <div class="stack c6">
   <section class="panel">
@@ -541,24 +584,6 @@ python scripts/export_dashboard_data.py</pre>
     </div>
   </section>
 
-  <details class="prov-note c12">
-    <summary>Provenance key — what each tag on this page means</summary>
-
-    <p class="hint">Every claim on this page is tagged by where it came from. The
-    distinction matters more than usual here, because the study's central result is
-    arithmetic and its supporting results are not.</p>
-    <div class="prov-key">
-      <div class="row"><span class="pill pill-derived">derived</span>
-        <span><b>Arithmetic.</b> True before any model existed.</span></div>
-      <div class="row"><span class="pill pill-measured">measured</span>
-        <span><b>A run in this repository.</b> Reproducible from a seed.</span></div>
-      <div class="row"><span class="pill pill-lit">lit</span>
-        <span><b>A verified primary source.</b> Read, not taken from a brief.</span></div>
-      <div class="row"><span class="pill pill-warn">unverified</span>
-        <span><b>Not confirmed.</b> Stated as a belief, never as evidence.</span></div>
-      <div class="row"><span class="pill pill-bad">withdrawn</span>
-        <span><b>Removed on verification.</b> Kept visible rather than deleted.</span></div>
-      </details>
 
   <footer class="c12">
     <p>The repository's <code>NOTES.md</code> is the design document, including the

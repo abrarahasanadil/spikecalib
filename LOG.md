@@ -2337,3 +2337,69 @@ no horizontal overflow, no console errors, and no text below 4.5:1.
 **Open.**
 - *`--accent` is still mint outside the rail* — links, focus rings, the ceiling curve.
 - *The three unread references* stay out of `SOURCES.md` until someone reads them.
+
+## 2026-09-12 — The filters move to what they filter; the rail carries the argument
+
+**Did.** Three changes, and the last of the dashboard work.
+
+**Ran.** `pytest -q` → **222 passed**. Verified at 1920, 1440 and 1200, re-checked at 900 and
+400.
+
+**Did: the filters now sit in the panel they control.** Timesteps, Seed, Calibrator and ECE
+estimator were in a global rail while only two things on the page respond to them — the four
+live tiles and the sweep table. They are now a row across the top of the Sweep results
+section, above the bootstrap chart and the filtered table, the same arrangement the ceiling
+instrument already had. The ECE estimator keeps its segmented track and its radiogroup role,
+and the section keeps its "filtered — narrowed by these controls" label.
+
+One thing broke in the move and was caught by measuring rather than by eye: in the rail the
+segmented track filled its column, so `flex: 1 1 0` on the segments was right. In a panel
+with room it stretched them and broke **"equal-width" across two lines**. The segments size
+to content there instead. The tiles' own label also stopped being true — it said "follows the
+run filters" while the controls were above it in the rail, and now says "follows the sweep
+filters below".
+
+**Did: the rail carries the argument.** Four blocks — the question, the claim, what was hard,
+what it establishes — in prose, two to three sentences each, no lists. The provenance key is
+a small collapsed `<details>` at the foot of the rail. Rail content is **859px against a
+900px viewport: it fits without scrolling at 1440.** At an 800px-tall viewport it scrolls by
+59px, which is the honest cost of putting this much prose there and is what the rail's own
+`overflow-y: auto` is for.
+
+The rail's surface is now the same material as the modal — `rgba(255,255,255,.045)` over
+`blur(32px) saturate(170%)` — rather than the solid `rgba(6,9,13,.82)` slab. That slab was
+also what made the ground gradient invisible beneath it; the orange now reaches the foot of
+the rail, which the contrast sampling shows directly as a `#31220e` background behind the
+provenance key.
+
+**Found and fixed: `.prov-key` had no closing `</div>`.** I introduced it last session when
+extracting the block out of the rail, and it survived because browsers close it implicitly.
+The document's div balance is now zero.
+
+**Did: alignment re-measured at the tighter threshold.** The harness threshold moved from
+150px to 100px. Every card-grid row and every `.main` row at 1920, 1440, 1200, 900 and 400:
+**zero columns ending with more than 100px empty.** The three rows named in the brief,
+measured directly:
+
+| row | 1920 | 1440 | 1200 |
+|---|---|---|---|
+| T = 80 card against the tile stack | 31px | 11px | different rows |
+| ceiling instrument against Derived quantities | 64px | 42px | 44px |
+| sweep stack against Filtered rows | 0px | 0px | 0px |
+
+At 1200 the tiles move to a full-width row above the cards and the card spans twelve, so the
+two are not in the same row and the 245px difference between their heights is not a gap. The
+row-grouped check reports it correctly as zero; a naive height comparison would not.
+
+**Verified.** 1920 and 1440: all eight modals still aligned and opening and closing on
+Escape, both single-select groups still exactly-one, the filters still driving the tiles and
+the table and nothing else, no horizontal overflow, no console errors. Contrast measured
+against sampled composited pixels across 31 samples per width, including the rail now that
+it is translucent: rail argument prose **9.12:1**, its headings 10.08:1, the provenance key
+over the orange gradient **5.46:1** at 1920 and 5.30:1 at 1440, lowest anywhere 5.22:1.
+Nothing below 4.5:1.
+
+**Open.**
+- *The rail scrolls by 59px at an 800px-tall viewport.* Fits at 900px and above.
+- *`--accent` is still mint outside the rail* — links, focus rings, the ceiling curve.
+- *The three unread references* stay out of `SOURCES.md` until someone reads them.
