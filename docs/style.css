@@ -164,6 +164,11 @@ a:hover { color: var(--teal); }
 .rail {
   position: fixed; inset: 0 auto 0 0; width: var(--rail-w);
   overflow-y: auto; overscroll-behavior: contain;
+  /* Centred when the argument fits, top-aligned and scrolling when it does not. An auto
+     block margin on a flex item absorbs positive free space only -- with negative free
+     space it resolves to zero -- so this cannot produce the classic centred-overflow bug
+     where the top of the content becomes unreachable. `justify-content: center` would. */
+  display: flex; flex-direction: column;
   padding: var(--s6) var(--s4) var(--s5);
   /* The same material as the modal rather than a solid slab. The old rgba(6,9,13,.82)
      passed only 18% of what was behind it, which is also what made the ground gradient
@@ -174,6 +179,7 @@ a:hover { color: var(--teal); }
   border-right: 1px solid var(--rule);
   z-index: 10;
 }
+.rail-inner { margin-block: auto; }
 .rail-head { padding-bottom: var(--s4); margin-bottom: var(--s4); border-bottom: 1px solid var(--rule); }
 .rail-head .name { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
 .rail-head .what { font-size: 12.5px; color: var(--ink-3); margin-top: var(--s1); line-height: 1.45; }
@@ -294,8 +300,11 @@ a:hover { color: var(--teal); }
 }
 .masthead-bar h1 { margin: 0; font-size: 20px; line-height: 1.2; letter-spacing: -0.015em; font-weight: 600; }
 .masthead-bar .tagline { margin: 0; color: var(--ink-2); font-size: 13px; line-height: 1.35; }
-.masthead-bar .who { margin: 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.35; }
-.masthead { margin-top: var(--s5); }
+.masthead-bar .who { margin: var(--s2) 0 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.35; }
+/* The bar already reserves its own space as a grid item, so the old margin here counted
+   it a second time: 24px of grid gap plus 20 plus the hero's own 16 came to 60px under
+   the border. The grid gap alone is the gap. */
+.masthead { margin-top: 0; }
 /* no in-page anchors exist today; this keeps any future one clear of the bar */
 [id] { scroll-margin-top: 104px; }
 
@@ -327,7 +336,7 @@ a:hover { color: var(--teal); }
      what is left over past the panel is trailing breathing room, not a stranded column */
   grid-template-columns: minmax(0, 900px) auto;
   justify-content: start;
-  gap: var(--s5); align-items: start; margin-top: var(--s4);
+  gap: var(--s5); align-items: start; margin-top: 0;
 }
 .hero-panel {
   background: var(--surface); border: 1px solid var(--border);
@@ -692,7 +701,11 @@ tbody tr:hover td { background: rgba(255,255,255,.03); color: var(--ink); }
 @media (max-width: 1199px) { .lim-list { columns: 1; } }
 
 .unverified-note { border-left: 2px solid var(--status); padding-left: var(--s3); color: var(--ink-3); }
-.prose p { margin: 0 0 var(--s3); }
+/* Body prose sits at --text-2 like the modals and the card claims. It was inheriting
+   full-strength --text from the panel, which made the energy note read louder than the
+   findings it qualifies. Headings, bold and code stay at full strength. */
+.prose p, .prose li { margin: 0 0 var(--s3); color: var(--text-2); }
+.prose li { margin: 0 0 var(--s2); }
 .prose h3 { margin: var(--s5) 0 var(--s2); font-size: 14.5px; font-weight: 600; color: var(--ink); }
 .prose h3:first-child { margin-top: 0; }
 .prose ul { padding-left: var(--s4); margin: 0 0 var(--s3); }
@@ -754,7 +767,8 @@ footer p { margin: 0 0 var(--s1); max-width: 100ch; }
 }
 @media (max-width: 900px) {
   .rail { position: static; width: auto; inset: auto; height: auto; border-right: none; border-bottom: 1px solid var(--rule); padding: var(--s4) var(--s3) var(--s5); }
-  .rail-inner { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0 var(--s4); align-items: start; }
+  /* static here, so the auto margins have no free space to absorb and do nothing */
+  .rail-inner { margin-block: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0 var(--s4); align-items: start; }
   .rail-head { grid-column: 1 / -1; }
   /* the divider is a grid item here; span it so it does not occupy a cell */
   .rail-sep { grid-column: 1 / -1; margin: var(--s1) 0 var(--s3); }

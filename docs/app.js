@@ -380,8 +380,12 @@
       '<p class="tiles-label">Live &mdash; follows the sweep filters below</p>' +
       tile("Uncalibrated ECE", fmt(mean(unc)), col, span, !unc.length) +
       tile("Best calibrated ECE", fmt(best), col, bestWhere || "no calibrated arm selected", !isFinite(best)) +
+      /* This one cannot follow the estimator toggle: the paired bootstrap was run on the
+         equal-width estimator only, and there is no iso_minus_temp_ece_em column in the
+         artifact to switch to. So it says which estimator it is, rather than appearing to
+         ignore the control. */
       tile("Isotonic − temperature", (isFinite(mean(iso)) ? (mean(iso) >= 0 ? "+" : "") + fmt(mean(iso)) : "—"),
-        "iso_minus_temp_ece_ew", "positive favours temperature", !iso.length) +
+        "iso_minus_temp_ece_ew", "positive favours temperature · equal-width only", !iso.length) +
       tile("AUROC, raw readout", fmt(mean(auroc)), "auroc_raw_test", "confidence vs correctness", !auroc.length);
   }
 

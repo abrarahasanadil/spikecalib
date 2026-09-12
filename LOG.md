@@ -2498,3 +2498,92 @@ with nothing in hand, so they went from `--ink-3` to `--ink-2`. Lowest anywhere 
 **Open.**
 - *132px at 3840px* in the instrument row, the only row over threshold at any width measured.
 - *`--accent` is still mint outside the rail.*
+
+## 2026-09-12 — The ECE toggle works; five layout items
+
+**Ran.** `pytest -q` → **222 passed**. Verified at 1920 and 1440, swept at 1200, 900, 400.
+
+**Found: the ECE estimator toggle is wired and working.** All three suspects check out.
+
+- *It updates state.* `aria-checked` flips correctly and `state.estimator` is written by the
+  chip's setter, which then calls `render()`.
+- *The tiles read it, not a hardcoded column.* `ecoCol()` maps the state to
+  `ece_equal_width` / `ece_equal_mass`, and `renderTiles` passes that one value as both the
+  number to average and the badge to print.
+- *The badge is not static.* It is the same `col` variable.
+
+Measured live on the rendered page, default view: **Uncalibrated 0.1441 → 0.1437** and
+**Best calibrated 0.0007 → 0.0002**, with both badges changing from `ece_equal_width` to
+`ece_equal_mass`. Both tiles move.
+
+**What a reader should expect, and why it can look dead.** Filtered to `T = 2` alone —
+which is where the brief's numbers come from — the Best calibrated tile moves **0.0012 →
+0.0002** but the Uncalibrated tile does not move at all. That is real, not a bug: at
+`T = 2` the two estimators agree on the uncalibrated arm **to four decimal places**, 0.5386
+both ways. Computed across the sweep:
+
+| T | uncalibrated ew / em | temperature ew / em |
+|---|---|---|
+| 2 | 0.5386 / 0.5386 | 0.0018 / 0.0008 |
+| 4 | 0.1447 / 0.1446 | 0.0031 / 0.0059 |
+| 6 | 0.0273 / 0.0272 | 0.0026 / 0.0030 |
+| 8 | 0.0072 / 0.0065 | 0.0028 / 0.0021 |
+| 10 | 0.0029 / 0.0019 | 0.0026 / 0.0018 |
+
+The uncalibrated readout at low `T` is clustered at the ceiling, so equal-width and
+equal-mass bins see the same systematic gap and return the same number. The estimator choice
+only bites once calibration has spread the confidences out — which is exactly the arm the
+brief quotes, and exactly the tile that moves. So the control is doing its job, and the
+`T = 2` view is the one case where half of its effect is invisible because the data says
+zero.
+
+**Found: the Isotonic − temperature tile cannot follow the toggle.** `results/sweep_nmnist.csv`
+has `iso_minus_temp_ece_ew` and its two interval bounds, and **no equal-mass counterpart** —
+the paired bootstrap was only ever run on equal-width. So there is nothing to switch to. Its
+caption now says **"positive favours temperature · equal-width only"** rather than silently
+ignoring the control.
+
+**Did: prose bodies brought in line.** `.prose p` and `.prose li` were inheriting
+full-strength `--text` from the panel, so the energy note read louder than the findings it
+qualifies. Both now sit at `--text-2`, the same as the modals and the card claims; headings,
+bold and inline code stay at full strength. Measured **8.78:1** at 1920 and 9.13:1 at 1440.
+
+Five other things on the page are still full strength and all of them are deliberate: the
+hero summary, the masthead link chips, the card headline numbers, the design-rule and verdict
+callouts in Derived quantities, and the "How they differ" line in each Related work entry.
+The last two are emphasis elements rather than body prose — flagged here rather than changed.
+
+**Did: closed the gap under the sticky bar.** It was **60px**, and the brief's guess was
+right: the bar reserves its own space as a grid item, and the old `.masthead { margin-top }`
+counted it again — 24px of grid gap plus 20 plus the hero's own 16. Both margins removed, so
+the gap is the grid gap alone: **24px**.
+
+**Did: masthead spacing.** The author line had **0px** above it and sat flush against the
+subtitle. Now 8px, so the three lines read as title / subtitle / attribution.
+
+**Did: a divider above "The question"**, matching the rule above the provenance key, so the
+argument is bracketed top and bottom.
+
+**Did: the rail centres when it fits.** `.rail` is a flex column and `.rail-inner` carries
+`margin-block: auto`. An auto block margin on a flex item absorbs positive free space only —
+with negative free space it resolves to zero — so this cannot produce the centred-overflow
+bug where the top of the content becomes unreachable. `justify-content: center` would have.
+Measured at six viewport sizes:
+
+| viewport | content vs available | result | top reachable |
+|---|---|---|---|
+| 1920×1100 | 725 / 1056 | centred, 165px above | yes |
+| 1440×1000 | 725 / 956 | centred, 115px above | yes |
+| 1440×900 | 725 / 856 | centred, 65px above | yes |
+| 1440×820 | 725 / 776 | centred, 25px above | yes |
+| 1440×700 | 725 / 656 | top-aligned, scrolls | yes |
+| 900×800 | static rail | top-aligned | yes |
+
+**Verified.** Zero columns ending with more than 100px empty at 1920, 1440, 1200, 900 and
+400. All eight modals still open, transition, take focus and close on Escape. Contrast
+re-measured across 35 samples per width; lowest anywhere **5.49:1**, nothing below 4.5:1.
+
+**Open.**
+- *The paired bootstrap has no equal-mass arm.* Closing that means re-running the bootstrap
+  with `ece_equal_mass`, not a dashboard change.
+- *`--accent` is still mint outside the rail.*
