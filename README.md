@@ -51,8 +51,10 @@ at `T` ≥ 6, and +0.08 to +0.23 at `C = 101`.
 
 ## Results dashboard
 
-An interactive summary — every table rendered from the result JSON rather than typed into the
-page — is in [docs/](docs/). **GitHub Pages is not enabled**, so it is not served publicly;
+An interactive summary is in [docs/](docs/). Each finding is a card carrying its headline
+number, a one-line claim and the table that makes the point; the full argument — caveats,
+qualifications and complete tables — opens in a modal. Every table is rendered from the
+result JSON rather than typed into the page. **GitHub Pages is not enabled**, so it is not served publicly;
 open `docs/index.html` directly in a browser, which works from `file://` with no server and no
 network access.
 

@@ -118,6 +118,101 @@
     </p>
   </header>
 
+  <div class="band"><h2>Findings</h2>
+    <p class="sub">N-MNIST, five timestep settings, three seeds</p></div>
+
+  <div class="cards c12">
+  <article class="card c4">
+    <div class="card-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></div>
+    <p class="stat"><span class="stat-num stat-teal">0</span>
+      <span class="stat-unit">violations in 24 cells</span></p>
+    <h3 class="card-title">The ceiling holds</h3>
+    <p class="card-claim">Softmax over spike counts cannot exceed e<sup>T</sup>/(e<sup>T</sup>+C−1). The bound was respected in every measured cell, at both class counts and both architectures.</p>
+    <div class="card-fig"><table class="mini"><thead><tr><th>C</th><th>T</th><th>derived</th><th>observed</th></tr></thead><tbody><tr><td>10</td><td>2</td><td>0.450853</td><td>0.450853</td></tr><tr><td>101</td><td>2</td><td>0.068806</td><td>0.068806</td></tr><tr><td>101</td><td>6</td><td>0.801362</td><td>0.801362</td></tr></tbody></table></div>
+    <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m1">
+      Full reasoning, caveats and complete tables
+      <span class="chev" aria-hidden="true">&rarr;</span></button>
+  </article>
+  <article class="card c4">
+    <div class="card-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></div>
+    <p class="stat"><span class="stat-num stat-teal">99.2%</span>
+      <span class="stat-unit">of uncalibrated error at T = 2</span></p>
+    <h3 class="card-title">Where it binds, it explains the error</h3>
+    <p class="card-claim">The gap between accuracy and the ceiling accounts for almost all the miscalibration where the cap binds, and none of it where it does not.</p>
+    <div class="card-fig"><table class="mini"><thead><tr><th>C</th><th>T</th><th>explained</th></tr></thead><tbody><tr><td>10</td><td>2</td><td>99.2%</td></tr><tr><td>10</td><td>6</td><td>44.1%</td></tr><tr><td>101</td><td>2</td><td>97.1%</td></tr></tbody></table></div>
+    <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m2">
+      Full reasoning, caveats and complete tables
+      <span class="chev" aria-hidden="true">&rarr;</span></button>
+  </article>
+  <article class="card c4">
+    <div class="card-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></div>
+    <p class="stat"><span class="stat-num stat-teal">0.7966</span>
+      <span class="stat-unit">nats, the floor at T = 2</span></p>
+    <h3 class="card-title">The same bound floors the training loss</h3>
+    <p class="card-claim">Cross-entropy cannot fall below −ln(ceiling). Plateaus sit 0.0072–0.0182 above it, so training loss is not comparable across T.</p>
+    <div class="card-fig"><table class="mini"><thead><tr><th>T</th><th>floor</th><th>plateau</th></tr></thead><tbody><tr><td>2</td><td>0.7966</td><td>0.8041</td></tr><tr><td>6</td><td>0.0221</td><td>0.0391</td></tr><tr><td>10</td><td>0.0004</td><td>0.0108</td></tr></tbody></table></div>
+    <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m3">
+      Full reasoning, caveats and complete tables
+      <span class="chev" aria-hidden="true">&rarr;</span></button>
+  </article>
+  <article class="card c12">
+    <div class="card-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span><span class="pill pill-lit">lit</span></div>
+    <p class="stat"><span class="stat-num stat-purple">−0.5386 / +0.0047</span>
+      <span class="stat-unit">capped vs unbounded, conf − acc</span></p>
+    <h3 class="card-title">The readout family decides the direction of the failure</h3>
+    <p class="card-claim">A capped readout is underconfident where the cap binds. An unbounded one is overconfident as T grows. The readout predicts the direction, not the network.</p>
+    <div class="card-fig"><table class="mini"><thead><tr><th>readout</th><th>bound</th><th>conf − acc</th></tr></thead><tbody><tr><td>count</td><td>capped</td><td>-0.5386</td></tr><tr><td>membrane</td><td>unbounded, leaky</td><td>-0.0289</td></tr><tr><td>accumulator</td><td>unbounded</td><td>+0.0000</td></tr></tbody></table></div>
+    <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m4">
+      Full reasoning, caveats and complete tables
+      <span class="chev" aria-hidden="true">&rarr;</span></button>
+  </article>
+  <article class="card c4">
+    <div class="card-pills"><span class="pill pill-measured">measured</span></div>
+    <p class="stat"><span class="stat-num stat-green">+3 to +13</span>
+      <span class="stat-unit">accuracy points &mdash; 12.8 at four blocks, 3.1 at two</span></p>
+    <h3 class="card-title">Removing the cap buys accuracy where it is severe</h3>
+    <p class="card-claim">Only where the cap is severe. The direction replicates across architectures; the magnitude does not.</p>
+    <div class="card-fig"><table class="mini"><thead><tr><th>depth</th><th>count</th><th>uncapped</th><th>gain</th></tr></thead><tbody><tr><td>4 blocks</td><td>0.4543</td><td>0.5825</td><td>+12.8</td></tr><tr><td>2 blocks</td><td>0.4891</td><td>0.5199</td><td>+3.1</td></tr></tbody></table></div>
+    <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m5">
+      Full reasoning, caveats and complete tables
+      <span class="chev" aria-hidden="true">&rarr;</span></button>
+  </article>
+  <article class="card c4">
+    <div class="card-pills"><span class="pill pill-measured">measured</span></div>
+    <p class="stat"><span class="stat-num stat-purple">13 / 15</span>
+      <span class="stat-unit">intervals straddle zero</span></p>
+    <h3 class="card-title">Calibrator choice does not matter</h3>
+    <p class="card-claim">Temperature and isotonic are statistically indistinguishable. The two that resolve point in opposite directions.</p>
+    <div class="card-fig"><table class="mini"><thead><tr><th>outcome</th><th>count</th></tr></thead><tbody><tr><td>straddle zero</td><td>13</td></tr><tr><td>favour temperature</td><td>1</td></tr><tr><td>favour isotonic</td><td>1</td></tr></tbody></table></div>
+    <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m6">
+      Full reasoning, caveats and complete tables
+      <span class="chev" aria-hidden="true">&rarr;</span></button>
+  </article>
+  <article class="card c4">
+    <div class="card-pills"><span class="pill pill-measured">measured</span></div>
+    <p class="stat"><span class="stat-num stat-purple">9</span>
+      <span class="stat-unit">operating points, against ~10,000</span></p>
+    <h3 class="card-title">The readout limits what can be deployed</h3>
+    <p class="card-claim">At T = 2 a count readout offers about nine achievable selective-prediction operating points across 10,000 test samples. An uncapped readout offers a continuum.</p>
+    <div class="card-fig"><table class="mini"><thead><tr><th>readout</th><th>T = 2 ops</th></tr></thead><tbody><tr><td>count</td><td>9</td></tr><tr><td>weighted-count</td><td>17</td></tr><tr><td>uncapped</td><td>10,000</td></tr></tbody></table></div>
+    <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m7">
+      Full reasoning, caveats and complete tables
+      <span class="chev" aria-hidden="true">&rarr;</span></button>
+  </article>
+  <article class="card c8">
+    <div class="card-pills"><span class="pill pill-lit">lit</span><span class="pill pill-measured">measured</span></div>
+    <p class="stat"><span class="stat-num stat-mint">T = 80</span>
+      <span class="stat-unit">vs T = 2 — different regimes</span></p>
+    <h3 class="card-title">The disagreement with the literature dissolves</h3>
+    <p class="card-claim">Prior work reports overconfidence with this readout at T = 80, where the ceiling is inert. This study measures underconfidence at T = 2. Non-overlapping regimes.</p>
+    <div class="card-fig"><table class="mini"><thead><tr><th>study</th><th>T</th><th>ceiling</th><th>reports</th></tr></thead><tbody><tr><td>Chen, Park &amp; Simeone</td><td>80</td><td>1.0000</td><td>overconfident</td></tr><tr><td>this study</td><td>2</td><td>0.4509</td><td>underconfident</td></tr><tr><td>this study</td><td>10</td><td>0.9996</td><td>unsigned</td></tr></tbody></table></div>
+    <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m8">
+      Full reasoning, caveats and complete tables
+      <span class="chev" aria-hidden="true">&rarr;</span></button>
+  </article>
+  </div>
+
+
   <div class="band"><h2>Live metrics</h2>
     <p class="sub">computed from sweep.csv for the current filter</p></div>
   <div class="tiles c12" id="tiles"></div>
@@ -201,683 +296,34 @@
       none is drawn here; read the small markers as suggestive only.</p>
   </section>
 
-  <div class="band"><h2>Findings</h2>
-    <p class="sub">N-MNIST, five timestep settings, three seeds</p></div>
+  
 
-  <section class="panel c12"><div class="prose wide">
-<h3>The ceiling accounts for almost all uncalibrated error at low T<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
-    <p>
-      At <em>T</em> = 2 with 10 classes the ceiling is 0.4509, and the trained models
-      saturate it exactly — observed maxima match the derived value to roughly one part in
-      10<sup>13</sup>, which is float64 rounding rather than approximation. A model at 98.5%
-      accuracy cannot emit a confidence near its own correctness rate, so it is forced into
-      underconfidence before any calibrator is involved. The gap between accuracy and the
-      ceiling accounts for <strong>99.2%</strong> of uncalibrated expected calibration error
-      at <em>T</em> = 2, 90.0% at <em>T</em> = 4 and 44.2% at <em>T</em> = 6.
-    </p>
-    <p style="color:var(--ink-3);font-size:13.5px">
-      That comparison is not exact and should not be read as one. The 99.2% sets a single
-      overall accuracy against a single ceiling value, whereas ECE is a mass-weighted mean
-      of per-bin gaps. The two agree closely here only because roughly 95% of the
-      calibration mass sits at the top confidence level, so the per-bin average is dominated
-      by that one bin. Where confidence is more spread out the two quantities would part
-      company.
-    </p>
-    <p>
-      By <em>T</em> = 8 accuracy has fallen below the ceiling and correct confidence becomes
-      reachable, so the ceiling explanation stops applying — it only ever applies where the
-      ceiling binds. What is left is small and <em>still not overconfidence</em>: mean
-      confidence minus accuracy is −0.0065 at <em>T</em> = 8, negative at all three seeds,
-      and −0.0008 at <em>T</em> = 10. The forced underconfidence disappears without being
-      replaced by anything this study can resolve.
-    </p>
-  </div></section>
 
-    <section class="panel c12"><div class="prose wide">
-<h3>The ceiling is a property of the readout, not of spiking networks<span class="pill pill-measured">measured</span></h3>
-    <p>
-      Softmax-over-spike-counts is a <em>choice</em>. The same architecture was trained with
-      four final aggregations — only the aggregation differs, every layer up to the last
-      BatchNorm is identical — across up to five timestep settings and three seeds,
-      54 runs.
-    </p>
-    <div class="scroll panel-table">
-      <table id="readout-table"></table>
-    </div>
-    <p class="chart-note">Mean ± sd over seeds, rendered from
-      <code>results/readout_experiment.json</code>. Every readout, every timestep setting.</p>
-    <p>
-      At T = 2 a membrane readout removes the cap and cuts uncalibrated ECE by
-      <strong>11.9&times; to 63.5&times;</strong> depending on seed (mean 30.5&times;), at
-      indistinguishable accuracy. The weighted-count control is what makes this
-      interpretable: it shares the cap exactly but has roughly twice the attainable levels,
-      and its ECE is 0.5385 against count's 0.5386. <strong>Granularity buys nothing; the
-      bound does all the work.</strong>
-    </p>
-    <p>
-      The spread matters and is reported rather than averaged away. Membrane ECE at T = 2 is
-      0.0290 ± 0.0153 across seeds — 0.0085, 0.0333, 0.0451 — while count's is
-      0.5386 ± 0.0004. Removing the cap removes a <em>deterministic</em> error and exposes an
-      ordinary, <em>variable</em> one. Three of fifteen (T, seed) cells have membrane worse
-      than count, all at T ≥ 8 where the cap no longer binds.
-    </p>
-    <p>
-      <strong>Membrane is not strictly dominant.</strong> It calibrates better wherever the
-      ceiling binds, but it ranks better only at T = 2 and T = 4. From T = 6 upward the count
-      readout separates correct from incorrect predictions <em>better</em> — AUROC 0.9842
-      against 0.9710 at T = 6, with roughly half the AURC. Calibration and ranking are
-      different properties and the readout that wins one does not automatically win the
-      other. <strong>The crossover is at T = 6</strong>, and the table below is computed
-      from the same artifact rather than asserted:
-    </p>
-    <div class="scroll panel-table">
-      <table id="readout-crossover"></table>
-    </div>
-    <p>
-      The recommendation is therefore narrow. Where the ceiling binds — accuracy above
-      e<sup>T</sup>/(e<sup>T</sup>+C−1), which for 10 classes means T ≤ 4 — a membrane
-      readout removes a large structural error and ranks at least as well. Above that the cap
-      is inert, count ranks better, and there is no reason to change it.
-      <strong>T<sub>min</sub> is exactly the test for which regime you are in.</strong>
-      A second consequence points the same way at low T: count gives 9 achievable selective
-      operating points at T = 2 across 10,000 samples, membrane gives 9,998 — effectively a
-      continuum.
-    </p>
-  </div></section>
+  
 
-  <section class="panel c12"><div class="prose wide">
-<h3>The C axis: 101 classes, where the ceiling stops explaining things<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
-    <p>
-      The ceiling e<sup>T</sup>/(e<sup>T</sup>+C−1) has two variables and every measurement
-      above varies only T. N-Caltech101 has <strong>101 classes</strong>, where the T = 2
-      ceiling is <strong>0.068806</strong> rather than 0.450853 — an order of magnitude more
-      binding. 18 runs: two readouts, three timestep settings, three seeds, all stopping on
-      the patience rule.
-    </p>
-    <div class="scroll panel-table">
-      <table id="caxis-table"></table>
-    </div>
-    <p class="chart-note">Mean over three seeds, rendered from
-      <code>results/caltech_experiment.json</code>. "binds" counts the seeds whose accuracy
-      exceeds the ceiling — a ceiling forces underconfidence only while it does.</p>
-    <p>
-      <strong>The formula holds.</strong> The bound was respected in 9 of 9 runs, and at
-      T = 2 and T = 6 the models saturate it to 2.4&times;10<sup>−14</sup> and
-      3.8&times;10<sup>−13</sup> — the same one-part-in-10<sup>13</sup> as at C = 10. At
-      T = 10 the observed maximum sits 1.5&times;10<sup>−3</sup> <em>below</em> the ceiling
-      instead of on it, and that is not a failure: reaching the bound needs a sample whose
-      count vector is [T, 0, …, 0], meaning all 100 other classes silent at every step. Easy
-      at C = 10, not at C = 101. <strong>Validity and tightness are different properties</strong>
-      and only the first is claimed here.
-    </p>
-    <p>
-      <strong>The important result is where it stops binding.</strong> At T = 2 the ceiling
-      binds in 3 of 3 seeds and accounts for <strong>97.1%</strong> of uncalibrated ECE, just
-      as it accounted for 99.2% on N-MNIST. At T = 6 accuracy is 0.6427 against a ceiling of
-      0.8014 — comfortably below it, so nothing is forced — and the readout is
-      <strong>still underconfident by 0.1534</strong>, 4.4&times; to 6&times; N-MNIST's ECE at the same
-      T. On N-MNIST the regime where the ceiling stopped binding was also one where almost no
-      error remained, so the two explanations could not be told apart. Here they come apart,
-      and a large miscalibration is left that <strong>the ceiling does not explain at
-      all</strong>. That is a limitation of this study's central claim, and only varying C
-      could expose it. The obvious rescue — that the theoretical bound is too generous
-      because it assumes all 100 competitors silent — was pre-registered as a prediction and
-      <strong>falsified</strong>; see the panel below.
-    </p>
-    <p>
-      <strong>Where the cap is severe it costs accuracy, not just calibration.</strong> At
-      T = 2 the uncapped accumulator beats the count readout by <strong>12.8 accuracy
-      points</strong> — in every seed (+15.2, +9.6, +13.7) — with this architecture. At the
-      other architecture tested the gain is <strong>+3.1 points</strong>, still positive in
-      3 of 3 seeds: the direction replicates and the magnitude does not, so this is an
-      architecture-specific number (see the matched-architecture panel below). At C = 10 the
-      same comparison was worth 0.1 points and the readouts were indistinguishable. The cross-entropy floor is
-      2.68 nats here against 0.80 at C = 10, so the objective is dominated by a target the
-      model cannot reach. Above T = 2 it reverses and count wins by about 4 points, so this
-      belongs to the binding regime rather than to the readout.
-    </p>
-    <p>
-      <strong>This is also the first genuinely uncertain regime the study has sampled</strong>
-      — accuracy 0.43 to 0.66 against N-MNIST's 0.99 — and in it the sign of the
-      miscalibration finally turns over. The <em>count</em> readout is overconfident at
-      T = 10 (+0.0344, 3 of 3 seeds), the first time anywhere in this study, and the
-      accumulator is overconfident in 9 of 9 runs. <strong>The disagreement with the
-      literature is a regime difference.</strong> Underconfidence is what a capped readout
-      does where the cap binds; take away either condition and this study measures
-      overconfidence too.
-    </p>
-  </div></section>
+    
 
-  <section class="panel c12"><div class="prose wide">
-<h3>Does the ceiling bind in published work? No — and the reason is the finding<span class="pill pill-lit">lit</span></h3>
-    <p>
-      Li, Jones &amp; Furber report <strong>94.11% accuracy at 4 timesteps on CIFAR-10</strong>
-      (ICCV 2023). At C = 10, T = 4 the ceiling is <strong>0.8585</strong>. If their
-      confidence were a softmax over integer spike counts, the bound would constrain a
-      published result. Their method section settles it, and nothing here is inferred from
-      the accuracy number.
-    </p>
-    <p>
-      <strong>It does not bind: they use a real-valued readout.</strong> Verbatim from their
-      experimental setup — <em>"keeping the output layer at full precision… the neurons in
-      the output layer only accumulate input currents"</em>. The output neurons integrate but
-      do not fire, so the logits are accumulated real-valued currents rather than integers in
-      [0, T], and e<sup>T</sup>/(e<sup>T</sup>+C−1) simply does not apply to them.
-    </p>
-    <p>
-      That is the same construction as this study's <strong>accumulator</strong> readout,
-      reached independently and for a different reason: conversion keeps the output layer at
-      full precision because conversion needs the precision. <strong>Conversion-based work
-      sidesteps the cap as a side effect of a choice made for accuracy.</strong>
-    </p>
-    <p>
-      <strong>And the same paragraph corroborates the other half of this study.</strong> It
-      states that with such a readout "the output logits of SNNs increase with t
-      continuously, which causes the <em>saturated confidence</em>", and its Figure 2 shows
-      confidence "saturates to 100% quickly with time" before a scalar α — temperature
-      scaling — softens it. An unbounded accumulator is <em>over</em>confident. That is
-      exactly what this study measures for its own accumulator: conf − acc of +0.0032 at
-      T = 6 and +0.0047 at T = 10 on N-MNIST, positive in 3 of 3 seeds at both, and +0.08 to
-      +0.23 at C = 101. Two independent lines of work, two datasets, same direction.
-    </p>
-    <div class="scroll panel-table">
-      <table>
-        <thead><tr><th style="cursor:default">readout</th>
-          <th style="cursor:default">bound</th>
-          <th style="cursor:default">failure mode</th>
-          <th style="cursor:default">reported by</th></tr></thead>
-        <tbody>
-          <tr><td class="k">softmax over spike counts</td><td>capped at e<sup>T</sup>/(e<sup>T</sup>+C−1)</td><td><strong>under</strong>confidence where the cap binds</td><td>this study, T ≤ 6</td></tr>
-          <tr><td class="k">non-spiking accumulator</td><td>unbounded, grows with t</td><td><strong>over</strong>confidence, saturating to 1</td><td>Li et al.; this study's accumulator</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>
-      <strong>So the claim the paper may make is narrower than "the bound constrains
-      published work", and it is the one the evidence supports.</strong> Of the two
-      references verified to report both a timestep count and a confidence measure, neither
-      is constrained: Li et al. use an uncapped readout, and Chen, Park &amp; Simeone do use
-      softmax over integer spike counts but at <strong>T = 80</strong>, where the ceiling is
-      1.0 to double precision and inert. The ceiling binds in a regime the literature has not
-      published in — <strong>a spike-count readout at low T</strong> — which is where this
-      study works.
-    </p>
-  </div></section>
+  
 
-  <section class="panel c12"><div class="prose wide">
-<h3>The same claims at two depths: what replicates and what does not<span class="pill pill-measured">measured</span></h3>
-    <p>
-      N-Caltech101 was run with four conv blocks and N-MNIST with two, so every cross-dataset
-      comparison above was confounded with architecture. This is the 2&times;2 that removes
-      it — both architectures on both datasets, T in {2, 6}, three seeds, both readouts, 48
-      cells. It doubles as the alternative-architecture check the study never had.
-    </p>
-    <p>
-      <strong>A caveat on what "architecture" varies here.</strong> More pooling shrinks the
-      flatten, so the four-block model is the <em>smaller</em> one: 464k parameters against
-      the two-block model's 2,749k on N-Caltech101. Depth and capacity move in opposite
-      directions, so this separates one network from another — which is the point — but it
-      cannot attribute a difference to depth specifically.
-    </p>
-    <div class="scroll panel-table">
-      <table id="arch-table"></table>
-    </div>
-    <p class="chart-note">Mean over three seeds, rendered from
-      <code>results/arch_matched.json</code>. "gain" is accumulator accuracy minus count
-      accuracy — the value of removing the cap.</p>
-    <p>
-      <strong>The ceiling is architecture-independent, as the formula requires.</strong> Zero
-      violations across all 24 count cells, and the bound is saturated to float precision in
-      every one of them — at both depths, on both datasets, at both timestep settings.
-    </p>
-    <p>
-      <strong>The headline accuracy gain does not replicate in magnitude.</strong> At
-      C = 101, T = 2 removing the cap is worth <strong>+12.8 points at four blocks and
-      +3.1 at two</strong> — a fourfold difference, though it stays positive in every seed at
-      both. So "removing the cap helps accuracy where it binds hard" replicates; "by 12.8
-      points" does not. That also undercuts the mechanism offered for it: a cross-entropy
-      floor dominating the gradient has no architectural term, and if it were the whole story
-      the gain would not depend on the network.
-    </p>
-    <p>
-      <strong>The C = 101, T = 6 residual survives.</strong> 0.1534 at four blocks and
-      <strong>0.1159</strong> at two — about a quarter attributable to the network and three
-      quarters not. N-MNIST's own residuals barely move between architectures (0.5386 against
-      0.5398 at T = 2; 0.0272 against 0.0253 at T = 6), so the sensitivity is specific to
-      C = 101. At matched depth the cross-dataset ratio at T = 6 is <strong>4.3&times; at two
-      blocks and 6.1&times; at four</strong>, so the finding holds with the confound removed.
-    </p>
-    <p>
-      <strong>And the conditional ceiling still explains none of it</strong> — it sits at
-      0.7146 against an accuracy of 0.5618 at two blocks, and 0.6804 against 0.6427 at four.
-      Above accuracy either way, so it forces nothing. The residual is genuine miscalibration
-      at both architectures.
-    </p>
-  </div></section>
+  
 
-  <section class="panel c12"><div class="prose wide">
-<h3>A conditional ceiling does not rescue the C = 101 residual<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
-    <p>
-      The theoretical ceiling assumes the extreme count vector [T, 0, …, 0] — every one of
-      the C−1 competitors silent for all T steps. At ten classes that is nearly free. At a
-      hundred and one it is a strong assumption, and the obvious rescue for the unexplained
-      T = 6 residual is that a bound conditioned on <em>real</em> competitor activity would
-      bind after all:
-    </p>
-    <p style="text-align:center;font-family:var(--mono);font-size:13px">
-      ceiling<sub>cond</sub> = e<sup>T</sup> / (e<sup>T</sup> + Σ<sub>j≠winner</sub>
-      e<sup>c<sub>j</sub></sup>)
-    </p>
-    <p>
-      Setting every c<sub>j</sub> = 0 recovers the theoretical ceiling exactly, so this is a
-      refinement of the same quantity rather than a rival to it.
-      <span class="tag">pre-registered</span> The prediction — that it would account for most
-      of the residual, and that it would coincide with the theoretical bound at C = 10 — was
-      recorded and committed before any competitor count was measured.
-    </p>
-    <div class="scroll panel-table">
-      <table id="conditional-table"></table>
-    </div>
-    <p class="chart-note">Mean over seeds, rendered from
-      <code>results/conditional_ceiling.json</code>. "share" is the fraction of the
-      accuracy-minus-confidence gap that each ceiling forces.</p>
-    <p>
-      <strong>The half about C = 10 held.</strong> There the two ceilings differ by at most
-      0.0067 at any T — with nine competitors silent 95–99% of the time the extreme vector is
-      nearly reachable, so the simple bound was nearly tight. At C = 101 the gap is up to
-      <strong>26 times larger</strong>. That is exactly why the study never needed the
-      refinement before and does now.
-    </p>
-    <p>
-      <strong>The half that mattered was falsified.</strong> At C = 101, T = 6 the
-      conditional ceiling is <strong>0.6804 — above the accuracy of 0.6427</strong>, in all
-      three seeds, against a pre-registered falsification threshold of 0.5660. It accounts for
-      <strong>0%</strong> of the residual. Nothing forced these models to be underconfident:
-      given exactly the competitor patterns they produced they could have averaged 0.68
-      confidence, and averaged 0.49. <strong>They left 0.19 of headroom unused.</strong> The
-      residual is genuine miscalibration and the tidiest explanation for it is gone.
-    </p>
-    <p>
-      The measured competitor distribution is why the refinement is real but insufficient. At
-      C = 101, T = 6, 81.6% of competitor slots hold zero, 12.1% hold one, and the tail
-      reaches six; the single loudest competitor carries 14.7% of the whole denominator. That
-      is enough to move the bound from 0.8014 to 0.6804 and not enough to reach 0.6427.
-    </p>
-    <p>
-      One caveat on what this kind of bound can claim. The theoretical ceiling is fixed by T
-      and C before a model exists, so it <em>predicts</em>. The conditional ceiling is
-      computed from a model's own spikes, so it only <em>explains</em> — a model that
-      distributed its spikes differently would face a different bound. It earns a place as an
-      analysis tool, not as a second derived result. It also means this conclusion survives
-      the architecture confound noted above: whatever produced the residual, the models
-      demonstrably had room to be more confident and were not.
-    </p>
-  </div></section>
+  
 
-  <section class="panel c12"><div class="prose wide">
-<h3>The leak explains about half of it — the threshold explains the rest<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
-    <p>
-      With quantisation ruled out, the next candidate needed no new mechanism either. The
-      membrane readout uses the network's own charge equation, v += (z − v)/τ with τ = 2, so
-      it <strong>leaks with a half-life of exactly one step</strong>: the input k steps before
-      the end enters the final potential with weight 0.5&nbsp;×&nbsp;0.5<sup>k</sup>. Its
-      effective evidence window is far shorter than T, and it does not grow with T.
-    </p>
-    <div class="scroll panel-table">
-      <table>
-        <thead><tr><th style="cursor:default">T</th>
-          <th style="cursor:default">leaky membrane — share of weight on the last 2 steps</th>
-          <th style="cursor:default">count — same share</th></tr></thead>
-        <tbody>
-          <tr><td class="k">2</td><td><strong>100.0%</strong></td><td><strong>100.0%</strong></td></tr>
-          <tr><td class="k">6</td><td>76.2%</td><td>33.3%</td></tr>
-          <tr><td class="k">10</td><td>75.1%</td><td>20.0%</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>
-      <strong>At T = 2 the two readouts integrate over exactly the same window</strong>, and
-      that is the regime where membrane wins. By T = 6 they have come apart, and that is where
-      it starts losing. So the test was a fourth readout: an <strong>accumulator</strong>,
-      v += z, the same non-spiking integrator with the leak removed and every step weighted
-      equally. It differs from count <em>only</em> by the output threshold, and from membrane
-      <em>only</em> by the leak — which separates two explanations that were confounded.
-    </p>
-    <p>
-      <span class="tag">pre-registered</span> The prediction and its falsification condition
-      were recorded in NOTES.md and committed before the first accumulator model was trained.
-      It said the prediction fails if the accumulator's AUROC deficit against count stays more
-      than half the leaky membrane's — 0.0066 at T = 6, 0.0045 at T = 10.
-    </p>
-    <p>
-      <strong>Both halves of the answer are reported because the prediction contains both.</strong>
-      The stated falsification condition is not met, so the prediction stands: the deficit is
-      <strong>0.0061 at T = 6</strong> and <strong>0.0035 at T = 10</strong>, closing
-      <strong>53%</strong> and <strong>62%</strong> of the membrane gap. But its headline
-      wording said the accumulator should "match or beat count", and it does not — count ranks
-      better in <strong>every seed at both timestep settings</strong>, 0 of 6. The leak is the
-      largest single mechanism found and it is not the only one. About 40% of the deficit
-      survives its removal, and since an accumulator and a count differ only by the threshold,
-      that residue belongs to the thresholding itself.
-    </p>
-    <p>
-      <strong>The part of the prediction that was wrong turned out to be the most useful.</strong>
-      It said accumulator and membrane should be close at T = 2. On ranking they are, 0.9698
-      against 0.9659. On calibration they are not: ECE is <strong>0.0031 ± 0.0002</strong>
-      against membrane's <strong>0.0290 ± 0.0153</strong>. Removing the leak drops the mean
-      ninefold and the seed-to-seed spread <strong>77-fold</strong>, to tighter than count's.
-      That answers a question this study had left open — why membrane's calibration at T = 2
-      swings so widely between seeds. A leaky integrator at T = 2 is reading essentially the
-      final step, so its calibration rides on whatever that one step produced.
-    </p>
-    <p>
-      One unpredicted result bears on the disagreement with the literature. The accumulator is
-      the <strong>first readout measured here that is consistently overconfident</strong>:
-      conf − acc is +0.0032 at T = 6 and +0.0047 at T = 10, positive in 3 of 3 seeds at both.
-      Every other readout is underconfident or unsigned. That does not resolve the
-      disagreement, but it narrows it — an uncapped, non-leaky readout at T ≥ 6 is mildly
-      overconfident, which is the direction the literature reports. The magnitude is under half
-      a percentage point on one architecture and one dataset, so it is a lead, not a finding.
-    </p>
-    <p>
-      None of this recommends changing the readout at high T. The accumulator costs about 0.2
-      points of accuracy at T = 10 (0.9879 against count's 0.9908), count still ranks best
-      there, and count is what the hardware exposes.
-    </p>
-  </div></section>
+  
 
-  <section class="panel c12"><div class="prose wide">
-<h3>Why membrane ranks worse at high T is not quantisation<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
-    <p>
-      Membrane calibrates better wherever the ceiling binds and <em>ranks</em> worse from
-      T = 6 up. The obvious explanation needs no new mechanism: a spike count is a
-      thresholded membrane signal, thresholding discards information, and if what it
-      discards is noise then the count readout gets a free denoiser. That was tested
-      directly — the saved membrane confidences coarsened to N ordered levels, no
-      retraining — and it is <strong>false</strong>.
-    </p>
-    <p>
-      The arithmetic makes the prediction exact. Coarsening cannot reorder a pair, only
-      merge pairs into ties, and AUROC scores a tie as 0.5. So with W the fraction of
-      correct/incorrect pairs merged and A the AUROC <em>within</em> levels,
-      AUROC(coarse) − AUROC(full) = W × (0.5 − A) — an identity. Coarsening can only help
-      where the structure it destroys is <em>worse than chance</em>.
-    </p>
-    <div class="scroll panel-table">
-      <table>
-        <thead><tr><th style="cursor:default">T</th><th style="cursor:default">N=5</th>
-          <th style="cursor:default">N=20</th><th style="cursor:default">N=100</th>
-          <th style="cursor:default">N=1000</th><th style="cursor:default">full</th>
-          <th style="cursor:default">count</th></tr></thead>
-        <tbody>
-          <tr><td class="k">2</td><td>0.8970</td><td>0.9587</td><td>0.9654</td><td>0.9659</td><td><strong>0.9659</strong></td><td>0.9205</td></tr>
-          <tr><td class="k">4</td><td>0.8999</td><td>0.9675</td><td>0.9768</td><td>0.9772</td><td><strong>0.9772</strong></td><td>0.9735</td></tr>
-          <tr><td class="k">6</td><td>0.8939</td><td>0.9604</td><td>0.9705</td><td>0.9710</td><td><strong>0.9710</strong></td><td>0.9842</td></tr>
-          <tr><td class="k">8</td><td>0.9008</td><td>0.9687</td><td>0.9768</td><td>0.9772</td><td><strong>0.9772</strong></td><td>0.9837</td></tr>
-          <tr><td class="k">10</td><td>0.9020</td><td>0.9683</td><td>0.9768</td><td>0.9773</td><td><strong>0.9773</strong></td><td>0.9863</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>
-      <strong>AUROC rises monotonically with N and saturates at full precision</strong>, at
-      every T and every seed. No interior peak anywhere. The curve is not even flat in N,
-      which refutes the hypothesis more strongly than the flat case would have: coarsening
-      does not merely fail to help, it <em>costs</em>, and the cost grows as the binning
-      gets coarser. Coarsening nudged AUROC up in 10 of 15 cells, and the magnitude is the
-      point — the largest gain anywhere is <strong>+0.000073</strong>, against a T = 6
-      deficit of 0.0132 it would have to close. It is 180&times; too small, and the sign
-      flutter is what floating-point noise around zero looks like.
-    </p>
-    <p>
-      The identity says why. At N = 5, where a fifth of all pairs are merged, the detail
-      being destroyed orders correct from incorrect at AUROC <strong>0.89</strong>; at
-      N = 20, 0.72; at N = 100, 0.56. <strong>Membrane's fine structure is signal, not
-      noise</strong>, at every resolution that merges a meaningful number of pairs. Of 266
-      measured points only 24 fall below chance, all at N ≥ 200 where under 1% of pairs
-      merge, bounding their effect at 0.0013.
-    </p>
-    <div class="scroll panel-table">
-      <table id="quant-within-table"></table>
-    </div>
-    <p class="chart-note">Mean over five timestep settings and three seeds, rendered from
-      <code>results/quantisation_test.json</code>. The verdict column applies the identity:
-      merging structure that ranks above chance can only cost AUROC.</p>
-    <figure class="fig">
-      <img src="figures/fig8-quantisation.svg" alt="Two rows of five panels, one column per
-        timestep setting. The top row plots AUROC against the number of confidence levels the
-        membrane signal is coarsened to; every curve rises monotonically and flattens at full
-        precision, with no interior peak. The bottom row plots the AUROC measured within a
-        level, which starts near 0.9 at five levels and decays towards the 0.5 chance line,
-        never falling meaningfully below it.">
-      <figcaption>Top row: AUROC against the number of confidence levels, against two
-        references — membrane at full precision and the count readout. Bottom row: the AUROC
-        of the structure being merged away. It sits above chance wherever a meaningful number
-        of pairs is merged, which is why coarsening can only cost. The dashed rule marks
-        count's own level count, shaded across its per-seed range.</figcaption>
-    </figure>
-    <p>
-      What the test rules <em>in</em> is sharper than what it rules out. Coarsened to
-      count's own level count, membrane at T = 2 <strong>still beats count</strong>
-      (0.9367 vs 0.9204) and at T = 6 is <strong>still 0.0138 behind</strong> it
-      (0.9705 vs 0.9842). Held at identical resolution the two readouts rank differently in
-      both directions, so the difference cannot be resolution. The remaining explanation is
-      that they rank <em>different quantities</em>: a count is a sum of thresholded events
-      and is invariant to how far above threshold each crossing was, where a potential is
-      not. That is untested, and this result does not establish it.
-    </p>
-  </div></section>
+  
 
-  <section class="panel c12"><div class="prose wide"><div class="two-col">
-<h3>Why the count readout exists<span class="pill pill-lit">lit</span><span class="pill pill-warn">unverified</span></h3>
-    <p>
-      The cap being avoidable makes it easy to read this study as saying the field has been
-      doing something obviously wrong. It has not. There are real reasons to sum spikes, and
-      the result does not dissolve all of them.
-    </p>
-    <p>
-      <strong>Spikes are the communication primitive; potentials are not.</strong> In
-      event-driven hardware the thing that crosses a core boundary is a spike event. A
-      per-class count is then an accumulator at the destination — one integer per class,
-      incremented on arrival, costing no traffic beyond the events already being sent.
-      Membrane potential is internal compartment state, and exporting it means a real value
-      per neuron per timestep: dense, continuous, and exactly the traffic these
-      architectures exist to avoid.
-    </p>
-    <p>
-      <strong>Counts are monotone; potentials are not.</strong> This is the sharpest
-      argument and it survives the experiment. A spike count never decreases in T, so a
-      threshold crossing is final and a stopping rule on it is stable. A leaky membrane
-      potential decays between inputs and can fall back below a threshold it already
-      crossed, so a stopping rule on it can un-fire. Anytime inference and early exit — the
-      Dynamic Confidence and SpikeCP line — depend on that stability. Even where a membrane
-      readout is available, a system that must stop early may still want counts.
-    </p>
-    <p class="unverified-note">
-      <strong>What the hardware exposes could not be confirmed, and the strong form of this
-      argument is withdrawn.</strong> A verification pass on 2026-09-12 found Intel's NxSDK
-      API reference unreachable and the sPyNNaker limitations page silent on recording
-      bandwidth. What is established: Loihi's neuron model carries membrane potential as
-      internal state, and the NxTF paper says embedded CPUs may read out SNN state during
-      the management phase — consistent with it being readable, silent on the per-timestep
-      cost, which is the only part the argument needed. SpiNNaker exposes potential through
-      PyNN's <code>record('v')</code> with host transfers bounded by Ethernet bandwidth, but
-      whether that binds for a ten-neuron output layer is unknown. Both stay
-      <span class="unver">unverified</span>, and the case for the count readout rests on the
-      two points above — spikes as the communication primitive, and count monotonicity — not
-      on an unverified cost model.
-    </p>
-    <p>
-      <strong>The recommendation, with its scope.</strong> Where a membrane readout is
-      available — simulation, GPU or CPU inference, hardware exposing output-layer state —
-      the cap is avoidable and should be avoided; it costs <strong>11.9&times; to
-      63.5&times;</strong> in uncalibrated ECE at T = 2, depending on seed (mean 30.5&times;),
-      for nothing. Where only spike events leave the chip, the cap is a hard
-      constraint rather than a design error, and T<sub>min</sub> gives the timestep budget.
-      Where early exit is required, counts may be preferable regardless, and the cap is the
-      price of monotonicity — which should be paid knowingly.
-    </p>
-  </div></div></section>
+  
 
-  <section class="panel c12"><div class="prose wide">
-<h3>Which calibrator you use does not matter<span class="pill pill-measured">measured</span></h3>
-    <p>
-      The study was designed around a hypothesis: that isotonic regression should beat
-      temperature scaling by a margin that <em>grows</em> as <em>T</em> falls, because a
-      spike-count readout is discrete and a scalar temperature is the wrong tool for a
-      discrete confidence distribution. It is not supported. At <em>T</em> = 2 — the most
-      discrete regime in the sweep, with 583 calibration samples per distinct confidence
-      level — temperature scaling <em>beat</em> isotonic, by a wider margin than at any other
-      <em>T</em> and in the opposite direction to the prediction.
-    </p>
+  
 
-    <div class="pre-reg">
-      <p class="stamp">pre-registered 2026-09-10, before any calibrator was fitted to a trained model</p>
-      <blockquote>
-        Temperature scaling will match or beat top-label isotonic at every <em>T</em>, and
-        the isotonic advantage will not be statistically resolvable at any <em>T</em> — the
-        95% paired-bootstrap interval on the equal-width ECE difference will straddle zero
-        at <em>T</em> in {2, 4, 6, 8, 10}.
-      </blockquote>
-      <p class="verdict-text">
-        <strong>Outcome: the letter of the prediction is false.</strong> Thirteen of fifteen
-        intervals straddle zero. Two resolve, and they point in <em>opposite</em> directions:
-        <em>T</em> = 6 seed 0 favours isotonic with a CI of [−0.0024, −0.0003], and
-        <em>T</em> = 2 seed 1 favours temperature with [+0.0006, +0.0044]. So the claim that
-        <em>every</em> interval would straddle zero is wrong. Two resolvable results in fifteen
-        at a 95% level is near what multiple comparisons produce unaided — the expected count
-        under no true difference is about 0.75 — and they disagree on direction, so neither
-        method gains support. The prediction as written did not survive and is recorded here
-        unedited.
-      </p>
-    </div>
+  
 
-    <p>
-      The refined form of the hypothesis fares no better. It held that the isotonic
-      advantage should track the number of calibration samples per distinct confidence
-      level, for which <em>T</em> is a proxy. That quantity moves 32-fold across the sweep,
-      from 583 samples per level at <em>T</em> = 2 to 18 at <em>T</em> = 10 — exactly the
-      manipulation the mechanism named. The advantage was flat and near zero across all of it.
-    </p>
-  </div></section>
+  
 
-  <section class="panel c12"><div class="prose wide">
-<h3>Selective prediction: the readout limits what can be deployed<span class="pill pill-measured">measured</span></h3>
-    <p>
-      Risk-coverage asks what fraction of samples can be acted on at a given error rate.
-      Samples sharing a confidence cannot be ordered against each other, so coverage steps
-      only at boundaries between distinct levels. With a count readout at T = 2 that gives
-      <strong>about 9 achievable operating points across 10,000 test samples</strong>
-      (10, 8 and 10 by seed), and <strong>no operating point at any coverage reaches 99.9%
-      accuracy</strong> — true at all three seeds. At T = 4 the same target is met at 92.0%
-      coverage on average (93.4%, 88.7%, 93.8%). A practitioner at T = 2 cannot choose an
-      arbitrary operating point.
-    </p>
-    <p>
-      <strong>This is the second deployment consequence of the readout choice, and at low T
-      it points the same way calibration does.</strong> The membrane readout is real-valued,
-      so almost every sample gets its own confidence: <strong>about 9,998 operating points at
-      T = 2</strong> against count's 9 — effectively a continuum. Whether that is worth having
-      depends on the regime, because from T = 6 up the count readout ranks better, and a
-      finer grid of operating points on a worse ranking is not a gain.
-    </p>
-    <p style="color:var(--ink-3)">
-      Calibration cannot change this for top-label calibrators, which are monotone in
-      confidence and so cannot reorder samples. One-vs-rest isotonic is the exception: it
-      recalibrates every class probability and renormalises, so it is not a function of the
-      top-label confidence, and it reorders — Kendall τ 0.28 against the raw ranking at
-      T = 2, with AURC six times worse (0.0149 against 0.0024, mean of three seeds; 5.1×,
-      6.2× and 7.7× by seed). It should not be used when
-      the downstream task is selective prediction.
-    </p>
-    <div class="scroll panel-table">
-      <table id="selective-table"></table>
-    </div>
-    <p class="chart-note">Mean over seeds, rendered from
-      <code>results/readout_experiment.json</code>. Oracle AURC is the floor a perfect ranker
-      would reach at that accuracy; a raw AURC is uninterpretable without it.</p>
-    <figure class="fig">
-      <img src="figures/fig7-risk-coverage.svg" alt="Risk against coverage for the count
-        readout at five timestep settings, drawn as step functions. The left panel covers the
-        full coverage range; the right panel covers the last tenth, where the differences are
-        visible. Every marker is an achievable operating point, and T = 2 has only a handful.">
-      <figcaption>Risk against coverage, count readout, seed 0. Drawn as steps on purpose:
-        joining the points with a smooth line would draw operating points that do not exist.
-        The right panel is the last tenth of the coverage range, where the differences
-        live.</figcaption>
-    </figure>
-  </div></section>
+  
 
-  <section class="panel c12"><div class="prose wide">
-<h3>The sign of the miscalibration disagrees with the literature<span class="pill pill-lit">lit</span><span class="pill pill-measured">measured</span></h3>
-    <p>
-      The SNN literature reports <strong>over</strong>confidence as the characteristic
-      calibration failure, and "Agreeing to Stop" says so using the <em>same readout this
-      study uses</em>. This study measures the opposite: mean confidence minus accuracy is
-      <strong>−0.5386 at T = 2</strong> and −0.1446 at T = 4, averaged over three
-      seeds. That is severe
-      <strong>under</strong>confidence, and it is structural — the ceiling at T = 2 is
-      0.4509 against a test accuracy of 0.9850, so no reachable output could have been
-      correctly confident.
-    </p>
-    <p style="color:var(--ink-3)">
-      This is reported as a contradiction of the received position, carefully. The
-      difference is most likely regime rather than error in the prior reports. The ceiling
-      binds only while accuracy exceeds it — at T = 8 and T = 10 this study's own models sit
-      below it, and the structural underconfidence duly disappears. It does <em>not</em>
-      become overconfidence: conf − acc is −0.0065 at T = 8 and −0.0008 at T = 10, so what
-      the ceiling stops forcing is simply not replaced. Work at higher T, on harder tasks,
-      with a
-      membrane or voting readout, or on converted rather than directly-trained networks
-      would see overconfidence and be right to report it. What this study defends is narrow:
-      at low T, with a spike-count readout, on a task where accuracy exceeds the ceiling,
-      the miscalibration is underconfidence and it is forced.
-    </p>
-    <p>
-      One tidy resolution was available and was <strong>tested and rejected</strong>. If
-      removing the cap restored overconfidence, both observations would be the same
-      phenomenon seen through different readouts. It does not — but the three-seed picture
-      is more qualified than one seed suggested, and the qualification matters.
-      <strong>The membrane readout's mean confidence stays below its accuracy at every
-      timestep setting</strong>: −0.0289, −0.0010, −0.0013, −0.0036 and −0.0008 at
-      T = 2, 4, 6, 8 and 10, averaged over three seeds. <strong>But only at T = 2 is that gap
-      larger than the spread between seeds.</strong> From T = 4 up the individual seeds fall
-      on both sides of zero — three of the twelve cells at T ≥ 4 are mildly
-      <em>over</em>confident (+0.0020, +0.0009, +0.0020) — so what survives the removal of the
-      cap is small and not consistently signed.
-    </p>
-    <p>
-      At T = 2, where the cap binds hardest, all three seeds are underconfident and removing
-      the cap shrinks the gap by roughly 12× to 64× depending on seed. (Rounded, because
-      this is the gap between mean confidence and accuracy; the ECE ratios quoted in the
-      readout panel are 11.9×–63.5× and are a different quantity.) That is the one regime
-      where the disagreement with the literature is unambiguous, and it is not explained by
-      the readout: an uncapped readout is still underconfident there. Above T = 4 this study
-      cannot resolve the sign at all — a weaker statement than seed 0 alone supported, and
-      the honest one.
-    </p>
-    <p>
-      <strong>One readout does show the literature's direction.</strong> The non-leaky
-      accumulator is mildly but consistently <em>over</em>confident at T ≥ 6 — conf − acc
-      +0.0032 and +0.0047, positive in 3 of 3 seeds at both. So an uncapped readout that also
-      integrates over the full window lands on the side the literature reports, while the
-      capped and the leaky ones do not. That is a lead worth following on a second dataset,
-      not a resolution: the magnitude is under half a percentage point, on one architecture.
-    </p>
-  </div></section>
-
-  <section class="panel c6"><div class="prose">
-<h3>The same bound is a floor on the training loss<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
-    <p>
-      Cross-entropy on spike-count logits cannot fall below −ln(ceiling): 0.7966 at
-      <em>T</em> = 2 against 0.0004 at <em>T</em> = 10. The observed plateaus sit between
-      0.0072 and 0.0182 above their own floor across all fifteen runs. A <em>T</em> = 2
-      model plateauing at 0.81 and a <em>T</em> = 10 model plateauing at 0.009 are equally
-      converged. <strong>Training loss is therefore not comparable across <em>T</em></strong>,
-      and read naively the low-<em>T</em> curve looks like a failure to train and invites
-      fixes for a problem that does not exist. Convergence here is judged on validation
-      accuracy, never on loss.
-    </p>
-  </div></section>
+  
 
   <section class="panel c6"><div class="prose">
 <h3>A note on energy<span class="pill pill-lit">lit</span><span class="pill pill-derived">derived</span></h3>
@@ -1171,6 +617,731 @@ python scripts/export_dashboard_data.py</pre>
       numeric constant with its provenance and everything still to verify.</p>
     <p>Last updated 2026-09-10.</p>
   </footer>
+
+
+<!-- ===== modals: the full reasoning, nested rather than deleted ===== -->
+<dialog class="modal" id="m1" aria-labelledby="m1-h">
+  <div class="modal-head">
+    <div><h2 id="m1-h">The ceiling holds at both class counts and both architectures</h2><div class="modal-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></div></div>
+    <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
+  </div>
+  <div class="modal-body">
+<section class="modal-part"><h3>The same claims at two depths: what replicates and what does not<span class="pill pill-measured">measured</span></h3>
+<p>
+      N-Caltech101 was run with four conv blocks and N-MNIST with two, so every cross-dataset
+      comparison above was confounded with architecture. This is the 2&times;2 that removes
+      it — both architectures on both datasets, T in {2, 6}, three seeds, both readouts, 48
+      cells. It doubles as the alternative-architecture check the study never had.
+    </p>
+    <p>
+      <strong>A caveat on what "architecture" varies here.</strong> More pooling shrinks the
+      flatten, so the four-block model is the <em>smaller</em> one: 464k parameters against
+      the two-block model's 2,749k on N-Caltech101. Depth and capacity move in opposite
+      directions, so this separates one network from another — which is the point — but it
+      cannot attribute a difference to depth specifically.
+    </p>
+    <div class="scroll panel-table">
+      <table id="arch-table"></table>
+    </div>
+    <p class="chart-note">Mean over three seeds, rendered from
+      <code>results/arch_matched.json</code>. "gain" is accumulator accuracy minus count
+      accuracy — the value of removing the cap.</p>
+    <p>
+      <strong>The ceiling is architecture-independent, as the formula requires.</strong> Zero
+      violations across all 24 count cells, and the bound is saturated to float precision in
+      every one of them — at both depths, on both datasets, at both timestep settings.
+    </p>
+    <p>
+      <strong>The headline accuracy gain does not replicate in magnitude.</strong> At
+      C = 101, T = 2 removing the cap is worth <strong>+12.8 points at four blocks and
+      +3.1 at two</strong> — a fourfold difference, though it stays positive in every seed at
+      both. So "removing the cap helps accuracy where it binds hard" replicates; "by 12.8
+      points" does not. That also undercuts the mechanism offered for it: a cross-entropy
+      floor dominating the gradient has no architectural term, and if it were the whole story
+      the gain would not depend on the network.
+    </p>
+    <p>
+      <strong>The C = 101, T = 6 residual survives.</strong> 0.1534 at four blocks and
+      <strong>0.1159</strong> at two — about a quarter attributable to the network and three
+      quarters not. N-MNIST's own residuals barely move between architectures (0.5386 against
+      0.5398 at T = 2; 0.0272 against 0.0253 at T = 6), so the sensitivity is specific to
+      C = 101. At matched depth the cross-dataset ratio at T = 6 is <strong>4.3&times; at two
+      blocks and 6.1&times; at four</strong>, so the finding holds with the confound removed.
+    </p>
+    <p>
+      <strong>And the conditional ceiling still explains none of it</strong> — it sits at
+      0.7146 against an accuracy of 0.5618 at two blocks, and 0.6804 against 0.6427 at four.
+      Above accuracy either way, so it forces nothing. The residual is genuine miscalibration
+      at both architectures.
+    </p>
+</section>
+  </div>
+</dialog>
+
+<dialog class="modal" id="m2" aria-labelledby="m2-h">
+  <div class="modal-head">
+    <div><h2 id="m2-h">Where the ceiling binds it explains the error, and where it does not it explains none</h2><div class="modal-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></div></div>
+    <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
+  </div>
+  <div class="modal-body">
+<section class="modal-part"><h3>The ceiling accounts for almost all uncalibrated error at low T<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
+<p>
+      At <em>T</em> = 2 with 10 classes the ceiling is 0.4509, and the trained models
+      saturate it exactly — observed maxima match the derived value to roughly one part in
+      10<sup>13</sup>, which is float64 rounding rather than approximation. A model at 98.5%
+      accuracy cannot emit a confidence near its own correctness rate, so it is forced into
+      underconfidence before any calibrator is involved. The gap between accuracy and the
+      ceiling accounts for <strong>99.2%</strong> of uncalibrated expected calibration error
+      at <em>T</em> = 2, 90.0% at <em>T</em> = 4 and 44.2% at <em>T</em> = 6.
+    </p>
+    <p style="color:var(--ink-3);font-size:13.5px">
+      That comparison is not exact and should not be read as one. The 99.2% sets a single
+      overall accuracy against a single ceiling value, whereas ECE is a mass-weighted mean
+      of per-bin gaps. The two agree closely here only because roughly 95% of the
+      calibration mass sits at the top confidence level, so the per-bin average is dominated
+      by that one bin. Where confidence is more spread out the two quantities would part
+      company.
+    </p>
+    <p>
+      By <em>T</em> = 8 accuracy has fallen below the ceiling and correct confidence becomes
+      reachable, so the ceiling explanation stops applying — it only ever applies where the
+      ceiling binds. What is left is small and <em>still not overconfidence</em>: mean
+      confidence minus accuracy is −0.0065 at <em>T</em> = 8, negative at all three seeds,
+      and −0.0008 at <em>T</em> = 10. The forced underconfidence disappears without being
+      replaced by anything this study can resolve.
+    </p>
+</section>
+<section class="modal-part"><h3>A conditional ceiling does not rescue the C = 101 residual<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
+<p>
+      The theoretical ceiling assumes the extreme count vector [T, 0, …, 0] — every one of
+      the C−1 competitors silent for all T steps. At ten classes that is nearly free. At a
+      hundred and one it is a strong assumption, and the obvious rescue for the unexplained
+      T = 6 residual is that a bound conditioned on <em>real</em> competitor activity would
+      bind after all:
+    </p>
+    <p style="text-align:center;font-family:var(--mono);font-size:13px">
+      ceiling<sub>cond</sub> = e<sup>T</sup> / (e<sup>T</sup> + Σ<sub>j≠winner</sub>
+      e<sup>c<sub>j</sub></sup>)
+    </p>
+    <p>
+      Setting every c<sub>j</sub> = 0 recovers the theoretical ceiling exactly, so this is a
+      refinement of the same quantity rather than a rival to it.
+      <span class="tag">pre-registered</span> The prediction — that it would account for most
+      of the residual, and that it would coincide with the theoretical bound at C = 10 — was
+      recorded and committed before any competitor count was measured.
+    </p>
+    <div class="scroll panel-table">
+      <table id="conditional-table"></table>
+    </div>
+    <p class="chart-note">Mean over seeds, rendered from
+      <code>results/conditional_ceiling.json</code>. "share" is the fraction of the
+      accuracy-minus-confidence gap that each ceiling forces.</p>
+    <p>
+      <strong>The half about C = 10 held.</strong> There the two ceilings differ by at most
+      0.0067 at any T — with nine competitors silent 95–99% of the time the extreme vector is
+      nearly reachable, so the simple bound was nearly tight. At C = 101 the gap is up to
+      <strong>26 times larger</strong>. That is exactly why the study never needed the
+      refinement before and does now.
+    </p>
+    <p>
+      <strong>The half that mattered was falsified.</strong> At C = 101, T = 6 the
+      conditional ceiling is <strong>0.6804 — above the accuracy of 0.6427</strong>, in all
+      three seeds, against a pre-registered falsification threshold of 0.5660. It accounts for
+      <strong>0%</strong> of the residual. Nothing forced these models to be underconfident:
+      given exactly the competitor patterns they produced they could have averaged 0.68
+      confidence, and averaged 0.49. <strong>They left 0.19 of headroom unused.</strong> The
+      residual is genuine miscalibration and the tidiest explanation for it is gone.
+    </p>
+    <p>
+      The measured competitor distribution is why the refinement is real but insufficient. At
+      C = 101, T = 6, 81.6% of competitor slots hold zero, 12.1% hold one, and the tail
+      reaches six; the single loudest competitor carries 14.7% of the whole denominator. That
+      is enough to move the bound from 0.8014 to 0.6804 and not enough to reach 0.6427.
+    </p>
+    <p>
+      One caveat on what this kind of bound can claim. The theoretical ceiling is fixed by T
+      and C before a model exists, so it <em>predicts</em>. The conditional ceiling is
+      computed from a model's own spikes, so it only <em>explains</em> — a model that
+      distributed its spikes differently would face a different bound. It earns a place as an
+      analysis tool, not as a second derived result. It also means this conclusion survives
+      the architecture confound noted above: whatever produced the residual, the models
+      demonstrably had room to be more confident and were not.
+    </p>
+</section>
+  </div>
+</dialog>
+
+<dialog class="modal" id="m3" aria-labelledby="m3-h">
+  <div class="modal-head">
+    <div><h2 id="m3-h">The same bound is a floor on the training loss</h2><div class="modal-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></div></div>
+    <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
+  </div>
+  <div class="modal-body">
+<section class="modal-part"><h3>The same bound is a floor on the training loss<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
+<p>
+      Cross-entropy on spike-count logits cannot fall below −ln(ceiling): 0.7966 at
+      <em>T</em> = 2 against 0.0004 at <em>T</em> = 10. The observed plateaus sit between
+      0.0072 and 0.0182 above their own floor across all fifteen runs. A <em>T</em> = 2
+      model plateauing at 0.81 and a <em>T</em> = 10 model plateauing at 0.009 are equally
+      converged. <strong>Training loss is therefore not comparable across <em>T</em></strong>,
+      and read naively the low-<em>T</em> curve looks like a failure to train and invites
+      fixes for a problem that does not exist. Convergence here is judged on validation
+      accuracy, never on loss.
+    </p>
+</section>
+  </div>
+</dialog>
+
+<dialog class="modal" id="m4" aria-labelledby="m4-h">
+  <div class="modal-head">
+    <div><h2 id="m4-h">The readout family decides the direction of the failure</h2><div class="modal-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span><span class="pill pill-lit">lit</span></div></div>
+    <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
+  </div>
+  <div class="modal-body">
+<section class="modal-part"><h3>The ceiling is a property of the readout, not of spiking networks<span class="pill pill-measured">measured</span></h3>
+<p>
+      Softmax-over-spike-counts is a <em>choice</em>. The same architecture was trained with
+      four final aggregations — only the aggregation differs, every layer up to the last
+      BatchNorm is identical — across up to five timestep settings and three seeds,
+      54 runs.
+    </p>
+    <div class="scroll panel-table">
+      <table id="readout-table"></table>
+    </div>
+    <p class="chart-note">Mean ± sd over seeds, rendered from
+      <code>results/readout_experiment.json</code>. Every readout, every timestep setting.</p>
+    <p>
+      At T = 2 a membrane readout removes the cap and cuts uncalibrated ECE by
+      <strong>11.9&times; to 63.5&times;</strong> depending on seed (mean 30.5&times;), at
+      indistinguishable accuracy. The weighted-count control is what makes this
+      interpretable: it shares the cap exactly but has roughly twice the attainable levels,
+      and its ECE is 0.5385 against count's 0.5386. <strong>Granularity buys nothing; the
+      bound does all the work.</strong>
+    </p>
+    <p>
+      The spread matters and is reported rather than averaged away. Membrane ECE at T = 2 is
+      0.0290 ± 0.0153 across seeds — 0.0085, 0.0333, 0.0451 — while count's is
+      0.5386 ± 0.0004. Removing the cap removes a <em>deterministic</em> error and exposes an
+      ordinary, <em>variable</em> one. Three of fifteen (T, seed) cells have membrane worse
+      than count, all at T ≥ 8 where the cap no longer binds.
+    </p>
+    <p>
+      <strong>Membrane is not strictly dominant.</strong> It calibrates better wherever the
+      ceiling binds, but it ranks better only at T = 2 and T = 4. From T = 6 upward the count
+      readout separates correct from incorrect predictions <em>better</em> — AUROC 0.9842
+      against 0.9710 at T = 6, with roughly half the AURC. Calibration and ranking are
+      different properties and the readout that wins one does not automatically win the
+      other. <strong>The crossover is at T = 6</strong>, and the table below is computed
+      from the same artifact rather than asserted:
+    </p>
+    <div class="scroll panel-table">
+      <table id="readout-crossover"></table>
+    </div>
+    <p>
+      The recommendation is therefore narrow. Where the ceiling binds — accuracy above
+      e<sup>T</sup>/(e<sup>T</sup>+C−1), which for 10 classes means T ≤ 4 — a membrane
+      readout removes a large structural error and ranks at least as well. Above that the cap
+      is inert, count ranks better, and there is no reason to change it.
+      <strong>T<sub>min</sub> is exactly the test for which regime you are in.</strong>
+      A second consequence points the same way at low T: count gives 9 achievable selective
+      operating points at T = 2 across 10,000 samples, membrane gives 9,998 — effectively a
+      continuum.
+    </p>
+</section>
+<section class="modal-part"><h3>The leak explains about half of it — the threshold explains the rest<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
+<p>
+      With quantisation ruled out, the next candidate needed no new mechanism either. The
+      membrane readout uses the network's own charge equation, v += (z − v)/τ with τ = 2, so
+      it <strong>leaks with a half-life of exactly one step</strong>: the input k steps before
+      the end enters the final potential with weight 0.5&nbsp;×&nbsp;0.5<sup>k</sup>. Its
+      effective evidence window is far shorter than T, and it does not grow with T.
+    </p>
+    <div class="scroll panel-table">
+      <table>
+        <thead><tr><th style="cursor:default">T</th>
+          <th style="cursor:default">leaky membrane — share of weight on the last 2 steps</th>
+          <th style="cursor:default">count — same share</th></tr></thead>
+        <tbody>
+          <tr><td class="k">2</td><td><strong>100.0%</strong></td><td><strong>100.0%</strong></td></tr>
+          <tr><td class="k">6</td><td>76.2%</td><td>33.3%</td></tr>
+          <tr><td class="k">10</td><td>75.1%</td><td>20.0%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      <strong>At T = 2 the two readouts integrate over exactly the same window</strong>, and
+      that is the regime where membrane wins. By T = 6 they have come apart, and that is where
+      it starts losing. So the test was a fourth readout: an <strong>accumulator</strong>,
+      v += z, the same non-spiking integrator with the leak removed and every step weighted
+      equally. It differs from count <em>only</em> by the output threshold, and from membrane
+      <em>only</em> by the leak — which separates two explanations that were confounded.
+    </p>
+    <p>
+      <span class="tag">pre-registered</span> The prediction and its falsification condition
+      were recorded in NOTES.md and committed before the first accumulator model was trained.
+      It said the prediction fails if the accumulator's AUROC deficit against count stays more
+      than half the leaky membrane's — 0.0066 at T = 6, 0.0045 at T = 10.
+    </p>
+    <p>
+      <strong>Both halves of the answer are reported because the prediction contains both.</strong>
+      The stated falsification condition is not met, so the prediction stands: the deficit is
+      <strong>0.0061 at T = 6</strong> and <strong>0.0035 at T = 10</strong>, closing
+      <strong>53%</strong> and <strong>62%</strong> of the membrane gap. But its headline
+      wording said the accumulator should "match or beat count", and it does not — count ranks
+      better in <strong>every seed at both timestep settings</strong>, 0 of 6. The leak is the
+      largest single mechanism found and it is not the only one. About 40% of the deficit
+      survives its removal, and since an accumulator and a count differ only by the threshold,
+      that residue belongs to the thresholding itself.
+    </p>
+    <p>
+      <strong>The part of the prediction that was wrong turned out to be the most useful.</strong>
+      It said accumulator and membrane should be close at T = 2. On ranking they are, 0.9698
+      against 0.9659. On calibration they are not: ECE is <strong>0.0031 ± 0.0002</strong>
+      against membrane's <strong>0.0290 ± 0.0153</strong>. Removing the leak drops the mean
+      ninefold and the seed-to-seed spread <strong>77-fold</strong>, to tighter than count's.
+      That answers a question this study had left open — why membrane's calibration at T = 2
+      swings so widely between seeds. A leaky integrator at T = 2 is reading essentially the
+      final step, so its calibration rides on whatever that one step produced.
+    </p>
+    <p>
+      One unpredicted result bears on the disagreement with the literature. The accumulator is
+      the <strong>first readout measured here that is consistently overconfident</strong>:
+      conf − acc is +0.0032 at T = 6 and +0.0047 at T = 10, positive in 3 of 3 seeds at both.
+      Every other readout is underconfident or unsigned. That does not resolve the
+      disagreement, but it narrows it — an uncapped, non-leaky readout at T ≥ 6 is mildly
+      overconfident, which is the direction the literature reports. The magnitude is under half
+      a percentage point on one architecture and one dataset, so it is a lead, not a finding.
+    </p>
+    <p>
+      None of this recommends changing the readout at high T. The accumulator costs about 0.2
+      points of accuracy at T = 10 (0.9879 against count's 0.9908), count still ranks best
+      there, and count is what the hardware exposes.
+    </p>
+</section>
+<section class="modal-part"><h3>Why membrane ranks worse at high T is not quantisation<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
+<p>
+      Membrane calibrates better wherever the ceiling binds and <em>ranks</em> worse from
+      T = 6 up. The obvious explanation needs no new mechanism: a spike count is a
+      thresholded membrane signal, thresholding discards information, and if what it
+      discards is noise then the count readout gets a free denoiser. That was tested
+      directly — the saved membrane confidences coarsened to N ordered levels, no
+      retraining — and it is <strong>false</strong>.
+    </p>
+    <p>
+      The arithmetic makes the prediction exact. Coarsening cannot reorder a pair, only
+      merge pairs into ties, and AUROC scores a tie as 0.5. So with W the fraction of
+      correct/incorrect pairs merged and A the AUROC <em>within</em> levels,
+      AUROC(coarse) − AUROC(full) = W × (0.5 − A) — an identity. Coarsening can only help
+      where the structure it destroys is <em>worse than chance</em>.
+    </p>
+    <div class="scroll panel-table">
+      <table>
+        <thead><tr><th style="cursor:default">T</th><th style="cursor:default">N=5</th>
+          <th style="cursor:default">N=20</th><th style="cursor:default">N=100</th>
+          <th style="cursor:default">N=1000</th><th style="cursor:default">full</th>
+          <th style="cursor:default">count</th></tr></thead>
+        <tbody>
+          <tr><td class="k">2</td><td>0.8970</td><td>0.9587</td><td>0.9654</td><td>0.9659</td><td><strong>0.9659</strong></td><td>0.9205</td></tr>
+          <tr><td class="k">4</td><td>0.8999</td><td>0.9675</td><td>0.9768</td><td>0.9772</td><td><strong>0.9772</strong></td><td>0.9735</td></tr>
+          <tr><td class="k">6</td><td>0.8939</td><td>0.9604</td><td>0.9705</td><td>0.9710</td><td><strong>0.9710</strong></td><td>0.9842</td></tr>
+          <tr><td class="k">8</td><td>0.9008</td><td>0.9687</td><td>0.9768</td><td>0.9772</td><td><strong>0.9772</strong></td><td>0.9837</td></tr>
+          <tr><td class="k">10</td><td>0.9020</td><td>0.9683</td><td>0.9768</td><td>0.9773</td><td><strong>0.9773</strong></td><td>0.9863</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      <strong>AUROC rises monotonically with N and saturates at full precision</strong>, at
+      every T and every seed. No interior peak anywhere. The curve is not even flat in N,
+      which refutes the hypothesis more strongly than the flat case would have: coarsening
+      does not merely fail to help, it <em>costs</em>, and the cost grows as the binning
+      gets coarser. Coarsening nudged AUROC up in 10 of 15 cells, and the magnitude is the
+      point — the largest gain anywhere is <strong>+0.000073</strong>, against a T = 6
+      deficit of 0.0132 it would have to close. It is 180&times; too small, and the sign
+      flutter is what floating-point noise around zero looks like.
+    </p>
+    <p>
+      The identity says why. At N = 5, where a fifth of all pairs are merged, the detail
+      being destroyed orders correct from incorrect at AUROC <strong>0.89</strong>; at
+      N = 20, 0.72; at N = 100, 0.56. <strong>Membrane's fine structure is signal, not
+      noise</strong>, at every resolution that merges a meaningful number of pairs. Of 266
+      measured points only 24 fall below chance, all at N ≥ 200 where under 1% of pairs
+      merge, bounding their effect at 0.0013.
+    </p>
+    <div class="scroll panel-table">
+      <table id="quant-within-table"></table>
+    </div>
+    <p class="chart-note">Mean over five timestep settings and three seeds, rendered from
+      <code>results/quantisation_test.json</code>. The verdict column applies the identity:
+      merging structure that ranks above chance can only cost AUROC.</p>
+    <figure class="fig">
+      <img src="figures/fig8-quantisation.svg" alt="Two rows of five panels, one column per
+        timestep setting. The top row plots AUROC against the number of confidence levels the
+        membrane signal is coarsened to; every curve rises monotonically and flattens at full
+        precision, with no interior peak. The bottom row plots the AUROC measured within a
+        level, which starts near 0.9 at five levels and decays towards the 0.5 chance line,
+        never falling meaningfully below it.">
+      <figcaption>Top row: AUROC against the number of confidence levels, against two
+        references — membrane at full precision and the count readout. Bottom row: the AUROC
+        of the structure being merged away. It sits above chance wherever a meaningful number
+        of pairs is merged, which is why coarsening can only cost. The dashed rule marks
+        count's own level count, shaded across its per-seed range.</figcaption>
+    </figure>
+    <p>
+      What the test rules <em>in</em> is sharper than what it rules out. Coarsened to
+      count's own level count, membrane at T = 2 <strong>still beats count</strong>
+      (0.9367 vs 0.9204) and at T = 6 is <strong>still 0.0138 behind</strong> it
+      (0.9705 vs 0.9842). Held at identical resolution the two readouts rank differently in
+      both directions, so the difference cannot be resolution. The remaining explanation is
+      that they rank <em>different quantities</em>: a count is a sum of thresholded events
+      and is invariant to how far above threshold each crossing was, where a potential is
+      not. That is untested, and this result does not establish it.
+    </p>
+</section>
+<section class="modal-part"><h3>Why the count readout exists<span class="pill pill-lit">lit</span><span class="pill pill-warn">unverified</span></h3>
+<div class="two-col">
+<p>
+      The cap being avoidable makes it easy to read this study as saying the field has been
+      doing something obviously wrong. It has not. There are real reasons to sum spikes, and
+      the result does not dissolve all of them.
+    </p>
+    <p>
+      <strong>Spikes are the communication primitive; potentials are not.</strong> In
+      event-driven hardware the thing that crosses a core boundary is a spike event. A
+      per-class count is then an accumulator at the destination — one integer per class,
+      incremented on arrival, costing no traffic beyond the events already being sent.
+      Membrane potential is internal compartment state, and exporting it means a real value
+      per neuron per timestep: dense, continuous, and exactly the traffic these
+      architectures exist to avoid.
+    </p>
+    <p>
+      <strong>Counts are monotone; potentials are not.</strong> This is the sharpest
+      argument and it survives the experiment. A spike count never decreases in T, so a
+      threshold crossing is final and a stopping rule on it is stable. A leaky membrane
+      potential decays between inputs and can fall back below a threshold it already
+      crossed, so a stopping rule on it can un-fire. Anytime inference and early exit — the
+      Dynamic Confidence and SpikeCP line — depend on that stability. Even where a membrane
+      readout is available, a system that must stop early may still want counts.
+    </p>
+    <p class="unverified-note">
+      <strong>What the hardware exposes could not be confirmed, and the strong form of this
+      argument is withdrawn.</strong> A verification pass on 2026-09-12 found Intel's NxSDK
+      API reference unreachable and the sPyNNaker limitations page silent on recording
+      bandwidth. What is established: Loihi's neuron model carries membrane potential as
+      internal state, and the NxTF paper says embedded CPUs may read out SNN state during
+      the management phase — consistent with it being readable, silent on the per-timestep
+      cost, which is the only part the argument needed. SpiNNaker exposes potential through
+      PyNN's <code>record('v')</code> with host transfers bounded by Ethernet bandwidth, but
+      whether that binds for a ten-neuron output layer is unknown. Both stay
+      <span class="unver">unverified</span>, and the case for the count readout rests on the
+      two points above — spikes as the communication primitive, and count monotonicity — not
+      on an unverified cost model.
+    </p>
+    <p>
+      <strong>The recommendation, with its scope.</strong> Where a membrane readout is
+      available — simulation, GPU or CPU inference, hardware exposing output-layer state —
+      the cap is avoidable and should be avoided; it costs <strong>11.9&times; to
+      63.5&times;</strong> in uncalibrated ECE at T = 2, depending on seed (mean 30.5&times;),
+      for nothing. Where only spike events leave the chip, the cap is a hard
+      constraint rather than a design error, and T<sub>min</sub> gives the timestep budget.
+      Where early exit is required, counts may be preferable regardless, and the cap is the
+      price of monotonicity — which should be paid knowingly.
+    </p>
+  </div>
+</section>
+  </div>
+</dialog>
+
+<dialog class="modal" id="m5" aria-labelledby="m5-h">
+  <div class="modal-head">
+    <div><h2 id="m5-h">Removing the cap buys accuracy where the cap is severe</h2><div class="modal-pills"><span class="pill pill-measured">measured</span></div></div>
+    <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
+  </div>
+  <div class="modal-body">
+<section class="modal-part"><h3>The C axis: 101 classes, where the ceiling stops explaining things<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
+<p>
+      The ceiling e<sup>T</sup>/(e<sup>T</sup>+C−1) has two variables and every measurement
+      above varies only T. N-Caltech101 has <strong>101 classes</strong>, where the T = 2
+      ceiling is <strong>0.068806</strong> rather than 0.450853 — an order of magnitude more
+      binding. 18 runs: two readouts, three timestep settings, three seeds, all stopping on
+      the patience rule.
+    </p>
+    <div class="scroll panel-table">
+      <table id="caxis-table"></table>
+    </div>
+    <p class="chart-note">Mean over three seeds, rendered from
+      <code>results/caltech_experiment.json</code>. "binds" counts the seeds whose accuracy
+      exceeds the ceiling — a ceiling forces underconfidence only while it does.</p>
+    <p>
+      <strong>The formula holds.</strong> The bound was respected in 9 of 9 runs, and at
+      T = 2 and T = 6 the models saturate it to 2.4&times;10<sup>−14</sup> and
+      3.8&times;10<sup>−13</sup> — the same one-part-in-10<sup>13</sup> as at C = 10. At
+      T = 10 the observed maximum sits 1.5&times;10<sup>−3</sup> <em>below</em> the ceiling
+      instead of on it, and that is not a failure: reaching the bound needs a sample whose
+      count vector is [T, 0, …, 0], meaning all 100 other classes silent at every step. Easy
+      at C = 10, not at C = 101. <strong>Validity and tightness are different properties</strong>
+      and only the first is claimed here.
+    </p>
+    <p>
+      <strong>The important result is where it stops binding.</strong> At T = 2 the ceiling
+      binds in 3 of 3 seeds and accounts for <strong>97.1%</strong> of uncalibrated ECE, just
+      as it accounted for 99.2% on N-MNIST. At T = 6 accuracy is 0.6427 against a ceiling of
+      0.8014 — comfortably below it, so nothing is forced — and the readout is
+      <strong>still underconfident by 0.1534</strong>, 4.4&times; to 6&times; N-MNIST's ECE at the same
+      T. On N-MNIST the regime where the ceiling stopped binding was also one where almost no
+      error remained, so the two explanations could not be told apart. Here they come apart,
+      and a large miscalibration is left that <strong>the ceiling does not explain at
+      all</strong>. That is a limitation of this study's central claim, and only varying C
+      could expose it. The obvious rescue — that the theoretical bound is too generous
+      because it assumes all 100 competitors silent — was pre-registered as a prediction and
+      <strong>falsified</strong>; see the panel below.
+    </p>
+    <p>
+      <strong>Where the cap is severe it costs accuracy, not just calibration.</strong> At
+      T = 2 the uncapped accumulator beats the count readout by <strong>12.8 accuracy
+      points</strong> — in every seed (+15.2, +9.6, +13.7) — with this architecture. At the
+      other architecture tested the gain is <strong>+3.1 points</strong>, still positive in
+      3 of 3 seeds: the direction replicates and the magnitude does not, so this is an
+      architecture-specific number (see the matched-architecture panel below). At C = 10 the
+      same comparison was worth 0.1 points and the readouts were indistinguishable. The cross-entropy floor is
+      2.68 nats here against 0.80 at C = 10, so the objective is dominated by a target the
+      model cannot reach. Above T = 2 it reverses and count wins by about 4 points, so this
+      belongs to the binding regime rather than to the readout.
+    </p>
+    <p>
+      <strong>This is also the first genuinely uncertain regime the study has sampled</strong>
+      — accuracy 0.43 to 0.66 against N-MNIST's 0.99 — and in it the sign of the
+      miscalibration finally turns over. The <em>count</em> readout is overconfident at
+      T = 10 (+0.0344, 3 of 3 seeds), the first time anywhere in this study, and the
+      accumulator is overconfident in 9 of 9 runs. <strong>The disagreement with the
+      literature is a regime difference.</strong> Underconfidence is what a capped readout
+      does where the cap binds; take away either condition and this study measures
+      overconfidence too.
+    </p>
+</section>
+  </div>
+</dialog>
+
+<dialog class="modal" id="m6" aria-labelledby="m6-h">
+  <div class="modal-head">
+    <div><h2 id="m6-h">Which calibrator you use does not matter</h2><div class="modal-pills"><span class="pill pill-measured">measured</span></div></div>
+    <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
+  </div>
+  <div class="modal-body">
+<section class="modal-part"><h3>Which calibrator you use does not matter<span class="pill pill-measured">measured</span></h3>
+<p>
+      The study was designed around a hypothesis: that isotonic regression should beat
+      temperature scaling by a margin that <em>grows</em> as <em>T</em> falls, because a
+      spike-count readout is discrete and a scalar temperature is the wrong tool for a
+      discrete confidence distribution. It is not supported. At <em>T</em> = 2 — the most
+      discrete regime in the sweep, with 583 calibration samples per distinct confidence
+      level — temperature scaling <em>beat</em> isotonic, by a wider margin than at any other
+      <em>T</em> and in the opposite direction to the prediction.
+    </p>
+
+    <div class="pre-reg">
+      <p class="stamp">pre-registered 2026-09-10, before any calibrator was fitted to a trained model</p>
+      <blockquote>
+        Temperature scaling will match or beat top-label isotonic at every <em>T</em>, and
+        the isotonic advantage will not be statistically resolvable at any <em>T</em> — the
+        95% paired-bootstrap interval on the equal-width ECE difference will straddle zero
+        at <em>T</em> in {2, 4, 6, 8, 10}.
+      </blockquote>
+      <p class="verdict-text">
+        <strong>Outcome: the letter of the prediction is false.</strong> Thirteen of fifteen
+        intervals straddle zero. Two resolve, and they point in <em>opposite</em> directions:
+        <em>T</em> = 6 seed 0 favours isotonic with a CI of [−0.0024, −0.0003], and
+        <em>T</em> = 2 seed 1 favours temperature with [+0.0006, +0.0044]. So the claim that
+        <em>every</em> interval would straddle zero is wrong. Two resolvable results in fifteen
+        at a 95% level is near what multiple comparisons produce unaided — the expected count
+        under no true difference is about 0.75 — and they disagree on direction, so neither
+        method gains support. The prediction as written did not survive and is recorded here
+        unedited.
+      </p>
+    </div>
+
+    <p>
+      The refined form of the hypothesis fares no better. It held that the isotonic
+      advantage should track the number of calibration samples per distinct confidence
+      level, for which <em>T</em> is a proxy. That quantity moves 32-fold across the sweep,
+      from 583 samples per level at <em>T</em> = 2 to 18 at <em>T</em> = 10 — exactly the
+      manipulation the mechanism named. The advantage was flat and near zero across all of it.
+    </p>
+</section>
+  </div>
+</dialog>
+
+<dialog class="modal" id="m7" aria-labelledby="m7-h">
+  <div class="modal-head">
+    <div><h2 id="m7-h">Selective prediction: the readout limits what can be deployed</h2><div class="modal-pills"><span class="pill pill-measured">measured</span></div></div>
+    <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
+  </div>
+  <div class="modal-body">
+<section class="modal-part"><h3>Selective prediction: the readout limits what can be deployed<span class="pill pill-measured">measured</span></h3>
+<p>
+      Risk-coverage asks what fraction of samples can be acted on at a given error rate.
+      Samples sharing a confidence cannot be ordered against each other, so coverage steps
+      only at boundaries between distinct levels. With a count readout at T = 2 that gives
+      <strong>about 9 achievable operating points across 10,000 test samples</strong>
+      (10, 8 and 10 by seed), and <strong>no operating point at any coverage reaches 99.9%
+      accuracy</strong> — true at all three seeds. At T = 4 the same target is met at 92.0%
+      coverage on average (93.4%, 88.7%, 93.8%). A practitioner at T = 2 cannot choose an
+      arbitrary operating point.
+    </p>
+    <p>
+      <strong>This is the second deployment consequence of the readout choice, and at low T
+      it points the same way calibration does.</strong> The membrane readout is real-valued,
+      so almost every sample gets its own confidence: <strong>about 9,998 operating points at
+      T = 2</strong> against count's 9 — effectively a continuum. Whether that is worth having
+      depends on the regime, because from T = 6 up the count readout ranks better, and a
+      finer grid of operating points on a worse ranking is not a gain.
+    </p>
+    <p style="color:var(--ink-3)">
+      Calibration cannot change this for top-label calibrators, which are monotone in
+      confidence and so cannot reorder samples. One-vs-rest isotonic is the exception: it
+      recalibrates every class probability and renormalises, so it is not a function of the
+      top-label confidence, and it reorders — Kendall τ 0.28 against the raw ranking at
+      T = 2, with AURC six times worse (0.0149 against 0.0024, mean of three seeds; 5.1×,
+      6.2× and 7.7× by seed). It should not be used when
+      the downstream task is selective prediction.
+    </p>
+    <div class="scroll panel-table">
+      <table id="selective-table"></table>
+    </div>
+    <p class="chart-note">Mean over seeds, rendered from
+      <code>results/readout_experiment.json</code>. Oracle AURC is the floor a perfect ranker
+      would reach at that accuracy; a raw AURC is uninterpretable without it.</p>
+    <figure class="fig">
+      <img src="figures/fig7-risk-coverage.svg" alt="Risk against coverage for the count
+        readout at five timestep settings, drawn as step functions. The left panel covers the
+        full coverage range; the right panel covers the last tenth, where the differences are
+        visible. Every marker is an achievable operating point, and T = 2 has only a handful.">
+      <figcaption>Risk against coverage, count readout, seed 0. Drawn as steps on purpose:
+        joining the points with a smooth line would draw operating points that do not exist.
+        The right panel is the last tenth of the coverage range, where the differences
+        live.</figcaption>
+    </figure>
+</section>
+  </div>
+</dialog>
+
+<dialog class="modal" id="m8" aria-labelledby="m8-h">
+  <div class="modal-head">
+    <div><h2 id="m8-h">The disagreement with the literature is a regime difference</h2><div class="modal-pills"><span class="pill pill-lit">lit</span><span class="pill pill-measured">measured</span></div></div>
+    <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
+  </div>
+  <div class="modal-body">
+<section class="modal-part"><h3>The sign of the miscalibration disagrees with the literature<span class="pill pill-lit">lit</span><span class="pill pill-measured">measured</span></h3>
+<p>
+      The SNN literature reports <strong>over</strong>confidence as the characteristic
+      calibration failure, and "Agreeing to Stop" says so using the <em>same readout this
+      study uses</em>. This study measures the opposite: mean confidence minus accuracy is
+      <strong>−0.5386 at T = 2</strong> and −0.1446 at T = 4, averaged over three
+      seeds. That is severe
+      <strong>under</strong>confidence, and it is structural — the ceiling at T = 2 is
+      0.4509 against a test accuracy of 0.9850, so no reachable output could have been
+      correctly confident.
+    </p>
+    <p style="color:var(--ink-3)">
+      This is reported as a contradiction of the received position, carefully. The
+      difference is most likely regime rather than error in the prior reports. The ceiling
+      binds only while accuracy exceeds it — at T = 8 and T = 10 this study's own models sit
+      below it, and the structural underconfidence duly disappears. It does <em>not</em>
+      become overconfidence: conf − acc is −0.0065 at T = 8 and −0.0008 at T = 10, so what
+      the ceiling stops forcing is simply not replaced. Work at higher T, on harder tasks,
+      with a
+      membrane or voting readout, or on converted rather than directly-trained networks
+      would see overconfidence and be right to report it. What this study defends is narrow:
+      at low T, with a spike-count readout, on a task where accuracy exceeds the ceiling,
+      the miscalibration is underconfidence and it is forced.
+    </p>
+    <p>
+      One tidy resolution was available and was <strong>tested and rejected</strong>. If
+      removing the cap restored overconfidence, both observations would be the same
+      phenomenon seen through different readouts. It does not — but the three-seed picture
+      is more qualified than one seed suggested, and the qualification matters.
+      <strong>The membrane readout's mean confidence stays below its accuracy at every
+      timestep setting</strong>: −0.0289, −0.0010, −0.0013, −0.0036 and −0.0008 at
+      T = 2, 4, 6, 8 and 10, averaged over three seeds. <strong>But only at T = 2 is that gap
+      larger than the spread between seeds.</strong> From T = 4 up the individual seeds fall
+      on both sides of zero — three of the twelve cells at T ≥ 4 are mildly
+      <em>over</em>confident (+0.0020, +0.0009, +0.0020) — so what survives the removal of the
+      cap is small and not consistently signed.
+    </p>
+    <p>
+      At T = 2, where the cap binds hardest, all three seeds are underconfident and removing
+      the cap shrinks the gap by roughly 12× to 64× depending on seed. (Rounded, because
+      this is the gap between mean confidence and accuracy; the ECE ratios quoted in the
+      readout panel are 11.9×–63.5× and are a different quantity.) That is the one regime
+      where the disagreement with the literature is unambiguous, and it is not explained by
+      the readout: an uncapped readout is still underconfident there. Above T = 4 this study
+      cannot resolve the sign at all — a weaker statement than seed 0 alone supported, and
+      the honest one.
+    </p>
+    <p>
+      <strong>One readout does show the literature's direction.</strong> The non-leaky
+      accumulator is mildly but consistently <em>over</em>confident at T ≥ 6 — conf − acc
+      +0.0032 and +0.0047, positive in 3 of 3 seeds at both. So an uncapped readout that also
+      integrates over the full window lands on the side the literature reports, while the
+      capped and the leaky ones do not. That is a lead worth following on a second dataset,
+      not a resolution: the magnitude is under half a percentage point, on one architecture.
+    </p>
+</section>
+<section class="modal-part"><h3>Does the ceiling bind in published work? No — and the reason is the finding<span class="pill pill-lit">lit</span></h3>
+<p>
+      Li, Jones &amp; Furber report <strong>94.11% accuracy at 4 timesteps on CIFAR-10</strong>
+      (ICCV 2023). At C = 10, T = 4 the ceiling is <strong>0.8585</strong>. If their
+      confidence were a softmax over integer spike counts, the bound would constrain a
+      published result. Their method section settles it, and nothing here is inferred from
+      the accuracy number.
+    </p>
+    <p>
+      <strong>It does not bind: they use a real-valued readout.</strong> Verbatim from their
+      experimental setup — <em>"keeping the output layer at full precision… the neurons in
+      the output layer only accumulate input currents"</em>. The output neurons integrate but
+      do not fire, so the logits are accumulated real-valued currents rather than integers in
+      [0, T], and e<sup>T</sup>/(e<sup>T</sup>+C−1) simply does not apply to them.
+    </p>
+    <p>
+      That is the same construction as this study's <strong>accumulator</strong> readout,
+      reached independently and for a different reason: conversion keeps the output layer at
+      full precision because conversion needs the precision. <strong>Conversion-based work
+      sidesteps the cap as a side effect of a choice made for accuracy.</strong>
+    </p>
+    <p>
+      <strong>And the same paragraph corroborates the other half of this study.</strong> It
+      states that with such a readout "the output logits of SNNs increase with t
+      continuously, which causes the <em>saturated confidence</em>", and its Figure 2 shows
+      confidence "saturates to 100% quickly with time" before a scalar α — temperature
+      scaling — softens it. An unbounded accumulator is <em>over</em>confident. That is
+      exactly what this study measures for its own accumulator: conf − acc of +0.0032 at
+      T = 6 and +0.0047 at T = 10 on N-MNIST, positive in 3 of 3 seeds at both, and +0.08 to
+      +0.23 at C = 101. Two independent lines of work, two datasets, same direction.
+    </p>
+    <div class="scroll panel-table">
+      <table>
+        <thead><tr><th style="cursor:default">readout</th>
+          <th style="cursor:default">bound</th>
+          <th style="cursor:default">failure mode</th>
+          <th style="cursor:default">reported by</th></tr></thead>
+        <tbody>
+          <tr><td class="k">softmax over spike counts</td><td>capped at e<sup>T</sup>/(e<sup>T</sup>+C−1)</td><td><strong>under</strong>confidence where the cap binds</td><td>this study, T ≤ 6</td></tr>
+          <tr><td class="k">non-spiking accumulator</td><td>unbounded, grows with t</td><td><strong>over</strong>confidence, saturating to 1</td><td>Li et al.; this study's accumulator</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      <strong>So the claim the paper may make is narrower than "the bound constrains
+      published work", and it is the one the evidence supports.</strong> Of the two
+      references verified to report both a timestep count and a confidence measure, neither
+      is constrained: Li et al. use an uncapped readout, and Chen, Park &amp; Simeone do use
+      softmax over integer spike counts but at <strong>T = 80</strong>, where the ceiling is
+      1.0 to double precision and inert. The ceiling binds in a regime the literature has not
+      published in — <strong>a spike-count readout at low T</strong> — which is where this
+      study works.
+    </p>
+</section>
+  </div>
+</dialog>
 
 </main>
 

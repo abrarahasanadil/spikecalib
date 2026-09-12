@@ -1787,9 +1787,31 @@ added.
 
 Implemented and run on N-MNIST: data acquisition, splits, model, training, both ECE
 estimators, all four calibrators, bootstrap intervals, selective prediction, and the
-figures. The main sweep (5 `T` × 3 seeds × 4 calibrators), the readout experiment
-(3 readouts × 5 `T` × 3 seeds) and the quantisation test have all completed, and their
-outcomes are recorded above beneath the predictions that preceded them.
+figures. Six experiments have completed, and each outcome is recorded above beneath the
+prediction that preceded it where one was registered:
+
+| experiment | scale |
+|---|---|
+| main calibration sweep | 5 `T` × 3 seeds × 4 calibrators, 60 rows |
+| readout experiment | 4 readouts × up to 5 `T` × 3 seeds, 54 runs |
+| quantisation test | 5 `T` × 3 seeds × 2 schemes × 9 resolutions, 296 rows |
+| C axis (N-Caltech101) | 2 readouts × 3 `T` × 3 seeds, 18 runs |
+| conditional ceiling | 24 cells, no training |
+| matched-architecture 2×2 | 2 datasets × 2 depths × 2 `T` × 3 seeds × 2 readouts, 48 cells |
+
+Five predictions were pre-registered and committed before their runs, and none has been
+revised after the fact:
+
+| # | subject | outcome |
+|---|---|---|
+| 1 | the isotonic advantage grows as `T` falls | **falsified in the letter**; its substance — that the two calibrators tie — held |
+| 2 | membrane removes the cap and most of the error | **held**, both halves, at every seed |
+| 3 | the leak explains the high-`T` ranking deficit | **passed its own falsification threshold, failed its headline wording** — it closes half the deficit, it does not close it |
+| 4 | a conditional ceiling explains the `C = 101` residual | **falsified in its central claim**; its secondary claim, that the two ceilings coincide at `C = 10`, held |
+| 5 | the matched-architecture 2×2 | three parts **held**, one **falsified** — the accuracy gain does not replicate in magnitude |
+
+So one prediction held cleanly, two were falsified in what they mainly claimed, and two
+split. That ratio is the point of registering them.
 
 Four readouts exist — count, weighted-count, membrane (leaky) and accumulator
 (non-leaky) — with 54 readout runs recorded on N-MNIST: all four at `T` in {2, 6, 10} and

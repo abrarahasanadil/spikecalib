@@ -1656,3 +1656,65 @@ work.
   `actions/checkout@v4` and the Pages actions will need version bumps.
 - *Five sessions remain undocumented* and their rejected alternatives are lost.
 - *`CITATION.cff` was not audited* in this pass and still carries a placeholder DOI.
+
+---
+
+## 2026-09-12 — The dashboard becomes scannable: nine cards, eight modals, nothing deleted
+
+**Did.** Restructured `docs/` from a long-form document into a card dashboard. Each finding
+is now a card carrying its headline number, a one-line claim and the table that makes the
+point; the full argument — caveats, qualifications, "what this does not show" — opens in a
+modal. Kept as-is: the rail, the filters, the ceiling instrument, the sweep table, the
+provenance pills and legend, the design tokens.
+
+**Ran.** `pytest -q` → **214 passed**, unchanged (no Python touched). Modal behaviour,
+scannability and content-preservation verified under headless Chromium.
+
+**Found: the restructure moved 13 panels into 8 modals and lost nothing.**
+The panels were extracted programmatically and reinserted rather than retyped, and the
+result was checked by tokenising the rendered text before and after: **zero distinct tokens
+lost**. The one token that did go missing on the first pass was the `unverified` pill from
+"Why the count readout exists" — the modals were rebuilding pills from the card spec rather
+than from the panel. Each nested section now carries its *own* original pills, which is
+more faithful than the card's summary set anyway.
+
+**Found: moving the cards above the instruments was the difference between 5.2 screens and
+2.5.** The cards themselves are only 1,881px tall; the masthead, live metrics, ceiling
+instrument and sweep table were 2,700px sitting on top of them. The brief asked for all
+cards visible within two scrolls at 1440px; with the cards where the Findings band used to
+be that was 5.17 screens, and with them directly after the masthead it is **2.47**. A
+scannable dashboard should lead with findings rather than with instruments, so this is the
+right ordering independent of the measurement.
+
+**Chose.**
+- *Native `<dialog>` with `showModal()`, not a hand-rolled overlay.* It supplies the focus
+  trap, the inert background, the Escape handler and the focus return, and a hand-rolled
+  version of any one of those is where accessibility bugs live. Only two things are added by
+  hand: a backdrop-click close, and a scroll lock on the page behind — `showModal` makes the
+  background inert but does not stop it scrolling.
+- *Each modal contains whole panels, never fragments.* Splitting a panel's argument across
+  two modals would have produced tidier cards and a worse document; every panel lands in the
+  modal whose card it most supports, and no panel appears twice.
+- *The headline card gets 43 words against a ~40 guideline.* The brief asked for the readout
+  taxonomy to have the most space; the other seven faces are 25–40.
+- *Limitations stays a visible list, and so does the energy note.* Both are caveats and the
+  brief was explicit about the first. The energy note had no card of its own and hiding a
+  caveat in a modal nobody opens would be the wrong instinct for the same reason.
+
+**Verified.** All 8 modals open and close by close button, backdrop and Escape; focus enters
+the dialog on open and returns to the trigger on close; the page behind does not scroll; the
+body scrolls when content overflows (5 of 8 do). No console errors. No horizontal overflow
+at 1920, 1440, 1200, 900 or 400px. Card faces 25–43 words. Zero unused vertical space inside
+any card.
+
+**Open.**
+- *The masthead abstract is still a 120-word paragraph.* It is the one remaining block of
+  long-form prose above the fold, and it was outside the brief, but the same argument
+  applies to it.
+- *Nothing tests the modals in CI.* The checks above are a one-off script in the session
+  scratchpad, not a committed test, so a future edit that breaks a modal would not be caught.
+- *The card faces carry hardcoded numbers.* Every one traces to an artifact today and the
+  mini-tables were generated from the JSON, but they are static HTML: unlike the panel
+  tables, they will not follow a re-run. That is the same defect the dashboard audit found
+  two sessions ago, reintroduced deliberately for the card faces and worth fixing by
+  rendering them from `window.SPIKECALIB` like the rest.

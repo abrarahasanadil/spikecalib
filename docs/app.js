@@ -802,6 +802,40 @@
     renderTable(rows);
   }
 
+  /* ---------- modals ----------
+
+     Native <dialog> rather than a hand-rolled overlay: showModal() gives the focus trap,
+     the inert background, the Escape handler and the focus return for free, and a
+     hand-rolled version of any one of those is where accessibility bugs live. What it
+     does NOT give is a backdrop-click close or a scroll lock on the page behind, so
+     those two are added here.
+  */
+  function wireModals() {
+    document.querySelectorAll("[data-modal]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var d = document.getElementById(btn.getAttribute("data-modal"));
+        if (!d) return;
+        d.__trigger = btn;
+        d.showModal();
+        document.body.classList.add("modal-open");
+        var body = d.querySelector(".modal-body");
+        if (body) body.scrollTop = 0;   // a reopened dialog otherwise keeps its scroll
+      });
+    });
+    document.querySelectorAll("dialog.modal").forEach(function (d) {
+      // The dialog element fills the viewport, so a click whose target IS the dialog
+      // landed outside the visible panel.
+      d.addEventListener("click", function (e) { if (e.target === d) d.close(); });
+      var x = d.querySelector("[data-close]");
+      if (x) x.addEventListener("click", function () { d.close(); });
+      // Fires for the close button, the backdrop and Escape alike.
+      d.addEventListener("close", function () {
+        document.body.classList.remove("modal-open");
+        if (d.__trigger) d.__trigger.focus();
+      });
+    });
+  }
+
   updateHero();
   renderReadoutTable();
   renderSelectiveTable();
@@ -809,6 +843,7 @@
   renderCaxis();
   renderConditional();
   renderArch();
+  wireModals();
   render();
   window.addEventListener("resize", function () { drawCeiling(); render(); });
 })();
