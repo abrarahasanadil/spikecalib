@@ -63,13 +63,11 @@ These are cited in the repository today and are **flagged**; each also appears u
 To verify.
 
 **Horowitz (2014). "Computing's Energy Problem (and what we can do about it)."
-*ISSCC 2014*.** `[LIT]` for the paper, `[UNVERIFIED]` for the values.
-*Taken from it:* 45 nm energy costs, `E_AC = 0.9 pJ` and `E_MAC = 4.6 pJ`.
-*Used in:* `NOTES.md` correctness rule 3, `spikecalib/models.py`, `spikecalib/figures.py`.
-*Status:* the paper's existence and topic are not in doubt. What is **not confirmed** is
-the specific figure or table number, the exact value 0.9 pJ (believed to be the 32-bit
-floating-point ADD at 45 nm), and whether 4.6 pJ appears in the paper at all or is the
-community convention of FP multiply + FP add. Do not cite a figure number until checked.
+*ISSCC 2014*.** **Resolved 2026-09-12 — see "Verified 2026-09-12 against primary
+documents" below for the evidence.** `E_AC = 0.9 pJ` is `[LIT]`, confirmed as the 32-bit
+float add in **Figure 1.1.9**. `E_MAC = 4.6 pJ` is `[DERIVED]`: it appears nowhere in the
+paper and is the 0.9 + 3.7 multiply-plus-add convention. This entry is kept only as a
+pointer; it no longer states an unverified status.
 
 **Guo, Pleiss, Sun & Weinberger (2017). "On Calibration of Modern Neural Networks."
 *ICML 2017*.** `[LIT]` for the paper, `[UNVERIFIED]` for the bin count.

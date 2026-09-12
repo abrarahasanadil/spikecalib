@@ -36,8 +36,8 @@
   </div>
   <div class="rail-arg">
     <h3>What it establishes</h3>
-    <p>The cap held in every one of 24 measured cells, saturated to float precision, across
-      two datasets and 96 trained models. Where it
+    <p>The cap held in all 48 measured count cells across two datasets and 96 trained models,
+      and saturates to float precision in 45 of them. Where it
       bites it accounts for 99.2% and 97.1% of the error before calibration; where it does not
       bite it accounts for none. The readout family, not the network, sets the direction of
       the failure. Which calibration method is used does not matter.</p>
@@ -86,9 +86,12 @@
       sits far below the model's own accuracy. Post-hoc calibration removes almost all of the
       resulting error — expected calibration error falls from 0.5386 at <em>T</em>&nbsp;=&nbsp;2
       to 0.0018 after calibration at the same <em>T</em>, and the uncalibrated error is only
-      0.0029 by <em>T</em>&nbsp;=&nbsp;10 once the cap stops binding. Which calibrator does
+      0.0029 by <em>T</em>&nbsp;=&nbsp;10 once the cap stops binding. Those are equal-width
+      figures; under equal-mass binning the same three are 0.5386, 0.0008 and 0.0019, and
+      both estimators are reported throughout. Which calibrator does
       the removing does not matter: temperature scaling and isotonic regression are statistically indistinguishable
-      in 13 of 15 runs across five timestep settings and three seeds.
+      in 13 of 15 runs under equal-width binning and 12 of 15 under equal-mass, across five
+      timestep settings and three seeds.
     </p>
       </div>
       <ul class="masthead-links">
@@ -107,10 +110,10 @@
   <article class="card c4">
     <div class="card-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></div>
     <p class="stat"><span class="stat-num stat-teal">0</span>
-      <span class="stat-unit">cases out of 24 broke the limit</span></p>
+      <span class="stat-unit">of the 24 matched-grid cells broke the limit &mdash; and none of the 48 across all runs</span></p>
     <h3 class="card-title">The ceiling held every time</h3>
-    <p class="card-claim">A spiking network answers by counting spikes over <em>T</em> time steps. Counting caps how confident the answer can look. The cap is e<sup>T</sup>/(e<sup>T</sup>+C−1). No measured case beat it, at either class count or either network shape.</p>
-    <div class="card-fig"><table class="mini"><thead><tr><th>C</th><th>T</th><th>derived</th><th>observed</th></tr></thead><tbody><tr><td>10</td><td>2</td><td>0.450853</td><td>0.450853</td></tr><tr><td>101</td><td>2</td><td>0.068806</td><td>0.068806</td></tr><tr><td>101</td><td>6</td><td>0.801362</td><td>0.801362</td></tr></tbody></table></div>
+    <p class="card-claim">A spiking network answers by counting spikes over <em>T</em> time steps. Counting caps how confident the answer can look. The cap is e<sup>T</sup>/(e<sup>T</sup>+C−1). No measured case beat it: 0 violations in the 24-cell matched grid, and 0 in all 48 count cells.</p>
+    <div class="card-fig" id="fig-ceiling"><table class="mini"><thead><tr><th>C</th><th>T</th><th>derived</th><th>observed</th></tr></thead><tbody><tr><td>10</td><td>2</td><td>0.450853</td><td>0.450853</td></tr><tr><td>101</td><td>2</td><td>0.068806</td><td>0.068806</td></tr><tr><td>101</td><td>6</td><td>0.801362</td><td>0.801362</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m1">
       Full reasoning, caveats and complete tables
       <span class="chev" aria-hidden="true">&rarr;</span></button>
@@ -121,7 +124,7 @@
       <span class="stat-unit">of the error before calibration, at T = 2</span></p>
     <h3 class="card-title">Where the cap bites, it explains the error</h3>
     <p class="card-claim">Miscalibration means confidence does not match how often the model is right. Where the cap bites, the gap between accuracy and the cap explains almost all of it. Where the cap does not bite, it explains none of it.</p>
-    <div class="card-fig"><table class="mini"><thead><tr><th>C</th><th>T</th><th>explained</th></tr></thead><tbody><tr><td>10</td><td>2</td><td>99.2%</td></tr><tr><td>10</td><td>6</td><td>44.1%</td></tr><tr><td>101</td><td>2</td><td>97.1%</td></tr></tbody></table></div>
+    <div class="card-fig" id="fig-explained"><table class="mini"><thead><tr><th>C</th><th>T</th><th>explained</th></tr></thead><tbody><tr><td>10</td><td>2</td><td>99.2%</td></tr><tr><td>10</td><td>6</td><td>44.1%</td></tr><tr><td>101</td><td>2</td><td>97.1%</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m2">
       Full reasoning, caveats and complete tables
       <span class="chev" aria-hidden="true">&rarr;</span></button>
@@ -132,7 +135,7 @@
       <span class="stat-unit">nats — the lowest loss reachable at T = 2</span></p>
     <h3 class="card-title">The same cap puts a floor under training loss</h3>
     <p class="card-claim">Training loss measures how wrong the confidences are. The cap puts a floor under it, at −ln(cap). Measured plateaus sit 0.0072–0.0182 above that floor. The floor moves with <em>T</em>. So losses at different <em>T</em> cannot be compared.</p>
-    <div class="card-fig"><table class="mini"><thead><tr><th>T</th><th>floor</th><th>plateau</th></tr></thead><tbody><tr><td>2</td><td>0.7966</td><td>0.8041</td></tr><tr><td>6</td><td>0.0221</td><td>0.0391</td></tr><tr><td>10</td><td>0.0004</td><td>0.0108</td></tr></tbody></table></div>
+    <div class="card-fig" id="fig-floor"><table class="mini"><thead><tr><th>T</th><th>floor</th><th>plateau</th></tr></thead><tbody><tr><td>2</td><td>0.7966</td><td>0.8041</td></tr><tr><td>6</td><td>0.0221</td><td>0.0391</td></tr><tr><td>10</td><td>0.0004</td><td>0.0108</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m3">
       Full reasoning, caveats and complete tables
       <span class="chev" aria-hidden="true">&rarr;</span></button>
@@ -140,10 +143,10 @@
   <article class="card c12">
     <div class="card-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span><span class="pill pill-lit">lit</span></div>
     <p class="stat"><span class="stat-num stat-purple">−0.5386 / +0.0047</span>
-      <span class="stat-unit">capped vs unbounded readout: confidence minus accuracy</span></p>
+      <span class="stat-unit">N-MNIST, T = 2 &mdash; capped vs unbounded readout, confidence minus accuracy</span></p>
     <h3 class="card-title">The readout decides which way it fails</h3>
     <p class="card-claim">A readout turns spikes into an answer. A capped one is underconfident where the cap bites. It is right more often than it claims. An unbounded one goes the other way as <em>T</em> grows. The readout sets the direction, not the network.</p>
-    <div class="card-fig"><table class="mini"><thead><tr><th>readout</th><th>bound</th><th>conf − acc</th></tr></thead><tbody><tr><td>count</td><td>capped</td><td>-0.5386</td></tr><tr><td>membrane</td><td>unbounded, leaky</td><td>-0.0289</td></tr><tr><td>accumulator</td><td>unbounded</td><td>+0.0000</td></tr></tbody></table></div>
+    <div class="card-fig" id="fig-readout"><table class="mini"><thead><tr><th>readout</th><th>bound</th><th>conf − acc</th></tr></thead><tbody><tr><td>count</td><td>capped</td><td>-0.5386</td></tr><tr><td>membrane</td><td>unbounded, leaky</td><td>-0.0289</td></tr><tr><td>accumulator</td><td>unbounded</td><td>+0.0000</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m4">
       Full reasoning, caveats and complete tables
       <span class="chev" aria-hidden="true">&rarr;</span></button>
@@ -151,10 +154,10 @@
   <article class="card c4">
     <div class="card-pills"><span class="pill pill-measured">measured</span></div>
     <p class="stat"><span class="stat-num stat-green">+3 to +13</span>
-      <span class="stat-unit">accuracy points &mdash; 12.8 in the four-block network, 3.1 in the two-block</span></p>
+      <span class="stat-unit">accuracy points on N-Caltech101 at <em>T</em> = 2 &mdash; 12.8 in the four-block network, 3.1 in the two-block</span></p>
     <h3 class="card-title">Removing the cap buys accuracy where it bites hardest</h3>
-    <p class="card-claim">The gain only appears where the cap is severe. The direction holds in both network shapes. The size of the gain does not.</p>
-    <div class="card-fig"><table class="mini"><thead><tr><th>depth</th><th>count</th><th>uncapped</th><th>gain</th></tr></thead><tbody><tr><td>4 blocks</td><td>0.4543</td><td>0.5825</td><td>+12.8</td></tr><tr><td>2 blocks</td><td>0.4891</td><td>0.5199</td><td>+3.1</td></tr></tbody></table></div>
+    <p class="card-claim">This is N-Caltech101 at <em>T</em> = 2, where the cap is severe. The direction holds in both network shapes. The size does not. On N-MNIST the same comparison moves nothing, and at <em>T</em> = 6 it reverses.</p>
+    <div class="card-fig" id="fig-gain"><table class="mini"><thead><tr><th>depth</th><th>count</th><th>uncapped</th><th>gain</th></tr></thead><tbody><tr><td>4 blocks</td><td>0.4543</td><td>0.5825</td><td>+12.8</td></tr><tr><td>2 blocks</td><td>0.4891</td><td>0.5199</td><td>+3.1</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m5">
       Full reasoning, caveats and complete tables
       <span class="chev" aria-hidden="true">&rarr;</span></button>
@@ -162,10 +165,10 @@
   <article class="card c4">
     <div class="card-pills"><span class="pill pill-measured">measured</span></div>
     <p class="stat"><span class="stat-num stat-purple">13 / 15</span>
-      <span class="stat-unit">intervals straddle zero</span></p>
+      <span class="stat-unit">intervals straddle zero, equal-width &mdash; 12 of 15 under equal-mass</span></p>
     <h3 class="card-title">Which calibration method you pick does not matter</h3>
-    <p class="card-claim">Calibration rescales confidence to match accuracy. Temperature and isotonic are the two methods here. An interval straddling zero means no measurable difference. The two runs that do resolve point in opposite directions.</p>
-    <div class="card-fig"><table class="mini"><thead><tr><th>outcome</th><th>count</th></tr></thead><tbody><tr><td>straddle zero</td><td>13</td></tr><tr><td>favour temperature</td><td>1</td></tr><tr><td>favour isotonic</td><td>1</td></tr></tbody></table></div>
+    <p class="card-claim">Calibration rescales confidence to match accuracy. Temperature and isotonic are the two methods here. An interval straddling zero means no measurable difference. Which runs resolve depends on the estimator, but the large majority tie under both.</p>
+    <div class="card-fig" id="fig-bootstrap"><table class="mini"><thead><tr><th>outcome</th><th>count</th></tr></thead><tbody><tr><td>straddle zero</td><td>13</td></tr><tr><td>favour temperature</td><td>1</td></tr><tr><td>favour isotonic</td><td>1</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m6">
       Full reasoning, caveats and complete tables
       <span class="chev" aria-hidden="true">&rarr;</span></button>
@@ -176,7 +179,7 @@
       <span class="stat-unit">usable cut-offs, against ~10,000 samples</span></p>
     <h3 class="card-title">The readout limits how you can deploy it</h3>
     <p class="card-claim">You can make a model answer only when it is confident. Each distinct confidence value is one usable cut-off. At <em>T</em> = 2 a count readout gives about nine, across 10,000 test samples. An uncapped readout gives a continuous range.</p>
-    <div class="card-fig"><table class="mini"><thead><tr><th>readout</th><th>T = 2 ops</th></tr></thead><tbody><tr><td>count</td><td>9</td></tr><tr><td>weighted-count</td><td>17</td></tr><tr><td>uncapped</td><td>10,000</td></tr></tbody></table></div>
+    <div class="card-fig" id="fig-ops"><table class="mini"><thead><tr><th>readout</th><th>T = 2 ops</th></tr></thead><tbody><tr><td>count</td><td>9</td></tr><tr><td>weighted-count</td><td>17</td></tr><tr><td>uncapped</td><td>10,000</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m7">
       Full reasoning, caveats and complete tables
       <span class="chev" aria-hidden="true">&rarr;</span></button>
@@ -333,8 +336,9 @@
     <div class="scroll"><table id="results-table"></table></div>
     <p class="table-meta" id="table-meta"></p>
     <p class="chart-note"><b>What this does not show:</b> the columns not displayed. The CSV
-      carries 60 columns including both bootstrap intervals, energy proxy, isotonic block
-      counts and the split fingerprint; this view shows eleven.</p>
+      carries 72 columns including both paired-bootstrap differences with their intervals, the
+      energy proxy, isotonic block counts and the split fingerprint; this view shows eleven.
+      <a href="sweep.csv">The downloadable copy</a> is the same file this page renders.</p>
   </section>
 
   <section class="panel c12">
@@ -455,6 +459,16 @@ python scripts/fetch_data.py --dataset nmnist --timesteps 2
 
 <span class="c"># 15 runs: 5 timestep settings x 3 seeds, ~2.7 h on an M-series Mac</span>
 python scripts/run_sweep.py --epochs 50 --patience 5
+
+<span class="c"># the five experiments the findings rest on</span>
+python scripts/readout_experiment.py  --seeds 0 1 2
+python scripts/quantisation_test.py   --seeds 0 1 2
+python scripts/caltech_experiment.py  --seeds 0 1 2
+python scripts/arch_matched.py        --seeds 0 1 2
+python scripts/conditional_ceiling.py
+
+<span class="c"># the equal-mass paired bootstrap (no training; reuses the weights)</span>
+python scripts/rerun_paired_bootstrap.py
 
 <span class="c"># regenerate everything this page reads</span>
 python scripts/extract_readout_stats.py
@@ -625,7 +639,7 @@ python scripts/export_dashboard_data.py</pre>
       accuracy — the value of removing the cap.</p>
     <p>
       <strong>The ceiling is architecture-independent, as the formula requires.</strong> Zero
-      violations across all 24 count cells, and the bound is saturated to float precision in
+      violations across all 24 count cells of the matched 2×2 grid, and the bound is saturated to float precision in
       every one of them — at both depths, on both datasets, at both timestep settings.
     </p>
     <p>
@@ -1041,6 +1055,32 @@ python scripts/export_dashboard_data.py</pre>
     <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
   </div>
   <div class="modal-body">
+<section class="modal-part"><h3>Where this gain holds, and where it does not<span class="pill pill-measured">measured</span></h3>
+<p>
+  The headline is <strong>N-Caltech101 at T = 2 only</strong>, and the qualifier is not a
+  technicality &mdash; the sign reverses outside it. Means over three seeds from
+  <code>results/arch_matched.json</code>:
+</p>
+<div class="scroll panel-table"><table>
+<thead><tr><th>dataset</th><th>blocks</th><th>T</th><th>count acc</th><th>uncapped acc</th><th>gain, points</th></tr></thead>
+<tbody>
+<tr><td>N-Caltech101</td><td>4</td><td>2</td><td>0.4543</td><td>0.5825</td><td><strong>+12.82</strong></td></tr>
+<tr><td>N-Caltech101</td><td>2</td><td>2</td><td>0.4891</td><td>0.5199</td><td><strong>+3.08</strong></td></tr>
+<tr><td>N-Caltech101</td><td>4</td><td>6</td><td>0.6427</td><td>0.5976</td><td>&minus;4.52</td></tr>
+<tr><td>N-Caltech101</td><td>2</td><td>6</td><td>0.5618</td><td>0.5394</td><td>&minus;2.24</td></tr>
+<tr><td>N-MNIST</td><td>4</td><td>2</td><td>0.9869</td><td>0.9859</td><td>&minus;0.10</td></tr>
+<tr><td>N-MNIST</td><td>2</td><td>2</td><td>0.9850</td><td>0.9861</td><td>+0.12</td></tr>
+<tr><td>N-MNIST</td><td>4</td><td>6</td><td>0.9887</td><td>0.9872</td><td>&minus;0.15</td></tr>
+<tr><td>N-MNIST</td><td>2</td><td>6</td><td>0.9902</td><td>0.9888</td><td>&minus;0.14</td></tr>
+</tbody></table></div>
+<p>
+  <strong>The gain does not survive a higher timestep count even on the same dataset.</strong>
+  At T = 6 on N-Caltech101 removing the cap <em>costs</em> 2.2 to 4.5 accuracy points, and on
+  N-MNIST &mdash; where accuracy is 0.99 and the cap never binds hard &mdash; the comparison
+  moves by at most 0.15 points in either direction. Any statement of this result that omits
+  the dataset and the timestep is broader than the evidence.
+</p>
+</section>
 <section class="modal-part"><h3>The C axis: 101 classes, where the ceiling stops explaining things<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
 <p>
       The ceiling e<sup>T</sup>/(e<sup>T</sup>+C−1) has two variables and every measurement

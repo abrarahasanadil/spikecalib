@@ -381,8 +381,10 @@ class TemperatureScaling(Calibrator):
     """Single scalar temperature, NLL-minimised on the calibration split.
 
     Fitted on the **raw counts before softmax**, which is where temperature scaling is
-    defined: it divides the logits by a scalar and re-softmaxes. Guo et al.'s method, and
-    the baseline used for SNN uncertainty by Sun & Bohte (AOT-SNN).
+    defined: it divides the logits by a scalar and re-softmaxes. The method is Guo et al.,
+    ICML 2017. (An earlier version of this docstring also named an SNN baseline; that
+    reference was withdrawn on verification -- wrong authors and wrong method -- and is
+    recorded in ``SOURCES.md`` rather than cited here.)
 
     The claim under test lives here, and it is about **capacity**. One parameter and a
     rigid functional form means temperature can only rescale the entire confidence curve.

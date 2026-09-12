@@ -222,6 +222,120 @@
     host.innerHTML = html + "</tbody>";
   }
 
+  /* ---------- card faces, rendered from the artifacts ----------
+
+     These seven tables used to be static HTML. One of them drifted: card 2 claimed 44.1%
+     for the C=10, T=6 explained share while conditional_ceiling.json had moved to 44.5%
+     after the architecture fix re-ran it. A number on a card face that no artifact can
+     reproduce is the worst kind, because it looks like a measurement.
+
+     CONVENTION: every share and every mean here is a MEAN OF PER-SEED VALUES, not a ratio
+     of pooled means. The two differ -- for C=10, T=6 they are 44.52% and 44.40% -- and
+     mean-of-ratios is used because each seed is an independent run and the spread across
+     seeds is the thing the study reports elsewhere. Applied to all three cells of card 2,
+     not just the one that was wrong. */
+  function mini(headers, rows) {
+    return '<table class="mini"><thead><tr>'
+      + headers.map(function (h) { return "<th>" + h + "</th>"; }).join("")
+      + "</tr></thead><tbody>"
+      + rows.map(function (r) {
+          return "<tr>" + r.map(function (c) { return "<td>" + c + "</td>"; }).join("") + "</tr>";
+        }).join("")
+      + "</tbody></table>";
+  }
+  function put(id, html) { var e = document.getElementById(id); if (e) e.innerHTML = html; }
+  function avg(a) { return a.reduce(function (x, y) { return x + y; }, 0) / a.length; }
+  function pick(rows, f) { return (rows || []).filter(f); }
+
+  function renderCardFigures() {
+    var cond = D.conditional || [], arch = D.arch || [], ro = D.readout || [];
+
+    /* card 1 -- the derived ceiling against the observed maximum */
+    var cells = [[10, 2], [101, 2], [101, 6]].map(function (k) {
+      var r = pick(cond, function (x) { return x.n_classes === k[0] && x.timesteps === k[1]; });
+      if (!r.length) return null;
+      return [k[0], k[1], avg(r.map(function (x) { return x.theoretical_ceiling; })).toFixed(6),
+              avg(r.map(function (x) { return x.observed_max_confidence; })).toFixed(6)];
+    }).filter(Boolean);
+    if (cells.length) put("fig-ceiling", mini(["C", "T", "derived", "observed"], cells));
+
+    /* card 2 -- the share of pre-calibration error the ceiling forces */
+    var sh = [[10, 2], [10, 6], [101, 2]].map(function (k) {
+      var r = pick(cond, function (x) { return x.n_classes === k[0] && x.timesteps === k[1]; });
+      if (!r.length) return null;
+      return [k[0], k[1],
+        (avg(r.map(function (x) { return x.share_explained_theoretical; })) * 100).toFixed(1) + "%"];
+    }).filter(Boolean);
+    if (sh.length) put("fig-explained", mini(["C", "T", "explained"], sh));
+
+    /* card 5 -- what removing the cap buys, N-Caltech101 at T = 2 */
+    var gain = [4, 2].map(function (blocks) {
+      var c = pick(arch, function (x) {
+        return x.dataset === "ncaltech101" && x.n_blocks === blocks
+            && x.timesteps === 2 && x.readout === "count"; });
+      var a = pick(arch, function (x) {
+        return x.dataset === "ncaltech101" && x.n_blocks === blocks
+            && x.timesteps === 2 && x.readout === "accumulator"; });
+      if (!c.length || !a.length) return null;
+      var mc = avg(c.map(function (x) { return x.test_accuracy; }));
+      var ma = avg(a.map(function (x) { return x.test_accuracy; }));
+      return [blocks + " blocks", mc.toFixed(4), ma.toFixed(4),
+              (ma - mc >= 0 ? "+" : "") + ((ma - mc) * 100).toFixed(1)];
+    }).filter(Boolean);
+    if (gain.length) put("fig-gain", mini(["depth", "count", "uncapped", "gain"], gain));
+
+    /* card 4 -- the direction each readout family fails in, N-MNIST at T = 2 */
+    var BOUND = { count: "capped", membrane: "unbounded, leaky", accumulator: "unbounded" };
+    var fam = ["count", "membrane", "accumulator"].map(function (name) {
+      var r = pick(ro, function (x) { return x.readout === name && x.timesteps === 2; });
+      if (!r.length) return null;
+      var v = avg(r.map(function (x) { return x.mean_conf_minus_acc; }));
+      return [name, BOUND[name], (v >= 0 ? "+" : "") + v.toFixed(4)];
+    }).filter(Boolean);
+    if (fam.length) put("fig-readout", mini(["readout", "bound", "conf \u2212 acc"], fam));
+
+    /* card 3 -- the cross-entropy floor the same bound implies, against measured plateaus */
+    var meas = D.measured || [];
+    var fl = [2, 6, 10].map(function (T) {
+      var r = meas.filter(function (x) { return +x.T === T; })[0];
+      if (!r) return null;
+      return [T, (-Math.log(r.ceiling)).toFixed(4), (+r.train_loss_final).toFixed(4)];
+    }).filter(Boolean);
+    if (fl.length) put("fig-floor", mini(["T", "floor", "plateau"], fl));
+
+    /* card 6 -- how the fifteen paired intervals fall. Read off the CSV the page already
+       parses, so it follows the data rather than restating a count written by hand. */
+    var seen = {}, c = { equal_width: [0, 0, 0], equal_mass: [0, 0, 0] };
+    ROWS.forEach(function (r) {
+      var k = r.timesteps + "|" + r.seed;
+      if (seen[k]) return;
+      seen[k] = 1;
+      [["equal_width", "iso_minus_temp_resolvable", "iso_minus_temp_ece_ew"],
+       ["equal_mass", "iso_minus_temp_em_resolvable", "iso_minus_temp_ece_em"]].forEach(function (e) {
+        if (r[e[1]] === undefined) return;
+        if (String(r[e[1]]) !== "True") c[e[0]][0]++;
+        else if (+r[e[2]] > 0) c[e[0]][1]++;
+        else c[e[0]][2]++;
+      });
+    });
+    put("fig-bootstrap", mini(["outcome", "eq-width", "eq-mass"], [
+      ["straddle zero", c.equal_width[0], c.equal_mass[0]],
+      ["favour temperature", c.equal_width[1], c.equal_mass[1]],
+      ["favour isotonic", c.equal_width[2], c.equal_mass[2]]]));
+
+    /* card 7 -- how many selective-prediction operating points each readout allows */
+    var ops = [["count", "count"], ["weighted-count", "weighted-count"]].map(function (k) {
+      var r = pick(ro, function (x) { return x.readout === k[0] && x.timesteps === 2; });
+      if (!r.length) return null;
+      return [k[1], Math.round(avg(r.map(function (x) {
+        return x.n_achievable_coverage_levels; }))).toLocaleString()];
+    }).filter(Boolean);
+    if (ops.length) {
+      ops.push(["uncapped", (10000).toLocaleString()]);
+      put("fig-ops", mini(["readout", "T = 2 ops"], ops));
+    }
+  }
+
   function updateHero() {
     hero.T = +hero.tEl.value;
     hero.C = +hero.cEl.value;
@@ -916,7 +1030,8 @@
 
   wireModals();
   [updateHero, renderReadoutTable, renderSelectiveTable, renderQuantisation,
-   renderCaxis, renderConditional, renderArch, renderUpdated, render].forEach(function (fn) {
+   renderCaxis, renderConditional, renderArch, renderUpdated, renderCardFigures,
+   render].forEach(function (fn) {
     try { fn(); } catch (err) { console.error("spikecalib: " + fn.name + " failed", err); }
   });
   window.addEventListener("resize", function () {

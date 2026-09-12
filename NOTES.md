@@ -285,7 +285,8 @@ Mean equal-width ECE over 3 seeds:
 | 10 | 0.0029 | 0.0026 | 0.0028 | +0.0002 |
 
 **The letter of the prediction is falsified; its substance holds.** **Thirteen** of the
-fifteen paired-bootstrap intervals straddle zero. Two do not: one favours temperature
+fifteen paired-bootstrap intervals straddle zero *under equal-width binning; twelve of
+fifteen under equal-mass — see "The paired bootstrap under both estimators" below.* Two do not: one favours temperature
 (`T = 2`, seed 1, CI [+0.0006, +0.0044]) and one favours isotonic (`T = 6`, seed 0, CI
 [−0.0024, −0.0003]). *(Corrected 2026-09-11: this paragraph previously said "fourteen of
 the fifteen" in the same sentence as "the two that do not", which cannot both be true. The
@@ -323,6 +324,33 @@ The honest summary for the paper: on N-MNIST the discreteness argument does not 
 calibrator preference. Whether it does on DVS-Gesture, where the calibration split is
 roughly 330 samples rather than 5,000 and isotonic's per-level estimates are far noisier,
 is untested and is now the more interesting question.
+
+### The paired bootstrap under both estimators, added 2026-09-12
+
+Correctness rule 2 says both ECE estimators are reported wherever a number is claimed, and
+this was the one place that never was: `iso_minus_temp_ece_ew` existed with no equal-mass
+counterpart, so "thirteen of fifteen" was an equal-width statement standing in for the
+finding. `scripts/rerun_paired_bootstrap.py` closes it — no training, weights reused,
+calibrators refit on CPU, the same bootstrap seed, and **the equal-width column recomputed
+and checked against the CSV before anything was written (worst |delta| 0.00e+00)**, so the
+two arms are comparable rather than merely adjacent.
+
+| estimator | straddle zero | favour temperature | favour isotonic |
+|---|---|---|---|
+| equal-width | **13** of 15 | 1 — `T = 2` seed 1 | 1 — `T = 6` seed 0 |
+| equal-mass | **12** of 15 | 0 | 3 — `T = 4` seeds 1 and 2, `T = 8` seed 0 |
+
+**The count is estimator-dependent, and so is the membership.** `T = 2` seed 1 and `T = 6`
+seed 0 resolve under equal-width and not under equal-mass; `T = 4` seeds 1 and 2 and `T = 8`
+seed 0 resolve under equal-mass and not under equal-width. The two estimators do not
+disagree about the conclusion but they do not agree on a single run.
+
+Neither is the arbiter. The substance — the two calibrators tie in the large majority of
+runs, and the handful that resolve are what fifteen uncorrected 95% comparisons produce on
+their own — holds under both, and **that is what belongs in the paper**, not either count
+quoted alone. Under equal-mass every resolvable run favours isotonic, which is worth saying
+plainly rather than leaving to be discovered: it is three runs in fifteen with no
+multiple-comparison adjustment, so it is not evidence of a preference.
 
 ## Pre-registered prediction 2, recorded 2026-09-11
 
@@ -1254,7 +1282,7 @@ below of the form "it changed with architecture" must not be read as "it changed
 | N-MNIST | 2 | 2 | 0.450853 | −2.8e-13 | yes |
 | N-MNIST | 4 | 6 | 0.978178 | +3.8e-14 | yes |
 
-**Zero violations across all 24 count cells**, and the bound is saturated to float precision
+**Zero violations across all 24 count cells of the matched 2×2 grid**, and the bound is saturated to float precision
 in every one. The prediction declined to claim saturation, since reaching the bound needs a
 sample with all competitors silent and that is a property of the trained model; it happened
 anyway at both depths on both datasets. The ceiling result is architecture-independent, as
@@ -1657,16 +1685,21 @@ stub in this repository restates the rule it is responsible for.
    rather than being resolved by picking the more convenient one.
 
 3. **Energy is a proxy, stated as such.** Energy is reported as the SynOps proxy using
-   45 nm figures attributed to Horowitz, "Computing's Energy Problem (and what we can do
-   about it)", ISSCC 2014: `E_AC = 0.9 pJ` for an accumulate and `E_MAC = 4.6 pJ` for a
-   multiply-accumulate. `[LIT]` for the paper; **`[UNVERIFIED]` for the values** — the
-   figure or table number, the exact 0.9 pJ (believed to be the 32-bit floating-point ADD
-   at 45 nm), and whether 4.6 pJ is stated in the paper or is the community convention of
-   FP multiply plus FP add, are all unconfirmed. See `SOURCES.md`, "To verify" item 1.
-   These constants must not be cited with a figure number until checked. Every appearance
-   of an energy number in
-   text, table, or figure describes it as a **design-comparison proxy**. It is never
-   described as measured power, and no claim about a physical device is derived from it.
+   45 nm figures from Horowitz, "Computing's Energy Problem (and what we can do about
+   it)", ISSCC 2014. **Verified against the primary document on 2026-09-12**, and the two
+   constants do not have the same status:
+
+   - `E_AC = 0.9 pJ` is **`[LIT]`**, confirmed as the 32-bit floating-point add in
+     **Figure 1.1.9**, "Rough energy costs for various operations in 45nm 0.9V". A caption
+     may cite that figure number for this value.
+   - `E_MAC = 4.6 pJ` is **`[DERIVED]`**, not `[LIT]`. **It appears nowhere in that
+     paper** — there is no MAC row and no combined figure. It is the community convention
+     of FP multiply plus FP add, 0.9 + 3.7, and **must not be attributed to Horowitz**.
+
+   The source describes its own figures as "Rough", so nothing may turn on their
+   precision. Every appearance of an energy number in text, table, or figure describes it
+   as a **design-comparison proxy**. It is never described as measured power, and no claim
+   about a physical device is derived from it.
 
 4. **Seeded and reproducible.** Every experiment is seeded and every seed is recorded
    alongside its result. One caveat is stated explicitly rather than discovered by a

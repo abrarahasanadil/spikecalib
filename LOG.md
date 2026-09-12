@@ -2587,3 +2587,117 @@ re-measured across 35 samples per width; lowest anywhere **5.49:1**, nothing bel
 - *The paired bootstrap has no equal-mass arm.* Closing that means re-running the bootstrap
   with `ece_equal_mass`, not a dashboard change.
 - *`--accent` is still mint outside the rail.*
+
+## 2026-09-12 — Every audit finding fixed, and the equal-mass bootstrap that closes rule 2
+
+**Ran.** `pytest -q` → **229 passed** (222 plus seven new provenance guards). Full audit
+re-run; dashboard verified at 1920, 1440, 1200, 900 and 400.
+
+**A1 — card 2's explained share. 44.1% → 44.5%.** The artifact gives per-seed shares of
+42.38 / 41.96 / 49.23 for N-MNIST, C=10, T=6. **Convention chosen: mean of per-seed ratios
+(44.52%, printed 44.5%), not ratio of pooled means (44.40%)** — each seed is an independent
+run and the spread across seeds is what the study reports everywhere else. The same
+convention now produces all three cells, not just the one that was wrong; 99.2% and 97.1%
+are unchanged under it.
+
+Seven of the eight card mini-tables now render from `window.SPIKECALIB` rather than static
+HTML: the ceiling table, the explained share, the cross-entropy floor, the readout family,
+the accuracy gain, the paired bootstrap and the operating points. Each reproduced its
+previous value exactly except the one that had drifted, which is the check that the
+renderers are faithful. **Card 8 stays static** — its rows are the literature comparison
+(Chen, Park & Simeone at T = 80), `[LIT]` rather than anything in `results/`.
+
+**A2 — README's cell figures. "30 measured cells, 27 saturated" → 48 / 45 / 3.** Respected
+and saturated are now stated as the different claims they are: *respected* (observed maximum
+never exceeds the bound) in **48 of 48** distinct count-readout cells, the union of
+`readout_experiment.json` (15), `caltech_experiment.json` (9) and `arch_matched.json` (24);
+*saturated* to within 1e-9 in **45**; and the **3** that are respected but slack named as
+`C = 101, T = 10`, one per seed, mean gap **1.489e-3** (2.347e-3, 1.269e-3, 8.496e-4).
+
+**A3 — the column count. 60 → 72**, with a link saying the downloadable copy is the same
+file the page renders.
+
+**A4 — `docs/sweep.csv`. 61 columns (Sep 10) → 72, identical to `results/` and to the copy
+embedded in `data.js`.** All three now agree byte-for-byte on the header. A test asserts the
+tracked CSV's column set equals the embedded one, because `results/*.csv` is gitignored and
+the tracked copy is the only one a reader ever sees.
+
+**B6 — the equal-mass paired bootstrap, and what it changes.** `scripts/rerun_paired_bootstrap.py`
+refits both calibrators from the saved weights on CPU and recomputes the paired difference
+under both estimators. **It recomputes the equal-width column first and refuses to write
+unless that reproduces the CSV; worst |delta| was 0.00e+00**, so the new arm is comparable
+rather than merely adjacent. Four columns added.
+
+| estimator | straddle zero | favour temperature | favour isotonic |
+|---|---|---|---|
+| equal-width | **13** of 15 | 1 — `T = 2` seed 1 | 1 — `T = 6` seed 0 |
+| equal-mass | **12** of 15 | 0 | 3 — `T = 4` seeds 1 and 2, `T = 8` seed 0 |
+
+**The headline is estimator-dependent and so is its membership** — the two estimators do not
+agree on a single resolvable run. The substance holds under both and that is what should
+enter the paper. Under equal-mass all three exceptions favour isotonic, which is three in
+fifteen with no multiple-comparison adjustment and is not evidence of a preference; it is
+stated in NOTES rather than left to be found.
+
+The prose violations are closed too: the hero now gives 0.5386 / 0.0018 / 0.0029 as
+equal-width **and** 0.5386 / 0.0008 / 0.0019 as equal-mass, and README's readout table has
+both ECE columns (count 0.5386/0.5386, weighted-count 0.5385/0.5385, membrane 0.0290/0.0289,
+accumulator **0.0031/0.0016** — they agree wherever the cap binds and separate once the
+distribution spreads).
+
+**One caveat on how `data.js` was updated.** Its embedded CSV and provenance stamp were
+spliced with the identical computation the export performs, rather than re-running
+`export_dashboard_data.py`, which repeats inference over fifteen models. Only those two
+fields changed; the header now matches `results/` exactly and a test enforces it.
+
+**B1/B2 — the energy provenance. Two contradictory live states → one.** NOTES rule 3 said
+`[UNVERIFIED]` for both values and "must not be cited with a figure number"; SOURCES lines
+60–72 said the same while SOURCES 325+ confirmed the opposite. Rule 3 now states `E_AC =
+0.9 pJ` as **`[LIT]`, Figure 1.1.9**, and `E_MAC = 4.6 pJ` as **`[DERIVED]`, appearing
+nowhere in the paper**. The superseded SOURCES block is replaced by a pointer rather than
+left for reading order to decide.
+
+**B3 — the withdrawn citation in code.** `calibration.py:385` attributed the
+temperature-scaling baseline to "Sun & Bohte (AOT-SNN)", withdrawn on verification as wrong
+authors and wrong method. Now **"The method is Guo et al., ICML 2017"**, with a note that
+the other reference was withdrawn and lives in `SOURCES.md`. No withdrawn reference appears
+anywhere in `spikecalib/`, `scripts/`, `docs/` or README.
+
+**B4 — card 5's scope, which was about to enter the abstract unqualified.** Face now reads
+"accuracy points on N-Caltech101 at **T = 2**", and the claim says the same comparison moves
+nothing on N-MNIST and reverses at T = 6. The modal gains a table of all eight matched
+cells: +12.82 and +3.08 at T = 2, **−4.52 and −2.24 at T = 6**, and −0.15 to +0.12 on
+N-MNIST.
+
+**B5 — card 4.** "capped vs unbounded readout" → "**N-MNIST, T = 2** — capped vs unbounded
+readout".
+
+**B7 — rule 3's documentation half is now guarded.** `tests/test_provenance.py` asserts
+E_MAC is never attributed to Horowitz without a disclaimer, that E_MAC carries `[DERIVED]`
+and E_AC `[LIT]`, that energy is called a proxy wherever it is reported, that rule 3 no
+longer says UNVERIFIED, and that no withdrawn reference is cited in a live file.
+Mutation-checked: marking E_MAC `[LIT]`, restoring the AOT-SNN attribution, and stripping
+the disclaimer from `figures.py` each fail exactly one test.
+
+**Two of my own test bugs, caught before they were believed.** The E_MAC guard first used a
+±200-character window and flagged `figures.py`'s own *prohibition* ("it must not attribute
+4.6 pJ to Horowitz") as a violation; it is now a file-level check. And the first
+withdrawn-reference mutation silently did not apply, because the string I replaced spans a
+line break in the docstring — the test looked like it had passed when nothing had changed.
+
+**C1 — one convention for the cell count, stated at every occurrence.** 24 is the matched
+2×2 grid in `arch_matched.json`; 48 is the union across all three artifacts. Card 1's face
+now says "of the 24 matched-grid cells … and none of the 48 across all runs"; the rail says
+48 held and 45 saturate; NOTES and the modal say "24 count cells of the matched 2×2 grid".
+
+**C2 — the Reproduce block** now lists the five experiment scripts and the bootstrap re-run,
+so following it verbatim regenerates the JSONs instead of reusing the committed ones.
+
+**Re-audit: outstanding.**
+- *Card 8's mini-table is static by design* — literature values, not artifacts.
+- *Rule 2's "reported everywhere" half is guarded only at the metrics-dict and CSV level.*
+  Nothing tests that prose quotes both estimators; that is a human check.
+- *The equal-mass arm exists only for N-MNIST.* `caltech_experiment` and `arch_matched` carry
+  both ECE columns per row, but no paired bootstrap at all, on either estimator.
+- *`--num-workers 6` deadlocks `rerun_paired_bootstrap.py`* on this machine, as it did the
+  sweep once before. It ran with `--num-workers 0`; the default is still 6.
