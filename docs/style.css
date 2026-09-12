@@ -223,7 +223,11 @@ a:hover { color: var(--teal); }
 .masthead-links a { color: var(--ink); }
 .masthead-links a:hover { border-color: var(--accent); color: var(--accent); }
 .masthead-links .pending { color: var(--ink-3); }
-.lede { max-width: 92ch; color: var(--ink); font-size: 15.5px; line-height: 1.65; margin: var(--s4) 0 0; }
+/* 82ch measures 116 rendered characters in this face -- the ch unit is the advance of
+   "0", which is wider than the average character, so 92ch was already running to 130.
+   The ceiling is the constraint, not the panel width: past ~120 the eye loses its place
+   on the return sweep, and the masthead is wider than that at every desktop size. */
+.lede { max-width: 82ch; color: var(--ink); font-size: 15.5px; line-height: 1.65; margin: var(--s4) 0 0; }
 
 /* ---------- glass panel ---------- */
 
@@ -264,10 +268,15 @@ a:hover { color: var(--teal); }
 input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; background: transparent; cursor: pointer; margin: 0; }
 input[type="range"]::-webkit-slider-runnable-track {
   height: 3px; border-radius: 2px;
-  background: linear-gradient(90deg, var(--accent) var(--fill, 0%), rgba(255,255,255,.11) var(--fill, 0%));
+  /* the filled run is a gradient across its own length, not a flat teal bar */
+  background: linear-gradient(90deg, var(--teal), var(--mint)) 0 / var(--fill, 0%) 100% no-repeat,
+              rgba(255, 255, 255, .11);
 }
 input[type="range"]::-moz-range-track { height: 3px; border-radius: 2px; background: rgba(255,255,255,.11); }
-input[type="range"]::-moz-range-progress { height: 3px; border-radius: 2px; background: var(--accent); }
+input[type="range"]::-moz-range-progress {
+  height: 3px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--teal), var(--mint));
+}
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none;
   width: 14px; height: 14px; margin-top: -5.5px; border-radius: 50%;
@@ -282,12 +291,21 @@ input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.12); }
 .chip {
   font: inherit; font-size: 12.5px; line-height: 1;
   padding: var(--s1) var(--s2); border-radius: var(--r-ctl);
-  background: rgba(255,255,255,.04); color: var(--ink-2);
-  border: 1px solid var(--edge-soft); cursor: pointer;
-  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  background: var(--surface); color: var(--ink-2);
+  border: 1px solid var(--border); cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
 }
-.chip:hover { color: var(--ink); border-color: var(--edge); }
-.chip[aria-pressed="true"] { background: var(--accent-dim); color: var(--accent); border-color: rgba(102,212,207,.42); }
+.chip:hover { color: var(--ink); border-color: var(--border-2); background: var(--surface-2); }
+/* Selected wears the same treatment as a card -- a gradient in the accent, the brighter
+   border, and the inset top highlight -- rather than a flat block of green, which was the
+   one control on the page that belonged to no design system. */
+.chip[aria-pressed="true"] {
+  background: linear-gradient(180deg, rgba(102,212,207,.26), rgba(102,212,207,.10));
+  color: var(--mint);
+  border-color: var(--border-2);
+  box-shadow: var(--hi);
+}
+.chip[aria-pressed="true"]:hover { border-color: rgba(102,212,207,.55); }
 .chip.mono { font-family: var(--mono); }
 
 /* ---------- readout ---------- */
@@ -315,6 +333,28 @@ input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.12); }
 /* ---------- metric tiles ---------- */
 
 .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s3); }
+/* The tiles used to be a band of their own below the cards, while the T = 80 card left
+   four columns empty beside it. They now fill that column, one per row. Below 1200px the
+   column is gone, so they fall back to a horizontal row above the cards. */
+.cards .tiles { grid-column: span 4; grid-template-columns: 1fr; align-content: start; }
+.cards .tiles .tile-label { min-height: 0; }
+@media (max-width: 1200px) {
+  .cards .tiles { grid-column: span 12; order: -1; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) { .cards .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 440px) { .cards .tiles { grid-template-columns: 1fr; } }
+
+/* Two panels sharing one grid column, flush against each other. The energy note used to
+   sit alone in a half-width row with its right half empty, under a bootstrap panel with
+   dead space below it; stacking closes both gaps at once. */
+.stack { display: flex; flex-direction: column; gap: var(--sp-4); align-self: start; }
+/* The one panel that should stretch to its row. Everything else on this page is sized by
+   its content, because an inflated panel shows the difference as empty space inside its
+   own border. This one is different: the table scrolls, so the height it gains is spent
+   on visible rows. flex-basis 0 with a min-height keeps its INTRINSIC height at today's
+   560px, so it never drives the row height -- it only absorbs what the row already has. */
+.sweep-rows { align-self: stretch; display: flex; flex-direction: column; }
+.sweep-rows .scroll { flex: 1 1 0; min-height: 560px; max-height: 1100px; }
 .tile {
   display: flex; flex-direction: column;
   padding: var(--s3) var(--s3) var(--s3);
@@ -464,6 +504,14 @@ tbody tr:hover td { background: rgba(255,255,255,.03); color: var(--ink); }
 .two-col h3 { column-span: all; }
 .two-col p { break-inside: avoid; }
 @media (max-width: 1100px) { .two-col { columns: 1; } }
+/* A full-width panel whose content sits in one narrow left column is worse than a narrow
+   panel. Two columns at the widths where the third is otherwise empty; each bullet stays
+   whole. The panel-level "unverified" pill is gone: a limitation is a known gap, which is
+   the opposite of an unverified claim. */
+.lim-list { max-width: none !important; columns: 2; column-gap: var(--s7); }
+.lim-list li { break-inside: avoid; margin-bottom: var(--s3); }
+@media (max-width: 1199px) { .lim-list { columns: 1; } }
+
 .unverified-note { border-left: 2px solid var(--status); padding-left: var(--s3); color: var(--ink-3); }
 /* Masonry, not a grid. These cards differ in height by hundreds of pixels, and in a grid
    every card in a row is inflated to the tallest -- measured at 1,241px of empty space
@@ -589,6 +637,10 @@ footer p { margin: 0 0 var(--s1); max-width: 100ch; }
 .stat-unit { font-size: 12px; color: var(--text-3); }
 .card-title { margin: 0; font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
 .card-claim { margin: 0; font-size: 13px; line-height: 1.5; color: var(--text-2); max-width: 68ch; }
+/* 68ch is the measure for a four-column card. In a wider card it stops the text a third
+   of the way across and leaves the rest of the panel empty, so the card fills instead. */
+.cards .c8 .card-claim,
+.cards .c12 .card-claim { max-width: none; }
 .card-fig { margin-top: auto; }
 
 /* The card-face table is an extract, not the full thing -- it is deliberately

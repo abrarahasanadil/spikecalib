@@ -810,40 +810,55 @@
      does NOT give is a backdrop-click close or a scroll lock on the page behind, so
      those two are added here.
   */
+  /* Delegated, and wired BEFORE anything reads data.
+
+     What was actually broken: this ran last, after six render calls, inside one IIFE.
+     A single failure anywhere above it -- an unavailable data.js, one absent column --
+     threw, the IIFE stopped, wireModals() never ran, and all eight buttons went dead
+     with one console error nobody opens. An interface must not depend on the data
+     rendering succeeding. Delegating on document also means no handler can be orphaned
+     by a re-render, now or later. */
   function wireModals() {
-    document.querySelectorAll("[data-modal]").forEach(function (btn) {
-      btn.addEventListener("click", function () {
+    document.addEventListener("click", function (e) {
+      var t = e.target;
+      if (!t || !t.closest) return;
+      var btn = t.closest("[data-modal]");
+      if (btn) {
         var d = document.getElementById(btn.getAttribute("data-modal"));
         if (!d) return;
         d.__trigger = btn;
-        d.showModal();
+        /* showModal() throws if the dialog is already open, and wherever the top layer
+           is unavailable; show() still puts the panel on screen. */
+        try { d.showModal(); } catch (err) { if (!d.open) d.show(); }
         document.body.classList.add("modal-open");
         var body = d.querySelector(".modal-body");
         if (body) body.scrollTop = 0;   // a reopened dialog otherwise keeps its scroll
-      });
+        return;
+      }
+      var dlg = t.closest("dialog.modal");
+      if (!dlg) return;
+      /* The dialog element fills the viewport, so a click whose target IS the dialog
+         landed outside the visible panel. */
+      if (t === dlg || t.closest("[data-close]")) dlg.close();
     });
-    document.querySelectorAll("dialog.modal").forEach(function (d) {
-      // The dialog element fills the viewport, so a click whose target IS the dialog
-      // landed outside the visible panel.
-      d.addEventListener("click", function (e) { if (e.target === d) d.close(); });
-      var x = d.querySelector("[data-close]");
-      if (x) x.addEventListener("click", function () { d.close(); });
-      // Fires for the close button, the backdrop and Escape alike.
-      d.addEventListener("close", function () {
-        document.body.classList.remove("modal-open");
-        if (d.__trigger) d.__trigger.focus();
-      });
-    });
+    /* close does not bubble, so listen in the capture phase: fires for the close
+       button, the backdrop and Escape alike. */
+    document.addEventListener("close", function (e) {
+      var d = e.target;
+      if (!d || !d.classList || !d.classList.contains("modal")) return;
+      document.body.classList.remove("modal-open");
+      if (d.__trigger) d.__trigger.focus();
+    }, true);
   }
 
-  updateHero();
-  renderReadoutTable();
-  renderSelectiveTable();
-  renderQuantisation();
-  renderCaxis();
-  renderConditional();
-  renderArch();
+  /* The interface first -- nothing below is allowed to be able to disable it -- and
+     each renderer isolated, so one missing column cannot take the whole page down. */
   wireModals();
-  render();
-  window.addEventListener("resize", function () { drawCeiling(); render(); });
+  [updateHero, renderReadoutTable, renderSelectiveTable, renderQuantisation,
+   renderCaxis, renderConditional, renderArch, render].forEach(function (fn) {
+    try { fn(); } catch (err) { console.error("spikecalib: " + fn.name + " failed", err); }
+  });
+  window.addEventListener("resize", function () {
+    try { drawCeiling(); render(); } catch (err) { console.error("spikecalib: resize", err); }
+  });
 })();

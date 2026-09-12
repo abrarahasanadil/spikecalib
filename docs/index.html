@@ -6,7 +6,7 @@
 <title>SpikeCalib — confidence calibration for event-driven spiking neural networks</title>
 <meta name="description" content="A measurement instrument for spiking neural networks: the attainable-confidence ceiling, the cross-entropy floor it implies, and a 15-run calibration sweep on N-MNIST.">
 <meta name="color-scheme" content="dark">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20260912">
 </head>
 <body>
 
@@ -210,12 +210,9 @@
       Full reasoning, caveats and complete tables
       <span class="chev" aria-hidden="true">&rarr;</span></button>
   </article>
+  <div class="tiles" id="tiles"></div>
   </div>
 
-
-  <div class="band"><h2>Live metrics</h2>
-    <p class="sub">computed from sweep.csv for the current filter</p></div>
-  <div class="tiles c12" id="tiles"></div>
 
   <div class="band"><h2>The ceiling instrument</h2>
     <p class="sub">derived arithmetic, not measurement</p></div>
@@ -263,7 +260,8 @@
   <div class="band"><h2>Sweep results</h2>
     <p class="sub">15 runs, five timestep settings, three seeds</p></div>
 
-  <section class="panel c6">
+  <div class="stack c6">
+  <section class="panel">
     <h3>Paired bootstrap, isotonic minus temperature</h3>
     <div class="well"><div id="interval-chart"></div></div>
     <p class="chart-note" id="interval-count"></p>
@@ -275,7 +273,25 @@
       exactly why one exclusion in fifteen is unremarkable rather than a finding.</p>
   </section>
 
-  <section class="panel c6">
+  <section class="panel"><div class="prose">
+<h3>A note on energy<span class="pill pill-lit">lit</span><span class="pill pill-derived">derived</span></h3>
+    <p>
+      The case for spiking networks is energy, so the sweep records a SynOps proxy. The
+      result complicates that case: the input encoder — the first layer, which receives
+      real-valued event frames rather than spikes and is therefore costed as
+      multiply-accumulates — is between 41% and 65% of the modelled energy at every timestep
+      setting. The layer that does <em>not</em> receive spikes is roughly half the bill.
+      This is a design-comparison proxy built from operation counts and published
+      per-operation energies; it ignores memory traffic, static power and clock, and no claim
+      about a physical device follows from it. The per-operation figures come from Horowitz,
+      ISSCC 2014, Figure 1.1.9 — 0.9 pJ for a 32-bit float add, verified against the paper —
+      while the 4.6 pJ multiply-accumulate is the 0.9 + 3.7 convention and is stated nowhere
+      in it.
+    </p>
+  </div></section>
+  </div>
+
+  <section class="panel c6 sweep-rows">
     <h3>Filtered rows</h3>
     <div class="scroll"><table id="results-table"></table></div>
     <p class="table-meta" id="table-meta"></p>
@@ -295,52 +311,6 @@
       holding a handful of samples has an accuracy estimate with a very wide interval, and
       none is drawn here; read the small markers as suggestive only.</p>
   </section>
-
-  
-
-
-  
-
-    
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  <section class="panel c6"><div class="prose">
-<h3>A note on energy<span class="pill pill-lit">lit</span><span class="pill pill-derived">derived</span></h3>
-    <p>
-      The case for spiking networks is energy, so the sweep records a SynOps proxy. The
-      result complicates that case: the input encoder — the first layer, which receives
-      real-valued event frames rather than spikes and is therefore costed as
-      multiply-accumulates — is between 41% and 65% of the modelled energy at every timestep
-      setting. The layer that does <em>not</em> receive spikes is roughly half the bill.
-      This is a design-comparison proxy built from operation counts and published
-      per-operation energies; it ignores memory traffic, static power and clock, and no claim
-      about a physical device follows from it. The per-operation figures come from Horowitz,
-      ISSCC 2014, Figure 1.1.9 — 0.9 pJ for a 32-bit float add, verified against the paper —
-      while the 4.6 pJ multiply-accumulate is the 0.9 + 3.7 convention and is stated nowhere
-      in it.
-    </p>
-  </div></section>
 
   <div class="band"><h2>Related work</h2>
     <p class="sub">this study claims novelty over none of the following; verified 2026-09-12, two withdrawn</p></div>
@@ -514,8 +484,8 @@ python scripts/export_dashboard_data.py</pre>
 
   <section class="panel c12">
     <div class="prose wide">
-<h3>Limitations<span class="pill pill-warn">unverified</span></h3>
-    <ul>
+<h3>Limitations</h3>
+    <ul class="lim-list">
       <li>
         <strong>Two datasets, not four.</strong> N-MNIST and N-Caltech101. DVS-Gesture matters most
         of the two not yet run: its calibration split is roughly 330 samples against
@@ -1345,7 +1315,7 @@ python scripts/export_dashboard_data.py</pre>
 
 </main>
 
-<script src="data.js"></script>
-<script src="app.js"></script>
+<script src="data.js?v=20260912"></script>
+<script src="app.js?v=20260912"></script>
 </body>
 </html>

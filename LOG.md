@@ -1718,3 +1718,103 @@ any card.
   tables, they will not follow a re-run. That is the same defect the dashboard audit found
   two sessions ago, reintroduced deliberately for the card faces and worth fixing by
   rendering them from `window.SPIKECALIB` like the rest.
+
+## 2026-09-12 — Every modal button was dead; my own check had reported 8/8 passing
+
+**Did.** Six layout and interaction fixes reported from the rendered page, plus a sweep of
+all five widths and a static guard on the interface wiring.
+
+**Ran.** `pytest -q` → **220 passed** (214 plus six new dashboard guards). Every width
+re-measured under headless Chromium.
+
+**Found: the verification, not the wiring, was what failed.** The previous entry says
+"All 8 modals open and close by close button, backdrop and Escape". That check asserted
+`dialog.open === true` after a synthetic click and never asked whether anything became
+visible, so it would have passed on a page where the panel rendered off-screen. It also ran
+only against a correctly-loaded `file://` copy, which is the one condition under which the
+bug does not appear. Two causes, both real, neither visible to that check:
+
+- **Ordering.** `wireModals()` was the last statement of a single IIFE, after six calls that
+  read `window.SPIKECALIB`. Any failure above it aborts the IIFE and the wiring never runs.
+  Reproduced by blocking `data.js`: `updateHero()` throws `Cannot read properties of
+  undefined (reading 'readout')`, and all eight buttons go dead behind one console error.
+  The wiring now runs *first* and each renderer is wrapped individually, so a data fault
+  costs a panel rather than the interface.
+- **Caching.** `app.js` was referenced with no version and had changed in `c7288b8`. A
+  browser holding the previous copy — which contained no `wireModals` at all — serves dead
+  buttons with *no* console error. All three assets now carry `?v=`.
+
+The hypothesis in the brief, that the cards are generated from data so a handler bound
+before render binds to nothing, is not what happened: the cards are static HTML written
+into `index.html`. Delegation was still the right remedy, for the first cause rather than
+that one, and it also removes the failure mode the hypothesis describes before it can
+arise.
+
+**Found: the layout harness was measuring the wrong quantity.** `measure.mjs` reported
+"0 panels with >150px unused vertical space" while a third of the cards row and the space
+under the bootstrap panel sat empty. It measured inside panels; the empty space was *beside*
+them, in grid columns it never looked at. Rewritten to group grid children into visual rows
+and measure the gap below each item within its row. It immediately found 167–371px under
+"Filtered rows" that the first pass had not.
+
+A second measurement bug in the same harness: `Range.getClientRects()` returns one rect per
+inline *fragment*, so `<b>` and `<em>` split a single line into several and the "widest
+line" read hundreds of pixels short. Thirty-one of the first run's thirty-one
+short-measure findings were artefacts of this. Fragments are now merged by baseline, and
+text inside a multi-column block is measured against its column box rather than the
+multi-column parent.
+
+**Did: the six fixes.**
+1. `.card-claim`'s 68ch measure is right for a four-column card and leaves a wider one two
+   thirds empty; removed for `c8`/`c12`. The hero summary is now capped at 82ch.
+2. Above.
+3. Limitations laid in two columns at ≥1200px, and its panel-level `unverified` pill
+   removed — a limitation is a known gap, which is the opposite of an unverified claim.
+4. Rail chips restyled onto the design system: selected takes an accent gradient, the
+   `--border-2` edge and the inset top highlight the cards use; unselected sits on
+   `--surface` with `--border`. Slider filled tracks take the same gradient.
+5. The four live tiles moved out of their own band into the column the T = 80 card leaves
+   empty, one per row, still live against the rail filters and still carrying their CSV
+   column names. Below 1200px they fall back to a horizontal row above the cards.
+6. The energy note moved up beneath the paired-bootstrap panel, closing the gap under the
+   bootstrap card and the empty right half the note used to sit beside.
+
+**Found: fix 6 moved the gap rather than closing it.** With the note stacked, the left
+column became the taller one and "Filtered rows" ended 167px short at 1920, 249px at 1440
+and 371px at 1200. The cause was that its table is capped at `max-height: 560px` and
+scrolls, so the panel is short by construction. That panel now stretches to its row — the
+single exception to the rule that nothing on this page stretches — because the height it
+gains is spent on visible table rows rather than on empty space. Its intrinsic height is
+pinned at today's 560px so it never drives the row height, only absorbs what the row has.
+
+**Found: "widen the hero substantially" and "cap at 110–120 characters" could not both
+hold.** The `ch` unit is the advance of "0", which is wider than the average character in
+this face: the existing 92ch was already rendering **130** characters per line, above the
+stated ceiling. Measured against a real average advance of 6.92px, 82ch is 116 characters.
+I took the ceiling, because it is the constraint with a reason attached, and the summary is
+therefore slightly *narrower* than before rather than wider. It holds at 116 characters at
+every width from 1200 to 1920.
+
+**Verified.** At 1920, 1440, 1200, 900 and 400px: zero columns ending with more than 150px
+of empty space, no horizontal overflow, no console errors, and all eight modals opening to
+a measured on-screen rectangle, with the click landing on the trigger rather than an
+overlay, and closing on Escape. The visibility and topmost-element assertions are the two
+the previous check lacked.
+
+**Added.** `tests/test_dashboard.py` — six static guards, closing the "nothing tests the
+modals in CI" item from the previous entry. They assert every trigger resolves to a dialog,
+that `wireModals()` precedes anything reading `window.SPIKECALIB`, that renderers are
+individually guarded, that assets are versioned, and that Limitations is not labelled
+unverified. Mutation-checked: restoring the original call order, dropping the version query
+and breaking one trigger id each fail exactly one test.
+
+**Open.**
+- *The static guards are not the browser check.* They catch the two causes found here and
+  the shape of a broken trigger. They cannot catch a modal that opens off-screen, which was
+  the thing the last check was blind to; that still needs a browser, and the harness for it
+  still lives in the session scratchpad rather than in the repository.
+- *A `c8` card claim runs to 161 characters at 1920px.* Removing the measure was what the
+  brief asked for and it is correct at 1440 (109 characters), but the same return-sweep
+  argument that ceilings the hero applies here above ~1560px. Left as specified rather than
+  capped unasked; a 120-character ceiling on `.card-claim` would close it.
+- *The card faces still carry hardcoded numbers,* unchanged from the previous entry.
