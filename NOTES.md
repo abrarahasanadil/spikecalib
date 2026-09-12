@@ -285,8 +285,8 @@ Mean equal-width ECE over 3 seeds:
 | 10 | 0.0029 | 0.0026 | 0.0028 | +0.0002 |
 
 **The letter of the prediction is falsified; its substance holds.** **Thirteen** of the
-fifteen paired-bootstrap intervals straddle zero *under equal-width binning; twelve of
-fifteen under equal-mass — see "The paired bootstrap under both estimators" below.* Two do not: one favours temperature
+fifteen paired-bootstrap intervals straddle zero *under equal-width binning — see the
+addendum below this paragraph for both estimators.* Two do not: one favours temperature
 (`T = 2`, seed 1, CI [+0.0006, +0.0044]) and one favours isotonic (`T = 6`, seed 0, CI
 [−0.0024, −0.0003]). *(Corrected 2026-09-11: this paragraph previously said "fourteen of
 the fifteen" in the same sentence as "the two that do not", which cannot both be true. The
@@ -295,6 +295,24 @@ and at `T = 6` it did not, so the prediction as stated is wrong. But one resolva
 in fifteen at a 95% level is what multiple comparisons produce on their own — the expected
 count under no true difference is about 0.75 — and it does not survive as evidence of an
 isotonic advantage.
+
+**Addendum 2026-09-12 — the outcome under both ECE estimators.** Across the two
+estimators, 13 of 15 intervals straddle zero under equal-width binning and 12 of 15 under
+equal-mass.
+
+**The runs that resolve are disjoint.** Equal-width resolves `T = 2` seed 1, favouring
+temperature, and `T = 6` seed 0, favouring isotonic. Equal-mass resolves `T = 4` seeds 1
+and 2 and `T = 8` seed 0, all three favouring isotonic and none temperature. **No run
+resolves under both.**
+
+**That strengthens the null result rather than weakening it.** The two estimators are
+computed on identical calibrated confidences and differ only in how they bin them. A run
+whose interval excluded zero because the calibrators genuinely differed would be found by
+both, in the same place and the same direction. Two estimators on the same data
+disagreeing entirely about which runs resolve is evidence that none of the five do — each
+is binning noise that one scheme pushes across zero and the other does not. That is a
+stronger argument than either count alone, and it is the form in which the calibrator
+result should enter the paper.
 
 **The study's own hypothesis fares worse.** It predicted an isotonic advantage that grows
 as `T` falls. At `T = 2`, the most discrete regime, with 583 calibration samples per
@@ -340,17 +358,12 @@ two arms are comparable rather than merely adjacent.
 | equal-width | **13** of 15 | 1 — `T = 2` seed 1 | 1 — `T = 6` seed 0 |
 | equal-mass | **12** of 15 | 0 | 3 — `T = 4` seeds 1 and 2, `T = 8` seed 0 |
 
-**The count is estimator-dependent, and so is the membership.** `T = 2` seed 1 and `T = 6`
-seed 0 resolve under equal-width and not under equal-mass; `T = 4` seeds 1 and 2 and `T = 8`
-seed 0 resolve under equal-mass and not under equal-width. The two estimators do not
-disagree about the conclusion but they do not agree on a single run.
-
-Neither is the arbiter. The substance — the two calibrators tie in the large majority of
-runs, and the handful that resolve are what fifteen uncorrected 95% comparisons produce on
-their own — holds under both, and **that is what belongs in the paper**, not either count
-quoted alone. Under equal-mass every resolvable run favours isotonic, which is worth saying
-plainly rather than leaving to be discovered: it is three runs in fifteen with no
-multiple-comparison adjustment, so it is not evidence of a preference.
+**No run resolves under both estimators.** The union of the two resolvable sets is five
+runs; their intersection is empty. As the addendum to the outcome above sets out, that is
+evidence none of the five reflects a real difference between the calibrators, and it
+strengthens the null. That every equal-mass exception favours isotonic does not change
+this: they are three runs that the other estimator, on the same confidences, does not
+confirm.
 
 ## Pre-registered prediction 2, recorded 2026-09-11
 

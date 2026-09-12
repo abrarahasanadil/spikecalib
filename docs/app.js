@@ -305,23 +305,29 @@
 
     /* card 6 -- how the fifteen paired intervals fall. Read off the CSV the page already
        parses, so it follows the data rather than restating a count written by hand. */
-    var seen = {}, c = { equal_width: [0, 0, 0], equal_mass: [0, 0, 0] };
+    /* The last row is the finding, not the counts above it: the runs that resolve under
+       each estimator are computed on identical confidences, so a real difference would
+       resolve under both. Counted here from the CSV rather than written down, because the
+       argument rests on that intersection being empty. */
+    var seen = {}, both = 0, c = { equal_width: [0, 0, 0], equal_mass: [0, 0, 0] };
     ROWS.forEach(function (r) {
       var k = r.timesteps + "|" + r.seed;
       if (seen[k]) return;
       seen[k] = 1;
+      var hit = 0;
       [["equal_width", "iso_minus_temp_resolvable", "iso_minus_temp_ece_ew"],
        ["equal_mass", "iso_minus_temp_em_resolvable", "iso_minus_temp_ece_em"]].forEach(function (e) {
         if (r[e[1]] === undefined) return;
         if (String(r[e[1]]) !== "True") c[e[0]][0]++;
-        else if (+r[e[2]] > 0) c[e[0]][1]++;
-        else c[e[0]][2]++;
+        else { hit++; if (+r[e[2]] > 0) c[e[0]][1]++; else c[e[0]][2]++; }
       });
+      if (hit === 2) both++;
     });
     put("fig-bootstrap", mini(["outcome", "eq-width", "eq-mass"], [
       ["straddle zero", c.equal_width[0], c.equal_mass[0]],
       ["favour temperature", c.equal_width[1], c.equal_mass[1]],
-      ["favour isotonic", c.equal_width[2], c.equal_mass[2]]]));
+      ["favour isotonic", c.equal_width[2], c.equal_mass[2]]])
+      .replace("</tbody>", '<tr><td>resolve under both</td><td colspan="2">' + both + "</td></tr></tbody>"));
 
     /* card 7 -- how many selective-prediction operating points each readout allows */
     var ops = [["count", "count"], ["weighted-count", "weighted-count"]].map(function (k) {

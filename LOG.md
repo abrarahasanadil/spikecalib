@@ -2701,3 +2701,54 @@ so following it verbatim regenerates the JSONs instead of reusing the committed 
   both ECE columns per row, but no paired bootstrap at all, on either estimator.
 - *`--num-workers 6` deadlocks `rerun_paired_bootstrap.py`* on this machine, as it did the
   sweep once before. It ran with `--num-workers 0`; the default is still 6.
+
+## 2026-09-12 — A default that cannot hang, and the disjoint resolvable sets
+
+**Ran.** `pytest -q` → **229 passed**. Dashboard re-swept at 1920, 1440, 1200, 900 and 400:
+no column ending with more than 100px empty, no overflow, no console errors, 8 of 8 modals
+passing.
+
+**Did: `rerun_paired_bootstrap.py --num-workers` now defaults to 0.** At 6 the script
+deadlocked on this machine — the process sat at 0% CPU indefinitely rather than failing —
+and the main sweep hit the same hang once before. A default that hangs is worse than one
+that is slow, because the slow one finishes; fifteen runs of inference take a few minutes
+single-process. The hazard is stated in the script's docstring, in the argument's help
+text, and in the dashboard's Reproduce block, which now passes `--num-workers 0` explicitly.
+
+**Not changed, reported:** the other scripts that load data still default to 4 or 6 —
+`run_sweep`, `readout_experiment`, `quantisation_test`, `export_dashboard_data`,
+`extract_readout_stats`, `extend_sweep_selective` and `readout_report` at 6;
+`caltech_experiment`, `arch_matched`, `conditional_ceiling` and `train_one` at 4. Those
+defaults produced the committed artifacts without hanging, so they were left as they are
+rather than changed on the strength of one script's failure. The same trap may be waiting in
+any of them.
+
+**Did: recorded the disjointness of the resolvable sets, which strengthens the null result.**
+Verified against `results/sweep_nmnist.csv` before recording. 13 of 15 paired intervals
+straddle zero under equal-width binning and 12 of 15 under equal-mass. The runs that resolve
+do not overlap: equal-width resolves `T = 2` seed 1 (temperature) and `T = 6` seed 0
+(isotonic); equal-mass resolves `T = 4` seeds 1 and 2 and `T = 8` seed 0, all isotonic.
+Five runs resolve under one estimator, and **none under both**.
+
+The two estimators see identical calibrated confidences and differ only in how they bin
+them, so a run that resolved because the calibrators really differed would resolve under
+both. Their total disagreement about which runs resolve is evidence that none of the five
+are real. That argument is stronger than either count, and it is now how the result is
+stated in three places, each in the same order — counts, then the disjointness, then the
+conclusion:
+
+- **NOTES**, as a dated addendum directly beneath the pre-registration outcome. The outcome
+  paragraph itself is unedited apart from a pointer to it.
+- **Card 6.** The headline number is now **0** runs showing a difference under both measures,
+  not 13 / 15. The claim gives both counts in one sentence, then the disjointness, then the
+  conclusion, in plain English with no semicolons. Its table gains a *resolve under both* row,
+  counted from the CSV at render time rather than written down, because the argument depends
+  on that intersection being empty.
+- **Modal m6**, as a new section immediately after the pre-registration outcome, with the
+  five resolvable runs tabulated by estimator and direction.
+
+**One analysis replaced.** The subsection "The paired bootstrap under both estimators",
+written earlier today, closed with "Neither is the arbiter" and treated the estimators'
+disagreement as a caveat on the finding. That was the weaker reading of the same data. Its
+conclusion now points to the addendum. This was analysis rather than a pre-registration, so
+replacing it revises no prediction.

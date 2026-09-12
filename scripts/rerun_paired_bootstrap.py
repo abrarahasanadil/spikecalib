@@ -6,6 +6,11 @@ paired isotonic-minus-temperature difference was the one place that only ever ex
 equal-width: ``iso_minus_temp_ece_ew`` had no ``_em`` counterpart, so "13 of 15 intervals
 straddle zero" was an equal-width statement presented as if it were the finding.
 
+**Runs single-process by default.** ``--num-workers`` defaults to 0: six DataLoader
+workers deadlock this script on an M-series Mac, sitting at 0% CPU rather than failing, and
+the main sweep hit the same hang once before. Inference over fifteen runs takes a few
+minutes single-process, which is the cheaper failure mode.
+
 No training happens here. Weights are reused, inference is re-run on the calibration and
 test splits, the two calibrators are refit on CPU exactly as :mod:`spikecalib.sweep` fits
 them, and the paired bootstrap is computed under *both* estimators with the same seed.
@@ -47,7 +52,13 @@ def main() -> int:
     ap.add_argument("--bins", type=int, default=15)
     ap.add_argument("--n-bootstrap", type=int, default=1000)
     ap.add_argument("--batch-size", type=int, default=128)
-    ap.add_argument("--num-workers", type=int, default=6)
+    # 0, not 6. Six DataLoader workers deadlock this script on an M-series Mac -- the
+    # process sits at 0% CPU indefinitely -- and the main sweep hit the same hang once
+    # before. A default that hangs is worse than one that is slow: the slow one finishes.
+    ap.add_argument("--num-workers", type=int, default=0,
+                    help="DataLoader workers. 0 by default because higher values have "
+                         "deadlocked on Apple silicon; raise it only if you know yours "
+                         "does not.")
     ap.add_argument("--data-root", default=os.path.join(REPO_ROOT, "data"))
     ap.add_argument("--results", default=os.path.join(REPO_ROOT, "results"))
     ap.add_argument("--tolerance", type=float, default=5e-4,

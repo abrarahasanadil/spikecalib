@@ -164,11 +164,11 @@
   </article>
   <article class="card c4">
     <div class="card-pills"><span class="pill pill-measured">measured</span></div>
-    <p class="stat"><span class="stat-num stat-purple">13 / 15</span>
-      <span class="stat-unit">intervals straddle zero, equal-width &mdash; 12 of 15 under equal-mass</span></p>
+    <p class="stat"><span class="stat-num stat-purple">0</span>
+      <span class="stat-unit">runs show a difference under both ways of measuring error</span></p>
     <h3 class="card-title">Which calibration method you pick does not matter</h3>
-    <p class="card-claim">Calibration rescales confidence to match accuracy. Temperature and isotonic are the two methods here. An interval straddling zero means no measurable difference. Which runs resolve depends on the estimator, but the large majority tie under both.</p>
-    <div class="card-fig" id="fig-bootstrap"><table class="mini"><thead><tr><th>outcome</th><th>count</th></tr></thead><tbody><tr><td>straddle zero</td><td>13</td></tr><tr><td>favour temperature</td><td>1</td></tr><tr><td>favour isotonic</td><td>1</td></tr></tbody></table></div>
+    <p class="card-claim">Temperature and isotonic are two calibration methods. Measured two ways, 13 of 15 and 12 of 15 runs show no difference. The runs that do differ are different runs each time. A real difference would appear in the same run both times.</p>
+    <div class="card-fig" id="fig-bootstrap"><table class="mini"><thead><tr><th>outcome</th><th>eq-width</th><th>eq-mass</th></tr></thead><tbody><tr><td>straddle zero</td><td>13</td><td>12</td></tr><tr><td>favour temperature</td><td>1</td><td>0</td></tr><tr><td>favour isotonic</td><td>1</td><td>3</td></tr><tr><td>resolve under both</td><td colspan="2">0</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m6">
       Full reasoning, caveats and complete tables
       <span class="chev" aria-hidden="true">&rarr;</span></button>
@@ -468,7 +468,8 @@ python scripts/arch_matched.py        --seeds 0 1 2
 python scripts/conditional_ceiling.py
 
 <span class="c"># the equal-mass paired bootstrap (no training; reuses the weights)</span>
-python scripts/rerun_paired_bootstrap.py
+<span class="c"># runs single-process: 6 DataLoader workers deadlock this on Apple silicon</span>
+python scripts/rerun_paired_bootstrap.py --num-workers 0
 
 <span class="c"># regenerate everything this page reads</span>
 python scripts/extract_readout_stats.py
@@ -1190,6 +1191,37 @@ python scripts/export_dashboard_data.py</pre>
       from 583 samples per level at <em>T</em> = 2 to 18 at <em>T</em> = 10 — exactly the
       manipulation the mechanism named. The advantage was flat and near zero across all of it.
     </p>
+</section>
+<section class="modal-part"><h3>Two estimators, no shared exception<span class="pill pill-measured">measured</span></h3>
+<p>
+  The paired bootstrap was run under both ECE estimators on the same calibrated confidences,
+  with the same resamples. <strong>13 of 15</strong> intervals straddle zero under equal-width
+  binning and <strong>12 of 15</strong> under equal-mass (<code>iso_minus_temp_resolvable</code>
+  and <code>iso_minus_temp_em_resolvable</code> in <code>sweep.csv</code>).
+</p>
+<div class="scroll panel-table"><table>
+<thead><tr><th>estimator</th><th>runs that resolve</th><th>direction</th></tr></thead>
+<tbody>
+<tr><td>equal-width</td><td>T = 2 seed 1</td><td>favours temperature</td></tr>
+<tr><td>equal-width</td><td>T = 6 seed 0</td><td>favours isotonic</td></tr>
+<tr><td>equal-mass</td><td>T = 4 seed 1</td><td>favours isotonic</td></tr>
+<tr><td>equal-mass</td><td>T = 4 seed 2</td><td>favours isotonic</td></tr>
+<tr><td>equal-mass</td><td>T = 8 seed 0</td><td>favours isotonic</td></tr>
+</tbody></table></div>
+<p>
+  <strong>The two sets are disjoint. No run resolves under both.</strong> Five runs resolve
+  under one estimator or the other, and the intersection is empty.
+</p>
+<p>
+  <strong>That strengthens the null result rather than weakening it.</strong> The estimators
+  see identical confidences and differ only in how they bin them. A run whose interval
+  excluded zero because the calibrators genuinely differed would be found by both, in the same
+  place and the same direction. Two estimators disagreeing entirely about which runs resolve is
+  evidence that none of the five are real &mdash; each is binning noise that one scheme pushes
+  across zero and the other does not. That is a stronger argument than either count alone. The
+  three equal-mass exceptions all favouring isotonic does not change it: no other estimator on
+  the same data confirms any of them.
+</p>
 </section>
   </div>
 </dialog>
