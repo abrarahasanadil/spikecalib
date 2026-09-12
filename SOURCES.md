@@ -23,6 +23,10 @@ year, venue, figure number or value is not.
 **Orchard, Jayawant, Cohen & Thakor (2015). "Converting Static Image Datasets to Spiking
 Neuromorphic Datasets Using Saccades." *Frontiers in Neuroscience*.**
 DOI 10.3389/fnins.2015.00437
+*Authors in full, for citation:* **Garrick Orchard, Ajinkya Jayawant, Gregory K. Cohen and
+Nitish Thakor**; *Frontiers in Neuroscience* volume 9, published 16 November 2015 — from the
+Crossref record for the DOI (https://api.crossref.org/works/10.3389/fnins.2015.00437), whose
+title matches. Used in `paper/refs.bib`.
 *Verification:* title and venue read directly from the installed
 `spikingjelly/datasets/n_mnist.py` docstring, which links the DOI.
 *Taken from it:* the N-MNIST dataset itself. 34x34 spatial resolution, 10 classes.
@@ -322,7 +326,10 @@ close a gap.**
 ### Confirmed from the primary document
 
 **1. Horowitz, "Computing's Energy Problem (and what we can do about it)", ISSCC 2014,
-Session 1 Plenary 1.1, Digest of Technical Papers pp. 10-14.** The energy table is
+Session 1 Plenary 1.1, Digest of Technical Papers pp. 10-14.** Author **Mark Horowitz**; DOI
+**10.1109/ISSCC.2014.6757323** — from the Crossref record for that DOI, whose title,
+proceedings (2014 IEEE ISSCC Digest of Technical Papers) and pages 10-14 match this entry. Used
+in `paper/refs.bib`. The energy table is
 **Figure 1.1.9**, captioned *"Rough energy costs for various operations in 45nm 0.9V"*
 (Digest p. 14). Read directly from the paper:
 
@@ -353,7 +360,10 @@ design-comparison quantity and never as measured power.
 
 **2. Atarashi, Oyama, Arai & Kashima. "Probability Bounding: Post-Hoc Calibration via
 Box-Constrained Softmax." arXiv:2506.10572, 12 June 2025 (v2, 23 February 2026).**
-Title, four authors and date confirmed. Read for the distinction rather than taken from the
+Title, four authors and date confirmed. **Authors in full: Kyohei Atarashi, Satoshi Oyama,
+Hiromi Arai and Hisashi Kashima** — from the arXiv record (https://arxiv.org/abs/2506.10572,
+`citation_author` metadata), submitted 12 June 2025 and last revised 23 February 2026 (v2).
+Used in `paper/refs.bib`. Read for the distinction rather than taken from the
 abstract:
 
 - It introduces **BCSoftmax**, a generalisation of softmax enforcing lower and upper bounds
@@ -448,9 +458,21 @@ softened to say what is actually known, and both claims stay `[UNVERIFIED]`.
 1. **Amir et al. CVPR 2017 — full author list** for DVS-Gesture. Only "Amir et al." and the
    title are confirmed, via SpikingJelly's docstring.
 2. **Li et al. 2017 — full author list** for CIFAR10-DVS. Same situation.
-3. **ATan surrogate gradient — originating paper.** SpikingJelly documents the function but
-   attaches no citation. The general method is usually credited to Neftci, Mostafa & Zenke;
-   the specific arctan form is unattributed here.
+3. **ATan surrogate gradient — originating paper. Still open; checked 2026-09-12.**
+   SpikingJelly 0.0.0.0.14 documents `surrogate.ATan` with its formula,
+   `g'(x) = alpha / (2 (1 + (pi/2 alpha x)^2))`, and **attaches no citation** — while the same
+   module does name a proposing paper for other surrogates (S2NN, q-PseudoSpike, Log-tailed
+   ReLU). The only lead in the package is `activation_based/model/parametric_lif_net.py`,
+   whose header names **Fang, Yu, Chen, Masquelier, Huang & Tian, "Incorporating Learnable
+   Membrane Time Constant to Enhance Learning of Spiking Neural Networks", arXiv:2007.05785**
+   (authors from the arXiv record: Wei Fang, Zhaofei Yu, Yanqi Chen, Timothee Masquelier,
+   Tiejun Huang, Yonghong Tian; 11 July 2020) and whose examples use `ATan`. Read: that
+   paper **uses** `sigma(x) = (1/pi) arctan(pi x) + 1/2` in its experimental settings — exactly
+   SpikingJelly's ATan at `alpha = 2`, the value this study uses — but **does not claim to
+   propose it**. So its origin is unconfirmed. `paper/main.tex` describes the surrogate as the
+   ATan function as implemented in SpikingJelly 0.0.0.0.14, gives the formula, and cites no
+   paper for it. The attribution of surrogate-gradient training in general to other authors
+   is not checked here and is not relied on.
 4. **DVS-Gesture 1,176 / 288 split counts.** From SpikingJelly's docstring; not built.
 5. **CIFAR10-DVS 10,000 sample count.** Same.
 6. **The AOT-SNN classification paper**, if one exists, and whether temperature scaling is

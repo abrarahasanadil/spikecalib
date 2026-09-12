@@ -2904,3 +2904,60 @@ the sentence.
   the untuned learning rate and the unswept τ = 2 are the two that bear on reported results.
 - *The withdrawn references still appear in NOTES.md*, as a record of their withdrawal rather than
   as citations.
+
+## 2026-09-12 — Full author names, the ATan surrogate, and two limitations stated
+
+**Ran.** `pytest -q` → **230 passed**. Paper recompiled: **9 pages, sections 1–7 ending on page
+8**, no overfull lines, no undefined references, no BibTeX warnings, and every line that uses a
+generated number still carries its source comment.
+
+**Did: the three surname-only references now have full author names**, each read from the
+registry record of the primary document already verified, and recorded in SOURCES.md:
+- **Atarashi et al.** — Kyohei Atarashi, Satoshi Oyama, Hiromi Arai, Hisashi Kashima, from the
+  arXiv record for 2506.10572 (v1 12 June 2025, v2 23 February 2026).
+- **Horowitz** — Mark Horowitz, DOI 10.1109/ISSCC.2014.6757323, from the Crossref record for that
+  DOI, whose title, proceedings and pages 10–14 match the confirmed entry.
+- **Orchard et al.** — Garrick Orchard, Ajinkya Jayawant, Gregory K. Cohen, Nitish Thakor,
+  *Frontiers in Neuroscience* volume 9, from the Crossref record for 10.3389/fnins.2015.00437.
+
+`refs.bib` now has no surname-only author field, and its header says every field is confirmed
+against a primary document or its registry record.
+
+**Did: the ATan surrogate. Its origin could not be confirmed, so the paper cites nothing for it.**
+SpikingJelly 0.0.0.0.14 documents `surrogate.ATan` with its formula and **attaches no citation**,
+though the same module names a proposing paper for other surrogates (S2NN, q-PseudoSpike,
+Log-tailed ReLU). The only lead in the package was the header of `parametric_lif_net.py`, which
+names Fang et al., arXiv:2007.05785, a model file whose examples use ATan. That paper was read:
+it **uses** `sigma(x) = (1/pi) arctan(pi x) + 1/2` in its experimental settings — exactly
+SpikingJelly's ATan at `alpha = 2`, the value used here — but **does not claim to propose it**.
+Using a function is not originating it, so no attribution follows. The method now says the
+surrogate is the ATan function as implemented in SpikingJelly 0.0.0.0.14, gives
+`g'(x) = alpha / (2(1 + (pi/2 alpha x)^2))` from the installed source, and states alpha = 2.0.
+SOURCES.md "Still to verify" item 3 records all of this and stays open.
+
+**Did: two limitations stated on the page.** Both were on the to-verify list and both bear on
+reported results, so neither is left off:
+- **No hyperparameter search was performed.** The learning rate of 10^-3, batch size of 128, the
+  early-stopping rule and the surrogate parameter were set once and never tuned; a tuned model
+  could be more accurate, which would change how much error the ceiling forces.
+- **The membrane time constant was fixed at tau = 2.0 and never varied.** It sets how many
+  timesteps the membrane readout integrates, so that readout's results hold at tau = 2.0 only.
+
+**Cut to length again.** The additions pushed the conclusion onto page 10. Recovered without
+changing any claim or number: Related Work's closing temperature-scaling sentence folded into the
+method's existing Guo et al. citation; the Splits paragraph merged into Data; the one-sentence
+Counts paragraph merged into the paragraph before it; the two "unexplained" limitations merged;
+the rate-saturation paragraph and the conclusion tightened; and Figure 1 reduced over three passes
+from 0.52 to 0.36 of the text width.
+
+**Two of my own slips, both caught.** A search of the SpikingJelly package ran against nothing
+because zsh expanded the unquoted `--include=*.py` pattern and aborted; re-run with quoting. And a
+check for the rendered tau sentence reported it missing because PDF text extraction turns "fi"
+into a single ligature glyph — the same cause as an earlier false miss on "Geoff"; the checks now
+normalise ligatures first.
+
+**Outstanding.**
+- *Figure 1 is now small*, at 0.36 of the text width. It is legible on screen; worth a look in
+  print before submission.
+- *The ATan surrogate's origin* remains open, item 3 of "Still to verify".
+- *`CITATION.cff`'s arXiv DOI* cannot be filled until the preprint is posted.

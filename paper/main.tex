@@ -118,10 +118,6 @@ be adjusted. It follows from the readout, and it holds before any calibrator is 
 Theirs is a bound placed on a model to improve calibration; this one is a bound the readout
 already imposes, and it causes the miscalibration studied here.
 
-Temperature scaling, a single-parameter variant of Platt scaling, was proposed as a calibrator
-by Guo et al., who also describe the equal-width estimate of expected calibration error used
-here~\citep{guo2017calibration}.
-
 % =========================================================================================
 \section{The bound}
 \label{sec:bound}
@@ -188,8 +184,6 @@ split. Its \ncSplitTotal{} samples are split into \ncSplitTrain{} for training, 
 \ncSplitVal{} for validation, \ncSplitCal{} for calibration and \ncSplitTest{} for testing, % src: results/ncaltech101_T2_seed0_split.npz
 with validation and calibration drawn per class. Its event frames are average-pooled four-fold
 to $45\times60$ pixels. % spikecalib/datasets.py: spatial_downsample = 4, spatial = (45, 60)
-
-\paragraph{Splits.}
 The calibration set is disjoint from both the validation set and the test set. This is
 asserted on the index sets before any calibrator is fitted, because a calibrator scored on the
 data it was fitted to reports its own training error. Splits and calibrator fits use CPU
@@ -198,8 +192,9 @@ random number generators only, so both reproduce exactly.
 \paragraph{Networks.}
 All models are convolutional networks of leaky integrate-and-fire neurons built with
 SpikingJelly~\citep{spikingjelly}. The membrane time constant is $\tau=\lifTau$, the % src: results/nmnist_T2_seed0_record.json model_config
-threshold \lifThreshold, and training uses an arctangent surrogate gradient with % src: results/nmnist_T2_seed0_record.json model_config
-$\alpha=\surrogateAlpha$ and a hidden layer of \hiddenUnits{} units. Two depths are used: two % src: results/nmnist_T2_seed0_record.json model_config
+threshold \lifThreshold, and the hidden layer has \hiddenUnits{} units. Training uses the ATan % src: results/nmnist_T2_seed0_record.json model_config
+surrogate gradient as implemented in SpikingJelly 0.0.0.0.14, % version: pip show spikingjelly
+$g'(x)=\alpha/\big(2\,(1+(\tfrac{\pi}{2}\alpha x)^2)\big)$, with $\alpha=\surrogateAlpha$. Two depths are used: two % formula: spikingjelly/activation_based/surrogate.py atan_backward; alpha: results/nmnist_T2_seed0_record.json
 convolutional blocks with 32 and 64 channels, and four blocks with 32, 64, 128 and 128. % src: results/arch_matched.json channels
 Extra pooling makes the deeper network the smaller one: \paramsNmTwo{} parameters against % src: results/arch_matched.json n_parameters
 \paramsNmFour{} on N-MNIST, and \paramsNcTwo{} against \paramsNcFour{} on N-Caltech101. The % src: results/arch_matched.json n_parameters
@@ -224,7 +219,8 @@ the spiking threshold, and from the membrane readout only by the leak.
 
 \paragraph{Calibration and its measurement.}
 Two post-hoc calibrators are fitted on the calibration set: temperature scaling, a single scalar
-that divides the logits~\citep{guo2017calibration}, and top-label isotonic regression.
+that divides the logits, proposed as a calibrator by Guo et al.~\citep{guo2017calibration}, and
+top-label isotonic regression.
 Calibrators are fitted on N-MNIST only. Expected calibration error (ECE) is the sample-weighted
 mean gap between confidence and accuracy over \nBins{} bins, computed with two binning schemes. % src: results/sweep_nmnist.csv n_bins
 Equal-width bins are the usual choice, and Guo et al.\ report ECE with 15 of them~\citep{guo2017calibration}. % [LIT] guo2017calibration, Table 1 caption: "ECE (%) (with M = 15 bins)"
@@ -273,7 +269,7 @@ network. Figure~\ref{fig:ceiling} shows it on N-MNIST.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.52\linewidth]{figures/fig1-ceiling.png} % figures/fig1-ceiling.png, drawn by scripts/make_figures.py from results/readout_stats.json
+\includegraphics[width=0.36\linewidth]{figures/fig1-ceiling.png} % figures/fig1-ceiling.png, drawn by scripts/make_figures.py from results/readout_stats.json
 \caption{The ceiling $e^{T}/(e^{T}+C-1)$ for $C=10$, which is derived, with the test accuracy
 and the largest observed confidence of the N-MNIST count readout (two convolutional blocks,
 seed~0). The shaded region is accuracy that no spike-count output can express as confidence.}
@@ -401,10 +397,7 @@ capacity would beat a single temperature by a margin that grows as $T$ falls.
 Table~\ref{tab:calibrators} gives the result. Calibration matters a great deal at low $T$. At
 $T=2$ it takes ECE from \swUncTwoW{} to \swTempTwoW{} under equal-width binning, and from % src: results/sweep_nmnist.csv
 \swUncTwoM{} to \swTempTwoM{} under equal-mass binning. Which calibrator is used matters much % src: results/sweep_nmnist.csv
-less.
-
-\paragraph{Counts.}
-Under equal-width binning, \straddleW{} of \runsTotal{} paired intervals straddle zero. Under % src: results/sweep_nmnist.csv
+less. Under equal-width binning, \straddleW{} of \runsTotal{} paired intervals straddle zero. Under % src: results/sweep_nmnist.csv
 equal-mass binning, \straddleM{} of \runsTotal{} do. % src: results/sweep_nmnist.csv
 
 \paragraph{Outcome of the prediction.}
@@ -484,6 +477,13 @@ Every result rests on N-MNIST and N-Caltech101. The deeper network is also the s
 \paramsNmFour{} parameters against \paramsNmTwo{} on N-MNIST, so a difference between the two % src: results/arch_matched.json
 cannot be attributed to depth or to capacity alone.
 
+\paragraph{No hyperparameter search, and an unexamined time constant.}
+No hyperparameter search was performed. The learning rate of $\learningRate$, the batch size of % src: results/nmnist_T2_seed0_record.json lr, batch_size
+\batchSize, the early-stopping rule and the surrogate parameter were set once and never tuned; a % src: results/nmnist_T2_seed0_record.json batch_size
+tuned model could be more accurate, which would change how much error the ceiling forces. The
+membrane time constant was fixed at $\tau=\lifTau$ for every neuron and the membrane readout, and % src: results/nmnist_T2_seed0_record.json model_config tau
+never varied. It sets how many timesteps that readout integrates, so its results hold at $\tau=\lifTau$ only. % src: results/nmnist_T2_seed0_record.json model_config tau
+
 \paragraph{Calibrators were compared on N-MNIST only.}
 No calibrator was fitted on N-Caltech101, and the equal-mass paired bootstrap exists only for
 N-MNIST. The null result therefore holds at ten classes, at accuracies between \swAccTwo{} and \swAccTen, % src: results/sweep_nmnist.csv
@@ -491,43 +491,35 @@ and with a calibration set of \nmSplitCal{} samples. It may not survive a small 
 or a genuinely uncertain model. N-Caltech101, at accuracies between \ncAccMin{} and \ncAccMax, is where it % src: results/caltech_experiment.json
 should be tested next.
 
-\paragraph{An unexplained residual.}
+\paragraph{Two effects left unexplained.}
 On N-Caltech101 at $T=6$ the count readout is underconfident by \residNcFourSix{} with four % src: results/arch_matched.json
-blocks, and by \residNcTwoSix{} with two, yet neither ceiling binds. The mean conditional % src: results/arch_matched.json
-ceiling, \condCeilHundredOneSix, sits above the accuracy, \accHundredOneSix. This residual is % src: results/conditional_ceiling.json
-miscalibration that the cap does not account for.
-
-\paragraph{A ranking deficit only partly explained.}
-At $T\ge6$ on N-MNIST, the membrane readout ranks correct predictions above incorrect ones less
-well than the count readout does, measured by the area under the ROC curve of confidence for
-correctness. Removing the leak closes \leakClosedSix\% of that deficit at $T=6$ and % src: results/readout_experiment.json auroc
-\leakClosedTen\% at $T=10$. The rest is unexplained. % src: results/readout_experiment.json auroc
+blocks, and by \residNcTwoSix{} with two, yet neither ceiling binds: the mean conditional ceiling, % src: results/arch_matched.json
+\condCeilHundredOneSix, sits above the accuracy, \accHundredOneSix. At $T\ge6$ on N-MNIST the % src: results/conditional_ceiling.json
+membrane readout ranks correct predictions above incorrect ones less well than the count readout,
+by the area under the ROC curve of confidence for correctness; removing the leak closes
+\leakClosedSix\% of that deficit at $T=6$ and \leakClosedTen\% at $T=10$, and the rest is unexplained. % src: results/readout_experiment.json auroc
 
 \paragraph{Rate saturation is not a finding here.}
-That spike-rate readouts saturate is known. What this study adds is a closed-form account of how
-far saturation limits confidence, and of what follows for calibration, training loss and
-selective prediction.
+That spike-rate readouts saturate is known; what is added is a closed-form account of how far it
+limits confidence, and what follows for calibration, training loss and selective prediction.
 
-\paragraph{Determinism.}
-Training ran on Apple silicon, whose floating-point operations are not bitwise deterministic.
-Trained weights therefore reproduce only up to small numerical variation at a fixed seed, which
-is why results are reported over \nSeeds{} seeds. Splits and calibrator fits reproduce exactly. % src: results/sweep_nmnist.csv
-
-\paragraph{Energy.}
-The energy figures are a proxy for comparing designs, built on rough per-operation costs. They
-say nothing about power on any physical device.
+\paragraph{Determinism and energy.}
+Training ran on Apple silicon, whose floating-point operations are not bitwise deterministic, so
+trained weights reproduce only up to small numerical variation at a fixed seed; results are
+reported over \nSeeds{} seeds for that reason, and splits and calibrator fits reproduce exactly. % src: results/sweep_nmnist.csv
+The energy figures are a design-comparison proxy built on rough per-operation costs, and say
+nothing about power on any physical device.
 
 % =========================================================================================
 \section{Conclusion}
 \label{sec:conclusion}
 
-Counting spikes limits how confident a spiking network can be. At few timesteps that limit sits
-below the accuracy such networks reach. In the lowest-timestep settings studied here, nearly all
-of the miscalibration follows from the limit, not from training. The readout, not the network,
-decides whether confidence errs low or high. Post-hoc calibration removes almost all of the
-error, and on N-MNIST it does not matter which calibrator does it. For a spike-count readout,
-$T_{\min}=\ln\big((C-1)a/(1-a)\big)$ is the fewest timesteps at which a model can express its
-own accuracy.
+Counting spikes limits how confident a spiking network can be. At few timesteps the limit sits
+below the accuracy such networks reach, and in the lowest-timestep settings studied here the limit,
+not training, accounts for nearly all of the miscalibration. The readout decides whether
+confidence errs low or high. Post-hoc calibration removes almost all of the error, and on N-MNIST
+the choice of calibrator does not matter. $T_{\min}=\ln\big((C-1)a/(1-a)\big)$ is the fewest
+timesteps at which a spike-count readout can express its own accuracy.
 
 \section*{Code and data}
 All code, training records and result artifacts are at
