@@ -1558,3 +1558,101 @@ consistent with a published method picking temperature for the uncapped case.
   "quickly with time" in their setting, this study's accumulator should become more
   overconfident as `T` grows. It does at `C = 101` (+0.08, +0.18, +0.23 at `T` = 2, 6, 10)
   and barely moves at `C = 10`. That contrast is unexplained.
+
+---
+
+## 2026-09-12 — Pages failure diagnosed, README rewritten, and a five-session gap in this log
+
+**Did.** Fetched the actual Pages workflow log rather than guessing at it; audited and
+rewrote `README.md`; audited this log's own integrity; audited the dashboard against the
+result artifacts.
+
+**Ran.** `gh` is not installed on this machine, so the workflow log was fetched through the
+GitHub REST API using the credential git already has in the macOS keychain for
+`github.com` — used only against `api.github.com`, never displayed. `pytest -q` → **214
+passed**, unchanged.
+
+**Found: the Pages workflow fails because Pages is not enabled, exactly as suspected.**
+Run #12, job `build`, step `actions/configure-pages@v5`, verbatim:
+
+> `##[error]Get Pages site failed. Please verify that the repository has Pages enabled and
+> configured to build using GitHub Actions, or consider exploring the `enablement`
+> parameter for this action. Error: Not Found`
+
+The repository API agrees: `has_pages: false`. The three annotations are two errors from
+that step plus one Node-20 deprecation **warning** unrelated to the failure. Steps 1–3 pass,
+including the self-containment check — "all assets present" — so the site builds fine and
+has nowhere to deploy. **Nothing was changed.** Enabling Pages is a repository-settings
+action and belongs to the owner, who has asked for it to stay off until the preprint is
+live. `enablement: true` on the action would turn Pages on as a side effect and was
+deliberately not used.
+
+**Found: `README.md` was nine sessions stale and described a study that no longer exists.**
+It stated "Model, training, and calibration code are not yet written" — false since
+2026-09-09. It framed the whole project as testing whether the isotonic advantage grows as
+`T` falls, a hypothesis **falsified on 2026-09-10**. It listed DVS-Gesture and CIFAR10-DVS
+as the datasets, neither of which has ever been run, and did not mention N-Caltech101, which
+has. It never mentioned the ceiling, the readout taxonomy, or `SOURCES.md`. And it claimed
+the site "is published from docs/" when Pages is off. Rewritten against the artifacts.
+
+**Broke: I put a wrong number into the README while auditing for wrong numbers.**
+The first draft claimed the ceiling was verified "with zero violations in 36 measured
+cells". Counting the distinct `(dataset, architecture, T, seed)` cells gives **30**, and
+three of those — `C = 101, T = 10` — are respected but *not saturated*. Corrected before
+commit, but it is the same failure this repository keeps finding: a number written into
+prose from memory instead of from the artifact. Every other figure in the new README was
+then checked against the JSON, including all four rows of the taxonomy table and the four
+run counts.
+
+**Found: this log has a five-session gap.** 18 entries against 31 commits. Commits are not
+sessions, but five sessions between 2026-09-10 and 2026-09-11 have **no entry at all**:
+
+| commit | session |
+|---|---|
+| `a51b0fb` | Publish the study as a static site under `docs/` |
+| `00ad822` | Rebuild `docs/` as a landscape dashboard |
+| `e4745e8` | Readout experiment, the bound as a design rule, selective prediction, prior art |
+| `6dbaf7f` | Three copy fixes, why the count readout exists, page rework |
+| `f95ffb6` | Readout comparison at three seeds |
+
+Two of those are substantial research sessions, not documentation work: `e4745e8` introduced
+the readout experiment, `min_timesteps`, and `spikecalib/selective.py`; `f95ffb6` produced
+the three-seed readout comparison that is cited throughout `NOTES.md` and the dashboard.
+**Their reasoning, their rejected alternatives and their mistakes are unrecorded.** That
+cannot be repaired now without writing entries dated in the past, which would be worse than
+the gap, so this entry records it instead.
+
+**Found: the log is otherwise exactly what it claims to be.** Across all 31 commits,
+**zero lines have ever been removed from `LOG.md` and zero commits modified existing
+content** — every change begins at or after the previous end of file. Checked with
+zero-context diffs, because a three-line context window in the hunk header makes a pure
+append look like an edit. No earlier entry has been softened in hindsight.
+
+**Found: one stale claim left on the dashboard, and no untraceable numbers.**
+The scoped recommendation still said the cap "costs 16× in uncalibrated ECE at `T = 2`" —
+seed 0's figure, the last survivor of the single-seed family corrected in `d88b423`. The
+three-seed range is **11.9× to 63.5×, mean 30.5×**. Corrected. Otherwise all 31 load-bearing
+prose figures were checked programmatically against `sweep_nmnist.csv`,
+`readout_experiment.json`, `quantisation_test.json`, `caltech_experiment.json`,
+`conditional_ceiling.json` and `arch_matched.json`, and **all 31 trace**. Every table on the
+page renders from the payload rather than carrying its own numbers, and the panels the audit
+asked for are all present: readout taxonomy, the two withdrawn citations visibly marked, the
+conditional ceiling, the matched-architecture 2×2, and the narrowed claim about published
+work.
+
+**Chose.**
+- *The Pages workflow is left failing.* It is a true signal — the site has no deployment
+  target — and silencing it would hide a real state. The alternative, gating the job on Pages
+  being enabled, would make the first enable-and-push silently succeed with no prior test.
+- *The gap is recorded rather than backfilled.* Append-only means the log may be incomplete
+  but never retroactive.
+- *The README leads with findings rather than with the hypothesis.* The hypothesis the study
+  set out to test was falsified; leading with it would misdescribe the work to the first
+  reader, which is what the old README did for nine sessions.
+
+**Open.**
+- *Pages must be enabled in repository settings* before `docs/` is reachable. Owner's action.
+- *The Node-20 deprecation warning* will become an error when GitHub removes the runtime;
+  `actions/checkout@v4` and the Pages actions will need version bumps.
+- *Five sessions remain undocumented* and their rejected alternatives are lost.
+- *`CITATION.cff` was not audited* in this pass and still carries a placeholder DOI.

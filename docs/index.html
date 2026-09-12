@@ -703,8 +703,9 @@
     <p>
       <strong>The recommendation, with its scope.</strong> Where a membrane readout is
       available — simulation, GPU or CPU inference, hardware exposing output-layer state —
-      the cap is avoidable and should be avoided; it costs 16&times; in uncalibrated ECE at
-      T = 2 for nothing. Where only spike events leave the chip, the cap is a hard
+      the cap is avoidable and should be avoided; it costs <strong>11.9&times; to
+      63.5&times;</strong> in uncalibrated ECE at T = 2, depending on seed (mean 30.5&times;),
+      for nothing. Where only spike events leave the chip, the cap is a hard
       constraint rather than a design error, and T<sub>min</sub> gives the timestep budget.
       Where early exit is required, counts may be preferable regardless, and the cap is the
       price of monotonicity — which should be paid knowingly.
