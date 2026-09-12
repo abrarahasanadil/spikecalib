@@ -1783,6 +1783,24 @@ added.
 
 ---
 
+## AI disclosure, for the paper
+
+The paper is not yet written. When it is, this goes in the methods or an acknowledgements
+note, once, in these words:
+
+> AI assistance was used for implementation and drafting. All research design, hypotheses,
+> the pre-registered prediction and its outcome, and all verification decisions are the
+> author's. Every citation was checked against primary documents; two were withdrawn on
+> verification and one energy constant was reclassified from cited to derived.
+
+It is not to be softened and not to be expanded, and it belongs in the paper rather than on
+the dashboard. Both of its factual claims are supported here: the two withdrawn references
+are recorded in `SOURCES.md`, and the energy constant is E_MAC = 4.6 pJ, reclassified from
+`[LIT]` to `[DERIVED]` on 2026-09-12 because it appears nowhere in Horowitz and is the
+0.9 + 3.7 multiply-plus-add convention.
+
+---
+
 ## Status
 
 Implemented and run on N-MNIST: data acquisition, splits, model, training, both ECE

@@ -2056,3 +2056,79 @@ checked — reverting the footer to a bare `<p>` fails exactly one test.
 - *A `c8` card claim runs to 161 characters at 1920,* unchanged. Now that the card stretches,
   making it `c6` would fix both that and the internal gap in one move — worth doing together
   rather than separately.
+
+## 2026-09-12 — Plain English on the card faces; the c6 change did not do what I said it would
+
+**Did.** Three items. The AI disclosure is recorded for the paper, not added to the page.
+
+**Ran.** `pytest -q` → **222 passed**. Verified at 1920 and 1440, re-checked at 1200, 1100,
+900 and 400.
+
+**Found: `c6` alone does not close the internal gap, and I said it would.** The previous
+entry ended by suggesting the T = 80 card be made `c6` because it "would fix both that and
+the internal gap in one move". Measured, it fixes one of them. At `c6` the claim drops from
+161 characters to 118, but the card still stands 409px against a 509px tile stack, so the
+blank simply stays — 112px of it, inside the card rather than under it. Three column splits
+had already been measured and none moved it by more than 19px, for the reason recorded then:
+the mismatch is vertical, and I suggested a horizontal remedy anyway.
+
+So the tiles were compacted as well, which is what the previous entry had listed as the
+alternative. In the stacked layout the caption and the CSV column name now share a row
+instead of taking one each — about 27px a tile, 411px for the stack against the card's 409px.
+**Row gap 2px at 1920 and 18px at 1440, internal blank 12px, which is the card's ordinary
+element gap.** `align-self: stretch` on that card is gone, so `.sweep-rows` is once again the
+only thing on the page that stretches, and it is the one where the gained height becomes
+table rows.
+
+**Found: four horizontal holes the harness could not see.** `measure.mjs` groups grid
+children into visual rows and reports the vertical gap under each — and skips any row with
+fewer than two items, because a lone item has nothing to be short against. Every hole here
+was exactly that case: a single card in a row that does not fill the width. Measured after
+adding a horizontal check: **424px** at 1200 (the tiles move to the top of the section, so
+the card that shared their row sits alone in six of twelve columns), **374px** at 1100 and
+**446px** at 900 (three four-column cards cannot pack into six-wide rows, so the third is
+orphaned), **196px** at 400. All four now fill. The cost is at 900px, where cards go to one
+column and the page grows from 10.87 to 12.06 screens; that is the right trade at a width
+where a single column is the correct layout anyway.
+
+One of the fixes did nothing at first: `@media (max-width: 1200px) { .cards .c6 { span 12 } }`
+sat beside the tiles rule, which is *earlier* in the file than `.cards .c6 { span 6 }`. Equal
+specificity, so source order won and the override was inert. Moved below the base rule.
+
+**Found: the `c6` claim was capped at 68ch, stranding 211px.** Uncapped it runs to 127
+characters at 1920, past the ceiling; at 68ch it stops 211px short of a 768px card, which is
+the same invisible-wall defect the hero had. 87ch lands at **117 characters** with 54px of
+slack, and does not bind at all below about 1620px. The dead `.cards .c8` rules went with it.
+
+**Did: plain English on the card faces.** Rewritten so a reader who has never heard of
+calibration can follow them. Terms are explained where they first appear — miscalibration as
+"confidence does not match how often the model is right", a readout as what "turns spikes
+into an answer", an operating point as a "usable cut-off", an interval straddling zero as "no
+measurable difference". Checked mechanically rather than by eye: **zero semicolons across all
+eight faces**, longest sentence 16 words, claims 23 to 42 words, and the multiset of numbers
+on each face is identical before and after. The eight modals are byte-identical — the
+precision stays where it belongs.
+
+Two judgement calls inside "wording only". The formula `e^T/(e^T+C−1)` stays on card 1: it
+is a claim, not phrasing, and the modal is not the only place it should appear. And card 6
+now glosses "an interval straddling zero means no measurable difference" rather than
+restating "13 of 15" in the claim — the hedge stays, as instructed, in the headline number
+and its caption directly above.
+
+**Did: the AI disclosure.** Recorded in `NOTES.md` under its own heading, verbatim, to go
+into the paper's methods or acknowledgements when the paper is written. Not on the dashboard.
+Both of its factual claims are supported here: the two withdrawn references are in
+`SOURCES.md`, and the reclassified constant is E_MAC = 4.6 pJ, moved from `[LIT]` to
+`[DERIVED]` on 2026-09-12.
+
+**Verified.** 1920 and 1440, re-checked at 1200, 1100, 900 and 400: every row of the card
+grid fills its width, zero columns ending with more than 150px of empty space, zero citations
+split, zero provenance statements split, no horizontal overflow, no console errors, all eight
+modals opening to a measured on-screen rectangle and closing on Escape. Contrast lowest
+**5.22:1**, nothing below 4.5:1.
+
+**Open.**
+- *The disclosure says "the pre-registered prediction" in the singular.* There are five in
+  this document, with five recorded outcomes. Left exactly as given, because the instruction
+  was not to expand it, and flagged here rather than edited.
+- *`--accent` is still mint outside the rail,* unchanged.

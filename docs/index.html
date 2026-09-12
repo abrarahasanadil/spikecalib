@@ -129,9 +129,9 @@
   <article class="card c4">
     <div class="card-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></div>
     <p class="stat"><span class="stat-num stat-teal">0</span>
-      <span class="stat-unit">violations in 24 cells</span></p>
-    <h3 class="card-title">The ceiling holds</h3>
-    <p class="card-claim">Softmax over spike counts cannot exceed e<sup>T</sup>/(e<sup>T</sup>+C−1). The bound was respected in every measured cell, at both class counts and both architectures.</p>
+      <span class="stat-unit">cases out of 24 broke the limit</span></p>
+    <h3 class="card-title">The ceiling held every time</h3>
+    <p class="card-claim">A spiking network answers by counting spikes over <em>T</em> time steps. Counting caps how confident the answer can look. The cap is e<sup>T</sup>/(e<sup>T</sup>+C−1). No measured case beat it, at either class count or either network shape.</p>
     <div class="card-fig"><table class="mini"><thead><tr><th>C</th><th>T</th><th>derived</th><th>observed</th></tr></thead><tbody><tr><td>10</td><td>2</td><td>0.450853</td><td>0.450853</td></tr><tr><td>101</td><td>2</td><td>0.068806</td><td>0.068806</td></tr><tr><td>101</td><td>6</td><td>0.801362</td><td>0.801362</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m1">
       Full reasoning, caveats and complete tables
@@ -140,9 +140,9 @@
   <article class="card c4">
     <div class="card-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></div>
     <p class="stat"><span class="stat-num stat-teal">99.2%</span>
-      <span class="stat-unit">of uncalibrated error at T = 2</span></p>
-    <h3 class="card-title">Where it binds, it explains the error</h3>
-    <p class="card-claim">The gap between accuracy and the ceiling accounts for almost all the miscalibration where the cap binds, and none of it where it does not.</p>
+      <span class="stat-unit">of the error before calibration, at T = 2</span></p>
+    <h3 class="card-title">Where the cap bites, it explains the error</h3>
+    <p class="card-claim">Miscalibration means confidence does not match how often the model is right. Where the cap bites, the gap between accuracy and the cap explains almost all of it. Where the cap does not bite, it explains none of it.</p>
     <div class="card-fig"><table class="mini"><thead><tr><th>C</th><th>T</th><th>explained</th></tr></thead><tbody><tr><td>10</td><td>2</td><td>99.2%</td></tr><tr><td>10</td><td>6</td><td>44.1%</td></tr><tr><td>101</td><td>2</td><td>97.1%</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m2">
       Full reasoning, caveats and complete tables
@@ -151,9 +151,9 @@
   <article class="card c4">
     <div class="card-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></div>
     <p class="stat"><span class="stat-num stat-teal">0.7966</span>
-      <span class="stat-unit">nats, the floor at T = 2</span></p>
-    <h3 class="card-title">The same bound floors the training loss</h3>
-    <p class="card-claim">Cross-entropy cannot fall below −ln(ceiling). Plateaus sit 0.0072–0.0182 above it, so training loss is not comparable across T.</p>
+      <span class="stat-unit">nats — the lowest loss reachable at T = 2</span></p>
+    <h3 class="card-title">The same cap puts a floor under training loss</h3>
+    <p class="card-claim">Training loss measures how wrong the confidences are. The cap puts a floor under it, at −ln(cap). Measured plateaus sit 0.0072–0.0182 above that floor. The floor moves with <em>T</em>. So losses at different <em>T</em> cannot be compared.</p>
     <div class="card-fig"><table class="mini"><thead><tr><th>T</th><th>floor</th><th>plateau</th></tr></thead><tbody><tr><td>2</td><td>0.7966</td><td>0.8041</td></tr><tr><td>6</td><td>0.0221</td><td>0.0391</td></tr><tr><td>10</td><td>0.0004</td><td>0.0108</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m3">
       Full reasoning, caveats and complete tables
@@ -162,9 +162,9 @@
   <article class="card c12">
     <div class="card-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span><span class="pill pill-lit">lit</span></div>
     <p class="stat"><span class="stat-num stat-purple">−0.5386 / +0.0047</span>
-      <span class="stat-unit">capped vs unbounded, conf − acc</span></p>
-    <h3 class="card-title">The readout family decides the direction of the failure</h3>
-    <p class="card-claim">A capped readout is underconfident where the cap binds. An unbounded one is overconfident as T grows. The readout predicts the direction, not the network.</p>
+      <span class="stat-unit">capped vs unbounded readout: confidence minus accuracy</span></p>
+    <h3 class="card-title">The readout decides which way it fails</h3>
+    <p class="card-claim">A readout turns spikes into an answer. A capped one is underconfident where the cap bites. It is right more often than it claims. An unbounded one goes the other way as <em>T</em> grows. The readout sets the direction, not the network.</p>
     <div class="card-fig"><table class="mini"><thead><tr><th>readout</th><th>bound</th><th>conf − acc</th></tr></thead><tbody><tr><td>count</td><td>capped</td><td>-0.5386</td></tr><tr><td>membrane</td><td>unbounded, leaky</td><td>-0.0289</td></tr><tr><td>accumulator</td><td>unbounded</td><td>+0.0000</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m4">
       Full reasoning, caveats and complete tables
@@ -173,9 +173,9 @@
   <article class="card c4">
     <div class="card-pills"><span class="pill pill-measured">measured</span></div>
     <p class="stat"><span class="stat-num stat-green">+3 to +13</span>
-      <span class="stat-unit">accuracy points &mdash; 12.8 at four blocks, 3.1 at two</span></p>
-    <h3 class="card-title">Removing the cap buys accuracy where it is severe</h3>
-    <p class="card-claim">Only where the cap is severe. The direction replicates across architectures; the magnitude does not.</p>
+      <span class="stat-unit">accuracy points &mdash; 12.8 in the four-block network, 3.1 in the two-block</span></p>
+    <h3 class="card-title">Removing the cap buys accuracy where it bites hardest</h3>
+    <p class="card-claim">The gain only appears where the cap is severe. The direction holds in both network shapes. The size of the gain does not.</p>
     <div class="card-fig"><table class="mini"><thead><tr><th>depth</th><th>count</th><th>uncapped</th><th>gain</th></tr></thead><tbody><tr><td>4 blocks</td><td>0.4543</td><td>0.5825</td><td>+12.8</td></tr><tr><td>2 blocks</td><td>0.4891</td><td>0.5199</td><td>+3.1</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m5">
       Full reasoning, caveats and complete tables
@@ -185,8 +185,8 @@
     <div class="card-pills"><span class="pill pill-measured">measured</span></div>
     <p class="stat"><span class="stat-num stat-purple">13 / 15</span>
       <span class="stat-unit">intervals straddle zero</span></p>
-    <h3 class="card-title">Calibrator choice does not matter</h3>
-    <p class="card-claim">Temperature and isotonic are statistically indistinguishable. The two that resolve point in opposite directions.</p>
+    <h3 class="card-title">Which calibration method you pick does not matter</h3>
+    <p class="card-claim">Calibration rescales confidence to match accuracy. Temperature and isotonic are the two methods here. An interval straddling zero means no measurable difference. The two runs that do resolve point in opposite directions.</p>
     <div class="card-fig"><table class="mini"><thead><tr><th>outcome</th><th>count</th></tr></thead><tbody><tr><td>straddle zero</td><td>13</td></tr><tr><td>favour temperature</td><td>1</td></tr><tr><td>favour isotonic</td><td>1</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m6">
       Full reasoning, caveats and complete tables
@@ -195,20 +195,20 @@
   <article class="card c4">
     <div class="card-pills"><span class="pill pill-measured">measured</span></div>
     <p class="stat"><span class="stat-num stat-purple">9</span>
-      <span class="stat-unit">operating points, against ~10,000</span></p>
-    <h3 class="card-title">The readout limits what can be deployed</h3>
-    <p class="card-claim">At T = 2 a count readout offers about nine achievable selective-prediction operating points across 10,000 test samples. An uncapped readout offers a continuum.</p>
+      <span class="stat-unit">usable cut-offs, against ~10,000 samples</span></p>
+    <h3 class="card-title">The readout limits how you can deploy it</h3>
+    <p class="card-claim">You can make a model answer only when it is confident. Each distinct confidence value is one usable cut-off. At <em>T</em> = 2 a count readout gives about nine, across 10,000 test samples. An uncapped readout gives a continuous range.</p>
     <div class="card-fig"><table class="mini"><thead><tr><th>readout</th><th>T = 2 ops</th></tr></thead><tbody><tr><td>count</td><td>9</td></tr><tr><td>weighted-count</td><td>17</td></tr><tr><td>uncapped</td><td>10,000</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m7">
       Full reasoning, caveats and complete tables
       <span class="chev" aria-hidden="true">&rarr;</span></button>
   </article>
-  <article class="card c8">
+  <article class="card c6">
     <div class="card-pills"><span class="pill pill-lit">lit</span><span class="pill pill-measured">measured</span></div>
     <p class="stat"><span class="stat-num stat-mint">T = 80</span>
-      <span class="stat-unit">vs T = 2 — different regimes</span></p>
-    <h3 class="card-title">The disagreement with the literature dissolves</h3>
-    <p class="card-claim">Prior work reports overconfidence with this readout at T = 80, where the ceiling is inert. This study measures underconfidence at T = 2. Non-overlapping regimes.</p>
+      <span class="stat-unit">vs T = 2 — two different regimes</span></p>
+    <h3 class="card-title">The clash with earlier work is not a clash</h3>
+    <p class="card-claim">Earlier work reports overconfidence at <em>T</em> = 80. At that many steps the cap sits so high it does nothing. This study measures underconfidence at <em>T</em> = 2. The two regimes never overlap.</p>
     <div class="card-fig"><table class="mini"><thead><tr><th>study</th><th>T</th><th>ceiling</th><th>reports</th></tr></thead><tbody><tr><td>Chen, Park &amp; Simeone</td><td>80</td><td>1.0000</td><td>overconfident</td></tr><tr><td>this study</td><td>2</td><td>0.4509</td><td>underconfident</td></tr><tr><td>this study</td><td>10</td><td>0.9996</td><td>unsigned</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m8">
       Full reasoning, caveats and complete tables
