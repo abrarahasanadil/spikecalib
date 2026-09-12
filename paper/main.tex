@@ -24,7 +24,7 @@
 A Structural Account of Miscalibration in Low-Timestep Spiking Networks}
 \author{Mohammed Abrar Ahasan Chowdhury\\[2pt]
   \small ORCID \href{https://orcid.org/0009-0006-9273-6593}{0009-0006-9273-6593}\\
-  \small \todo{affiliation}\quad \texttt{abrarahasanadil@gmail.com}}
+  \small Independent researcher, Liverpool, United Kingdom\quad \texttt{abrarahasanadil@gmail.com}}
 \date{}
 
 \begin{document}
@@ -118,8 +118,9 @@ be adjusted. It follows from the readout, and it holds before any calibrator is 
 Theirs is a bound placed on a model to improve calibration; this one is a bound the readout
 already imposes, and it causes the miscalibration studied here.
 
-Temperature scaling and the binned expected calibration error follow Guo
-et al.~\citep{guo2017calibration}.
+Temperature scaling, a single-parameter variant of Platt scaling, was proposed as a calibrator
+by Guo et al., who also describe the equal-width estimate of expected calibration error used
+here~\citep{guo2017calibration}.
 
 % =========================================================================================
 \section{The bound}
@@ -226,7 +227,8 @@ Two post-hoc calibrators are fitted on the calibration set: temperature scaling,
 that divides the logits~\citep{guo2017calibration}, and top-label isotonic regression.
 Calibrators are fitted on N-MNIST only. Expected calibration error (ECE) is the sample-weighted
 mean gap between confidence and accuracy over \nBins{} bins, computed with two binning schemes. % src: results/sweep_nmnist.csv n_bins
-Equal-width bins~\citep{guo2017calibration} are the usual choice. A spike-count readout,
+Equal-width bins are the usual choice, and Guo et al.\ report ECE with 15 of them~\citep{guo2017calibration}. % [LIT] guo2017calibration, Table 1 caption: "ECE (%) (with M = 15 bins)"
+A spike-count readout,
 however, concentrates its confidences on a few values, which leaves most equal-width bins empty
 and can bias the estimate. Equal-mass bins, each holding the same number of samples, do not fail
 in that way. Both are reported for every calibration number. The difference between two

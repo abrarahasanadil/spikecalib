@@ -56,27 +56,35 @@ contributors, https://github.com/fangwei123456/spikingjelly
 train/test split convention for DVS-Gesture (1,176 / 288), and the MD5 checksums used to
 verify N-MNIST archives.
 *Used in:* throughout `spikecalib/` and `scripts/`.
-
-### Believed but not yet confirmed against the primary document
-
-These are cited in the repository today and are **flagged**; each also appears under
-To verify.
-
-**Horowitz (2014). "Computing's Energy Problem (and what we can do about it)."
-*ISSCC 2014*.** **Resolved 2026-09-12 — see "Verified 2026-09-12 against primary
-documents" below for the evidence.** `E_AC = 0.9 pJ` is `[LIT]`, confirmed as the 32-bit
-float add in **Figure 1.1.9**. `E_MAC = 4.6 pJ` is `[DERIVED]`: it appears nowhere in the
-paper and is the 0.9 + 3.7 multiply-plus-add convention. This entry is kept only as a
-pointer; it no longer states an unverified status.
+*Year and author, for citation:* PyPI records the 0.0.0.0.14 upload on **20 March 2023**
+and lists the author as **"PKU MLG, PCL, and other contributors"**
+(https://pypi.org/pypi/spikingjelly/0.0.0.0.14/json). `paper/refs.bib` uses both. The
+accompanying journal paper is not cited, because it has not been read.
 
 **Guo, Pleiss, Sun & Weinberger (2017). "On Calibration of Modern Neural Networks."
-*ICML 2017*.** `[LIT]` for the paper, `[UNVERIFIED]` for the bin count.
-*Taken from it:* equal-width-binned ECE; temperature scaling as a post-hoc calibrator;
-the one-vs-rest-with-renormalisation isotonic formulation; the default of 15 bins.
+*ICML 2017*, PMLR 70:1321-1330.** `[LIT]` verified 2026-09-12 against the proceedings PDF
+and the PMLR record, https://proceedings.mlr.press/v70/guo17a.html: authors **Chuan Guo,
+Geoff Pleiss, Yu Sun and Kilian Q. Weinberger**, published 17 July 2017.
+*What it says, and what it does not:*
+- **Temperature scaling is theirs.** "Temperature scaling, the simplest extension of Platt
+  scaling, uses a single scalar parameter T > 0 for all classes", and they write that they
+  are "not aware of any prior use" of it for calibration.
+- **Equal-width ECE is described, not introduced.** ECE "approximates (2) by partitioning
+  predictions into M equally-spaced bins", and the paper attributes Expected Calibration
+  Error to **Naeini et al. (2015)**. Crediting Guo et al. for the estimator would be wrong;
+  crediting them for describing the equal-width form used here is accurate.
+- **15 bins is their reported setting, not a stated default.** Table 1 and the results text
+  give ECE "with M = 15 bins". Nothing in the paper recommends 15 as a default, so it is
+  described here as following their setting rather than as their default.
+- **Isotonic regression and the one-versus-all extension are attributed to Zadrozny & Elkan
+  (2002).** Guo et al. describe that extension — K one-versus-all calibrators, confidence
+  the maximum of the vector normalised by its sum — and apply it to isotonic regression.
+- **Equal-mass binning does not appear in the paper.**
 *Used in:* `spikecalib/calibration.py` (`ece_equal_width`, `TemperatureScaling`,
-`IsotonicOneVsRest`, `n_bins=15` default), `NOTES.md` correctness rule 2 and prior work.
-*Status:* author list, year and venue are high-confidence but unconfirmed here; the
-**`n_bins = 15` default is attributed to this paper and has not been checked**.
+`IsotonicOneVsRest`), `NOTES.md` correctness rule 2, `paper/main.tex`.
+*Not read:* Naeini et al. (2015) and Zadrozny & Elkan (2002). Neither is cited.
+
+### Prior-work citations from the project brief, checked 2026-09-12
 
 **Four prior-work citations carried over from the project brief.** **Checked 2026-09-12;
 two did not survive.** See "Verified 2026-09-12" below for the evidence.
@@ -95,7 +103,10 @@ nothing in the brief is now treated as a source until it has been opened.
 
 **N-Caltech101 (Orchard, Jayawant, Cohen & Thakor).** The C axis. `[LIT]` for the dataset
 itself; the copy used here is the Mendeley Data mirror, `doi:10.17632/cy6cvx3ryv.1`,
-version 1. `Caltech101.zip` is 3,989,375,649 bytes with SHA-256
+version 1. The DOI record at DataCite gives the creator as **Garrick Orchard**, the publisher
+as Mendeley and the issue date as **12 January 2022**
+(https://api.datacite.org/dois/10.17632/cy6cvx3ryv.1); `paper/refs.bib` uses these.
+`Caltech101.zip``Caltech101.zip` is 3,989,375,649 bytes with SHA-256
 `c70d387facd67f38f04a6f0afc4b1181416f2610cb924afa1f16fed99f7ebb9f`, and its MD5 matches the
 hash SpikingJelly publishes for the same file exactly, so the mirror is serving the archive
 upstream expects. `[MEASURED]` 8,709 samples in 101 class directories, class sizes 31
@@ -112,23 +123,6 @@ ceiling, the cross-entropy floor it implies, and a **null result** on calibrator
 not the original isotonic hypothesis. These are the references a reviewer of *those*
 claims will raise.
 
-**Atarashi, Oyama, Arai & Kashima (2026). "Probability Bounding: Post-Hoc Calibration via
-Box-Constrained Softmax." arXiv:2506.10572, February 2026.** `[UNVERIFIED]`
-*Status:* taken from the abstract; **not read in full**. Must be read before the preprint
-ships, because it is the closest prior work to the ceiling claim and the distinction below
-depends on details the abstract may not settle.
-*What it does:* post-hoc calibration that **learns** lower and upper bounds on output
-probabilities through a box-constrained softmax.
-*Distinction, which a reviewer who knows this paper will ask for:* their bounds are
-**learned parameters fitted to the outputs of a general ANN** — a modelling choice, tunable,
-and imposed to improve calibration. The ceiling in this study is **structural**: it is not
-fitted, not adjustable, and not a design decision. It follows arithmetically from applying
-a softmax to integer spike counts bounded by `T`, and the trained models saturate it to
-within 4e-13. The two are near-opposites in kind — one is a bound put *onto* a model, the
-other a bound the readout *already has*. Where they may genuinely meet is that a learned
-box constraint could in principle be used to *correct* the structural ceiling, which is a
-direction this study does not pursue.
-
 **Wu, Qi, Cai, Jin, Yi & Huang. "Direct Training Needs Regularisation: Anytime Optimal
 Inference Spiking Neural Network." arXiv:2405.00699, 15 April 2024.** `[LIT]` verified
 against the arXiv record 2026-09-12.
@@ -137,15 +131,14 @@ against the arXiv record 2026-09-12.
 > theirs. arXiv:2405.00699 is by **Dengyu Wu, Yi Qi, Kaiwen Cai, Gaojie Jin, Xinping Yi and
 > Xiaowei Huang**, and the method is **AOI-SNN** (Anytime Optimal Inference), not AOT-SNN.
 > The brief supplied the wrong author pair against this identifier and it was carried
-> unchecked. A separate AOT-SNN line does exist and is Sun & Bohté's — see the next entry —
+> unchecked. A separate AOT-SNN line does exist and is Sun & Bohté's — see "Could NOT be
+> confirmed", item 4 —
 > so two different papers with similar acronyms had been merged into one citation.
 
 *What it does:* introduces a Spatial-Temporal Regulariser that balances spike strength
 against membrane potential at each timestep, producing an SNN whose accuracy degrades
 gracefully under early cutoff; combined with a softmax-output cutoff it reports 2.14-2.89x
 faster inference at 0.50-0.64% accuracy cost on event-based data.
-*Distinction:* the object is a **stopping rule and a training regulariser**, not the
-calibration of the confidence itself.
 *Distinction:* the setting overlaps closely — directly trained, event data, softmax over
 the output — but the object is a **stopping rule**, not the calibration of the confidence
 itself. This study fixes the network and the timestep count and asks only whether the
@@ -175,8 +168,8 @@ until 2026-09-12 this study had asserted that without knowing their timestep cou
 uses** — softmax over spike counts — and reports the opposite direction of miscalibration.
 See "The sign of the miscalibration" in `NOTES.md`. This study measures mean confidence
 minus accuracy of **−0.539 at T = 2**, severe *under*confidence, and attributes it to the
-attainable-confidence ceiling. The disagreement is most likely one of regime rather than of
-fact, and is reported as such rather than as a correction.
+attainable-confidence ceiling. At their `T` the cap cannot bind, so the disagreement is one of regime rather than of
+fact.
 
 ---
 
@@ -202,10 +195,10 @@ calibrators. *Used in:* `NOTES.md` "What tie rate is, and what it is not".
 **Temperature is not bounded by the ceiling.** `softmax(z/t) -> one-hot` as `t -> 0`, so
 confidence approaches 1 regardless of `T`. *Used in:* `NOTES.md` claim section.
 
-**`E_MAC` as multiply-plus-accumulate.** If `E_MAC = 4.6 pJ` is not stated directly by
-Horowitz, it is the sum of a 32-bit FP multiply (believed 3.7 pJ) and a 32-bit FP add
-(believed 0.9 pJ). This decomposition is `[DERIVED]` *conditional on* two `[UNVERIFIED]`
-inputs, so it inherits their status.
+**`E_MAC` as multiply-plus-accumulate.** `E_MAC = 4.6 pJ` is not stated by Horowitz. It
+is the sum of the 32-bit floating-point multiply, 3.7 pJ, and the 32-bit floating-point add,
+0.9 pJ, both read from Figure 1.1.9 (see "Verified 2026-09-12", item 1). The inputs are
+`[LIT]`; the sum is `[DERIVED]`, and the convention of adding them is not a citation.
 
 **DVS-Gesture count gap.** `1,464 - 1,342 = 122`, which equals the number of recording
 trials (98 train + 24 test). One extra labelled segment per trial on average.
@@ -452,33 +445,22 @@ softened to say what is actually known, and both claims stay `[UNVERIFIED]`.
 
 ## Still to verify
 
-1. **Guo et al. ICML 2017 — full author list and the `n_bins = 15` default.** Not attempted
-   in this pass.
-2. **Amir et al. CVPR 2017 — full author list** for DVS-Gesture. Only "Amir et al." and the
+1. **Amir et al. CVPR 2017 — full author list** for DVS-Gesture. Only "Amir et al." and the
    title are confirmed, via SpikingJelly's docstring.
-3. **Li et al. 2017 — full author list** for CIFAR10-DVS. Same situation.
-4. **ATan surrogate gradient — originating paper.** SpikingJelly documents the function but
+2. **Li et al. 2017 — full author list** for CIFAR10-DVS. Same situation.
+3. **ATan surrogate gradient — originating paper.** SpikingJelly documents the function but
    attaches no citation. The general method is usually credited to Neftci, Mostafa & Zenke;
    the specific arctan form is unattributed here.
-5. **DVS-Gesture 1,176 / 288 split counts.** From SpikingJelly's docstring; not built.
-6. **CIFAR10-DVS 10,000 sample count.** Same.
-7. ~~Whether "Dynamic Confidence" uses a spike-count or membrane readout.~~ **RESOLVED
-   2026-09-12 by reading the method section: a real-valued readout. The ceiling does not
-   apply to their results.** Verbatim from their experimental setup: *"keeping the output
-   layer at full precision... the neurons in the output layer only accumulate input
-   currents."* The output neurons integrate but do not fire, so the logits are accumulated
-   real-valued currents, not integers in `[0, T]`. See `NOTES.md`, "Does the ceiling bind in
-   published work?" — which also records that the same paragraph independently documents the
-   *opposite* failure mode, confidence "saturating to 100%" under an unbounded accumulating
-   readout, corroborating this study's accumulator measurements.
-8. **The AOT-SNN classification paper**, if one exists, and whether temperature scaling is
+4. **DVS-Gesture 1,176 / 288 split counts.** From SpikingJelly's docstring; not built.
+5. **CIFAR10-DVS 10,000 sample count.** Same.
+6. **The AOT-SNN classification paper**, if one exists, and whether temperature scaling is
    its calibration baseline.
-9. **Loihi compartment-state access cost** and **SpiNNaker recording bandwidth for a small
-   output layer** — see item 6 above.
-10. **Adam `lr = 1e-3`** — an unjustified constant, never tuned.
-11. **LIF `tau = 2.0` as a readout parameter.** Adopted as a neuron default, but the leak
+7. **Loihi compartment-state access cost** and **SpiNNaker recording bandwidth for a small
+   output layer** — see "Could NOT be confirmed", item 6.
+8. **Adam `lr = 1e-3`** — an unjustified constant, never tuned.
+9. **LIF `tau = 2.0` as a readout parameter.** Adopted as a neuron default, but the leak
     experiment shows it sets the membrane readout's evidence window and therefore drives a
     reported result. No sweep has been run. Every statement about "a membrane readout" is a
     statement about `tau = 2`.
-12. **N-Caltech101 class semantics** — the 101 = 100 + background composition is from the
+10. **N-Caltech101 class semantics** — the 101 = 100 + background composition is from the
     dataset homepage; only the counts were measured here.

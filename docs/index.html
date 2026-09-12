@@ -124,7 +124,7 @@
       <span class="stat-unit">of the error before calibration, at T = 2</span></p>
     <h3 class="card-title">Where the cap bites, it explains the error</h3>
     <p class="card-claim">Miscalibration means confidence does not match how often the model is right. Where the cap bites, the gap between accuracy and the cap explains almost all of it. Where the cap does not bite, it explains none of it.</p>
-    <div class="card-fig" id="fig-explained"><table class="mini"><thead><tr><th>C</th><th>T</th><th>explained</th></tr></thead><tbody><tr><td>10</td><td>2</td><td>99.2%</td></tr><tr><td>10</td><td>6</td><td>44.1%</td></tr><tr><td>101</td><td>2</td><td>97.1%</td></tr></tbody></table></div>
+    <div class="card-fig" id="fig-explained"><table class="mini"><thead><tr><th>C</th><th>T</th><th>explained</th></tr></thead><tbody><tr><td>10</td><td>2</td><td>99.2%</td></tr><tr><td>10</td><td>6</td><td>44.5%</td></tr><tr><td>101</td><td>2</td><td>97.1%</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m2">
       Full reasoning, caveats and complete tables
       <span class="chev" aria-hidden="true">&rarr;</span></button>
@@ -319,8 +319,8 @@
       The case for spiking networks is energy, so the sweep records a SynOps proxy. The
       result complicates that case: the input encoder — the first layer, which receives
       real-valued event frames rather than spikes and is therefore costed as
-      multiply-accumulates — is between 41% and 65% of the modelled energy at every timestep
-      setting. The layer that does <em>not</em> receive spikes is roughly half the bill.
+      multiply-accumulates — is between 41% and 70% of the modelled energy across the fifteen sweep
+      runs, and between 47% and 67% when the three seeds at each timestep setting are averaged. The layer that does <em>not</em> receive spikes is roughly half the bill.
       This is a design-comparison proxy built from operation counts and published
       per-operation energies; it ignores memory traffic, static power and clock, and no claim
       about a physical device follows from it. The per-operation figures come from Horowitz,

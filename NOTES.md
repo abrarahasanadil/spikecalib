@@ -1687,8 +1687,8 @@ stub in this repository restates the rule it is responsible for.
    the evaluation set reports its own training error as a result, which is the single
    most damaging thing that can silently go wrong in this study.
 
-2. **Two ECE estimators, both reported.** Equal-width binning (Guo et al., ICML 2017;
-   `[LIT]` for the method, `[UNVERIFIED]` for the 15-bin default attributed to it) and
+2. **Two ECE estimators, both reported.** Equal-width binning (as described by Guo et al.,
+   ICML 2017, who attribute ECE to Naeini et al., 2015, and report it with 15 bins) and
    equal-mass binning are both computed and both reported. With discrete spike counts
    the confidence distribution is lumpy: equal-width binning leaves bins empty and
    concentrates mass in a few others, which biases the estimate **optimistically** at low
@@ -1745,7 +1745,8 @@ logits, and the spike count is the natural logit of a rate-coded SNN.
   calibrator fitted on exactly that pairing is the like-for-like comparison. This
   formulation appears in the headline table.
 - *Secondary — one-vs-rest with renormalisation.* Included for comparability with Guo
-  et al., who report this formulation. It is reported alongside so that readers
+  et al., who describe this formulation and attribute its one-versus-all extension to
+  Zadrozny & Elkan (2002). It is reported alongside so that readers
   cross-referencing that paper can find the number they expect.
 
 **Tie-breaking.** Argmax ties are broken **uniformly at random under the experiment

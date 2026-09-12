@@ -323,7 +323,10 @@
       });
       if (hit === 2) both++;
     });
-    put("fig-bootstrap", mini(["outcome", "eq-width", "eq-mass"], [
+    /* Only overwrite the static fallback when there were rows to count. Without data.js
+       this renderer used to replace the correct fallback with a table of zeros, including
+       "resolve under both 0" -- a claim about data it never saw. */
+    if (Object.keys(seen).length) put("fig-bootstrap", mini(["outcome", "eq-width", "eq-mass"], [
       ["straddle zero", c.equal_width[0], c.equal_mass[0]],
       ["favour temperature", c.equal_width[1], c.equal_mass[1]],
       ["favour isotonic", c.equal_width[2], c.equal_mass[2]]])

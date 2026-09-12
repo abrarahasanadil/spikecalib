@@ -2818,3 +2818,89 @@ line. Figure 1 is seed 0, drawn from `results/readout_stats.json`, and its capti
 **Tooling.** Tectonic installed via Homebrew. The PDF and build logs are ignored in
 `.gitignore`; the source, the bibliography, the generated `numbers.tex` and its generator are
 tracked, so `tectonic -X compile paper/main.tex` rebuilds the paper from a checkout.
+
+## 2026-09-12 — Paper and sources cleanup: affiliation, Guo verified, stale entries removed
+
+**Ran.** `pytest -q` → **230 passed** (one new guard). Paper recompiled: **9 pages, sections 1–7
+ending on page 8**, no overfull lines, no undefined references, **no BibTeX warnings**. Dashboard
+re-checked at 1920, 1440, 1200, 900 and 400: no row over 100px empty, 8 of 8 modals, filters
+unchanged, lowest contrast 4.88:1.
+
+**Did: affiliation.** The red TODO on page 1 now reads "Independent researcher, Liverpool,
+United Kingdom". No employer or project is named.
+
+**Did: Guo et al. verified against the primary document** — the ICML 2017 proceedings PDF and
+its PMLR record. Authors **Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger**; PMLR 70,
+pages 1321–1330, published 17 July 2017. What it does and does not say:
+- **Temperature scaling is theirs**, "the simplest extension of Platt scaling", and they are
+  "not aware of any prior use" of it for calibration.
+- **Equal-width ECE is described, not introduced.** They define it by "M equally-spaced bins"
+  and **attribute ECE to Naeini et al. (2015)**.
+- **15 bins is the setting they report with, not a default.** Table 1 and the results text give
+  ECE "with M = 15 bins"; nothing recommends it.
+- **Isotonic regression and the one-versus-all extension are attributed to Zadrozny & Elkan
+  (2002)**; Guo et al. describe the renormalised extension and apply it to isotonic regression.
+- Equal-mass binning does not appear.
+
+So the credits were narrowed rather than confirmed wholesale. The paper said "temperature
+scaling and the binned expected calibration error follow Guo et al."; it now credits them with
+proposing temperature scaling and with *describing* the equal-width estimate, and says they
+report ECE with 15 bins. `refs.bib` carries the full entry. SOURCES.md moves Guo to the verified
+section with the evidence above; NOTES correctness rule 2 and three `calibration.py` docstrings
+lose their "`[UNVERIFIED]` 15-bin default" wording. Naeini et al. and Zadrozny & Elkan are not
+read and are not cited.
+
+**Did: stale and superseded entries in SOURCES.md.** Removed or corrected, one entry per work
+now:
+- **The stale Atarashi et al. entry** — dated 2026, `[UNVERIFIED]`, "not read in full" — beside
+  the confirmed one. Removed.
+- **A Horowitz pointer** duplicating the confirmed entry, and the section heading "Believed but
+  not yet confirmed", which no longer held anything unconfirmed. Removed; the brief-citations
+  summary table keeps its own heading.
+- **Wu et al.: two "Distinction" paragraphs**, the shorter superseded by the fuller. The shorter
+  removed.
+- **Chen, Park & Simeone: "most likely one of regime"**, a hedge written before the T = 80 regime
+  was confirmed. Now states the regime difference.
+- **The E_MAC derivation** still called 0.9 and 3.7 pJ "believed" and the sum "conditional on two
+  `[UNVERIFIED]` inputs". Both are read from Figure 1.1.9; the inputs are now `[LIT]` and the sum
+  `[DERIVED]`.
+- **"Still to verify"** carried two resolved items, Guo and Dynamic Confidence's readout. Removed
+  and renumbered, 12 → 10, with one internal reference repaired; a second pointer in the Wu entry
+  ("see the next entry") pointed at nothing after the reshuffle and now names its section.
+
+**Did: bibliography years, found in the primary metadata.** SpikingJelly 0.0.0.0.14 — PyPI
+records the upload on 20 March 2023 and the author as "PKU MLG, PCL, and other contributors".
+The N-Caltech101 Mendeley mirror — the DataCite record gives creator Garrick Orchard, publisher
+Mendeley, issued 12 January 2022. Both recorded in SOURCES.md and used in `refs.bib`; the two
+BibTeX warnings are gone.
+
+**Did: the dashboard's energy range. "Between 41% and 65% … at every timestep setting" →
+"between 41% and 70% … across the fifteen sweep runs, and between 47% and 67% when the three
+seeds at each timestep setting are averaged."** The old figure was exactly **seed 0's range**
+(41.3% at T = 8, 65.0% at T = 2) presented as if it covered every run; T = 2 seed 2 is 70.0%.
+A new test in `tests/test_provenance.py` recomputes both ranges from `docs/sweep.csv` and checks
+the sentence.
+
+**Found by the re-audit, fixed.**
+- *Card 2's static fallback table still said 44.1%.* The data renderer overwrites it at load, so
+  only a reader without `data.js` saw it. Now 44.5%, and a comparison of all seven fallback
+  tables against their data-rendered versions shows **0 of 7 differ**.
+- *Card 6 wiped its own fallback without data.* With `data.js` unavailable, its renderer ran on
+  an empty CSV and replaced the correct table with zeros — including "resolve under both 0", a
+  claim about data it never saw. It now writes only when there are rows to count.
+- *My own scan was broken first.* Its file list was an unquoted variable, which zsh does not
+  split, so every grep searched one nonexistent path and reported zero. Re-run with an explicit
+  list and a sanity row that must match.
+
+**Outstanding.**
+- *`CITATION.cff` carries `doi: "10.48550/arXiv.TODO"`* — the arXiv DOI, which cannot exist until
+  the preprint is posted.
+- *Three bibliography entries give surnames only* — Atarashi et al., Horowitz, Orchard et al. —
+  because SOURCES.md records only surnames for them; first names would need the primary documents
+  opened again.
+- *The arctangent surrogate gradient is uncited in the paper*, because its originating paper is
+  item 3 of "Still to verify".
+- *The ten open items in "Still to verify"* — none is cited by the paper except as noted above;
+  the untuned learning rate and the unswept τ = 2 are the two that bear on reported results.
+- *The withdrawn references still appear in NOTES.md*, as a record of their withdrawal rather than
+  as citations.

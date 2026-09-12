@@ -3,8 +3,8 @@
 This module is the contribution. Everything else in the repository is scaffolding that
 gets data into it and results out of it.
 
-Owns correctness rule 2: **both equal-width (Guo et al., ICML 2017; ``[LIT]`` for the
-method, ``[UNVERIFIED]`` for the 15-bin default attributed to it -- SOURCES.md item 2)
+Owns correctness rule 2: **both equal-width ECE -- in the form described by Guo et al.,
+ICML 2017, who attribute the estimator to Naeini et al. (2015) and report it with 15 bins --
 and equal-mass ECE are computed
 and both are reported.** :func:`compute_metrics` returns them together in one object, so
 there is no code path that produces one without the other. With discrete spike counts the
@@ -516,7 +516,8 @@ class IsotonicTopLabel(Calibrator):
 class IsotonicOneVsRest(Calibrator):
     """SECONDARY formulation: per-class isotonic, then renormalised.
 
-    Included for comparability with Guo et al., who report this formulation, so a reader
+    Included for comparability with Guo et al., who describe this formulation (attributing its
+    one-versus-all extension to Zadrozny & Elkan, 2002), so a reader
     cross-referencing that paper finds the number they expect. One isotonic fit per class
     maps that class's probability to the indicator of it being the true class; the
     calibrated columns are then renormalised to sum to one.
@@ -614,10 +615,12 @@ def _validate(conf: np.ndarray, correct: np.ndarray) -> tuple[np.ndarray, np.nda
 
 
 def ece_equal_width(conf: np.ndarray, correct: np.ndarray, n_bins: int = 15) -> float:
-    """Expected calibration error with equal-width bins (Guo et al., ICML 2017).
+    """Expected calibration error with equal-width bins, as described by Guo et al., ICML 2017.
 
-    ``[LIT]`` for the binning scheme. The ``n_bins = 15`` default is attributed to that
-    paper and is ``[UNVERIFIED]``; see SOURCES.md "To verify" item 2.
+    ``[LIT]``, verified against the proceedings: Guo et al. partition predictions into
+    equally-spaced bins, attribute the estimator to Naeini et al. (2015), and report ECE with
+    15 bins. That is the setting they report with, not a default they recommend; 15 here
+    follows it.
 
     Bins partition ``[0, 1]`` into ``n_bins`` intervals of equal width regardless of where
     the data is. With discrete spike counts most intervals are empty and the occupied ones

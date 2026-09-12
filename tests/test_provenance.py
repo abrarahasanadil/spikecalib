@@ -121,3 +121,26 @@ def test_the_dashboard_states_the_real_column_count(claimed: str) -> None:
         f"the page claims a column count that is not {n}; sweep.csv has {n}"
     )
     assert claimed == str(n)
+
+
+# --------------------------------------------------------------------------- energy
+
+def test_dashboard_energy_ranges_match_the_sweep() -> None:
+    """The energy note once quoted seed 0's range, 41-65%, as if it covered every run."""
+    with open(os.path.join(ROOT, "docs", "sweep.csv")) as fh:
+        rows = list(csv.DictReader(fh))
+    runs: dict[tuple[str, str], float] = {}
+    for r in rows:
+        runs.setdefault((r["timesteps"], r["seed"]), float(r["encoder_energy_fraction"]))
+    by_t: dict[str, list[float]] = {}
+    for (t, _), v in runs.items():
+        by_t.setdefault(t, []).append(v)
+    lo, hi = round(100 * min(runs.values())), round(100 * max(runs.values()))
+    means = [100 * sum(v) / len(v) for v in by_t.values()]
+    page = " ".join(_read("docs", "index.html").split())
+    assert f"between {lo}% and {hi}% of the modelled energy across the fifteen sweep runs" in page, (
+        f"the per-run range in the energy note should read {lo}-{hi}%"
+    )
+    assert f"between {round(min(means))}% and {round(max(means))}% when the three seeds" in page, (
+        "the per-timestep-mean range in the energy note does not match the sweep"
+    )
