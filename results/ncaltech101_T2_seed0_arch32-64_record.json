@@ -1,0 +1,93 @@
+{
+  "seed": 0,
+  "eval_seed": 0,
+  "dataset": "ncaltech101",
+  "timesteps": 2,
+  "split_fingerprint": "17e6b35480e6d410",
+  "epochs_requested": 50,
+  "epochs_run": 10,
+  "best_val_accuracy": 0.3234323432343234,
+  "final_val_accuracy": 0.30033003300330036,
+  "final_val_tie_rate": 0.49174917491749176,
+  "best_epoch": 4,
+  "early_stopped": true,
+  "lr": 0.001,
+  "batch_size": 32,
+  "device": "mps",
+  "n_parameters": 2749130,
+  "seconds": 31.964582204818726,
+  "mps_nondeterministic": true,
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 4.022397739203271,
+      "val_accuracy": 0.20462046204620463,
+      "val_tie_rate": 0.6831683168316832
+    },
+    {
+      "epoch": 1,
+      "train_loss": 3.478320314642141,
+      "val_accuracy": 0.25412541254125415,
+      "val_tie_rate": 0.6501650165016502
+    },
+    {
+      "epoch": 2,
+      "train_loss": 3.155743624744881,
+      "val_accuracy": 0.2706270627062706,
+      "val_tie_rate": 0.6666666666666666
+    },
+    {
+      "epoch": 3,
+      "train_loss": 2.9715578166427314,
+      "val_accuracy": 0.31683168316831684,
+      "val_tie_rate": 0.6171617161716172
+    },
+    {
+      "epoch": 4,
+      "train_loss": 2.8807252090981708,
+      "val_accuracy": 0.3234323432343234,
+      "val_tie_rate": 0.5577557755775577
+    },
+    {
+      "epoch": 5,
+      "train_loss": 2.8273008523326397,
+      "val_accuracy": 0.3102310231023102,
+      "val_tie_rate": 0.5346534653465347
+    },
+    {
+      "epoch": 6,
+      "train_loss": 2.8015349277304726,
+      "val_accuracy": 0.30033003300330036,
+      "val_tie_rate": 0.49834983498349833
+    },
+    {
+      "epoch": 7,
+      "train_loss": 2.782756500291369,
+      "val_accuracy": 0.3201320132013201,
+      "val_tie_rate": 0.5148514851485149
+    },
+    {
+      "epoch": 8,
+      "train_loss": 2.7720523938974138,
+      "val_accuracy": 0.30033003300330036,
+      "val_tie_rate": 0.44884488448844884
+    },
+    {
+      "epoch": 9,
+      "train_loss": 2.762474773627606,
+      "val_accuracy": 0.30033003300330036,
+      "val_tie_rate": 0.49174917491749176
+    }
+  ],
+  "model_config": {
+    "channels": [
+      32,
+      64
+    ],
+    "hidden": 256,
+    "tau": 2.0,
+    "v_threshold": 1.0,
+    "surrogate_alpha": 2.0,
+    "readout": "count"
+  }
+}

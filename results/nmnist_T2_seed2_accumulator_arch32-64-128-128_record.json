@@ -1,0 +1,185 @@
+{
+  "seed": 2,
+  "eval_seed": 0,
+  "dataset": "nmnist",
+  "timesteps": 2,
+  "split_fingerprint": "efb1e8b8510cd229",
+  "epochs_requested": 50,
+  "epochs_run": 25,
+  "best_val_accuracy": 0.9898,
+  "final_val_accuracy": 0.9858,
+  "final_val_tie_rate": 0.0036,
+  "best_epoch": 19,
+  "early_stopped": true,
+  "lr": 0.001,
+  "batch_size": 128,
+  "device": "mps",
+  "n_parameters": 375060,
+  "seconds": 254.01673412322998,
+  "mps_nondeterministic": true,
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 0.31827409585475924,
+      "val_accuracy": 0.9638,
+      "val_tie_rate": 0.0196
+    },
+    {
+      "epoch": 1,
+      "train_loss": 0.11602240806818008,
+      "val_accuracy": 0.9752,
+      "val_tie_rate": 0.0118
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.08645604913234711,
+      "val_accuracy": 0.9802,
+      "val_tie_rate": 0.0084
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.06854602255582809,
+      "val_accuracy": 0.979,
+      "val_tie_rate": 0.0078
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.06293914937019349,
+      "val_accuracy": 0.9836,
+      "val_tie_rate": 0.0086
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.05460406266927719,
+      "val_accuracy": 0.9816,
+      "val_tie_rate": 0.0076
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.04701715082526207,
+      "val_accuracy": 0.9828,
+      "val_tie_rate": 0.0074
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.04274176921606064,
+      "val_accuracy": 0.984,
+      "val_tie_rate": 0.0064
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.04168662105381489,
+      "val_accuracy": 0.9846,
+      "val_tie_rate": 0.0056
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.03479915460020304,
+      "val_accuracy": 0.9854,
+      "val_tie_rate": 0.0044
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.03384239154696465,
+      "val_accuracy": 0.9858,
+      "val_tie_rate": 0.0058
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.03099087925493717,
+      "val_accuracy": 0.9856,
+      "val_tie_rate": 0.0064
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.0298542919421196,
+      "val_accuracy": 0.9864,
+      "val_tie_rate": 0.0064
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.03082878875851631,
+      "val_accuracy": 0.9852,
+      "val_tie_rate": 0.0046
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.027079543379098178,
+      "val_accuracy": 0.9856,
+      "val_tie_rate": 0.004
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.02599666038736701,
+      "val_accuracy": 0.987,
+      "val_tie_rate": 0.0056
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.024507431764602662,
+      "val_accuracy": 0.9876,
+      "val_tie_rate": 0.006
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.023374839525818824,
+      "val_accuracy": 0.9882,
+      "val_tie_rate": 0.0036
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.02267276840597391,
+      "val_accuracy": 0.983,
+      "val_tie_rate": 0.0058
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.019336611454486848,
+      "val_accuracy": 0.9898,
+      "val_tie_rate": 0.0042
+    },
+    {
+      "epoch": 20,
+      "train_loss": 0.020818375329077245,
+      "val_accuracy": 0.9868,
+      "val_tie_rate": 0.0048
+    },
+    {
+      "epoch": 21,
+      "train_loss": 0.022287323319613934,
+      "val_accuracy": 0.9886,
+      "val_tie_rate": 0.0042
+    },
+    {
+      "epoch": 22,
+      "train_loss": 0.020461310715079308,
+      "val_accuracy": 0.9878,
+      "val_tie_rate": 0.0034
+    },
+    {
+      "epoch": 23,
+      "train_loss": 0.017238843794465063,
+      "val_accuracy": 0.988,
+      "val_tie_rate": 0.0032
+    },
+    {
+      "epoch": 24,
+      "train_loss": 0.018038970617055894,
+      "val_accuracy": 0.9858,
+      "val_tie_rate": 0.0036
+    }
+  ],
+  "model_config": {
+    "channels": [
+      32,
+      64,
+      128,
+      128
+    ],
+    "hidden": 256,
+    "tau": 2.0,
+    "v_threshold": 1.0,
+    "surrogate_alpha": 2.0,
+    "readout": "accumulator"
+  }
+}

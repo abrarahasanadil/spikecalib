@@ -1,0 +1,87 @@
+{
+  "seed": 0,
+  "eval_seed": 0,
+  "dataset": "ncaltech101",
+  "timesteps": 6,
+  "split_fingerprint": "17e6b35480e6d410",
+  "epochs_requested": 50,
+  "epochs_run": 9,
+  "best_val_accuracy": 0.40264026402640263,
+  "final_val_accuracy": 0.3696369636963696,
+  "final_val_tie_rate": 0.2706270627062706,
+  "best_epoch": 3,
+  "early_stopped": true,
+  "lr": 0.001,
+  "batch_size": 32,
+  "device": "mps",
+  "n_parameters": 2749130,
+  "seconds": 62.686970949172974,
+  "mps_nondeterministic": true,
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 3.0914215856868554,
+      "val_accuracy": 0.30363036303630364,
+      "val_tie_rate": 0.37623762376237624
+    },
+    {
+      "epoch": 1,
+      "train_loss": 1.9125770433319302,
+      "val_accuracy": 0.37293729372937295,
+      "val_tie_rate": 0.3234323432343234
+    },
+    {
+      "epoch": 2,
+      "train_loss": 1.188252244520238,
+      "val_accuracy": 0.3564356435643564,
+      "val_tie_rate": 0.3432343234323432
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.7914154553185683,
+      "val_accuracy": 0.40264026402640263,
+      "val_tie_rate": 0.2607260726072607
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.562016583897429,
+      "val_accuracy": 0.38283828382838286,
+      "val_tie_rate": 0.3069306930693069
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.4625507729357951,
+      "val_accuracy": 0.40264026402640263,
+      "val_tie_rate": 0.2838283828382838
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.40882270177809815,
+      "val_accuracy": 0.39603960396039606,
+      "val_tie_rate": 0.2838283828382838
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.374626979426862,
+      "val_accuracy": 0.3795379537953795,
+      "val_tie_rate": 0.26732673267326734
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.35775095857956574,
+      "val_accuracy": 0.3696369636963696,
+      "val_tie_rate": 0.2706270627062706
+    }
+  ],
+  "model_config": {
+    "channels": [
+      32,
+      64
+    ],
+    "hidden": 256,
+    "tau": 2.0,
+    "v_threshold": 1.0,
+    "surrogate_alpha": 2.0,
+    "readout": "count"
+  }
+}

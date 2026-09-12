@@ -1,0 +1,107 @@
+{
+  "seed": 0,
+  "eval_seed": 0,
+  "dataset": "nmnist",
+  "timesteps": 6,
+  "split_fingerprint": "e524beccace851af",
+  "epochs_requested": 50,
+  "epochs_run": 12,
+  "best_val_accuracy": 0.9872,
+  "final_val_accuracy": 0.9848,
+  "final_val_tie_rate": 0.0072,
+  "best_epoch": 6,
+  "early_stopped": true,
+  "lr": 0.001,
+  "batch_size": 128,
+  "device": "mps",
+  "n_parameters": 375060,
+  "seconds": 381.1035430431366,
+  "mps_nondeterministic": true,
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 0.20705482962846755,
+      "val_accuracy": 0.952,
+      "val_tie_rate": 0.0218
+    },
+    {
+      "epoch": 1,
+      "train_loss": 0.07400831582307815,
+      "val_accuracy": 0.9764,
+      "val_tie_rate": 0.008
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.055558663300275805,
+      "val_accuracy": 0.9742,
+      "val_tie_rate": 0.0114
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.04747879782438278,
+      "val_accuracy": 0.9854,
+      "val_tie_rate": 0.0068
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.039644013519883156,
+      "val_accuracy": 0.9818,
+      "val_tie_rate": 0.0072
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.038677187995314596,
+      "val_accuracy": 0.9766,
+      "val_tie_rate": 0.0122
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.03429013102829456,
+      "val_accuracy": 0.9872,
+      "val_tie_rate": 0.0078
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.03035938675791025,
+      "val_accuracy": 0.9856,
+      "val_tie_rate": 0.0052
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.02746010333120823,
+      "val_accuracy": 0.9834,
+      "val_tie_rate": 0.0066
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.02642646945685148,
+      "val_accuracy": 0.986,
+      "val_tie_rate": 0.0066
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.024095645359754562,
+      "val_accuracy": 0.9846,
+      "val_tie_rate": 0.0046
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.020560763044059276,
+      "val_accuracy": 0.9848,
+      "val_tie_rate": 0.0072
+    }
+  ],
+  "model_config": {
+    "channels": [
+      32,
+      64,
+      128,
+      128
+    ],
+    "hidden": 256,
+    "tau": 2.0,
+    "v_threshold": 1.0,
+    "surrogate_alpha": 2.0,
+    "readout": "accumulator"
+  }
+}

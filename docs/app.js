@@ -685,6 +685,47 @@
     host.innerHTML = html + "</tbody>";
   }
 
+  function renderArch() {
+    var host = document.getElementById("arch-table");
+    if (!host) return;
+    var rows = window.SPIKECALIB.arch;
+    if (!rows || !rows.length) { hide("arch-table"); return; }
+    function cells(ds, nb, T, ro) {
+      return rows.filter(function (r) {
+        return r.dataset === ds && r.n_blocks === nb && r.timesteps === T && r.readout === ro;
+      });
+    }
+    var html = "<thead><tr>" +
+      ["dataset", "C", "blocks", "params", "T", "count acc", "accum acc", "gain",
+       "residual", "ceiling held", "cond ceiling", "share"]
+        .map(function (t) { return '<th scope="col" style="cursor:default">' + t + "</th>"; })
+        .join("") + "</tr></thead><tbody>";
+    [["ncaltech101", "N-Caltech101"], ["nmnist", "N-MNIST"]].forEach(function (d) {
+      [2, 6].forEach(function (T) {
+        [2, 4].forEach(function (nb) {
+          var c = cells(d[0], nb, T, "count"), a = cells(d[0], nb, T, "accumulator");
+          if (!c.length) return;
+          var acc = mean(c.map(function (r) { return r.test_accuracy; }));
+          var aacc = a.length ? mean(a.map(function (r) { return r.test_accuracy; })) : null;
+          var held = c.every(function (r) { return r.ceiling_signed_excess <= 1e-12; });
+          html += '<tr><td class="k">' + d[1] + '</td><td class="k">' + c[0].n_classes +
+            '</td><td class="k">' + nb + "</td><td>" +
+            (c[0].n_parameters / 1000).toFixed(0) + "k</td>" +
+            '<td class="k">' + T + "</td>" +
+            "<td>" + acc.toFixed(4) + "</td>" +
+            "<td>" + (aacc === null ? "\u2014" : aacc.toFixed(4)) + "</td>" +
+            "<td>" + (aacc === null ? "\u2014" : signed(aacc - acc, 4)) + "</td>" +
+            "<td>" + signed(mean(c.map(function (r) { return r.residual; })), 4) + "</td>" +
+            "<td>" + (held ? "yes" : "NO") + "</td>" +
+            "<td>" + mean(c.map(function (r) { return r.conditional_ceiling_mean; })).toFixed(4) + "</td>" +
+            "<td>" + (mean(c.map(function (r) { return r.share_explained_conditional; })) * 100).toFixed(0) + "%</td>" +
+            "</tr>";
+        });
+      });
+    });
+    host.innerHTML = html + "</tbody>";
+  }
+
   function renderConditional() {
     var host = document.getElementById("conditional-table");
     if (!host) return;
@@ -767,6 +808,7 @@
   renderQuantisation();
   renderCaxis();
   renderConditional();
+  renderArch();
   render();
   window.addEventListener("resize", function () { drawCeiling(); render(); });
 })();

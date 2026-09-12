@@ -63,12 +63,18 @@ def conditional_ceiling(counts: np.ndarray, timesteps: float) -> np.ndarray:
     return e_t / (e_t + competitor_sum)
 
 
-def competitor_profile(counts: np.ndarray, n_classes: int) -> dict:
+def competitor_profile(counts: np.ndarray, n_classes: int,
+                       max_histogram_values: int = 64) -> dict:
     """How many non-winning classes fire, and at what counts.
 
     Returns the distribution rather than only its mean: the softmax denominator is a sum of
     exponentials, so it is dominated by the few loudest competitors and a mean count hides
     whether the activity is spread thinly or concentrated.
+
+    ``count_histogram`` is ``None`` for a readout with more than ``max_histogram_values``
+    distinct competitor values -- a real-valued readout has one per sample per class, and
+    tabulating them is neither informative nor small. The quantiles of the competitor sum are
+    reported either way and are what the conditional ceiling actually depends on.
     """
     counts = np.asarray(counts, dtype=np.float64)
     n = counts.shape[0]
@@ -85,9 +91,13 @@ def competitor_profile(counts: np.ndarray, n_classes: int) -> dict:
     # says whether "mean competitor count" is a fair summary at all.
     top1_share = np.exp(loudest[:, 0]) / denom
 
-    hist = {}
-    for v in np.unique(comp):
-        hist[float(v)] = float((comp == v).mean())
+    # A histogram only makes sense for a DISCRETE readout. Spike counts take a handful of
+    # integer values; a membrane or accumulator readout is real-valued, and tabulating its
+    # unique values produced 173,962 keys per row and a 137 MB dashboard payload before this
+    # guard existed. Above the threshold the quantiles below carry the shape instead.
+    uniq = np.unique(comp)
+    hist = ({float(v): float((comp == v).mean()) for v in uniq}
+            if uniq.size <= max_histogram_values else None)
     return {
         "n_competitors": int(counts.shape[1] - 1),
         "mean_count": float(comp.mean()),
@@ -98,6 +108,7 @@ def competitor_profile(counts: np.ndarray, n_classes: int) -> dict:
         "mean_competitor_sum": float(denom.mean()),
         "mean_top1_share_of_sum": float(top1_share.mean()),
         "count_histogram": hist,
+        "n_distinct_competitor_values": int(uniq.size),
         "quantiles_of_competitor_sum": {
             str(q): float(np.quantile(denom, q)) for q in (0.05, 0.25, 0.5, 0.75, 0.95)
         },

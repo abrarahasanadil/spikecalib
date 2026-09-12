@@ -309,7 +309,7 @@
       binds in 3 of 3 seeds and accounts for <strong>97.1%</strong> of uncalibrated ECE, just
       as it accounted for 99.2% on N-MNIST. At T = 6 accuracy is 0.6427 against a ceiling of
       0.8014 — comfortably below it, so nothing is forced — and the readout is
-      <strong>still underconfident by 0.1534</strong>, fifty times N-MNIST's ECE at the same
+      <strong>still underconfident by 0.1534</strong>, 4.4&times; to 6&times; N-MNIST's ECE at the same
       T. On N-MNIST the regime where the ceiling stopped binding was also one where almost no
       error remained, so the two explanations could not be told apart. Here they come apart,
       and a large miscalibration is left that <strong>the ceiling does not explain at
@@ -321,8 +321,11 @@
     <p>
       <strong>Where the cap is severe it costs accuracy, not just calibration.</strong> At
       T = 2 the uncapped accumulator beats the count readout by <strong>12.8 accuracy
-      points</strong> — in every seed (+15.2, +9.6, +13.7). At C = 10 the same comparison was
-      worth 0.1 points and the readouts were indistinguishable. The cross-entropy floor is
+      points</strong> — in every seed (+15.2, +9.6, +13.7) — with this architecture. At the
+      other architecture tested the gain is <strong>+3.1 points</strong>, still positive in
+      3 of 3 seeds: the direction replicates and the magnitude does not, so this is an
+      architecture-specific number (see the matched-architecture panel below). At C = 10 the
+      same comparison was worth 0.1 points and the readouts were indistinguishable. The cross-entropy floor is
       2.68 nats here against 0.80 at C = 10, so the objective is dominated by a target the
       model cannot reach. Above T = 2 it reverses and count wins by about 4 points, so this
       belongs to the binding regime rather than to the readout.
@@ -336,6 +339,57 @@
       literature is a regime difference.</strong> Underconfidence is what a capped readout
       does where the cap binds; take away either condition and this study measures
       overconfidence too.
+    </p>
+  </div></section>
+
+  <section class="panel c12"><div class="prose wide">
+<h3>The same claims at two depths: what replicates and what does not</h3>
+    <p>
+      N-Caltech101 was run with four conv blocks and N-MNIST with two, so every cross-dataset
+      comparison above was confounded with architecture. This is the 2&times;2 that removes
+      it — both architectures on both datasets, T in {2, 6}, three seeds, both readouts, 48
+      cells. It doubles as the alternative-architecture check the study never had.
+    </p>
+    <p>
+      <strong>A caveat on what "architecture" varies here.</strong> More pooling shrinks the
+      flatten, so the four-block model is the <em>smaller</em> one: 464k parameters against
+      the two-block model's 2,749k on N-Caltech101. Depth and capacity move in opposite
+      directions, so this separates one network from another — which is the point — but it
+      cannot attribute a difference to depth specifically.
+    </p>
+    <div class="scroll" style="margin:12px 0">
+      <table id="arch-table"></table>
+    </div>
+    <p class="chart-note">Mean over three seeds, rendered from
+      <code>results/arch_matched.json</code>. "gain" is accumulator accuracy minus count
+      accuracy — the value of removing the cap.</p>
+    <p>
+      <strong>The ceiling is architecture-independent, as the formula requires.</strong> Zero
+      violations across all 24 count cells, and the bound is saturated to float precision in
+      every one of them — at both depths, on both datasets, at both timestep settings.
+    </p>
+    <p>
+      <strong>The headline accuracy gain does not replicate in magnitude.</strong> At
+      C = 101, T = 2 removing the cap is worth <strong>+12.8 points at four blocks and
+      +3.1 at two</strong> — a fourfold difference, though it stays positive in every seed at
+      both. So "removing the cap helps accuracy where it binds hard" replicates; "by 12.8
+      points" does not. That also undercuts the mechanism offered for it: a cross-entropy
+      floor dominating the gradient has no architectural term, and if it were the whole story
+      the gain would not depend on the network.
+    </p>
+    <p>
+      <strong>The C = 101, T = 6 residual survives.</strong> 0.1534 at four blocks and
+      <strong>0.1159</strong> at two — about a quarter attributable to the network and three
+      quarters not. N-MNIST's own residuals barely move between architectures (0.5386 against
+      0.5398 at T = 2; 0.0272 against 0.0253 at T = 6), so the sensitivity is specific to
+      C = 101. At matched depth the cross-dataset ratio at T = 6 is <strong>4.3&times; at two
+      blocks and 6.1&times; at four</strong>, so the finding holds with the confound removed.
+    </p>
+    <p>
+      <strong>And the conditional ceiling still explains none of it</strong> — it sits at
+      0.7146 against an accuracy of 0.5618 at two blocks, and 0.6804 against 0.6427 at four.
+      Above accuracy either way, so it forces nothing. The residual is genuine miscalibration
+      at both architectures.
     </p>
   </div></section>
 

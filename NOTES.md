@@ -869,7 +869,10 @@ story as `C = 10`, where it accounted for 99.2%.
 **At `T = 6` it does not bind, and the study's `C = 10` intuition fails.** On N-MNIST, once
 accuracy fell below the ceiling the miscalibration collapsed to 0.0029. Here accuracy is
 0.6427 against a ceiling of 0.8014 — comfortably below it, so nothing is forced — and the
-readout is **still underconfident by 0.1534**, an ECE fifty times N-MNIST's at the same `T`.
+readout is **still underconfident by 0.1534**, an ECE **4.4× to 6.0×** N-MNIST's at the same
+`T` depending on architecture. *(Corrected 2026-09-12: this read "fifty times N-MNIST's at
+the same `T`". Fifty is the ratio against N-MNIST at `T = 10`, a different setting. See
+"Outcome of prediction 5".)*
 So:
 
 > **The ceiling explains the miscalibration where it binds and explains none of it where it
@@ -897,8 +900,11 @@ so these models had 0.19 of unused headroom. The residual is genuine miscalibrat
 | 6 | 0.6427 | 0.5976 | −0.0452 |
 | 10 | 0.6435 | 0.6072 | −0.0364 |
 
-At `T = 2`, removing the cap is worth **12.8 accuracy points**, in every seed. At `C = 10`
-the same comparison was worth 0.1 points — the readouts were indistinguishable. The
+At `T = 2`, removing the cap is worth **12.8 accuracy points**, in every seed, *with this
+architecture*. At `C = 10` the same comparison was worth 0.1 points — the readouts were
+indistinguishable. *(Qualified 2026-09-12: at the other architecture tested the gain is
+**+3.1 points**, still positive in 3 of 3 seeds. The direction replicates and the magnitude
+does not; see "Outcome of prediction 5".)* The
 difference is the severity of the bound: the cross-entropy floor at `C = 101, T = 2` is
 **2.6765 nats** against 0.7966 at `C = 10`, so the objective cannot be reduced below a value
 that dominates the gradient signal, and the model is optimising against a target it cannot
@@ -1213,6 +1219,125 @@ Every cross-dataset quantitative comparison in "The C axis" and in "Outcome of p
 is provisional. They are left in place, unedited, with this section as the pointer: a reader
 should treat the `C = 10` against `C = 101` numbers as unmatched until the table below is
 filled in.
+
+## Outcome of prediction 5, recorded 2026-09-12 after the run
+
+`[MEASURED]` `scripts/arch_matched.py`, 48 cells — 2 datasets × 2 architectures × 2 `T` ×
+3 seeds × 2 readouts, of which 24 were reused and 24 newly trained. The prediction above is
+unedited.
+
+### First, what the two architectures actually are
+
+They differ in depth **and** in size, in opposite directions, because more pooling shrinks
+the flatten:
+
+| | blocks | N-MNIST params | N-Caltech101 params |
+|---|---|---|---|
+| `(32, 64)` | 2 | 1,070,868 | 2,749,130 |
+| `(32, 64, 128, 128)` | 4 | 375,060 | 464,074 |
+
+**The shallower model is the larger one, by about 6×.** So this design separates "one
+network" from "another network", which is what the alternative-architecture check needed,
+but it cannot separate depth from capacity — they are anti-correlated here. Any statement
+below of the form "it changed with architecture" must not be read as "it changed with depth".
+
+### 1. The ceiling holds — prediction HELD, and more strongly than predicted
+
+`[MEASURED]` Signed excess (observed max − derived), worst case over 3 seeds:
+
+| dataset | blocks | `T` | derived | worst signed excess | saturated |
+|---|---|---|---|---|---|
+| N-Caltech101 | 2 | 2 | 0.068806 | +2.4e-14 | yes |
+| N-Caltech101 | 2 | 6 | 0.801362 | +3.8e-13 | yes |
+| N-Caltech101 | 4 | 2 | 0.068806 | +2.4e-14 | yes |
+| N-Caltech101 | 4 | 6 | 0.801362 | +3.8e-13 | yes |
+| N-MNIST | 2 | 2 | 0.450853 | −2.8e-13 | yes |
+| N-MNIST | 4 | 6 | 0.978178 | +3.8e-14 | yes |
+
+**Zero violations across all 24 count cells**, and the bound is saturated to float precision
+in every one. The prediction declined to claim saturation, since reaching the bound needs a
+sample with all competitors silent and that is a property of the trained model; it happened
+anyway at both depths on both datasets. The ceiling result is architecture-independent, as
+the formula says it must be.
+
+### 2. The accuracy gain does not survive — prediction FALSIFIED
+
+The prediction said the gain from removing the cap at `C = 101, T = 2` would stay above
+**+0.05 at both depths**.
+
+| blocks | count | accumulator | gain | per seed |
+|---|---|---|---|---|
+| 4 | 0.4543 | 0.5825 | **+0.1282** | +0.1515, +0.0959, +0.1372 |
+| 2 | 0.4891 | 0.5199 | **+0.0308** | +0.0482, +0.0138, +0.0304 |
+
+**+0.0308 is below the threshold, so the prediction is falsified.** The gain shrinks
+fourfold with the other architecture. It stays positive in 3 of 3 seeds, so the *direction*
+replicates, but the magnitude does not.
+
+> **The headline "+12.8 accuracy points" is an architecture-specific number and must be
+> reported as one.** What replicates is "removing the cap helps accuracy at `C = 101, T = 2`,
+> by between 3 and 13 points depending on the network". The claim that the cross-entropy
+> floor dominates the gradient — offered as a mechanism with no architectural term — does not
+> survive this: if it were the whole story the gain would not depend on the network.
+
+At `T = 6` the sign reverses at both depths (−0.0224 and −0.0452), so "the cap costs accuracy
+only where it binds hard" does replicate.
+
+### 3. The `C = 101, T = 6` residual persists — prediction HELD
+
+| blocks | params | accuracy | mean conf | residual | per seed |
+|---|---|---|---|---|---|
+| 4 | 464,074 | 0.6427 | 0.4894 | **+0.1534** | 0.1597, 0.1491, 0.1513 |
+| 2 | 2,749,130 | 0.5618 | 0.4459 | **+0.1159** | 0.1054, 0.1194, 0.1229 |
+
+The threshold was 0.08 and the residual is 0.1159 at the other architecture, so it holds.
+**About a quarter of it is attributable to the network and three quarters are not.** For
+contrast, N-MNIST's residuals barely move: 0.5386 against 0.5398 at `T = 2`, and 0.0272
+against 0.0253 at `T = 6`. The architecture sensitivity is specific to `C = 101`.
+
+### 4. The conditional ceiling still explains none of it — prediction HELD
+
+| blocks | residual | theoretical | share | conditional | share |
+|---|---|---|---|---|---|
+| 4 | +0.1534 | 0.8014 | 0% | 0.6804 | **0%** |
+| 2 | +0.1159 | 0.8014 | 0% | 0.7146 | **0%** |
+
+The conditional ceiling sits above accuracy at both depths (0.7146 against 0.5618; 0.6804
+against 0.6427), so it forces none of the residual either way. **The `C = 101, T = 6`
+residual is genuine miscalibration at both architectures**, and prediction 4's falsification
+survives the matched design.
+
+### The cross-dataset comparison, with the confound removed
+
+`[MEASURED]` Residual at `C = 101` against `C = 10`, count readout, **matched depth**:
+
+| blocks | `T` | `C = 101` | `C = 10` | ratio |
+|---|---|---|---|---|
+| 2 | 2 | +0.4343 | +0.5386 | 0.8× |
+| 4 | 2 | +0.3969 | +0.5398 | 0.7× |
+| 2 | 6 | +0.1159 | +0.0272 | **4.3×** |
+| 4 | 6 | +0.1534 | +0.0253 | **6.1×** |
+
+**The `T = 6` result survives the matched comparison at both depths.** More classes leave a
+much larger residual where the ceiling is slack, by a factor of 4 to 6.
+
+Two corrections follow from this table:
+
+- ***Corrected 2026-09-12.*** The C-axis section previously called the `C = 101, T = 6` ECE
+  "fifty times N-MNIST's at the same `T`". It is **4.4× to 6.0×** at the same `T`. The
+  fifty-fold figure is the ratio against N-MNIST at `T = 10` (0.1539 / 0.0029 = 53), which is
+  a different timestep setting. The comparison was mislabelled, not miscomputed.
+- At `T = 2` the residual is *smaller* at `C = 101` than at `C = 10`, which is not a
+  contradiction: at `C = 10` accuracy is 0.985 against a ceiling of 0.4509, and at `C = 101`
+  accuracy is only 0.45–0.49 against a ceiling of 0.0688. The ceiling is far more binding and
+  the absolute gap is still smaller, because the model is much worse.
+
+### What is no longer suspended
+
+Everything listed under prediction 5. The cross-dataset `T = 6` comparison holds at matched
+depth with a corrected ratio; the ceiling verification holds at both depths; the conditional
+ceiling result holds at both depths. The one claim that did not survive is the magnitude of
+the `T = 2` accuracy gain, which is now reported as a range across architectures.
 
 ## Why the count readout exists
 

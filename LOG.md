@@ -1284,3 +1284,93 @@ wrong thing. The script now reads `model_config` from each run's own record.
   thresholds did not depend on it.
 - *Nothing here tests a conditional ceiling at `C` between 10 and 101*, so the claim that it
   converges on the theoretical bound as `C` falls rests on two points.
+
+---
+
+## 2026-09-12 — The matched-architecture 2×2: the ceiling is architecture-independent, the headline accuracy gain is not
+
+**Did.** Ran both architectures on both datasets — `(32, 64)` and `(32, 64, 128, 128)`,
+`T` in {2, 6}, seeds 0–2, count and accumulator in every cell — to remove the depth confound
+introduced when N-Caltech101 was run four blocks deep against N-MNIST's two. 48 cells, of
+which 24 already existed and were reused under their historical filenames.
+
+**Ran.** `scripts/arch_matched.py` → 48 cells, 24 newly trained, about 2 h.
+`pytest -q` → **212 passed**, unchanged.
+
+**Corrected the framing first.** The task described the +12.8 accuracy gain at
+`C = 101, T = 2` as confounded with depth. It is not: count and accumulator share a trunk
+within N-Caltech101, so depth never varied inside that comparison. What it lacked was
+replication at a second depth — a weaker charge, and one this run answers. The genuinely
+confounded claims were the cross-dataset ones, and they were listed as suspended in
+prediction 5 before anything was run.
+
+**Found: the two architectures differ in depth AND size, in opposite directions.**
+More pooling shrinks the flatten, so the four-block model is the *smaller* one — 464k
+parameters against the two-block model's 2,749k on N-Caltech101, 375k against 1,071k on
+N-MNIST. This is a genuine alternative-architecture check and it is **not** a depth
+experiment; nothing here can attribute a difference to depth specifically, and the writeup
+says so.
+
+**Found: the ceiling is architecture-independent, exactly as the formula requires.**
+Zero violations across all 24 count cells, and the bound is **saturated to float precision
+in every one** — both depths, both datasets, both `T`. The prediction declined to claim
+saturation because reaching the bound needs a sample with all competitors silent, which is a
+property of the trained model. It happened anyway, everywhere.
+
+**Found: the headline accuracy gain does not replicate in magnitude — prediction falsified.**
+The prediction said the gain at `C = 101, T = 2` would stay above +0.05 at both depths.
+Measured **+0.1282 at four blocks and +0.0308 at two**, so it is falsified by its own
+threshold. The gain stays positive in 3 of 3 seeds at both, so the direction replicates and
+the magnitude does not. That also undercuts the mechanism offered for it: a 2.68-nat
+cross-entropy floor dominating the gradient has no architectural term, and if it were the
+whole story the gain would not be fourfold different between networks. "+12.8 points" is now
+reported as "+3 to +13 points depending on the network".
+
+**Found: the `C = 101, T = 6` residual survives — prediction held.**
+0.1534 at four blocks, **0.1159** at two, against a threshold of 0.08. About a quarter of it
+is attributable to the network and three quarters are not. N-MNIST's residuals barely move
+between architectures (0.5386/0.5398 at `T = 2`, 0.0272/0.0253 at `T = 6`), so the
+sensitivity is specific to `C = 101`. With the confound removed the cross-dataset ratio at
+`T = 6` is **4.3× at two blocks and 6.1× at four**.
+
+**Found: the conditional ceiling still explains none of it — prediction held.**
+0.7146 against an accuracy of 0.5618 at two blocks; 0.6804 against 0.6427 at four. Above
+accuracy either way, so it forces nothing. Prediction 4's falsification survives the matched
+design.
+
+**Broke: a second false number from the C-axis session, caught by this comparison.**
+The C-axis section called the `C = 101, T = 6` ECE "fifty times N-MNIST's at the same `T`".
+It is **4.4× to 6.0×** at the same `T`. Fifty is the ratio against N-MNIST at `T = 10`
+(0.1539 / 0.0029 = 53) — a different timestep setting. The figure was mislabelled rather
+than miscomputed, and it was only caught because the matched table put the same-`T`
+comparison in front of me at two depths. Corrected in `NOTES.md` and on the page.
+
+That makes two factual errors from that one session — this and the architecture claim — both
+found by later work rather than by review at the time. The pattern in both: a number or a
+claim written into prose while the code that would have contradicted it sat unexamined in
+another file.
+
+**Chose.**
+- *Reuse existing weights under their historical filenames.* A cell whose architecture
+  matches what that dataset already ran resolves to the old stem and is loaded, not
+  retrained. The reused N-MNIST cells reproduce their recorded accuracies exactly, which is
+  what confirms the lookup is finding the right files.
+- *New cells carry an architecture tag in their filename.* `_arch32-64-128-128`. Without it
+  a second architecture would silently overwrite the first dataset's weights.
+- *Training settings are taken per dataset from what its existing runs used* — batch 128 for
+  N-MNIST, 32 for N-Caltech101 — so a new cell differs from an existing one in depth alone.
+- *N-MNIST is materialised into RAM like N-Caltech101.* Frames round-trip through float16
+  exactly (maximum value 15, integers), checked before relying on it.
+
+**Open.**
+- *Depth and capacity cannot be separated here* because they are anti-correlated across the
+  two architectures. A matched-parameter pair at two depths would separate them and has not
+  been run.
+- *Two architectures is two points.* "Survives both depths" is a much weaker statement than
+  "architecture-independent", except for the ceiling itself, which is arithmetic.
+- *`T` in {2, 6} only* for the matched grid, so nothing here says whether the `T = 10`
+  behaviour replicates.
+- *Why the accuracy gain is architecture-sensitive is unexplained*, and it is now the most
+  concrete open question about the cap's effect on learning.
+- *The residual's remaining three quarters still has no mechanism.* Ruling out attainability
+  and now most of the capacity explanation makes it sharper, not smaller.

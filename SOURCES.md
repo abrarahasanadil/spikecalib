@@ -270,6 +270,12 @@ is engineering judgement recorded in `LOG.md`, not a citation.
 - Synthetic generator parameters: `p_hi = 0.75`, `p_lo = 0.15`, `noise = 0.20`,
   `noise_lo = 0.02`, `noise_hi = 0.45`. Chosen to produce visible miscalibration; not
   tuned and not meaningful outside the synthetic check.
+- Model depth per dataset: `(32, 64)` for N-MNIST, `(32, 64, 128, 128)` for N-Caltech101.
+  Neither is tuned. **These two differ in depth and in parameter count in opposite
+  directions** -- more pooling shrinks the flatten, so the four-block model has roughly a
+  sixth the parameters. Every result reported at both is an alternative-architecture check,
+  never a depth experiment. `[MEASURED]` parameter counts: N-MNIST 1,070,868 / 375,060;
+  N-Caltech101 2,749,130 / 464,074.
 - LIF `tau = 2.0`, `v_threshold = 1.0`. Conventional defaults, not tuned. **`tau` became
   load-bearing on 2026-09-11**: it sets the membrane readout's effective evidence window,
   which the leak experiment shows accounts for about half the high-`T` ranking deficit. A

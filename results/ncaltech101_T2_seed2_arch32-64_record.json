@@ -1,0 +1,159 @@
+{
+  "seed": 2,
+  "eval_seed": 0,
+  "dataset": "ncaltech101",
+  "timesteps": 2,
+  "split_fingerprint": "65947f632bdb55cc",
+  "epochs_requested": 50,
+  "epochs_run": 21,
+  "best_val_accuracy": 0.30033003300330036,
+  "final_val_accuracy": 0.264026402640264,
+  "final_val_tie_rate": 0.5544554455445545,
+  "best_epoch": 15,
+  "early_stopped": true,
+  "lr": 0.001,
+  "batch_size": 32,
+  "device": "mps",
+  "n_parameters": 2749130,
+  "seconds": 65.43180322647095,
+  "mps_nondeterministic": true,
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 3.9980859939479387,
+      "val_accuracy": 0.2079207920792079,
+      "val_tie_rate": 0.7260726072607261
+    },
+    {
+      "epoch": 1,
+      "train_loss": 3.465188239883272,
+      "val_accuracy": 0.24092409240924093,
+      "val_tie_rate": 0.6897689768976898
+    },
+    {
+      "epoch": 2,
+      "train_loss": 3.1349781203025384,
+      "val_accuracy": 0.2706270627062706,
+      "val_tie_rate": 0.5841584158415841
+    },
+    {
+      "epoch": 3,
+      "train_loss": 2.9583444029440678,
+      "val_accuracy": 0.2607260726072607,
+      "val_tie_rate": 0.6006600660066007
+    },
+    {
+      "epoch": 4,
+      "train_loss": 2.8663906723018413,
+      "val_accuracy": 0.2508250825082508,
+      "val_tie_rate": 0.6303630363036303
+    },
+    {
+      "epoch": 5,
+      "train_loss": 2.825822978885004,
+      "val_accuracy": 0.26732673267326734,
+      "val_tie_rate": 0.6402640264026402
+    },
+    {
+      "epoch": 6,
+      "train_loss": 2.793431359632807,
+      "val_accuracy": 0.27722772277227725,
+      "val_tie_rate": 0.5577557755775577
+    },
+    {
+      "epoch": 7,
+      "train_loss": 2.78095091709114,
+      "val_accuracy": 0.28052805280528054,
+      "val_tie_rate": 0.5412541254125413
+    },
+    {
+      "epoch": 8,
+      "train_loss": 2.768166188853007,
+      "val_accuracy": 0.27722772277227725,
+      "val_tie_rate": 0.5907590759075908
+    },
+    {
+      "epoch": 9,
+      "train_loss": 2.76155349202151,
+      "val_accuracy": 0.27722772277227725,
+      "val_tie_rate": 0.5511551155115512
+    },
+    {
+      "epoch": 10,
+      "train_loss": 2.7517378681912876,
+      "val_accuracy": 0.26732673267326734,
+      "val_tie_rate": 0.5544554455445545
+    },
+    {
+      "epoch": 11,
+      "train_loss": 2.7483890133356095,
+      "val_accuracy": 0.29372937293729373,
+      "val_tie_rate": 0.48184818481848185
+    },
+    {
+      "epoch": 12,
+      "train_loss": 2.745891983702194,
+      "val_accuracy": 0.2739273927392739,
+      "val_tie_rate": 0.49834983498349833
+    },
+    {
+      "epoch": 13,
+      "train_loss": 2.7442021482101295,
+      "val_accuracy": 0.2838283828382838,
+      "val_tie_rate": 0.5511551155115512
+    },
+    {
+      "epoch": 14,
+      "train_loss": 2.7352651450842314,
+      "val_accuracy": 0.29042904290429045,
+      "val_tie_rate": 0.5247524752475248
+    },
+    {
+      "epoch": 15,
+      "train_loss": 2.731439774981817,
+      "val_accuracy": 0.30033003300330036,
+      "val_tie_rate": 0.4521452145214521
+    },
+    {
+      "epoch": 16,
+      "train_loss": 2.7304883919969902,
+      "val_accuracy": 0.29372937293729373,
+      "val_tie_rate": 0.528052805280528
+    },
+    {
+      "epoch": 17,
+      "train_loss": 2.727558921915843,
+      "val_accuracy": 0.264026402640264,
+      "val_tie_rate": 0.5445544554455446
+    },
+    {
+      "epoch": 18,
+      "train_loss": 2.727775600127715,
+      "val_accuracy": 0.2838283828382838,
+      "val_tie_rate": 0.5511551155115512
+    },
+    {
+      "epoch": 19,
+      "train_loss": 2.7224135897291983,
+      "val_accuracy": 0.2607260726072607,
+      "val_tie_rate": 0.5379537953795379
+    },
+    {
+      "epoch": 20,
+      "train_loss": 2.718264588037902,
+      "val_accuracy": 0.264026402640264,
+      "val_tie_rate": 0.5544554455445545
+    }
+  ],
+  "model_config": {
+    "channels": [
+      32,
+      64
+    ],
+    "hidden": 256,
+    "tau": 2.0,
+    "v_threshold": 1.0,
+    "surrogate_alpha": 2.0,
+    "readout": "count"
+  }
+}

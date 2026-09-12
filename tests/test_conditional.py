@@ -164,3 +164,28 @@ def test_share_explained_is_proportional_in_between():
 def test_share_explained_is_zero_for_an_overconfident_model():
     """With mean confidence above accuracy there is no underconfidence to explain."""
     assert residual_share_explained(0.64, 0.70, 0.50) == 0.0
+
+
+def test_histogram_is_omitted_for_a_real_valued_readout():
+    """A membrane or accumulator readout has one distinct value per slot, not a handful.
+
+    Tabulating them produced 173,962 keys per row and a 137 MB dashboard payload before this
+    guard existed, so the size of the returned object is part of the contract.
+    """
+    rng = np.random.default_rng(0)
+    real = rng.normal(size=(200, 101))          # continuous, like an accumulator
+    prof = competitor_profile(real, 101)
+    assert prof["count_histogram"] is None
+    assert prof["n_distinct_competitor_values"] > 64
+    # The quantiles the conditional ceiling depends on are still there.
+    assert set(prof["quantiles_of_competitor_sum"]) == {"0.05", "0.25", "0.5", "0.75", "0.95"}
+
+
+def test_histogram_is_kept_for_a_discrete_readout():
+    counts = np.zeros((200, 101))
+    counts[:, 0] = 6
+    counts[:, 1:4] = 2
+    prof = competitor_profile(counts, 101)
+    assert prof["count_histogram"] is not None
+    assert set(prof["count_histogram"]) == {0.0, 2.0}
+    assert prof["n_distinct_competitor_values"] == 2
