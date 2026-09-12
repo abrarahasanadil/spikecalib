@@ -68,6 +68,25 @@
     <p class="hint">Both are reported everywhere in this study. With discrete confidences
     they can disagree by a factor of two, and picking one would change the ranking.</p>
   </div>
+
+  <div class="rail-group">
+    <h3>Provenance</h3>
+    <p class="hint">Every claim on this page is tagged by where it came from. The
+    distinction matters more than usual here, because the study's central result is
+    arithmetic and its supporting results are not.</p>
+    <div class="prov-key">
+      <div class="row"><span class="pill pill-derived">derived</span>
+        <span><b>Arithmetic.</b> True before any model existed.</span></div>
+      <div class="row"><span class="pill pill-measured">measured</span>
+        <span><b>A run in this repository.</b> Reproducible from a seed.</span></div>
+      <div class="row"><span class="pill pill-lit">lit</span>
+        <span><b>A verified primary source.</b> Read, not taken from a brief.</span></div>
+      <div class="row"><span class="pill pill-warn">unverified</span>
+        <span><b>Not confirmed.</b> Stated as a belief, never as evidence.</span></div>
+      <div class="row"><span class="pill pill-bad">withdrawn</span>
+        <span><b>Removed on verification.</b> Kept visible rather than deleted.</span></div>
+    </div>
+  </div>
  </div>
 </aside>
 
@@ -186,7 +205,7 @@
     <p class="sub">N-MNIST, five timestep settings, three seeds</p></div>
 
   <section class="panel c12"><div class="prose wide">
-<h3>The ceiling accounts for almost all uncalibrated error at low T</h3>
+<h3>The ceiling accounts for almost all uncalibrated error at low T<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
     <p>
       At <em>T</em> = 2 with 10 classes the ceiling is 0.4509, and the trained models
       saturate it exactly — observed maxima match the derived value to roughly one part in
@@ -215,7 +234,7 @@
   </div></section>
 
     <section class="panel c12"><div class="prose wide">
-<h3>The ceiling is a property of the readout, not of spiking networks</h3>
+<h3>The ceiling is a property of the readout, not of spiking networks<span class="pill pill-measured">measured</span></h3>
     <p>
       Softmax-over-spike-counts is a <em>choice</em>. The same architecture was trained with
       four final aggregations — only the aggregation differs, every layer up to the last
@@ -267,7 +286,7 @@
   </div></section>
 
   <section class="panel c12"><div class="prose wide">
-<h3>The C axis: 101 classes, where the ceiling stops explaining things</h3>
+<h3>The C axis: 101 classes, where the ceiling stops explaining things<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
     <p>
       The ceiling e<sup>T</sup>/(e<sup>T</sup>+C−1) has two variables and every measurement
       above varies only T. N-Caltech101 has <strong>101 classes</strong>, where the T = 2
@@ -330,7 +349,7 @@
   </div></section>
 
   <section class="panel c12"><div class="prose wide">
-<h3>Does the ceiling bind in published work? No — and the reason is the finding</h3>
+<h3>Does the ceiling bind in published work? No — and the reason is the finding<span class="pill pill-lit">lit</span></h3>
     <p>
       Li, Jones &amp; Furber report <strong>94.11% accuracy at 4 timesteps on CIFAR-10</strong>
       (ICCV 2023). At C = 10, T = 4 the ceiling is <strong>0.8585</strong>. If their
@@ -386,7 +405,7 @@
   </div></section>
 
   <section class="panel c12"><div class="prose wide">
-<h3>The same claims at two depths: what replicates and what does not</h3>
+<h3>The same claims at two depths: what replicates and what does not<span class="pill pill-measured">measured</span></h3>
     <p>
       N-Caltech101 was run with four conv blocks and N-MNIST with two, so every cross-dataset
       comparison above was confounded with architecture. This is the 2&times;2 that removes
@@ -437,7 +456,7 @@
   </div></section>
 
   <section class="panel c12"><div class="prose wide">
-<h3>A conditional ceiling does not rescue the C = 101 residual</h3>
+<h3>A conditional ceiling does not rescue the C = 101 residual<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
     <p>
       The theoretical ceiling assumes the extreme count vector [T, 0, …, 0] — every one of
       the C−1 competitors silent for all T steps. At ten classes that is nearly free. At a
@@ -496,7 +515,7 @@
   </div></section>
 
   <section class="panel c12"><div class="prose wide">
-<h3>The leak explains about half of it — the threshold explains the rest</h3>
+<h3>The leak explains about half of it — the threshold explains the rest<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
     <p>
       With quantisation ruled out, the next candidate needed no new mechanism either. The
       membrane readout uses the network's own charge equation, v += (z − v)/τ with τ = 2, so
@@ -568,7 +587,7 @@
   </div></section>
 
   <section class="panel c12"><div class="prose wide">
-<h3>Why membrane ranks worse at high T is not quantisation</h3>
+<h3>Why membrane ranks worse at high T is not quantisation<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
     <p>
       Membrane calibrates better wherever the ceiling binds and <em>ranks</em> worse from
       T = 6 up. The obvious explanation needs no new mechanism: a spike count is a
@@ -649,7 +668,7 @@
   </div></section>
 
   <section class="panel c12"><div class="prose wide"><div class="two-col">
-<h3>Why the count readout exists</h3>
+<h3>Why the count readout exists<span class="pill pill-lit">lit</span><span class="pill pill-warn">unverified</span></h3>
     <p>
       The cap being avoidable makes it easy to read this study as saying the field has been
       doing something obviously wrong. It has not. There are real reasons to sum spikes, and
@@ -700,7 +719,7 @@
   </div></div></section>
 
   <section class="panel c12"><div class="prose wide">
-<h3>Which calibrator you use does not matter</h3>
+<h3>Which calibrator you use does not matter<span class="pill pill-measured">measured</span></h3>
     <p>
       The study was designed around a hypothesis: that isotonic regression should beat
       temperature scaling by a margin that <em>grows</em> as <em>T</em> falls, because a
@@ -742,7 +761,7 @@
   </div></section>
 
   <section class="panel c12"><div class="prose wide">
-<h3>Selective prediction: the readout limits what can be deployed</h3>
+<h3>Selective prediction: the readout limits what can be deployed<span class="pill pill-measured">measured</span></h3>
     <p>
       Risk-coverage asks what fraction of samples can be acted on at a given error rate.
       Samples sharing a confidence cannot be ordered against each other, so coverage steps
@@ -789,7 +808,7 @@
   </div></section>
 
   <section class="panel c12"><div class="prose wide">
-<h3>The sign of the miscalibration disagrees with the literature</h3>
+<h3>The sign of the miscalibration disagrees with the literature<span class="pill pill-lit">lit</span><span class="pill pill-measured">measured</span></h3>
     <p>
       The SNN literature reports <strong>over</strong>confidence as the characteristic
       calibration failure, and "Agreeing to Stop" says so using the <em>same readout this
@@ -847,7 +866,7 @@
   </div></section>
 
   <section class="panel c6"><div class="prose">
-<h3>The same bound is a floor on the training loss</h3>
+<h3>The same bound is a floor on the training loss<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
     <p>
       Cross-entropy on spike-count logits cannot fall below −ln(ceiling): 0.7966 at
       <em>T</em> = 2 against 0.0004 at <em>T</em> = 10. The observed plateaus sit between
@@ -861,7 +880,7 @@
   </div></section>
 
   <section class="panel c6"><div class="prose">
-<h3>A note on energy</h3>
+<h3>A note on energy<span class="pill pill-lit">lit</span><span class="pill pill-derived">derived</span></h3>
     <p>
       The case for spiking networks is energy, so the sweep records a SynOps proxy. The
       result complicates that case: the input encoder — the first layer, which receives
@@ -1049,7 +1068,7 @@ python scripts/export_dashboard_data.py</pre>
 
   <section class="panel c12">
     <div class="prose wide">
-<h3>Limitations</h3>
+<h3>Limitations<span class="pill pill-warn">unverified</span></h3>
     <ul>
       <li>
         <strong>Two datasets, not four.</strong> N-MNIST and N-Caltech101. DVS-Gesture matters most
