@@ -1803,9 +1803,10 @@ are recorded in `SOURCES.md`, and the energy constant is E_MAC = 4.6 pJ, reclass
 
 ## Status
 
-Implemented and run on N-MNIST: data acquisition, splits, model, training, both ECE
-estimators, all four calibrators, bootstrap intervals, selective prediction, and the
-figures. Six experiments have completed, and each outcome is recorded above beneath the
+Implemented and run on **N-MNIST and N-Caltech101**: data acquisition, splits, model,
+training, both ECE estimators, all four calibrators, bootstrap intervals, selective
+prediction, and the figures. **96 models have been trained** — 66 on N-MNIST and 30 on
+N-Caltech101, counted as weight files in `results/`. Six experiments have completed, and each outcome is recorded above beneath the
 prediction that preceded it where one was registered:
 
 | experiment | scale |

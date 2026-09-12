@@ -25,9 +25,13 @@ measured competitor activity was pre-registered as the explanation and **falsifi
 
 **The readout family, not the network, determines the direction of the failure.** A capped
 readout is *under*confident wherever the cap binds; an unbounded accumulating readout is
-*over*confident, saturating towards 1 as `T` grows. Both directions appear in the literature,
-and which one a paper reports is predicted by its readout and its timestep count rather than
-by anything about spiking networks.
+*over*confident, saturating towards 1 as `T` grows. The published work read for this study
+reports only the overconfident direction — Li, Jones & Furber observe an unbounded
+accumulating readout saturating towards 1, and Chen, Park & Simeone report overconfidence at
+`T = 80`. The underconfident direction is this study's own observation, and no verified
+published result is constrained by the cap, because the conversion work uses a real-valued
+readout. Which direction a paper reports is predicted by its readout and its timestep count
+rather than by anything about spiking networks.
 
 ## The readout taxonomy
 

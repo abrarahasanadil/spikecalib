@@ -18,75 +18,33 @@
       N-MNIST and N-Caltech101, four readouts, 96 trained models.</div>
   </div>
 
-  <div class="rail-group">
-    <h3>Ceiling instrument</h3>
-    <label class="field" for="t-slider">
-      <span class="field-top">
-        <span class="field-label">Simulation timesteps</span>
-        <span class="field-value">T = <span id="t-value">2</span></span>
-      </span>
-      <input type="range" id="t-slider" min="1" max="20" step="1" value="2">
-    </label>
-    <label class="field" for="c-slider">
-      <span class="field-top">
-        <span class="field-label">Classes</span>
-        <span class="field-value">C = <span id="c-value">10</span></span>
-      </span>
-      <input type="range" id="c-slider" min="2" max="100" step="1" value="10">
-    </label>
-    <label class="field" for="a-slider">
-      <span class="field-top">
-        <span class="field-label">Target accuracy</span>
-        <span class="field-value">a = <span id="a-value">0.95</span></span>
-      </span>
-      <input type="range" id="a-slider" min="0.50" max="0.999" step="0.001" value="0.95">
-    </label>
-    <div class="preset-row segmented stack" role="radiogroup" aria-label="Instrument preset">
-      <button type="button" class="chip" role="radio" data-preset="2,10" aria-checked="true">N-MNIST, 10 classes</button>
-      <button type="button" class="chip" role="radio" data-preset="2,11" aria-checked="false">DVS-Gesture, 11 classes</button>
-      <button type="button" class="chip" role="radio" data-preset="4,100" aria-checked="false">CIFAR-100</button>
-    </div>
-  </div>
-
   <div class="rail-sep"></div>
 
   <div class="rail-group">
-    <h3>Timesteps</h3>
+    <h3>Filter the runs</h3>
+    <p class="hint">These four narrow the live metrics and the sweep table below. They do
+    not change the findings, which are study-wide.</p>
+  </div>
+  <div class="rail-group">
+    <h4>Timesteps</h4>
     <div class="chips" id="filter-t"></div>
   </div>
   <div class="rail-group">
-    <h3>Seed</h3>
+    <h4>Seed</h4>
     <div class="chips" id="filter-seed"></div>
   </div>
   <div class="rail-group">
-    <h3>Calibrator</h3>
+    <h4>Calibrator</h4>
     <div class="chips" id="filter-arm"></div>
   </div>
   <div class="rail-group">
-    <h3>ECE estimator</h3>
+    <h4>ECE estimator</h4>
     <div class="chips" id="filter-est"></div>
     <p class="hint">Both are reported everywhere in this study. With discrete confidences
     they can disagree by a factor of two, and picking one would change the ranking.</p>
   </div>
 
-  <div class="rail-group">
-    <h3>Provenance</h3>
-    <p class="hint">Every claim on this page is tagged by where it came from. The
-    distinction matters more than usual here, because the study's central result is
-    arithmetic and its supporting results are not.</p>
-    <div class="prov-key">
-      <div class="row"><span class="pill pill-derived">derived</span>
-        <span><b>Arithmetic.</b> True before any model existed.</span></div>
-      <div class="row"><span class="pill pill-measured">measured</span>
-        <span><b>A run in this repository.</b> Reproducible from a seed.</span></div>
-      <div class="row"><span class="pill pill-lit">lit</span>
-        <span><b>A verified primary source.</b> Read, not taken from a brief.</span></div>
-      <div class="row"><span class="pill pill-warn">unverified</span>
-        <span><b>Not confirmed.</b> Stated as a belief, never as evidence.</span></div>
-      <div class="row"><span class="pill pill-bad">withdrawn</span>
-        <span><b>Removed on verification.</b> Kept visible rather than deleted.</span></div>
-    </div>
-  </div>
+</div>
  </div>
 </aside>
 
@@ -123,7 +81,8 @@
   </header>
 
   <div class="band"><h2>Findings</h2>
-    <p class="sub">N-MNIST, five timestep settings, three seeds</p></div>
+    <p class="sub">study-wide &mdash; every number below is fixed and does not follow the
+    run filters</p></div>
 
   <div class="cards c12">
   <article class="card c4">
@@ -222,6 +181,34 @@
     <p class="sub">derived arithmetic, not measurement</p></div>
 
   <section class="panel c7">
+    <div class="instrument-controls">
+    <label class="field" for="t-slider">
+      <span class="field-top">
+        <span class="field-label">Simulation timesteps</span>
+        <span class="field-value">T = <span id="t-value">2</span></span>
+      </span>
+      <input type="range" id="t-slider" min="1" max="20" step="1" value="2">
+    </label>
+    <label class="field" for="c-slider">
+      <span class="field-top">
+        <span class="field-label">Classes</span>
+        <span class="field-value">C = <span id="c-value">10</span></span>
+      </span>
+      <input type="range" id="c-slider" min="2" max="100" step="1" value="10">
+    </label>
+    <label class="field" for="a-slider">
+      <span class="field-top">
+        <span class="field-label">Target accuracy</span>
+        <span class="field-value">a = <span id="a-value">0.95</span></span>
+      </span>
+      <input type="range" id="a-slider" min="0.50" max="0.999" step="0.001" value="0.95">
+    </label>
+    <div class="preset-row segmented" role="radiogroup" aria-label="Instrument preset">
+      <button type="button" class="chip" role="radio" data-preset="2,10" aria-checked="true">N-MNIST, 10 classes</button>
+      <button type="button" class="chip" role="radio" data-preset="2,11" aria-checked="false">DVS-Gesture, 11 classes</button>
+      <button type="button" class="chip" role="radio" data-preset="4,100" aria-checked="false">CIFAR-100</button>
+    </div>
+      </div>
     <div class="well"><div id="ceiling-chart"></div></div>
     <div class="legend">
       <span><i style="background:var(--accent)"></i>ceiling, derived</span>
@@ -262,7 +249,8 @@
   </section>
 
   <div class="band"><h2>Sweep results</h2>
-    <p class="sub">15 runs, five timestep settings, three seeds</p></div>
+    <p class="sub">filtered &mdash; 15 runs over five timestep settings and three seeds,
+    narrowed by the rail</p></div>
 
   <div class="stack c6">
   <section class="panel">
@@ -317,111 +305,84 @@
   </section>
 
   <div class="band"><h2>Related work</h2>
-    <p class="sub">this study claims novelty over none of the following; verified 2026-09-12, two withdrawn</p></div>
+    <p class="sub">this study claims novelty over none of the following</p></div>
 
   <section class="panel c12"><div class="prose wide"><div class="rel-work">
 <div class="cite">
       <h4>Probability Bounding: Post-Hoc Calibration via Box-Constrained Softmax</h4>
       <p class="venue">Atarashi, Oyama, Arai &amp; Kashima, arXiv:2506.10572, June 2025 &nbsp;<span class="ver">verified against the full text</span></p>
-      <p>Post-hoc calibration that <em>learns</em> lower and upper bounds on output
-        probabilities through a box-constrained softmax.</p>
-      <p class="diff"><b>This study differs</b> in what the bound is. Theirs is a learned,
-        tunable parameter fitted to a general ANN's outputs and imposed to improve
-        calibration. The ceiling here is structural: not fitted, not adjustable, and
-        saturated to within 4e-13 by every trained model. One is a bound put onto a model;
-        the other is a bound the readout already has.</p>
+      <p><b>What it does.</b> Post-hoc calibration that <em>learns</em> lower and upper
+        bounds on output probabilities, fitting them as parameters of a box-constrained
+        softmax over a general network's outputs.</p>
+      <p><b>What this study does.</b> Takes the bound as given rather than fitted. With a
+        spike-count readout the largest expressible confidence is
+        e<sup>T</sup>/(e<sup>T</sup>+C&minus;1), set by <em>T</em> and <em>C</em> before any
+        training happens.</p>
+      <p class="diff"><b>How they differ.</b> Theirs is a bound put onto a model to improve
+        its calibration. This one is a bound the readout already has: not fitted, not
+        adjustable, and saturated to within 4e-13 by every model trained here.</p>
     </div>
 
     <div class="cite">
       <h4>Direct Training Needs Regularisation: Anytime Optimal Inference SNN</h4>
-      <p class="venue">Wu, Qi, Cai, Jin, Yi &amp; Huang, arXiv:2405.00699, April 2024 &nbsp;<span class="ver">verified — authorship corrected</span></p>
-      <p>Applies a cutoff on the softmax output over event-based datasets, for anytime
-        inference in directly-trained SNNs.</p>
-      <p class="diff"><b>This study differs</b> in object: theirs is a stopping rule, this
-        fixes the network and the timestep count and asks only whether the confidence is
-        correctly scaled. The settings overlap closely enough that this is the reference
-        most likely to have already noted the ceiling in passing.</p>
+      <p class="venue">Wu, Qi, Cai, Jin, Yi &amp; Huang, arXiv:2405.00699, April 2024 &nbsp;<span class="ver">verified</span></p>
+      <p><b>What it does.</b> Applies a cutoff to the softmax output of a directly-trained
+        SNN on event-based datasets, so inference can stop as soon as the answer is settled
+        &mdash; anytime inference.</p>
+      <p><b>What this study does.</b> Fixes the network and the timestep count and asks only
+        whether the confidence is correctly scaled.</p>
+      <p class="diff"><b>How they differ.</b> Theirs is a stopping rule built on a confidence
+        signal; this measures the signal itself. The settings otherwise overlap closely
+        &mdash; directly-trained SNNs, event data, softmax over the output &mdash; which
+        makes it the nearest neighbour here in experimental setup.</p>
     </div>
 
     <div class="cite">
       <h4>Agreeing to Stop: Latency-Adaptive Decisions via Ensembles of SNNs</h4>
       <p class="venue">Chen, Park &amp; Simeone, <em>Entropy</em> 26(2):126, 2024 &nbsp;<span class="ver">verified against the full text</span></p>
-      <p>Uses softmax over spike counts as a confidence signal for latency-adaptive
-        stopping, and states that SNNs are poorly calibrated and <strong>overconfident</strong>.</p>
-      <p class="diff"><b>This study disagrees on the sign</b>, using the same readout. Mean
-        confidence minus accuracy here is −0.539 at T = 2: severe underconfidence, forced by
-        the ceiling. The difference is most likely regime — low T, accuracy above the
-        ceiling — rather than the prior reports being wrong.</p>
+      <p><b>What it does.</b> Uses softmax over spike counts as a confidence signal for
+        latency-adaptive stopping, at <em>T</em> = 80, and reports that SNNs are poorly
+        calibrated and <strong>overconfident</strong>.</p>
+      <p><b>What this study does.</b> Measures the same readout at <em>T</em> = 2. Mean
+        confidence minus accuracy is <strong>&minus;0.539</strong>: underconfidence, forced
+        by the ceiling.</p>
+      <p class="diff"><b>How they differ.</b> The readout is the same; the timestep regime is
+        not. At <em>T</em> = 80 the ceiling is 1.0000 and inert. At <em>T</em> = 2 it is
+        0.4509 and sits below the model's accuracy. The two measurements are taken in
+        regimes that do not overlap.</p>
     </div>
 
     <div class="cite">
       <h4>Unleashing the Potential of SNNs by Dynamic Confidence</h4>
-      <p class="venue">Li, Jones &amp; Furber, ICCV 2023, pp. 13350–13360 &nbsp;<span class="ver">verified</span></p>
-      <p>
-        Constructs a runtime confidence signal for early exit in SNNs, so inference can stop
-        as soon as the network is confident enough. The setting is ANN-to-SNN conversion on
-        static image data, with an ANN as the calibration reference.
-      </p>
-      <p>
-        <b>Readout, verified in the method section:</b> a non-spiking accumulator — "keeping
-        the output layer at full precision… the neurons in the output layer only accumulate
-        input currents". So the attainable-confidence ceiling <b>does not apply</b> to their
-        94.11%-at-4-timesteps result, even though T = 4 with C = 10 is squarely in the regime
-        where it would bind for a spike-count readout.
-      </p>
-      <p class="diff">
-        <b>This study differs</b> on three axes: the networks are directly trained as SNNs
-        rather than converted, the data is event data rather than static frames, and the
-        object of study is the calibration method itself rather than a stopping rule built on
-        top of a confidence signal. But the paper independently reports the
-        <b>mirror image</b> of this study's finding — with an unbounded accumulating readout,
-        confidence "saturates to 100% quickly with time", which they damp with a scalar α
-        that is temperature scaling.
-      </p>
+      <p class="venue">Li, Jones &amp; Furber, ICCV 2023, pp. 13350&ndash;13360 &nbsp;<span class="ver">verified against the full text</span></p>
+      <p><b>What it does.</b> Builds a runtime confidence signal for early exit, on
+        ANN-to-SNN conversion over static images with an ANN as the calibration reference.
+        Its readout is a non-spiking accumulator &mdash; "keeping the output layer at full
+        precision&hellip; the neurons in the output layer only accumulate input currents".
+        It observes that confidence <b>"saturates to 100% quickly with time"</b>, and damps
+        it with a scalar &alpha;.</p>
+      <p><b>What this study does.</b> Measures four readouts on directly-trained SNNs over
+        event data. The unbounded accumulator is <b>overconfident and rises with
+        <em>T</em></b>, mean confidence minus accuracy +0.0047 at <em>T</em> = 2 and growing,
+        and temperature scaling removes it.</p>
+      <p class="diff"><b>How they differ.</b> Converted rather than directly trained, static
+        frames rather than event data, and a stopping rule built on a confidence signal
+        rather than the calibration of the signal itself. Their accumulator is real-valued,
+        so the attainable-confidence ceiling does not apply to their 94.11%-at-4-timesteps
+        result, even though <em>T</em> = 4 at <em>C</em> = 10 is squarely in the regime where
+        it would bind for a spike-count readout.</p>
     </div>
 
     <div class="cite">
       <h4>Knowing When to Stop: Delay-Adaptive SNN Classifiers with Reliability Guarantees</h4>
       <p class="venue">Chen, Park &amp; Simeone, arXiv:2305.11322, 2023 &nbsp;<span class="ver">verified</span></p>
-      <p>
-        Applies conformal prediction to the SNN stopping problem, producing coverage
-        guarantees for early exit.
-      </p>
-      <p class="diff">
-        <b>This study differs</b> in the quantity targeted: conformal methods give set-valued
-        coverage, this measures scalar confidence calibration by ECE. Related problem,
-        different object.
-      </p>
-    </div>
-
-    <div class="cite provenance">
-      <p class="unver">Provenance</p>
-      <p>
-        <b>Verified 2026-09-12 against primary documents</b>, because these are load-bearing
-        in a preprint and several were supplied in a brief rather than read.
-      </p>
-      <p>
-        <b>Confirmed:</b> Atarashi et al.; Li, Jones &amp; Furber; and both Chen, Park &amp;
-        Simeone papers — authors, titles, venues, years, and the timestep regime each works
-        at.
-      </p>
-      <p>
-        <b>Withdrawn:</b> two references, one an arXiv identifier attributed to the wrong
-        authors and one that could not be identified at all; <code>SOURCES.md</code> records
-        the evidence for both rather than deleting them.
-      </p>
-      <p>
-        <b>Horowitz:</b> the energy table is <b>Figure 1.1.9</b>, "Rough energy
-        costs for various operations in 45nm 0.9V" — E<sub>AC</sub> = 0.9 pJ is confirmed as
-        the 32-bit float add, but <b>4.6 pJ appears nowhere in the paper</b>. It is the
-        multiply-plus-add convention, 0.9 + 3.7, and is now described as a convention rather
-        than cited as a measurement.
-      </p>
-      <p>
-        <b>Loihi and SpiNNaker</b> could not be confirmed and
-        the strong form of that argument is withdrawn. <code>SOURCES.md</code> carries the
-        evidence for each and what remains unverified.
-      </p>
+      <p><b>What it does.</b> Applies conformal prediction to the SNN stopping problem,
+        producing coverage guarantees for early exit.</p>
+      <p><b>What this study does.</b> Measures scalar confidence calibration by expected
+        calibration error, and the selective-prediction operating points a readout allows.</p>
+      <p class="diff"><b>How they differ.</b> Conformal methods return a set with a coverage
+        guarantee; this measures how closely a single confidence number tracks accuracy.
+        Related problem, different object.</p>
     </div>
   </div></div></section>
 
@@ -579,6 +540,25 @@ python scripts/export_dashboard_data.py</pre>
     </ul>
     </div>
   </section>
+
+  <details class="prov-note c12">
+    <summary>Provenance key — what each tag on this page means</summary>
+
+    <p class="hint">Every claim on this page is tagged by where it came from. The
+    distinction matters more than usual here, because the study's central result is
+    arithmetic and its supporting results are not.</p>
+    <div class="prov-key">
+      <div class="row"><span class="pill pill-derived">derived</span>
+        <span><b>Arithmetic.</b> True before any model existed.</span></div>
+      <div class="row"><span class="pill pill-measured">measured</span>
+        <span><b>A run in this repository.</b> Reproducible from a seed.</span></div>
+      <div class="row"><span class="pill pill-lit">lit</span>
+        <span><b>A verified primary source.</b> Read, not taken from a brief.</span></div>
+      <div class="row"><span class="pill pill-warn">unverified</span>
+        <span><b>Not confirmed.</b> Stated as a belief, never as evidence.</span></div>
+      <div class="row"><span class="pill pill-bad">withdrawn</span>
+        <span><b>Removed on verification.</b> Kept visible rather than deleted.</span></div>
+      </details>
 
   <footer class="c12">
     <p>The repository's <code>NOTES.md</code> is the design document, including the
@@ -874,12 +854,19 @@ python scripts/export_dashboard_data.py</pre>
       final step, so its calibration rides on whatever that one step produced.
     </p>
     <p>
-      One unpredicted result bears on the disagreement with the literature. The accumulator is
+      One unpredicted result matches an observation already in the literature.
+      <b>Li, Jones &amp; Furber (ICCV 2023)</b> report that with a non-spiking accumulator
+      readout &mdash; "the neurons in the output layer only accumulate input currents"
+      &mdash; confidence "saturates to 100% quickly with time", and they damp it with a
+      scalar &alpha; that is temperature scaling. This study measures the same direction on
+      its own accumulator, independently and on different data. The accumulator is
       the <strong>first readout measured here that is consistently overconfident</strong>:
       conf − acc is +0.0032 at T = 6 and +0.0047 at T = 10, positive in 3 of 3 seeds at both.
-      Every other readout is underconfident or unsigned. That does not resolve the
-      disagreement, but it narrows it — an uncapped, non-leaky readout at T ≥ 6 is mildly
-      overconfident, which is the direction the literature reports. The magnitude is under half
+      Every other readout is underconfident or unsigned. So an uncapped, non-leaky readout at T ≥ 6 is mildly
+      overconfident here, which is the direction Li, Jones &amp; Furber report for their
+      accumulator, and the direction <b>Chen, Park &amp; Simeone</b> report at T = 80. Two
+      papers and this study observe the same sign wherever the readout is unbounded or the
+      cap is inert. The magnitude is under half
       a percentage point on one architecture and one dataset, so it is a lead, not a finding.
     </p>
     <p>

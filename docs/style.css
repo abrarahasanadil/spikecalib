@@ -131,13 +131,19 @@ html { -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
-  /* Two soft radials over the black base: blue anchored at the top behind the masthead,
-     orange low on the left behind the rail. Both are meant to be felt rather than seen --
-     the strongest point of either lifts the ground by under 3% luminance, which is why the
-     --text-3 captions still clear 5.9:1. Fixed, so they do not travel with the scroll. */
+  /* Two soft radials over the black base: blue across the top, orange across the lower
+     band. Both are viewport-fixed, so they stay put as the page scrolls.
+
+     The orange was invisible, and the cause was geometry rather than opacity. Its colour
+     stop reached zero at 60% of a 1000px radius -- 600px -- from a centre at x = -4%, so it
+     died around x = 530 and never left the rail and the left gutter; and the rail's own
+     rgba(6,9,13,.82) passes only 18% of what is behind it, so the little that landed there
+     contributed +2 of 255 to the final pixel. Measured against the rendered page it added
+     nothing at all to any panel face. It is now as wide as the blue and anchored inside the
+     page, and measures a +24 peak contribution against the blue's +23. */
   background:
     radial-gradient(1500px 820px at 46% -12%, rgba(10, 132, 255, .13) 0%, rgba(10, 132, 255, 0) 64%),
-    radial-gradient(1000px 900px at -4% 82%, rgba(255, 159, 10, .075) 0%, rgba(255, 159, 10, 0) 60%),
+    radial-gradient(1700px 950px at 24% 96%, rgba(255, 159, 10, .12) 0%, rgba(255, 159, 10, 0) 68%),
     var(--bg);
   background-attachment: fixed;
   color: var(--text);
@@ -171,6 +177,47 @@ a:hover { color: var(--teal); }
 .rail-group { margin-bottom: var(--s5); }
 .rail-group > h3 { margin: 0 0 var(--s2); font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
 .rail-group .hint { margin: var(--s2) 0 0; font-size: 12px; color: var(--ink-3); line-height: 1.5; }
+/* The rail used to carry two unrelated control sets -- a derived-arithmetic instrument and
+   the filters over measured runs -- each with its own "timesteps" meaning a different
+   thing. The instrument now lives beside the chart it drives, so h3 names the one job the
+   rail still has and h4 names each control under it. */
+.rail-group > h4 { margin: 0 0 var(--s2); font-size: 11.5px; font-weight: 600;
+  color: var(--ink-3); letter-spacing: .04em; text-transform: uppercase; }
+.rail-group:has(> h4) { margin-bottom: var(--s4); }
+
+/* The instrument's controls, in the panel with their output. */
+.instrument-controls {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s3) var(--s5); align-items: start;
+  margin-bottom: var(--s4); padding-bottom: var(--s4);
+  border-bottom: 1px solid var(--border);
+}
+.instrument-controls .field { margin: 0; }
+.instrument-controls .preset-row { grid-column: 1 / -1; }
+@media (max-width: 1000px) {
+  /* three labels this long need their own line once the panel is this narrow */
+  .instrument-controls .preset-row { flex-direction: column; border-radius: var(--r); gap: 2px; }
+  .instrument-controls .preset-row .chip { text-align: left; border-radius: calc(var(--r) - 5px); }
+}
+@media (max-width: 560px) { .instrument-controls { grid-template-columns: 1fr; } }
+
+/* The provenance key is a legend: read once, then out of the way. It used to take half the
+   rail height, which is why the rail did not fit on a screen. */
+.prov-note {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: var(--s4) var(--s5);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+}
+.prov-note > summary {
+  cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-2);
+  list-style: none;
+}
+.prov-note > summary::-webkit-details-marker { display: none; }
+.prov-note > summary::before { content: "\25B8\00a0"; color: var(--text-3); }
+.prov-note[open] > summary::before { content: "\25BE\00a0"; }
+.prov-note[open] > summary { margin-bottom: var(--s3); }
+.prov-note .hint { margin: 0 0 var(--s2); font-size: 12.5px; color: var(--ink-3); line-height: 1.5; max-width: 80ch; }
+.prov-note .prov-key { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--s2) var(--s5); }
 .rail-sep { height: 1px; background: var(--rule); margin: var(--s1) 0 var(--s5); }
 
 /* ---------- dashboard grid ---------- */
@@ -404,6 +451,8 @@ input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.12); }
 .cards .tiles .tile-sub   { grid-area: sub; }
 .cards .tiles .tile-code  { grid-area: code; margin-top: 0; padding-top: 0; text-align: right; }
 .cards .tiles .tile-label { min-height: 0; }
+.tiles-label { grid-column: 1 / -1; margin: 0; font-size: 11.5px; font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--mint); }
 @media (max-width: 1200px) {
   .cards .tiles { grid-column: span 12; order: -1; grid-template-columns: repeat(4, minmax(0, 1fr)); }
   /* four abreast leaves no room to share a row; back to the stacked tile */
@@ -589,6 +638,11 @@ tbody tr:hover td { background: rgba(255,255,255,.03); color: var(--ink); }
    the opposite of an unverified claim. */
 .lim-list { max-width: none !important; columns: 2; column-gap: var(--s7); }
 .lim-list li { break-inside: avoid; margin-bottom: var(--s3); }
+/* A known-gaps appendix should not compete with the findings, so the body of each bullet
+   drops to --text-3 while its bold lead-in stays at full strength and keeps the list
+   scannable. Measured at 5.94:1 against the panel, so it stays well clear of 4.5. */
+.lim-list li { color: var(--text-3); }
+.lim-list li strong { color: var(--text); }
 @media (max-width: 1199px) { .lim-list { columns: 1; } }
 
 .unverified-note { border-left: 2px solid var(--status); padding-left: var(--s3); color: var(--ink-3); }
@@ -616,17 +670,6 @@ tbody tr:hover td { background: rgba(255,255,255,.03); color: var(--ink); }
    as a stray rule. Only the very first card is reliably at a column top, so it alone loses
    the border; the rest keep it as a separator between stacked cards. */
 .rel-work .cite:first-child { border-top: none; padding-top: 0; }
-/* The provenance note describes every reference, so it is a footer to the section rather
-   than one more card. Spanning it also stops it taking a column of its own and leaving the
-   others short. */
-.rel-work .provenance { column-span: all; max-width: none; margin-top: var(--s1); }
-/* Spanning both columns made this 1,502px wide at 1920 -- about 206 characters -- so it
-   takes two columns of its own. Putting those columns on the paragraph split it mid-sentence
-   across the gap: the note is five separate statements, so they are now five elements that
-   flow as items and each stays whole, exactly as the citations do. */
-.rel-work .provenance { columns: 2; column-gap: var(--s6); }
-.rel-work .provenance .unver { column-span: all; }
-.rel-work .provenance p { break-inside: avoid; }
 /* A citation stays whole. Allowing it to split balanced the columns, but the later
    paragraphs then landed at the top of the next column under a different paper's heading,
    which reads as misattribution -- a worse failure here than an uneven column. */
@@ -658,7 +701,9 @@ footer p { margin: 0 0 var(--s1); max-width: 100ch; }
 /* ---------- responsive ---------- */
 
 @media (max-width: 1200px) {
-  .c7, .c5 { grid-column: span 6; }
+  /* .c7/.c5 used to collapse to 6/6 here. Once the instrument's controls moved into the
+     c7 panel it grew, and an even split left 229px under the c5 beside it; 7/5 holds the
+     proportion and the gap measures 117px. */
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 900px) {
@@ -756,14 +801,31 @@ table.mini tr:last-child td { border-bottom: none; }
 
 /* ---------- modal ---------- */
 dialog.modal {
+  /* The floating surface, one step stronger than the panels: more blur, so what is behind
+     reads as genuinely out of focus rather than merely dimmed, a brighter edge, and a
+     deeper shadow than a card because this one sits above everything. This was the only
+     flat opaque box left on a page of layered glass. */
   width: min(1080px, calc(100vw - var(--s8)));
   max-height: min(86vh, 1000px);
-  padding: 0; border: 1px solid var(--border-2); border-radius: var(--r-xl);
-  background: var(--bg); color: var(--text);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 24px 80px rgba(0,0,0,.66);
+  padding: 0;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-xl);
+  background: rgba(255, 255, 255, .075);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 32px 90px rgba(0, 0, 0, .62);
   overflow: hidden;
 }
-dialog.modal::backdrop { background: rgba(4, 6, 10, .66); backdrop-filter: blur(4px); }
+/* Dim and blur the page rather than flat-blacking it, so the reader keeps a sense of where
+   they were. */
+dialog.modal::backdrop { background: rgba(4, 6, 10, .52); backdrop-filter: blur(10px) saturate(115%); }
+/* Nested surfaces step up one level, or they dissolve into a translucent panel. */
+.modal-body .scroll,
+.modal-body pre,
+.modal-body .well { background: rgba(8, 11, 17, .58); border-color: var(--border-2); }
+.modal-body thead th { background: rgba(8, 11, 17, .72); }
+.modal-body tbody tr:nth-child(odd) td { background: rgba(255, 255, 255, .022); }
 .modal-head {
   display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s4);
   padding: var(--s6); border-bottom: 1px solid var(--border);

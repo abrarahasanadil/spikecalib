@@ -2231,3 +2231,109 @@ errors, all eight modals opening and closing on Escape.
 **Open.**
 - *The five audit findings above,* none of them fixed.
 - *`--accent` is still mint outside the rail,* unchanged.
+
+## 2026-09-12 — Static numbers labelled, the rail split in two, and the orange gradient diagnosed
+
+**Did.** Eight changes, and the last dashboard session.
+
+**Ran.** `pytest -q` → **222 passed**. Verified at 1920 and 1440, re-checked at 1200, 1100,
+1000, 900 and 400.
+
+**Found: every card face and every modal is static. All sixteen.** Tested by selecting seed 1
+alone, then `T = 2` alone, and diffing the full text of every card face and every dialog
+against the unfiltered page. Only two things move: the four live tiles and the sweep table's
+row count. Nothing on a card or in a modal changed under any filter.
+
+Decided per the rule in the brief, and the answer is the same for all of them: **none of
+these numbers describe the filtered selection, so none should recompute.** Card 1 is 24 cells
+across both datasets and both architectures; card 6 is 13 of 15 intervals over the whole
+sweep; cards 2, 3, 7 and 8 state a fixed condition in their own captions (`at T = 2`,
+`vs T = 80`). Recomputing any of them under a filter would turn a study-wide claim into
+something it is not.
+
+What was wrong was the second half of the rule — nothing said so. A reader with "seed 1,
+T = 2" in the rail saw eight cards of full-study numbers with no indication. Three labels
+now carry it: the Findings band says **"study-wide — every number below is fixed and does not
+follow the run filters"**, the Sweep results band says **"filtered … narrowed by the rail"**,
+and the four live tiles carry a **"Live — follows the run filters"** label, because a live
+number sitting unlabelled among fixed ones is exactly how the confusion happens.
+
+**Did: README's literature claim.** "Both directions appear in the literature" now names what
+is actually in the literature — Li, Jones & Furber on accumulator saturation, Chen, Park &
+Simeone on overconfidence at `T = 80` — and states that the underconfident direction is this
+study's own observation, with no verified published result constrained by the cap.
+
+**Did: NOTES Status.** Opens on both datasets rather than N-MNIST alone, and carries the
+**96 trained models, 66 N-MNIST and 30 N-Caltech101**, counted as weight files in `results/`.
+
+**Did: split the rail.** It held two unrelated control sets with two different meanings of
+"timesteps". The instrument's three sliders and its preset moved into the ceiling-instrument
+panel, above the chart they drive. The rail keeps four filters under one heading, **"Filter
+the runs"**, with a line saying what they do and do not touch. The provenance key became a
+collapsed `<details>` at the foot of the page. Rail content is now **638px against a 900px
+viewport at 1440 — it fits without scrolling**, and at 800px tall too.
+
+That created one gap and it is measured rather than assumed: the instrument panel grew, and
+at 1200px `.c7`/`.c5` used to collapse to 6/6, which left **229px** under the narrower panel.
+Four splits were measured; 6/6 gave 229px, 12/12 stacked removed the gap but added 805px of
+page, 8/4 gave 53px with an unusably narrow derived panel. Holding 7/5 and keeping the preset
+horizontal gives **117px** and costs 32px of page. Gaps across every width now run 34–64px.
+
+**Did: Related work in three parts.** Every entry is now *What it does* / *What this study
+does* / *How they differ*, in that order and in parallel phrasing, so the five can be read
+against each other. All process language is gone — no verification dates, no corrections, no
+withdrawal framing, and the "two withdrawn" subtitle. The audit-trail block at the foot of
+the section went with it; `SOURCES.md` keeps every word of it and the footer already points
+there. The "verified against the full text" markers stay.
+
+Chen, Park & Simeone's entry no longer says this study "disagrees on the sign". It states
+their measurement at `T = 80` and this one at `T = 2` and leaves the reader to see that the
+regimes do not overlap.
+
+**Did: named the papers in m4.** It said "the literature" twice. It now names **Li, Jones &
+Furber**, quotes what they observed — an accumulator readout whose confidence "saturates to
+100% quickly with time", damped with a scalar α that is temperature scaling — and names
+**Chen, Park & Simeone** for the `T = 80` direction. A reader who opens card 4 and goes no
+further now knows what is independently corroborated.
+
+No `SOURCES.md` entries were added for hls4ml, snnTorch Tutorial 5 or SFOD.
+
+**Did: the modal is glass.** It was the one flat opaque box left. Now `rgba(255,255,255,.075)`
+over `blur(32px) saturate(180%)` — more blur than the panels, so the page behind reads as out
+of focus rather than dimmed — a `--border-2` edge, a `rgba(255,255,255,.12)` top inset and a
+deeper shadow than a card. The backdrop dims and blurs at `.52` with `blur(10px)` instead of
+flat-blacking at `.66`. Nested surfaces step up: tables, code blocks and wells sit on
+`rgba(8,11,17,.58)`, table heads on `.72`.
+
+Contrast measured against sampled composited pixels, which is the check that mattered here
+because translucency over a gradient can drop where flat grey would not: modal table body
+**14.18:1** at 1920 and 17.15:1 at 1440, table heads 9.70:1, modal prose 9.14:1.
+
+**Did: Limitations reads as an appendix.** Bullet bodies drop to `--text-3` at **5.94:1**
+(5.86:1 at 1440) while the bold lead-ins stay at `--text` and **15.01:1**, so the list is
+still scannable. Lowest contrast anywhere on the page is the footer at 5.22:1. Nothing below
+4.5:1 at either width.
+
+**Found: the orange gradient was a geometry bug, not an opacity one.** Two of the three
+candidate causes were wrong and the real one was not on the list.
+
+- *Not positioning against the viewport.* `background-attachment: fixed` means it is on
+  screen at every scroll position; measured at scroll 4000 it was still there.
+- *The rail does hide part of it.* The rail's `rgba(6,9,13,.82)` passes 18%, so behind it the
+  orange contributed **+2 of 255** to the final pixel.
+- *The actual cause:* its colour stop reached zero at 60% of a 1000px radius — **600px** —
+  from a centre at `x = -4%`, so it died around **x = 530** and never reached the main column
+  at all. Measured against the rendered page it added **+6** in the left gutter and **+0** on
+  every panel face, while the blue spans the full width and peaks at +23.
+
+Now 1700×950 at `24% 96%` at `.12`, as wide as the blue and anchored inside the page.
+Measured the same way: **+24 peak**, visible across the lower band and through the panel
+faces, against the blue's +23 at the top.
+
+**Verified.** 1920 and 1440: zero columns ending with more than 150px of empty space, every
+card-grid row filling its width, all eight modals aligned and opening and closing on Escape,
+no horizontal overflow, no console errors, and no text below 4.5:1.
+
+**Open.**
+- *`--accent` is still mint outside the rail* — links, focus rings, the ceiling curve.
+- *The three unread references* stay out of `SOURCES.md` until someone reads them.

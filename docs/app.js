@@ -348,7 +348,11 @@
     var bestWhere = "";
     cal.forEach(function (r) { if (num(r, col) === best) bestWhere = ARM_LABEL[r.arm] + ", T=" + r.timesteps + " seed " + r.seed; });
 
+    /* These four move with the rail filters while the cards beside them do not, so they
+       say so. A live number sitting unlabelled among fixed ones is how a reader ends up
+       reading a study-wide claim as a filtered result. */
     document.getElementById("tiles").innerHTML =
+      '<p class="tiles-label">Live &mdash; follows the run filters</p>' +
       tile("Uncalibrated ECE", fmt(mean(unc)), col, span, !unc.length) +
       tile("Best calibrated ECE", fmt(best), col, bestWhere || "no calibrated arm selected", !isFinite(best)) +
       tile("Isotonic − temperature", (isFinite(mean(iso)) ? (mean(iso) >= 0 ? "+" : "") + fmt(mean(iso)) : "—"),
