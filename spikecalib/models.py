@@ -58,12 +58,24 @@ __all__ = [
 ]
 
 # [LIT] Horowitz, "Computing's Energy Problem (and what we can do about it)", ISSCC 2014,
-# 45 nm. [UNVERIFIED] the exact values and the figure/table they come from have NOT been
-# checked against the paper: 0.9 pJ is believed to be the 32-bit floating-point ADD, and
-# 4.6 pJ is either stated directly or is the community convention of FP multiply (believed
-# 3.7 pJ) plus FP add. See SOURCES.md "To verify" item 1. Do not cite a figure number.
-E_AC_JOULES = 0.9e-12  # J per accumulate
-E_MAC_JOULES = 4.6e-12  # J per multiply-accumulate
+# Session 1 Plenary 1.1, Digest of Technical Papers pp. 10-14. VERIFIED 2026-09-12 against
+# the paper itself: the energy table is **Figure 1.1.9**, captioned "Rough energy costs for
+# various operations in 45nm 0.9V" (Digest p. 14).
+#
+# E_AC = 0.9 pJ is CONFIRMED as the 32-bit floating-point FAdd in that figure. (The 0.9 in
+# the caption is the supply voltage; the coincidence is unfortunate and is not the source of
+# the number.)
+#
+# E_MAC = 4.6 pJ is [DERIVED], NOT [LIT]. **The paper states no MAC value anywhere** -- the
+# figure has FAdd and FMult rows and no combined one. 4.6 = 0.9 (FAdd, 32 bit) + 3.7 (FMult,
+# 32 bit) is the community convention of multiply-plus-add, and the paper must describe it
+# that way rather than attribute it to Horowitz as a measurement.
+#
+# The caption says "Rough". The source presents these as order-of-magnitude figures, so no
+# result may turn on their precision -- which is why the energy number is only ever reported
+# as a design-comparison proxy. See SOURCES.md, "Verified 2026-09-12", item 1.
+E_AC_JOULES = 0.9e-12   # [LIT] J per accumulate: 32-bit FP add, Horowitz Fig. 1.1.9
+E_MAC_JOULES = 4.6e-12  # [DERIVED] 0.9 + 3.7, the multiply-plus-add convention
 
 # [DERIVED] Event cameras emit ON and OFF events, so an integrated event frame has two
 # polarity channels. Confirmed by the frame shape (T, 2, H, W) that SpikingJelly produces;

@@ -80,11 +80,18 @@ the one-vs-rest-with-renormalisation isotonic formulation; the default of 15 bin
 *Status:* author list, year and venue are high-confidence but unconfirmed here; the
 **`n_bins = 15` default is attributed to this paper and has not been checked**.
 
-**Four prior-work citations carried over from the project brief.** All `[UNVERIFIED]`.
-Li, Jones & Furber "Dynamic Confidence" (ICCV 2023); Sun & Bohte "AOT-SNN";
-Skatchkovsky & Simeone on SNN overconfidence; "Knowing When to Stop" on conformal
-prediction for SNN early exit. These appear in `NOTES.md` "Prior work" exactly as
-supplied. None has been checked against a primary source in this repository.
+**Four prior-work citations carried over from the project brief.** **Checked 2026-09-12;
+two did not survive.** See "Verified 2026-09-12" below for the evidence.
+
+| as supplied in the brief | outcome |
+|---|---|
+| Li, Jones & Furber, "Dynamic Confidence" (ICCV 2023) | **confirmed**, with the title corrected — *Dynamic Confidence* is the method, not the paper |
+| Sun & Bohte, "AOT-SNN" | **withdrawn** — the arXiv identifier attached to it belongs to Wu et al. and a different method |
+| Skatchkovsky & Simeone on SNN overconfidence | **withdrawn** — no such paper identified; the overconfidence result is Chen, Park & Simeone's |
+| "Knowing When to Stop" on conformal prediction for SNN early exit | **confirmed** — Chen, Park & Simeone, arXiv:2305.11322 |
+
+Two of four supplied references being wrong is the reason this pass was run, and the reason
+nothing in the brief is now treated as a source until it has been opened.
 
 ### Added 2026-09-11, against the study's final claims
 
@@ -124,10 +131,23 @@ other a bound the readout *already has*. Where they may genuinely meet is that a
 box constraint could in principle be used to *correct* the structural ceiling, which is a
 direction this study does not pursue.
 
-**Sun & Bohte. "Direct Training Needs Regularisation: Anytime Optimal Inference Spiking
-Neural Network." arXiv:2405.00699.** `[UNVERIFIED]`
-*What it does:* applies a cutoff on the softmax output over event-based datasets, for
-anytime inference in directly-trained SNNs.
+**Wu, Qi, Cai, Jin, Yi & Huang. "Direct Training Needs Regularisation: Anytime Optimal
+Inference Spiking Neural Network." arXiv:2405.00699, 15 April 2024.** `[LIT]` verified
+against the arXiv record 2026-09-12.
+
+> **Attribution corrected 2026-09-12.** This entry previously read "Sun & Bohte". It is not
+> theirs. arXiv:2405.00699 is by **Dengyu Wu, Yi Qi, Kaiwen Cai, Gaojie Jin, Xinping Yi and
+> Xiaowei Huang**, and the method is **AOI-SNN** (Anytime Optimal Inference), not AOT-SNN.
+> The brief supplied the wrong author pair against this identifier and it was carried
+> unchecked. A separate AOT-SNN line does exist and is Sun & Bohté's — see the next entry —
+> so two different papers with similar acronyms had been merged into one citation.
+
+*What it does:* introduces a Spatial-Temporal Regulariser that balances spike strength
+against membrane potential at each timestep, producing an SNN whose accuracy degrades
+gracefully under early cutoff; combined with a softmax-output cutoff it reports 2.14-2.89x
+faster inference at 0.50-0.64% accuracy cost on event-based data.
+*Distinction:* the object is a **stopping rule and a training regulariser**, not the
+calibration of the confidence itself.
 *Distinction:* the setting overlaps closely — directly trained, event data, softmax over
 the output — but the object is a **stopping rule**, not the calibration of the confidence
 itself. This study fixes the network and the timestep count and asks only whether the
@@ -135,10 +155,24 @@ confidence is correctly scaled. The overlap makes this the reference most likely
 already observed the ceiling in passing, which is a reason to read it before claiming the
 observation is new.
 
-**"Agreeing to Stop: Reliable Latency-Adaptive Decision Making via Ensembles of Spiking
-Neural Networks" (Simeone group).** `[UNVERIFIED]`
+**Chen, Park & Simeone. "Agreeing to Stop: Reliable Latency-Adaptive Decision Making via
+Ensembles of Spiking Neural Networks." *Entropy* 26(2):126, February 2024.
+doi:10.3390/e26020126, arXiv:2310.16675.** `[LIT]` verified against the arXiv full text
+2026-09-12: authors Jiechen Chen, Sangwoo Park, Osvaldo Simeone (King's College London).
 *What it does:* uses the softmax over spike counts as a confidence signal for
-latency-adaptive stopping, and states that SNNs are poorly calibrated and **overconfident**.
+latency-adaptive stopping via ensembles, and states verbatim that "SNN models, like their
+conventional neural network counterpart, tend to be poorly calibrated, producing
+**overconfident** decisions".
+*Readout, verified:* spike counts `r_c` accumulated over the readout neuron, then
+`f_c = e^{r_c} / sum_c' e^{r_c'}`. **This is exactly the readout this study analyses.**
+*Regime, verified and decisive:* **`T = 80`**, with checkpoints at `{20, 40, 60, 80}`, on
+MNIST-DVS, DVS128-Gesture and CIFAR-10, **directly trained with surrogate gradients**,
+calibration set of 50 examples. `[DERIVED]` At `T = 80, C = 10` the attainable-confidence
+ceiling is 1.0 to double precision, and even at their earliest checkpoint `T = 20` it is
+0.99999998. **The cap is completely inert in their regime**, which is why they can observe
+ordinary overconfidence while this study observes structural underconfidence at `T = 2`.
+The two results do not conflict; they are measurements in non-overlapping regimes, and
+until 2026-09-12 this study had asserted that without knowing their timestep count.
 *Distinction, and a direct disagreement on the sign:* it uses the **same readout this study
 uses** — softmax over spike counts — and reports the opposite direction of miscalibration.
 See "The sign of the miscalibration" in `NOTES.md`. This study measures mean confidence
@@ -288,63 +322,153 @@ is engineering judgement recorded in `LOG.md`, not a citation.
 
 ---
 
-## To verify
+## Verified 2026-09-12 against primary documents
 
-Nothing in this list may be cited in the paper until it has been checked against the
-primary document.
+A verification pass was run over every `[UNVERIFIED]` item because these are load-bearing in
+a preprint. What follows is what could and could not be confirmed. **Nothing was invented to
+close a gap.**
 
-1. **Horowitz ISSCC 2014 — figure/table number and exact values.** Confirm `E_AC = 0.9 pJ`
-   is the 45 nm 32-bit floating-point ADD, confirm the 32-bit FP MULT value (believed
-   3.7 pJ), and establish whether `E_MAC = 4.6 pJ` is stated in the paper or is the
-   community convention MULT + ADD. Until then, `spikecalib/models.py` marks both
-   constants `[UNVERIFIED]`.
-2. **Guo et al. ICML 2017 — full author list, and the `n_bins = 15` default.** Confirm the
-   paper uses 15 equal-width bins for ECE, and that the one-vs-rest isotonic formulation
-   is reported there as this repository claims.
-3. **Li, Jones & Furber, "Dynamic Confidence", ICCV 2023.** Supplied in the project brief;
-   not checked. Confirm authors, title, venue, year, and that it concerns runtime
-   confidence for early exit in ANN-to-SNN-converted networks on static data.
-4. **Sun & Bohte, "AOT-SNN".** Supplied in the brief; not checked. Confirm full reference
-   and that temperature scaling is its calibration baseline.
-5. **Skatchkovsky & Simeone on SNN overconfidence.** Supplied in the brief; not checked.
-   Confirm which specific paper is meant — these authors have several on SNNs.
-6. **"Knowing When to Stop."** Supplied in the brief; not checked. Confirm authors, venue,
-   year, and that it applies conformal prediction to SNN early exit.
-7. **Amir et al. CVPR 2017 — full author list.** Only "Amir et al." and the title are
-   confirmed, via SpikingJelly's docstring.
-8. **Li et al. 2017 — full author list for CIFAR10-DVS.** Same situation.
-9. **ATan surrogate gradient — originating paper.** SpikingJelly documents the function
-   `g(x) = (1/pi) arctan((pi/2) alpha x) + 1/2` but attaches no citation in source. The
-   general surrogate-gradient method is usually credited to Neftci, Mostafa & Zenke, but
-   that attribution is **not confirmed here** and the specific arctan form may be due to
-   someone else.
-10. **DVS-Gesture 1,176 / 288 split counts.** Read from SpikingJelly's docstring, not yet
-    reproduced by building the dataset in this repository. Verify on first build.
-11. **CIFAR10-DVS 10,000 sample count.** Same: from SpikingJelly's docstring, not built.
-12. **Atarashi et al., arXiv:2506.10572.** Read in full. Confirm the authors, the date,
-    and specifically whether the learned box constraint is ever applied to a readout with a
-    structural bound. The distinction drawn above rests on the abstract alone.
-13. **Sun & Bohte, arXiv:2405.00699.** Read in full. Check whether the attainable-confidence
-    ceiling, or any equivalent bound on softmax-over-spike-counts, is already noted there.
-    If it is, this study's first claim is a re-derivation and must say so.
-14. **"Agreeing to Stop" (Simeone group).** Confirm authors, venue and year. Establish the
-    regime in which overconfidence was measured — timestep count, readout, whether directly
-    trained or converted — because the comparison with this study's underconfidence result
-    is only meaningful once those are known.
-15. **Intel Loihi compartment-state access.** Confirm from Intel's documentation whether
-    membrane voltage is readable at inference time, whether that requires a host round-trip,
-    and what it costs. `NOTES.md` "Why the count readout exists" relies on the belief that
-    it is probe-only and that inter-core traffic is spike-only.
-16. **SpiNNaker membrane recording bandwidth.** Confirm from the SpiNNaker/PyNN
-    documentation whether recording membrane potential is bandwidth-limited, and critically
-    whether that limit binds for an output layer of ten to a thousand neurons — which is all
-    a membrane readout needs — or only for whole-network recording.
-17. **Adam `lr = 1e-3` for this model.** Not a citation issue but an unjustified constant:
-    no tuning has been done, and no evidence exists that it is appropriate for a
-    surrogate-gradient SNN at low `T`.
-18. **LIF `tau = 2.0` as a readout parameter.** Also not a citation issue. It was adopted as
-    a conventional neuron default, but the leak experiment of 2026-09-11 shows it sets the
-    membrane readout's evidence window — half-life one step — and therefore drives a result
-    the study now reports. No sweep over `tau` has been run. Until one is, every statement
-    about the membrane readout is a statement about `tau = 2` specifically, and the paper
-    must say so rather than describing "a membrane readout" in general.
+### Confirmed from the primary document
+
+**1. Horowitz, "Computing's Energy Problem (and what we can do about it)", ISSCC 2014,
+Session 1 Plenary 1.1, Digest of Technical Papers pp. 10-14.** The energy table is
+**Figure 1.1.9**, captioned *"Rough energy costs for various operations in 45nm 0.9V"*
+(Digest p. 14). Read directly from the paper:
+
+| | 8/16 bit | 32 bit |
+|---|---|---|
+| Integer Add | 0.03 pJ | **0.1 pJ** |
+| Integer Mult | 0.2 pJ | **3.1 pJ** |
+| FP FAdd | 0.4 pJ (16 bit) | **0.9 pJ** |
+| FP FMult | 1.1 pJ (16 bit) | **3.7 pJ** |
+| Cache (64 bit) | 8KB 10 pJ, 32KB 20 pJ, 1MB 100 pJ | |
+| DRAM | 1.3-2.6 nJ | |
+
+- **`E_AC = 0.9 pJ` is CONFIRMED** as the 45 nm, 0.9 V, **32-bit floating-point add**. Note
+  the coincidence that the supply voltage is also 0.9: the caption's "0.9V" is not the
+  energy figure.
+- **`E_MAC = 4.6 pJ` is NOT stated anywhere in the paper.** Figure 1.1.9 has no MAC row and
+  the text gives no combined value. 4.6 = 0.9 + 3.7 is the **community convention** of
+  multiply-plus-add, exactly as this repository suspected. It must be described that way and
+  never attributed to Horowitz as a measurement.
+- The caption says **"Rough"**. The source presents these as order-of-magnitude figures, so
+  no result here may turn on their precision.
+
+**Consequence for the paper.** The absolute energy numbers may be reported, with `E_AC`
+cited to Figure 1.1.9 and `E_MAC` described as the multiply-plus-add convention rather than
+a citation. The safer alternative the task offered — report ratios only — is not necessary
+now that the add value is confirmed, but the proxy must keep its existing framing as a
+design-comparison quantity and never as measured power.
+
+**2. Atarashi, Oyama, Arai & Kashima. "Probability Bounding: Post-Hoc Calibration via
+Box-Constrained Softmax." arXiv:2506.10572, 12 June 2025 (v2, 23 February 2026).**
+Title, four authors and date confirmed. Read for the distinction rather than taken from the
+abstract:
+
+- It introduces **BCSoftmax**, a generalisation of softmax enforcing lower and upper bounds
+  on output probabilities, and fits those bounds **by empirical risk minimisation on a
+  validation set**. The bounds are *learned parameters*.
+- **It never considers a model whose probabilities are bounded structurally.** Every
+  experiment uses a standard unbounded softmax over ResNet-50, DenseNet-121, ViT-B/16 or a
+  GloVe-embedding CNN, on TinyImageNet, CIFAR-100, ImageNet-1K and 20NewsGroups.
+- **The precise distinction.** Atarashi et al. *impose* a box constraint as a post-hoc remedy
+  for miscalibration. This study *finds* a box constraint the readout already imposes, before
+  any calibrator is fitted, and shows it *causes* miscalibration. The two are inverses in
+  direction: one adds a bound to fix calibration, the other identifies a bound that breaks
+  it. They meet only in the untried direction of using a learned bound to correct a
+  structural one, which this study does not pursue.
+
+**3a. Li, Jones & Furber.** Title confirmed as **"Unleashing the Potential of Spiking Neural
+Networks by Dynamic Confidence"** — *Dynamic Confidence is the method, not the title*, and
+this repository had been using the method name as the title. Chen Li, Edward Jones, Steve
+Furber; **ICCV 2023, pp. 13350-13360**; arXiv:2303.10276, 17 March 2023. (The ICCV
+open-access listing renders the title with "with" in place of "by"; the arXiv record uses
+"by".)
+*Regime, verified:* **ANN-to-SNN converted**, not directly trained — the paper places itself
+in the conversion category explicitly. Static image data: CIFAR-10 at about 4 timesteps
+falling to ~2.52 with the method, ImageNet at 14 falling to 4.71. It applies **temperature
+scaling** as a post-training calibration step.
+*Note for the paper, not a claim:* this operates at `T` of roughly 2.5-14 with `C = 10` on
+CIFAR-10, which is inside this study's regime, and reports 94.11% accuracy at 4 timesteps
+against a `C = 10, T = 4` ceiling of 0.8585. **If** its readout is a softmax over
+accumulated spike counts, the ceiling would bind there too. The readout description
+available to this verification was ambiguous between accumulated spikes and accumulated
+membrane potential, so this is recorded as a **checkable question**, not a finding.
+
+**3b. Chen, Park & Simeone. "Knowing When to Stop: Delay-Adaptive Spiking Neural Network
+Classifiers with Reliability Guarantees."** arXiv:2305.11322, 18 May 2023 (v4, 29 June
+2024). Authors **Jiechen Chen, Sangwoo Park, Osvaldo Simeone** confirmed. Introduces
+**SpikeCP**, wrapping a pre-trained SNN with **conformal prediction** to give guaranteed
+reliability at input-dependent stopping times. The repository's description of it was
+correct.
+
+**3c. Chen, Park & Simeone. "Agreeing to Stop."** *Entropy* 26(2):126, February 2024. See
+the Cited works entry above: the **readout and the overconfidence statement are confirmed**,
+and the regime is **`T = 80`**, which settles the apparent disagreement with this study.
+
+### Could NOT be confirmed — and what follows
+
+**4. "Sun & Bohte, AOT-SNN, arXiv:2405.00699" is a wrong citation and has been removed.**
+Verified: arXiv:2405.00699 is **Wu, Qi, Cai, Jin, Yi & Huang**, "Direct Training Needs
+Regularisation: Anytime Optimal Inference Spiking Neural Network" — method **AOI-SNN**. A
+genuine **AOT-SNN** line exists and is Tao Sun & Sander Bohté's; the one reference confirmed
+is **Sun & Bohté, "Average-Over-Time Spiking Neural Networks for Uncertainty Estimation in
+Regression", arXiv:2412.00278, 29 November 2024**, which is a **regression** paper and
+therefore probably not what the brief intended. A related earlier paper, **Sun, Yin &
+Bohté, "Efficient Uncertainty Estimation in Spiking Neural Networks via MC-dropout",
+arXiv:2304.10191, 20 April 2023**, is confirmed to exist but was not read.
+**Action taken:** the Wu et al. paper is cited correctly under its real authors. The claim
+that "AOT-SNN uses temperature scaling as its calibration baseline" is **withdrawn** — it
+was attached to the wrong paper and the right paper has not been read.
+
+**5. "Skatchkovsky & Simeone on SNN overconfidence" could not be confirmed and has been
+withdrawn.** The overconfidence claim this study compares itself against is in **Chen, Park
+& Simeone**, not Skatchkovsky. Nicolas Skatchkovsky has co-authored SNN papers with Simeone,
+but **no specific paper of theirs on SNN overconfidence was identified**, and none is cited.
+Rather than guess at which was meant, the reference is removed.
+
+**6. The Loihi and SpiNNaker hardware claims could not be confirmed from primary
+documentation.** Intel's NxSDK API reference is not publicly reachable, and the sPyNNaker
+limitations page does not discuss recording bandwidth. What could be established, from
+secondary but peer-reviewed sources:
+- Loihi's neuron model is a CUBA leaky integrate-and-fire with membrane potential as an
+  internal state variable, and Rueckauer et al., "NxTF: An API and Compiler for Deep Spiking
+  Neural Networks on Intel Loihi" (arXiv:2101.04261) states that during the management phase
+  the embedded CPUs may read out the current SNN state. That is **consistent with** membrane
+  state being readable, and says nothing about the cost of doing so per timestep.
+- sPyNNaker exposes membrane potential through PyNN's `record('v')`, has a 255-neuron
+  per-core limit, and its host transfers are bounded by on-board Ethernet bandwidth. Whether
+  that limit binds for an output layer of ten to a thousand neurons — the only thing a
+  membrane readout needs — is **not established**.
+**Action taken:** the hardware argument in `NOTES.md` "Why the count readout exists" is
+softened to say what is actually known, and both claims stay `[UNVERIFIED]`.
+
+---
+
+## Still to verify
+
+1. **Guo et al. ICML 2017 — full author list and the `n_bins = 15` default.** Not attempted
+   in this pass.
+2. **Amir et al. CVPR 2017 — full author list** for DVS-Gesture. Only "Amir et al." and the
+   title are confirmed, via SpikingJelly's docstring.
+3. **Li et al. 2017 — full author list** for CIFAR10-DVS. Same situation.
+4. **ATan surrogate gradient — originating paper.** SpikingJelly documents the function but
+   attaches no citation. The general method is usually credited to Neftci, Mostafa & Zenke;
+   the specific arctan form is unattributed here.
+5. **DVS-Gesture 1,176 / 288 split counts.** From SpikingJelly's docstring; not built.
+6. **CIFAR10-DVS 10,000 sample count.** Same.
+7. **Whether "Dynamic Confidence" uses a spike-count or membrane readout**, which decides
+   whether the attainable-confidence ceiling binds in its `T = 4`, `C = 10` setting. The most
+   consequential remaining question, because a positive answer would mean the ceiling already
+   constrains published work.
+8. **The AOT-SNN classification paper**, if one exists, and whether temperature scaling is
+   its calibration baseline.
+9. **Loihi compartment-state access cost** and **SpiNNaker recording bandwidth for a small
+   output layer** — see item 6 above.
+10. **Adam `lr = 1e-3`** — an unjustified constant, never tuned.
+11. **LIF `tau = 2.0` as a readout parameter.** Adopted as a neuron default, but the leak
+    experiment shows it sets the membrane readout's evidence window and therefore drives a
+    reported result. No sweep has been run. Every statement about "a membrane readout" is a
+    statement about `tau = 2`.
+12. **N-Caltech101 class semantics** — the 101 = 100 + background composition is from the
+    dataset homepage; only the counts were measured here.

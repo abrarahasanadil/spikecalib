@@ -1375,24 +1375,30 @@ stop early may still want counts — and then the cap applies and `T_min` is the
 
 ### 3. What the hardware actually exposes — `[UNVERIFIED]`
 
-**Nothing in this section has been confirmed against primary documentation, and it must be
-before the preprint ships.** Recorded as the belief being relied on, so it can be checked.
+**A verification pass on 2026-09-12 could not confirm these claims from primary
+documentation, and they remain `[UNVERIFIED]`.** Intel's NxSDK API reference is not publicly
+reachable and the sPyNNaker limitations page does not discuss recording bandwidth. What
+follows is therefore weaker than it was: the strong form of the argument is withdrawn and
+only what could be established is stated.
 
-- **Intel Loihi.** Believed to keep membrane voltage as per-compartment state that the host
-  API can probe, while inter-core communication is spike-only. If so, membrane readout is
-  available in a host-in-the-loop setting but not as a native on-chip routed quantity.
-  *To verify:* whether compartment voltage is readable at inference time without a host
-  round-trip, and at what cost.
-- **SpiNNaker.** Simulates neurons in software on ARM cores, so membrane potential is a
-  variable in memory and is recordable through PyNN. Recording it for many neurons is
-  believed to be bandwidth-limited in a way that spike recording is not.
-  *To verify:* whether that bandwidth limit binds at the output layer only, which is all
-  this readout needs — ten to a thousand neurons, not the whole network.
+- **Intel Loihi.** `[UNVERIFIED]` Loihi's neuron model is a CUBA leaky integrate-and-fire
+  with membrane potential as an internal state variable, and Rueckauer et al.'s NxTF paper
+  (arXiv:2101.04261) states that during the management phase the embedded CPUs may read out
+  the current SNN state. That is **consistent with** membrane state being readable and says
+  **nothing about the per-timestep cost** of reading it, which is the only part this argument
+  needed. The claim that it is probe-only, or that reading requires a host round-trip, is
+  **not established** and is no longer asserted.
+- **SpiNNaker.** `[UNVERIFIED]` Membrane potential is exposed through PyNN's `record('v')`,
+  cores carry at most 255 neurons, and host transfers are bounded by on-board Ethernet
+  bandwidth. Whether that bound binds for an output layer of ten to a thousand neurons —
+  the only thing a membrane readout needs — is **not established**.
 
-That last point matters and cuts in this study's favour: the membrane readout needs the
-potential of the **output layer only**, which is `C` values per timestep, not the whole
-network. A dense-readout objection scaled to an entire network may not apply to ten
-neurons.
+The structural observation that motivated this section still stands on its own, without
+needing either hardware claim: a membrane readout needs the potential of the **output layer
+only**, `C` values per timestep rather than the whole network. Whether that is cheap on any
+particular device is exactly what could not be verified, so the argument for the count
+readout should rest on the two points above it — spikes as the communication primitive, and
+count monotonicity — and not on an unverified cost model.
 
 ### 4. The recommendation, with its scope
 
@@ -1438,34 +1444,41 @@ dropping the inconvenient dataset, and any dataset that is run is reported.
 The study claims novelty over none of the following. Each is cited, and the difference
 is stated rather than implied.
 
-**Every reference in this section is `[UNVERIFIED]`.** The original four were supplied in
-the project brief; three more were added on 2026-09-11 against the study's final claims —
-Atarashi et al. on learned probability bounds, Sun & Bohte on anytime inference, and
-"Agreeing to Stop" on latency-adaptive stopping. None has been checked against a primary
-document in this repository. `SOURCES.md` carries what each does, how this study differs,
-and what specifically must be confirmed.
-Authors, titles, venues and years must be confirmed before the paper cites any of them;
-see `SOURCES.md`, "To verify" items 3–6.
+**Verified against primary documents on 2026-09-12.** Every reference here was checked;
+`SOURCES.md`, "Verified 2026-09-12", carries the evidence. Two did not survive:
 
-**Li, Jones & Furber, "Dynamic Confidence" (ICCV 2023).** Constructs a runtime
-confidence signal for early exit in SNNs, so that inference can stop as soon as the
-network is confident enough. The setting is ANN-to-SNN conversion on static image data,
-and the calibration reference is an ANN. This study differs on three axes: the networks
+- **"Sun & Bohte, AOT-SNN, arXiv:2405.00699" was a wrong citation** and is withdrawn. That
+  identifier is **Wu, Qi, Cai, Jin, Yi & Huang**, "Direct Training Needs Regularisation:
+  Anytime Optimal Inference Spiking Neural Network" — method AOI-SNN, not AOT-SNN. A real
+  AOT-SNN line exists and is Sun & Bohté's, but the paper the brief meant was never
+  identified, so no claim is made about it.
+- **"Skatchkovsky & Simeone on SNN overconfidence" could not be confirmed** and is
+  withdrawn. The overconfidence result this study compares itself against is **Chen, Park &
+  Simeone's**. No Skatchkovsky paper on SNN overconfidence was identified, and guessing at
+  one would be worse than omitting it.
+
+**Li, Jones & Furber, "Unleashing the Potential of Spiking Neural Networks by Dynamic
+Confidence", ICCV 2023, pp. 13350–13360** (arXiv:2303.10276). `[LIT]` *Dynamic Confidence is
+the method; the title above is the paper, which this document previously conflated.*
+Constructs a runtime confidence signal for early exit in SNNs, so that inference can stop as
+soon as the network is confident enough. `[LIT]` **verified:** the setting is ANN-to-SNN
+**conversion** on static image data (CIFAR-10, ImageNet), and temperature scaling is applied
+as post-training calibration. It runs at **2.5–14 timesteps**, which is inside this study's
+own regime — the closest overlap of any reference here. This study differs on three axes: the networks
 are **directly trained** as SNNs rather than converted; the data is **event data** rather
 than static frames; and the object of study is the **calibration method itself** rather
 than a stopping rule built on top of a confidence signal.
 
-**Sun & Bohte, AOT-SNN.** Uses temperature scaling as the calibration baseline for SNN
-uncertainty estimation. This is the baseline the present study interrogates: the question
-here is whether that choice of calibrator is appropriate given a spike-count readout, not
-whether uncertainty estimation for SNNs is worthwhile.
+**Wu, Qi, Cai, Jin, Yi & Huang, "Direct Training Needs Regularisation: Anytime Optimal
+Inference Spiking Neural Network", arXiv:2405.00699.** `[LIT]` Introduces a
+Spatial-Temporal Regulariser so that accuracy degrades gracefully under an early cutoff on
+the softmax output, on event data with directly-trained SNNs. The setting overlaps this
+study closely, but the object is a **stopping rule and a training regulariser**, not the
+calibration of the confidence itself. *(This entry previously misattributed the paper to
+Sun & Bohte; corrected 2026-09-12.)*
 
-**Skatchkovsky & Simeone.** Documents overconfidence in SNNs and addresses it with a
-Bayesian treatment. That is a training-time and model-class intervention. This study is
-strictly **post-hoc**: the trained network is fixed, and only the mapping from its
-outputs to confidences is changed. The two are complementary rather than competing.
-
-**"Knowing When to Stop."** Applies conformal prediction to the SNN stopping problem,
+**Chen, Park & Simeone, "Knowing When to Stop: Delay-Adaptive Spiking Neural Network
+Classifiers with Reliability Guarantees", arXiv:2305.11322.** `[LIT]` Applies conformal prediction to the SNN stopping problem,
 producing coverage guarantees for early exit. Conformal methods target set-valued
 coverage; this study targets scalar confidence calibration measured by ECE. Related
 problem, different quantity.
@@ -1483,12 +1496,24 @@ were seed 2's, labelled as though they covered seeds 0–2.)* That is severe
 attainable-confidence ceiling, which at `T = 2` with 10 classes is 0.4509 against a test
 accuracy of 0.9850. No reachable output could have been correctly confident.
 
-"Agreeing to Stop" (Simeone group) uses the **same readout** — softmax over spike counts —
-and states that SNNs are poorly calibrated and overconfident. That is a direct disagreement
-on the sign, using the same construction.
+Chen, Park & Simeone's "Agreeing to Stop" (*Entropy* 26(2):126, 2024) uses the **same
+readout** — `[LIT]` verified in its full text as `f_c = e^{r_c} / Σ e^{r_c'}` over
+accumulated spike counts `r_c` — and states verbatim that SNNs "tend to be poorly
+calibrated, producing **overconfident** decisions". It too is directly trained with
+surrogate gradients. On the face of it that is a direct disagreement on the sign, using the
+same construction.
 
-**This is reported as a contradiction of the received position, carefully.** The difference
-is most likely **regime**, not error in the prior reports:
+**It is not a disagreement. It is a regime difference, and the numbers now say so.**
+`[LIT]` **verified 2026-09-12:** their experiments run at **`T = 80`**, with checkpoints at
+`{20, 40, 60, 80}`. `[DERIVED]` At `T = 80` with `C = 10` the attainable-confidence ceiling
+is **1.0 to double precision**; even at their earliest checkpoint, `T = 20`, it is
+0.99999998. **The cap is completely inert in their regime.** Nothing forces underconfidence
+there, so what they measure is ordinary overconfidence, and what this study measures at
+`T = 2` — where the ceiling is 0.4509 — is a different phenomenon in a different place. The
+two results are compatible and this document previously asserted that without knowing their
+timestep count.
+
+The remaining regime differences are secondary and are listed for completeness:
 
 - **Timestep count.** The ceiling only binds while accuracy exceeds it. At `T = 8` and
   `T = 10` this study's own models sit *below* the ceiling, and the structural

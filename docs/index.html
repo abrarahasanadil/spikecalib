@@ -631,14 +631,18 @@
       readout is available, a system that must stop early may still want counts.
     </p>
     <p class="unverified-note">
-      <strong>What the hardware exposes has not been confirmed.</strong> Intel Loihi is
-      believed to keep membrane voltage as per-compartment state that a host API can probe
-      while inter-core communication stays spike-only; SpiNNaker simulates neurons in
-      software, so potential is recordable but believed bandwidth-limited. Neither has been
-      checked against primary documentation and both are listed in SOURCES.md to verify.
-      One point cuts in this study's favour: a membrane readout needs the output layer only
-      — C values per timestep, not the whole network — so a dense-readout objection scaled
-      to an entire network may not apply to ten neurons.
+      <strong>What the hardware exposes could not be confirmed, and the strong form of this
+      argument is withdrawn.</strong> A verification pass on 2026-09-12 found Intel's NxSDK
+      API reference unreachable and the sPyNNaker limitations page silent on recording
+      bandwidth. What is established: Loihi's neuron model carries membrane potential as
+      internal state, and the NxTF paper says embedded CPUs may read out SNN state during
+      the management phase — consistent with it being readable, silent on the per-timestep
+      cost, which is the only part the argument needed. SpiNNaker exposes potential through
+      PyNN's <code>record('v')</code> with host transfers bounded by Ethernet bandwidth, but
+      whether that binds for a ten-neuron output layer is unknown. Both stay
+      <span class="unver">unverified</span>, and the case for the count readout rests on the
+      two points above — spikes as the communication primitive, and count monotonicity — not
+      on an unverified cost model.
     </p>
     <p>
       <strong>The recommendation, with its scope.</strong> Where a membrane readout is
@@ -808,7 +812,10 @@
       setting. The layer that does <em>not</em> receive spikes is roughly half the bill.
       This is a design-comparison proxy built from operation counts and published
       per-operation energies; it ignores memory traffic, static power and clock, and no claim
-      about a physical device follows from it.
+      about a physical device follows from it. The per-operation figures come from Horowitz,
+      ISSCC 2014, Figure 1.1.9 — 0.9 pJ for a 32-bit float add, verified against the paper —
+      while the 4.6 pJ multiply-accumulate is the 0.9 + 3.7 convention and is stated nowhere
+      in it.
     </p>
   </div></section>
 
@@ -818,7 +825,7 @@
   <section class="panel c12"><div class="prose wide"><div class="rel-work">
 <div class="cite">
       <h4>Probability Bounding: Post-Hoc Calibration via Box-Constrained Softmax</h4>
-      <p class="venue">Atarashi, Oyama, Arai &amp; Kashima, arXiv:2506.10572, 2026 &nbsp;<span class="unver">unverified — abstract only</span></p>
+      <p class="venue">Atarashi, Oyama, Arai &amp; Kashima, arXiv:2506.10572, June 2025 &nbsp;<span class="ver">verified against the full text</span></p>
       <p>Post-hoc calibration that <em>learns</em> lower and upper bounds on output
         probabilities through a box-constrained softmax.</p>
       <p class="diff"><b>This study differs</b> in what the bound is. Theirs is a learned,
@@ -830,7 +837,7 @@
 
     <div class="cite">
       <h4>Direct Training Needs Regularisation: Anytime Optimal Inference SNN</h4>
-      <p class="venue">Sun &amp; Bohte, arXiv:2405.00699 &nbsp;<span class="unver">unverified</span></p>
+      <p class="venue">Wu, Qi, Cai, Jin, Yi &amp; Huang, arXiv:2405.00699, April 2024 &nbsp;<span class="ver">verified — authorship corrected</span></p>
       <p>Applies a cutoff on the softmax output over event-based datasets, for anytime
         inference in directly-trained SNNs.</p>
       <p class="diff"><b>This study differs</b> in object: theirs is a stopping rule, this
@@ -841,7 +848,7 @@
 
     <div class="cite">
       <h4>Agreeing to Stop: Latency-Adaptive Decisions via Ensembles of SNNs</h4>
-      <p class="venue">Simeone group &nbsp;<span class="unver">unverified</span></p>
+      <p class="venue">Chen, Park &amp; Simeone, <em>Entropy</em> 26(2):126, 2024 &nbsp;<span class="ver">verified against the full text</span></p>
       <p>Uses softmax over spike counts as a confidence signal for latency-adaptive
         stopping, and states that SNNs are poorly calibrated and <strong>overconfident</strong>.</p>
       <p class="diff"><b>This study disagrees on the sign</b>, using the same readout. Mean
@@ -851,8 +858,8 @@
     </div>
 
     <div class="cite">
-      <h4>Dynamic Confidence</h4>
-      <p class="venue">Li, Jones &amp; Furber, ICCV 2023</p>
+      <h4>Unleashing the Potential of SNNs by Dynamic Confidence</h4>
+      <p class="venue">Li, Jones &amp; Furber, ICCV 2023, pp. 13350–13360 &nbsp;<span class="ver">verified</span></p>
       <p>
         Constructs a runtime confidence signal for early exit in SNNs, so inference can stop
         as soon as the network is confident enough. The setting is ANN-to-SNN conversion on
@@ -866,37 +873,28 @@
       </p>
     </div>
 
-    <div class="cite">
-      <h4>AOT-SNN</h4>
-      <p class="venue">Sun &amp; Bohte</p>
+    <div class="cite withdrawn">
+      <h4>Two references withdrawn on verification</h4>
+      <p class="venue">2026-09-12</p>
       <p>
-        Uses temperature scaling as the calibration baseline for SNN uncertainty estimation.
+        <b>"Sun &amp; Bohte, AOT-SNN, arXiv:2405.00699"</b> was a wrong citation. That
+        identifier belongs to Wu et al. above, and the method is AOI-SNN, not AOT-SNN — two
+        papers with similar acronyms had been merged into one reference. A genuine AOT-SNN
+        line exists and is Sun &amp; Bohté's, but the paper the brief meant was never
+        identified, so the claim that it uses temperature scaling as its calibration
+        baseline is withdrawn rather than reattached to a guess.
       </p>
-      <p class="diff">
-        <b>This study differs</b> by interrogating that choice rather than adopting it. The
-        question here is whether a scalar calibrator is appropriate given a spike-count
-        readout — and the answer, on N-MNIST, turns out to be that it is entirely adequate.
+      <p>
+        <b>"Skatchkovsky &amp; Simeone on SNN overconfidence"</b> could not be confirmed.
+        The overconfidence result this study compares itself against is Chen, Park &amp;
+        Simeone's. No Skatchkovsky paper on SNN overconfidence was identified, and inventing
+        a plausible one would be worse than omitting it.
       </p>
     </div>
 
     <div class="cite">
-      <h4>SNN overconfidence, Bayesian treatment</h4>
-      <p class="venue">Skatchkovsky &amp; Simeone</p>
-      <p>
-        Documents overconfidence in SNNs and addresses it with a Bayesian treatment — a
-        training-time and model-class intervention.
-      </p>
-      <p class="diff">
-        <b>This study differs</b> by being strictly post-hoc: the trained network is fixed and
-        only the mapping from its outputs to confidences changes. The two are complementary
-        rather than competing. Note also that the miscalibration found here at low <em>T</em>
-        is <em>under</em>confidence, not overconfidence, and is structural.
-      </p>
-    </div>
-
-    <div class="cite">
-      <h4>Knowing When to Stop</h4>
-      <p class="venue">conformal prediction for SNN early exit</p>
+      <h4>Knowing When to Stop: Delay-Adaptive SNN Classifiers with Reliability Guarantees</h4>
+      <p class="venue">Chen, Park &amp; Simeone, arXiv:2305.11322, 2023 &nbsp;<span class="ver">verified</span></p>
       <p>
         Applies conformal prediction to the SNN stopping problem, producing coverage
         guarantees for early exit.
@@ -911,10 +909,19 @@
     <div class="cite">
       <p class="unver">Provenance</p>
       <p>
-        All four references were supplied in the project brief and have not been checked
-        against primary documents. Authors, titles, venues and years must be confirmed before
-        the paper cites any of them. The repository's <code>SOURCES.md</code> lists them under
-        "To verify" alongside the Horowitz energy constants, which are in the same state.
+        <b>Verified 2026-09-12 against primary documents</b>, because these are load-bearing
+        in a preprint and several were supplied in a brief rather than read.
+        <b>Confirmed:</b> Atarashi et al.; Li, Jones &amp; Furber; and both Chen, Park &amp;
+        Simeone papers — authors, titles, venues, years, and the timestep regime each works
+        at. <b>Withdrawn:</b> two references, one an arXiv identifier attributed to the wrong
+        authors and one that could not be identified at all; both are recorded above rather
+        than deleted. <b>Horowitz:</b> the energy table is <b>Figure 1.1.9</b>, "Rough energy
+        costs for various operations in 45nm 0.9V" — E<sub>AC</sub> = 0.9 pJ is confirmed as
+        the 32-bit float add, but <b>4.6 pJ appears nowhere in the paper</b>. It is the
+        multiply-plus-add convention, 0.9 + 3.7, and is now described as a convention rather
+        than cited as a measurement. <b>Loihi and SpiNNaker</b> could not be confirmed and
+        the strong form of that argument is withdrawn. <code>SOURCES.md</code> carries the
+        evidence for each and what remains unverified.
       </p>
     </div>
   </div></div></section>

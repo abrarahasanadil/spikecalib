@@ -1374,3 +1374,112 @@ another file.
   concrete open question about the cap's effect on learning.
 - *The residual's remaining three quarters still has no mechanism.* Ruling out attainability
   and now most of the capacity explanation makes it sharper, not smaller.
+
+---
+
+## 2026-09-12 — Verification pass over every `[UNVERIFIED]` source: two citations withdrawn, one constant reclassified
+
+**Did.** Checked every `[UNVERIFIED]` item against primary documents, because they are
+load-bearing in a preprint and several came from a project brief rather than from reading.
+Nothing was invented to close a gap; where a source could not be confirmed the claim was
+withdrawn or softened rather than patched with a plausible substitute.
+
+**Found: Horowitz is fully confirmed, and one of the two constants is not a citation.**
+Read the ISSCC 2014 digest paper directly. The energy table is **Figure 1.1.9**, captioned
+"Rough energy costs for various operations in 45nm 0.9V", Digest p. 14. It gives Integer
+Add 32-bit 0.1 pJ, Integer Mult 32-bit 3.1 pJ, FP FAdd 32-bit **0.9 pJ**, FP FMult 32-bit
+**3.7 pJ**, cache 10–100 pJ, DRAM 1.3–2.6 nJ.
+- `E_AC = 0.9 pJ` is **confirmed** as the 32-bit floating-point add. The caption's "0.9V" is
+  the supply voltage — an unfortunate coincidence with the energy figure, and not its source.
+- `E_MAC = 4.6 pJ` **appears nowhere in the paper.** There is no MAC row and no combined
+  value in the text. It is the community convention 0.9 + 3.7. Reclassified from `[LIT]` to
+  `[DERIVED]` in `spikecalib/models.py`, and the paper must describe it as a convention.
+- The caption says **"Rough"**. The source presents its own numbers as order-of-magnitude,
+  which retroactively justifies the study's existing rule that the energy figure is only ever
+  a design-comparison proxy.
+
+**Found: Atarashi et al. is confirmed, and the distinction is sharper than the abstract
+allowed.** Kyohei Atarashi, Satoshi Oyama, Hiromi Arai, Hisashi Kashima, arXiv:2506.10572,
+12 June 2025. The bounds in BCSoftmax are **learned by empirical risk minimisation on a
+validation set**, and the paper **never applies the method to a structurally bounded
+readout** — every experiment is a standard unbounded softmax over ResNet-50, DenseNet-121,
+ViT-B/16 or a GloVe CNN. So the two works are inverses: they *impose* a box constraint to
+fix miscalibration; this study *finds* one the readout already imposes and shows it *causes*
+miscalibration.
+
+**Found: the disagreement with the literature was never a disagreement.**
+"Agreeing to Stop" is Jiechen Chen, Sangwoo Park & Osvaldo Simeone, *Entropy* 26(2):126,
+February 2024, arXiv:2310.16675. Read the full text. It **does** use this study's readout —
+`f_c = e^{r_c} / Σ e^{r_c'}` over accumulated spike counts — it **is** directly trained with
+surrogate gradients, and it **does** say SNNs "tend to be poorly calibrated, producing
+overconfident decisions". All three of the repository's claims about it were right.
+
+The regime was the missing piece: **they run at `T = 80`**, checkpointing at {20, 40, 60,
+80}. `[DERIVED]` at `T = 80, C = 10` the attainable-confidence ceiling is 1.0 to double
+precision, and even at `T = 20` it is 0.99999998. **The cap is completely inert where they
+work.** This study had asserted a regime explanation for fourteen sessions without knowing
+their timestep count; the number now supports it exactly.
+
+**Broke: two citations did not survive and were withdrawn.**
+- *"Sun & Bohte, AOT-SNN, arXiv:2405.00699" is wrong on authors and on method.* That
+  identifier is **Dengyu Wu, Yi Qi, Kaiwen Cai, Gaojie Jin, Xinping Yi & Xiaowei Huang**,
+  "Direct Training Needs Regularisation: Anytime Optimal Inference Spiking Neural Network",
+  and the method is **AOI-SNN**, not AOT-SNN. Two papers with similar acronyms had been
+  merged into one reference. A genuine AOT-SNN line exists and is Tao Sun & Sander Bohté's —
+  arXiv:2412.00278 is confirmed but is a **regression** paper and probably not what the brief
+  meant. The paper is now cited under its real authors and the claim that "AOT-SNN uses
+  temperature scaling as its calibration baseline" is withdrawn, since it was attached to the
+  wrong paper and the right one has not been read.
+- *"Skatchkovsky & Simeone on SNN overconfidence" could not be confirmed at all.* The
+  overconfidence result this study compares itself against is Chen, Park & Simeone's. No
+  Skatchkovsky paper on SNN overconfidence was identified. Guessing at which was meant would
+  have produced exactly the failure mode this pass existed to prevent, so it is removed and
+  the removal is recorded on the page rather than hidden.
+
+**Found: a title this repository had been using was the method name, not the paper.**
+"Dynamic Confidence" is the method. The paper is **"Unleashing the Potential of Spiking
+Neural Networks by Dynamic Confidence"**, Chen Li, Edward Jones, Steve Furber, **ICCV 2023,
+pp. 13350–13360**, arXiv:2303.10276. Verified: **ANN-to-SNN converted**, static image data,
+temperature scaling as post-training calibration, and it runs at **2.5–14 timesteps** — the
+closest regime overlap of any reference here.
+
+**Open, and consequential:** that paper reports 94.11% accuracy at 4 timesteps on CIFAR-10.
+If its readout is a softmax over accumulated spike *counts*, the `C = 10, T = 4` ceiling of
+0.8585 binds there too, and the ceiling would already constrain published work. The readout
+description available to this pass was ambiguous between accumulated spikes and accumulated
+membrane potential, so it is recorded as a checkable question, not a finding.
+
+**Could not confirm: the Loihi and SpiNNaker claims.** Intel's NxSDK API reference is not
+publicly reachable and the sPyNNaker limitations page does not discuss recording bandwidth.
+What could be established, from peer-reviewed secondary sources: Loihi's CUBA LIF carries
+membrane potential as internal state and Rueckauer et al.'s NxTF paper says embedded CPUs
+may read out SNN state during the management phase — consistent with readability, silent on
+per-timestep cost, which is the only part the argument needed. sPyNNaker exposes potential
+through PyNN's `record('v')` with host transfers bounded by Ethernet bandwidth, but whether
+that binds for a ten-neuron output layer is unknown. **The strong form of the hardware
+argument is withdrawn** in both `NOTES.md` and on the page; the case for the count readout
+now rests on spikes-as-communication-primitive and count monotonicity, neither of which
+needs a cost model.
+
+**Chose.**
+- *Withdrawn references stay on the page rather than disappearing.* A reader who saw the
+  earlier version should be able to find out what was removed and why, so the related-work
+  section carries a "withdrawn on verification" card with a status rule beside it.
+- *`E_MAC` keeps its value and loses its provenance tag.* 4.6 pJ is still the right number to
+  use; what changed is that it is `[DERIVED]` from two `[LIT]` values rather than cited.
+- *The `.ver` marker is quieter than `.unver`.* A confirmed reference is the normal case and
+  should not shout; the warning state is the one that needs to be visible.
+- *Nothing was substituted for the two withdrawn references.* Offering a nearby paper that
+  happens to exist would be a plausible wrong citation, which is the specific failure this
+  pass was run to avoid.
+
+**Open.**
+- *Whether "Dynamic Confidence" uses a spike-count or a membrane readout.* Now the most
+  consequential unresolved item in `SOURCES.md`: a positive answer would mean the
+  attainable-confidence ceiling already constrains published results.
+- *Which AOT-SNN paper the brief intended*, and whether temperature scaling is its baseline.
+- *Guo et al. `n_bins = 15`, Amir et al. and Li et al. author lists, and the ATan surrogate's
+  origin* were not attempted in this pass and remain unverified.
+- *Loihi per-timestep state-read cost and SpiNNaker small-layer recording bandwidth.*
+- *The energy figures are "Rough" by their own source*, so the absolute microjoule values on
+  the page carry less weight than their uniformity across `T` suggests.
