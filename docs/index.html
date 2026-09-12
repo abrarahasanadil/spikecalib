@@ -12,14 +12,6 @@
 
 <aside class="rail" aria-label="What this study argues">
  <div class="rail-inner">
-  <div class="rail-head">
-    <div class="name">SpikeCalib</div>
-    <div class="what">Confidence calibration for event-driven spiking neural networks.
-      N-MNIST and N-Caltech101, four readouts, 96 trained models.</div>
-  </div>
-
-  <div class="rail-sep"></div>
-
   <div class="rail-arg">
     <h3>The question</h3>
     <p>Confidence in a deployed spiking network is only useful if it is trustworthy. At low
@@ -42,7 +34,8 @@
   </div>
   <div class="rail-arg">
     <h3>What it establishes</h3>
-    <p>The cap held in every one of 24 measured cells, saturated to float precision. Where it
+    <p>The cap held in every one of 24 measured cells, saturated to float precision, across
+      two datasets and 96 trained models. Where it
       bites it accounts for 99.2% and 97.1% of the error before calibration; where it does not
       bite it accounts for none. The readout family, not the network, sets the direction of
       the failure. Which calibration method is used does not matter.</p>
@@ -71,13 +64,16 @@
 
 <main class="main">
 
-  <header class="masthead c12">
+  <header class="masthead-bar c12">
     <h1>SpikeCalib</h1>
     <p class="tagline">Post-hoc confidence calibration for event-driven spiking neural networks</p>
     <p class="who">
       <strong>Mohammed Abrar Ahasan Chowdhury</strong> &nbsp; ORCID
       <a href="https://orcid.org/0009-0006-9273-6593">0009-0006-9273-6593</a>
     </p>
+  </header>
+
+  <header class="masthead c12">
     <div class="hero">
       <div class="hero-panel">
     <p class="lede">
@@ -267,6 +263,10 @@
       <span class="lamp" aria-hidden="true"></span>
       <p><span class="tag">verdict</span><span id="verdict-text"></span></p>
     </div>
+    <h4 class="sub-h">Minimum <em>T</em> at this target accuracy</h4>
+    <div class="scroll panel-table"><table id="tmin-table"></table></div>
+    <p class="hint">T<sub>min</sub> = ln((C&minus;1)a / (1&minus;a)), below which the ceiling
+      sits under the target accuracy. It follows the sliders.</p>
   </section>
 
   <div class="band"><h2>Sweep results</h2>

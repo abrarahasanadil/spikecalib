@@ -144,7 +144,11 @@
 
   function drawCeiling() {
     var C = hero.C, Tsel = hero.T, TMAX = 20;
-    var c = chart(hero.host, 760, 340, { l: 48, r: 18, t: 14, b: 32 });
+    /* 540, not 340. The panel beside this one now carries the T-min table, and at 340 the
+       chart left it 207px short at 1440. A taller plot is also a better one here: the
+       ceiling curve is steep at low T and the extra vertical resolution is where the
+       argument lives. */
+    var c = chart(hero.host, 760, 540, { l: 48, r: 18, t: 14, b: 32 });
     graticule(c, 10, 5);
 
     var X = function (t) { return c.ix(t, 1, TMAX); };
@@ -198,6 +202,26 @@
       Tsel + " the ceiling is " + ceilingOf(Tsel, C).toFixed(4) + ".");
   }
 
+  /* The derived panel used to end well above the chart beside it. This is the same
+     arithmetic the readout above already shows, swept across the class counts the study
+     actually uses plus the two it does not, so the space is filled with derived content
+     rather than with padding. It follows the target-accuracy slider. */
+  var TMIN_C = [10, 11, 101];   // the three class counts in the dataset registry
+  function renderTmin(a) {
+    var host = document.getElementById("tmin-table");
+    if (!host) return;
+    var html = "<thead><tr><th>classes C</th><th>ceiling at T = " + hero.T +
+      "</th><th>T<sub>min</sub></th></tr></thead><tbody>";
+    TMIN_C.forEach(function (C) {
+      var t = minTimesteps(C, a);
+      var here = C === hero.C ? ' class="k"' : "";
+      html += "<tr" + (C === hero.C ? ' style="background:rgba(102,212,207,.07)"' : "") +
+        "><td" + here + ">" + C + "</td><td>" + ceilingOf(hero.T, C).toFixed(4) +
+        "</td><td>" + (t <= 0 ? "&lt; 1" : Math.max(1, Math.ceil(t))) + "</td></tr>";
+    });
+    host.innerHTML = html + "</tbody>";
+  }
+
   function updateHero() {
     hero.T = +hero.tEl.value;
     hero.C = +hero.cEl.value;
@@ -216,6 +240,7 @@
     var tmin = minTimesteps(hero.C, a);
     var tminCeil = Math.max(1, Math.ceil(tmin));
     hero.tminOut.textContent = tmin <= 0 ? "< 1" : String(tminCeil);
+    renderTmin(a);
     hero.designText.textContent =
       "To reach " + (a * 100).toFixed(1) + "% accuracy with " + hero.C +
       " classes and still be able to express it, a spike-count readout needs T \u2265 " +

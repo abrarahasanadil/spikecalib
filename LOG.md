@@ -2403,3 +2403,98 @@ Nothing below 4.5:1.
 - *The rail scrolls by 59px at an 800px-tall viewport.* Fits at 900px and above.
 - *`--accent` is still mint outside the rail* — links, focus rings, the ceiling curve.
 - *The three unread references* stay out of `SOURCES.md` until someone reads them.
+
+## 2026-09-12 — Sticky masthead, a modal transition, and a gap I could not reproduce
+
+**Did.** Four changes.
+
+**Ran.** `pytest -q` → **222 passed**. Verified at 1920, 1440 and 1200, with the row sweep
+re-run after the sticky bar was in place.
+
+**Did: removed the duplicated rail header.** The name, the description line and the divider
+are gone; the rail opens on "The question". The dataset and model counts were the one thing
+in there worth keeping and are folded into *What it establishes* — "across two datasets and
+96 trained models" — without adding a sentence. Rail top padding went from `--s5` to `--s6`
+so the first heading is not flush against the viewport.
+
+**Did: the modal arrives from somewhere.** Opening, the panel fades and rises 8px while
+scaling 0.96 → 1 over 200ms on a decelerating curve; closing reverses at 140ms. The duration
+lives on the destination state, so opening lands on `[open]` at 200ms and closing lands on
+the base rule at 140ms. `@starting-style` gives the opening frame, and `display` and
+`overlay` carry `allow-discrete` or the element would vanish before it could fade. The
+backdrop's blur transitions with it rather than snapping on.
+
+Nothing else on the page animates. No load fade, no scroll reveals.
+
+Reduced motion is handled twice: the global rule strips every transition, and a local rule
+next to the transform states the intent where the transform is. Measured under
+`prefers-reduced-motion: reduce`, 25ms after `showModal()`: `opacity 1, transform none,
+transition-duration 0s`.
+
+**Verified the thing the brief warned about.** All eight, sampled 60ms into the open
+transition: the dialog is already `display: block`, already in the top layer, opacity
+between 0.72 and 0.92, and **focus is already inside the panel** — so focus does not move
+before the element exists. Focus returns to the trigger on close in all eight. Escape pressed
+**40ms into the open transition** closes cleanly and returns focus.
+
+**Did: sticky masthead.** Title, subtitle and author line split into their own `.masthead-bar`
+as a direct child of `.main` — sticky inside the old header would have unstuck the moment the
+header scrolled past, because a sticky child only sticks within its own parent's box. **83px
+tall**, `rgba(255,255,255,.06)` over `blur(28px)`, 1px `--border` bottom. The summary and the
+three link buttons scroll away with the content, as asked.
+
+There are **no in-page anchors** on this page, so nothing lands behind the bar today; a
+`[id] { scroll-margin-top: 104px }` is in anyway so a future one cannot.
+
+The bleed margin caused a real bug and the sweep caught it: the bar is pulled out to the edge
+of `.main`'s padding box with negative margins, and at the 900px breakpoint that padding
+changes from `--s6` to `--s3` while the negative margin did not. **12px of horizontal
+overflow at 900 and 400.** The negatives are now matched at both breakpoints.
+
+**Found: I could not reproduce either gap, and my earlier figures were right.** The brief
+reports roughly 340px under Derived quantities against my 64px, and roughly 200px for the
+card against my 31px.
+
+Measured before changing anything: **64px and 31px at 1920**, unchanged at viewport heights
+900, 1000 and 1200 — the chart is a fixed 340px SVG, so viewport height does not enter.
+Swept eleven widths from 1280 to 3840: the instrument gap runs 43–123px and reaches **163px
+only at 3840px**; the card gap is 12px or 31px throughout. Tested with `data.js` blocked, in
+case an empty verdict collapsed the panel: heights identical, because the markup carries
+fallback text. So the earlier figures were not wrong and the layout had not shifted. If the
+rendered page shows 340px, it is showing something these fifteen measurements do not.
+
+**Did the work anyway**, because the row is better for it. Derived quantities now carries a
+T<sub>min</sub> table across the three class counts in the dataset registry — 10, 11 and 101
+— with the ceiling at the current `T` beside each, following the sliders like everything else
+in that panel.
+
+That overshot on the first attempt, by more than the gap it was closing: five rows plus a
+three-line note added 340px and left the **derived panel 297px taller** than the chart. Cut
+to three rows with a one-line note, and the chart raised from 340 to 540px — which the plot
+wanted anyway, since the ceiling curve is steep at low `T` and that is where the argument
+lives. Chart heights were swept at 340/420/470/520/560 before picking.
+
+**Worst gap per width, after the sticky bar:**
+
+| | 1280 | 1440 | 1920 | 2560 | 3840 |
+|---|---|---|---|---|---|
+| instrument vs derived | 14px | −7px | 14px | 91px | 132px |
+| T = 80 card vs tiles | 12px | 12px | 31px | 31px | 31px |
+
+Against the 100px threshold, every row at **1920, 1440, 1200, 900 and 400 is clear**; the
+only reading over it is 132px at 3840px, a width no display in the brief covers.
+
+**One harness artifact, not a page defect.** The modal edge check reported 8 of 8 misaligned
+immediately after the transition landed — it was measuring a panel still at `scale(.96)`. It
+now waits 260ms for the transition to settle and reports 8 of 8 aligned, as before.
+
+**Verified.** Contrast re-measured against sampled composited pixels, 33 samples per width,
+including the new sticky bar and T-min table: bar title 14.08:1, its subtitle and author line
+8.26:1 and 8.32:1, T-min body 15.20:1, heads 8.87:1. One label moved: the filter headings sit
+over the brightest part of the ground gradient and measured **4.52:1** there, which passes
+with nothing in hand, so they went from `--ink-3` to `--ink-2`. Lowest anywhere is now
+**4.82:1**. Nothing below 4.5:1.
+
+**Open.**
+- *132px at 3840px* in the instrument row, the only row over threshold at any width measured.
+- *`--accent` is still mint outside the rail.*
