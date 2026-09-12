@@ -65,6 +65,15 @@
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
+  /* One spacing scale. Every inset and every vertical gap on the page is one of these,
+     so "tight here, loose there" cannot reappear by accident. */
+  --sp-1: 6px;    /* inside a control */
+  --sp-2: 10px;   /* inside a nested surface, vertical */
+  --sp-3: 12px;   /* inside a nested surface, horizontal */
+  --sp-4: 16px;   /* panel padding, and the gap between panels */
+  --sp-5: 18px;   /* panel padding, horizontal -- 2px more than vertical reads as equal */
+  --sp-6: 36px;   /* between sections */
+
   --r-panel: 8px;
   --r-tile: 6px;
   --r-ctl: 5px;
@@ -123,16 +132,29 @@ a:hover { color: #7fe0d8; }
   padding: 22px 24px 70px;
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--sp-4);
   align-content: start;
-  align-items: stretch;
+  /* start, not stretch. With stretch a short panel is inflated to the height of the tallest
+     panel in its row and shows that difference as empty space inside its own border -- which
+     was up to 1,237px on one row. With start, a panel is exactly as tall as its content and
+     a height mismatch costs nothing. Row balance is then handled by SPAN, not by padding:
+     anything long enough to dominate a row is given the full twelve columns. */
+  align-items: start;
 }
 .c12 { grid-column: span 12; }
 .c7  { grid-column: span 7; }
 .c6  { grid-column: span 6; }
 .c5  { grid-column: span 5; }
 
-.band { grid-column: span 12; margin: 14px 0 -6px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 11px; }
+.band {
+  grid-column: span 12;
+  /* The only two vertical gaps on the page: --sp-4 between panels (the grid gap) and
+     --sp-6 before a new section. The old rule set a negative bottom margin, which made the
+     gap after a band header 10px against 16px elsewhere. */
+  margin: calc(var(--sp-6) - var(--sp-4)) 0 0;
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 11px;
+}
+.band:first-of-type { margin-top: 0; }
 .band .idx { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
 .band h2 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
 .band .sub { margin: 0; font-size: 13px; color: var(--ink-3); }
@@ -166,7 +188,7 @@ a:hover { color: #7fe0d8; }
   box-shadow: var(--hi), var(--shadow);
   backdrop-filter: blur(18px) saturate(125%);
   -webkit-backdrop-filter: blur(18px) saturate(125%);
-  padding: 16px 17px;
+  padding: var(--sp-4) var(--sp-5);
 }
 /* Anything nested inside a panel sits a step brighter, so depth stays legible
    instead of every surface reading at the same level. */
@@ -216,7 +238,7 @@ input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.12); }
 /* ---------- readout ---------- */
 
 .readout { display: grid; gap: 1px; background: var(--rule); border-radius: var(--r-tile); overflow: hidden; }
-.readout-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 10px 12px; background: var(--screen); }
+.readout-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: var(--sp-2) var(--sp-3); background: var(--screen); }
 .readout-label { font-size: 12.5px; color: var(--ink-2); }
 .readout-value { font-family: var(--mono); font-size: 15px; color: var(--ink); }
 .readout-value.big { font-size: 19px; color: var(--accent); }
@@ -255,7 +277,7 @@ input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.12); }
 
 /* ---------- chart wells ---------- */
 
-.well { background: var(--screen); border-radius: var(--r-panel); box-shadow: var(--well); padding: 10px 12px 6px; }
+.well { background: var(--screen); border-radius: var(--r-panel); box-shadow: var(--well); padding: var(--sp-2) var(--sp-3) var(--sp-1); }
 .well svg { display: block; width: 100%; height: auto; max-width: 100%; overflow: visible; }
 .chart-note { margin: 9px 2px 2px; font-size: 12.5px; color: var(--ink-3); line-height: 1.5; }
 
@@ -301,10 +323,11 @@ input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.12); }
 
 .rel-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 @media (max-width: 820px) { .rel-grid { grid-template-columns: 1fr; } }
-.rel-grid .well { padding: 8px 10px 4px; }
+.rel-grid .well { padding: var(--sp-2) var(--sp-3) var(--sp-1); }
 
 /* ---------- table ---------- */
 
+.panel-table { margin: var(--sp-3) 0; }
 .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--r-panel); border: 1px solid var(--edge-soft); max-height: 560px; overflow-y: auto; }
 table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
 thead th {
@@ -324,15 +347,30 @@ tbody tr:hover td { background: rgba(255,255,255,.03); color: var(--ink); }
 /* ---------- prose ---------- */
 
 .prose { max-width: 70ch; }
+/* A full-width panel lets its tables and figures use the whole width, but running text at
+   1,072px is unreadable. Constrain the text elements only, so the panel is wide and the
+   measure is not. */
 .prose.wide { max-width: none; }
+.prose.wide > p,
+.prose.wide > h3,
+.prose.wide > h4,
+.prose.wide > ul,
+.prose.wide > ol,
+.prose.wide > blockquote,
+.prose.wide > .chart-note { max-width: 75ch; }
 /* A full-width panel of prose needs columns, or the measure runs to 200 characters. */
 .two-col { columns: 2; column-gap: 34px; }
 .two-col h3 { column-span: all; }
 .two-col p { break-inside: avoid; }
 @media (max-width: 1100px) { .two-col { columns: 1; } }
 .unverified-note { border-left: 2px solid var(--status); padding-left: 12px; color: var(--ink-3); }
-.rel-work { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0 28px; }
-.rel-work .cite { max-width: 70ch; }
+/* Masonry, not a grid. These cards differ in height by hundreds of pixels, and in a grid
+   every card in a row is inflated to the tallest -- measured at 1,241px of empty space
+   across the section at 1920px. Multi-column packs them by flow instead, so a short card
+   costs nothing. `columns: 320px` picks the column count from the available width, so it
+   needs no breakpoints of its own and cannot disagree with the panel's. */
+.rel-work { columns: 320px; column-gap: 28px; }
+.rel-work .cite { max-width: 70ch; break-inside: avoid; }
 .prose p { margin: 0 0 13px; }
 .prose h3 { margin: 22px 0 8px; font-size: 14.5px; font-weight: 600; color: var(--ink); }
 .prose h3:first-child { margin-top: 0; }
@@ -341,9 +379,29 @@ tbody tr:hover td { background: rgba(255,255,255,.03); color: var(--ink); }
 .prose code { font-family: var(--mono); font-size: 12.5px; background: rgba(255,255,255,.06); padding: 1px 5px; border-radius: 3px; color: var(--ink); }
 .prose strong { font-weight: 600; color: var(--ink); }
 
-.rel-work { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 0 26px; }
-.cite { padding: 13px 0; border-top: 1px solid var(--rule); max-width: 70ch; }
-.rel-work .cite:nth-child(-n+3) { border-top: none; padding-top: 0; }
+.rel-work { columns: 310px; column-gap: 26px; }
+.cite { padding: 13px 0; border-top: 1px solid var(--rule); max-width: 70ch; break-inside: avoid; }
+/* In column flow the first card of each column sits at the top, so a top border there reads
+   as a stray rule. Only the very first card is reliably at a column top, so it alone loses
+   the border; the rest keep it as a separator between stacked cards. */
+.rel-work .cite:first-child { border-top: none; padding-top: 0; }
+/* The provenance note describes every reference, so it is a footer to the section rather
+   than one more card. Spanning it also stops it taking a column of its own and leaving the
+   others short. */
+.rel-work .provenance { column-span: all; max-width: none; margin-top: 4px; }
+/* Balance. Six cards whose heights run 265px to 658px cannot balance across columns while
+   every one of them is unbreakable: the tallest sets the container height and the rest come
+   up short, measured at 322px. So a card MAY break between its paragraphs -- but never
+   between its heading and its text, and never leaving a single line stranded. That is the
+   ordinary multi-column contract and it costs nothing here, because a card is a sequence of
+   paragraphs rather than a unit that must be seen whole. */
+.rel-work .cite { break-inside: auto; }
+.rel-work .cite h4,
+.rel-work .cite .venue { break-after: avoid; }
+.rel-work .cite p { break-inside: avoid; orphans: 2; widows: 2; }
+/* The withdrawal card carries a status rule down its left edge, which would be cut in half
+   by a column break. It stays whole. */
+.rel-work .cite.withdrawn { break-inside: avoid; }
 .cite h4 { margin: 0 0 3px; font-size: 14px; font-weight: 600; }
 .cite .venue { font-size: 12.5px; color: var(--ink-3); margin: 0 0 7px; }
 .cite p { margin: 0 0 6px; font-size: 13.5px; color: var(--ink-2); }

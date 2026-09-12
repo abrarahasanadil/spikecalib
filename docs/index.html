@@ -14,7 +14,8 @@
  <div class="rail-inner">
   <div class="rail-head">
     <div class="name">SpikeCalib</div>
-    <div class="what">Confidence calibration for event-driven spiking neural networks. N-MNIST, 15 runs.</div>
+    <div class="what">Confidence calibration for event-driven spiking neural networks.
+      N-MNIST and N-Caltech101, four readouts, 96 trained models.</div>
   </div>
 
   <div class="rail-group">
@@ -184,7 +185,7 @@
   <div class="band"><h2>Findings</h2>
     <p class="sub">N-MNIST, five timestep settings, three seeds</p></div>
 
-  <section class="panel c6"><div class="prose">
+  <section class="panel c12"><div class="prose wide">
 <h3>The ceiling accounts for almost all uncalibrated error at low T</h3>
     <p>
       At <em>T</em> = 2 with 10 classes the ceiling is 0.4509, and the trained models
@@ -213,21 +214,7 @@
     </p>
   </div></section>
 
-  <section class="panel c6"><div class="prose">
-<h3>The same bound is a floor on the training loss</h3>
-    <p>
-      Cross-entropy on spike-count logits cannot fall below −ln(ceiling): 0.7966 at
-      <em>T</em> = 2 against 0.0004 at <em>T</em> = 10. The observed plateaus sit between
-      0.0072 and 0.0182 above their own floor across all fifteen runs. A <em>T</em> = 2
-      model plateauing at 0.81 and a <em>T</em> = 10 model plateauing at 0.009 are equally
-      converged. <strong>Training loss is therefore not comparable across <em>T</em></strong>,
-      and read naively the low-<em>T</em> curve looks like a failure to train and invites
-      fixes for a problem that does not exist. Convergence here is judged on validation
-      accuracy, never on loss.
-    </p>
-  </div></section>
-
-  <section class="panel c12"><div class="prose wide">
+    <section class="panel c12"><div class="prose wide">
 <h3>The ceiling is a property of the readout, not of spiking networks</h3>
     <p>
       Softmax-over-spike-counts is a <em>choice</em>. The same architecture was trained with
@@ -235,7 +222,7 @@
       BatchNorm is identical — across up to five timestep settings and three seeds,
       54 runs.
     </p>
-    <div class="scroll" style="margin:12px 0">
+    <div class="scroll panel-table">
       <table id="readout-table"></table>
     </div>
     <p class="chart-note">Mean ± sd over seeds, rendered from
@@ -264,7 +251,7 @@
       other. <strong>The crossover is at T = 6</strong>, and the table below is computed
       from the same artifact rather than asserted:
     </p>
-    <div class="scroll" style="margin:12px 0">
+    <div class="scroll panel-table">
       <table id="readout-crossover"></table>
     </div>
     <p>
@@ -288,7 +275,7 @@
       binding. 18 runs: two readouts, three timestep settings, three seeds, all stopping on
       the patience rule.
     </p>
-    <div class="scroll" style="margin:12px 0">
+    <div class="scroll panel-table">
       <table id="caxis-table"></table>
     </div>
     <p class="chart-note">Mean over three seeds, rendered from
@@ -374,7 +361,7 @@
       T = 6 and +0.0047 at T = 10 on N-MNIST, positive in 3 of 3 seeds at both, and +0.08 to
       +0.23 at C = 101. Two independent lines of work, two datasets, same direction.
     </p>
-    <div class="scroll" style="margin:12px 0">
+    <div class="scroll panel-table">
       <table>
         <thead><tr><th style="cursor:default">readout</th>
           <th style="cursor:default">bound</th>
@@ -413,7 +400,7 @@
       directions, so this separates one network from another — which is the point — but it
       cannot attribute a difference to depth specifically.
     </p>
-    <div class="scroll" style="margin:12px 0">
+    <div class="scroll panel-table">
       <table id="arch-table"></table>
     </div>
     <p class="chart-note">Mean over three seeds, rendered from
@@ -469,7 +456,7 @@
       of the residual, and that it would coincide with the theoretical bound at C = 10 — was
       recorded and committed before any competitor count was measured.
     </p>
-    <div class="scroll" style="margin:12px 0">
+    <div class="scroll panel-table">
       <table id="conditional-table"></table>
     </div>
     <p class="chart-note">Mean over seeds, rendered from
@@ -517,7 +504,7 @@
       the end enters the final potential with weight 0.5&nbsp;×&nbsp;0.5<sup>k</sup>. Its
       effective evidence window is far shorter than T, and it does not grow with T.
     </p>
-    <div class="scroll" style="margin:12px 0">
+    <div class="scroll panel-table">
       <table>
         <thead><tr><th style="cursor:default">T</th>
           <th style="cursor:default">leaky membrane — share of weight on the last 2 steps</th>
@@ -597,7 +584,7 @@
       AUROC(coarse) − AUROC(full) = W × (0.5 − A) — an identity. Coarsening can only help
       where the structure it destroys is <em>worse than chance</em>.
     </p>
-    <div class="scroll" style="margin:12px 0">
+    <div class="scroll panel-table">
       <table>
         <thead><tr><th style="cursor:default">T</th><th style="cursor:default">N=5</th>
           <th style="cursor:default">N=20</th><th style="cursor:default">N=100</th>
@@ -630,7 +617,7 @@
       measured points only 24 fall below chance, all at N ≥ 200 where under 1% of pairs
       merge, bounding their effect at 0.0013.
     </p>
-    <div class="scroll" style="margin:12px 0">
+    <div class="scroll panel-table">
       <table id="quant-within-table"></table>
     </div>
     <p class="chart-note">Mean over five timestep settings and three seeds, rendered from
@@ -712,7 +699,7 @@
     </p>
   </div></div></section>
 
-  <section class="panel c6"><div class="prose">
+  <section class="panel c12"><div class="prose wide">
 <h3>Which calibrator you use does not matter</h3>
     <p>
       The study was designed around a hypothesis: that isotonic regression should beat
@@ -754,7 +741,7 @@
     </p>
   </div></section>
 
-  <section class="panel c6"><div class="prose">
+  <section class="panel c12"><div class="prose wide">
 <h3>Selective prediction: the readout limits what can be deployed</h3>
     <p>
       Risk-coverage asks what fraction of samples can be acted on at a given error rate.
@@ -783,7 +770,7 @@
       6.2× and 7.7× by seed). It should not be used when
       the downstream task is selective prediction.
     </p>
-    <div class="scroll" style="margin:12px 0">
+    <div class="scroll panel-table">
       <table id="selective-table"></table>
     </div>
     <p class="chart-note">Mean over seeds, rendered from
@@ -801,7 +788,7 @@
     </figure>
   </div></section>
 
-  <section class="panel c7"><div class="prose">
+  <section class="panel c12"><div class="prose wide">
 <h3>The sign of the miscalibration disagrees with the literature</h3>
     <p>
       The SNN literature reports <strong>over</strong>confidence as the characteristic
@@ -859,7 +846,21 @@
     </p>
   </div></section>
 
-  <section class="panel c5"><div class="prose">
+  <section class="panel c6"><div class="prose">
+<h3>The same bound is a floor on the training loss</h3>
+    <p>
+      Cross-entropy on spike-count logits cannot fall below −ln(ceiling): 0.7966 at
+      <em>T</em> = 2 against 0.0004 at <em>T</em> = 10. The observed plateaus sit between
+      0.0072 and 0.0182 above their own floor across all fifteen runs. A <em>T</em> = 2
+      model plateauing at 0.81 and a <em>T</em> = 10 model plateauing at 0.009 are equally
+      converged. <strong>Training loss is therefore not comparable across <em>T</em></strong>,
+      and read naively the low-<em>T</em> curve looks like a failure to train and invites
+      fixes for a problem that does not exist. Convergence here is judged on validation
+      accuracy, never on loss.
+    </p>
+  </div></section>
+
+  <section class="panel c6"><div class="prose">
 <h3>A note on energy</h3>
     <p>
       The case for spiking networks is energy, so the sweep records a SynOps proxy. The
@@ -877,7 +878,7 @@
   </div></section>
 
   <div class="band"><h2>Related work</h2>
-    <p class="sub">this study claims novelty over none of the following; all unverified</p></div>
+    <p class="sub">this study claims novelty over none of the following; verified 2026-09-12, two withdrawn</p></div>
 
   <section class="panel c12"><div class="prose wide"><div class="rel-work">
 <div class="cite">
@@ -973,7 +974,7 @@
       </p>
     </div>
 
-    <div class="cite">
+    <div class="cite provenance">
       <p class="unver">Provenance</p>
       <p>
         <b>Verified 2026-09-12 against primary documents</b>, because these are load-bearing
@@ -995,8 +996,8 @@
 
   <div class="band"><h2>Reproduce it</h2></div>
 
-  <section class="panel c7">
-    <div class="prose">
+  <section class="panel c12">
+    <div class="prose wide">
       <p>Every number on this page comes from artifacts that regenerate from a clean
       checkout. Training on Apple silicon is not bitwise deterministic, so trained weights
       vary slightly at a fixed seed; splits and calibrator fitting are kept on CPU RNG and
@@ -1020,7 +1021,7 @@ python scripts/run_sweep.py --epochs 50 --patience 5
 python scripts/extract_readout_stats.py
 python scripts/export_dashboard_data.py</pre>
 
-    <div class="scroll" style="margin-top:16px">
+    <div class="scroll panel-table">
       <table>
         <thead><tr><th scope="col" style="cursor:default">Item</th><th scope="col" style="cursor:default">Value</th></tr></thead>
         <tbody>
@@ -1046,8 +1047,8 @@ python scripts/export_dashboard_data.py</pre>
     </div>
   </section>
 
-  <section class="panel c5">
-    <div class="prose">
+  <section class="panel c12">
+    <div class="prose wide">
 <h3>Limitations</h3>
     <ul>
       <li>
@@ -1065,10 +1066,13 @@ python scripts/export_dashboard_data.py</pre>
         been fitted there, so this is now a gap in coverage rather than in available data.
       </li>
       <li>
-        <strong>The energy constants are unverified.</strong> E<sub>AC</sub> = 0.9 pJ and
-        E<sub>MAC</sub> = 4.6 pJ are attributed to Horowitz, ISSCC 2014, but the specific
-        figure, the exact 0.9 pJ, and whether 4.6 pJ is stated or is the community convention
-        of multiply-plus-add have not been checked against the primary document.
+        <strong>One energy constant is a convention, not a citation.</strong> Verified
+        2026-09-12 against the primary document: E<sub>AC</sub> = 0.9 pJ is confirmed as the
+        32-bit float add in Horowitz, ISSCC 2014, Figure 1.1.9. <strong>E<sub>MAC</sub> =
+        4.6 pJ appears nowhere in that paper</strong> — it is 0.9 + 3.7, the community
+        multiply-plus-add convention, and is labelled <code>[DERIVED]</code> rather than
+        cited. The source also calls its own figures "Rough", so nothing here may turn on
+        their precision.
       </li>
       <li>
         <strong>Five points is too few to infer a scaling law.</strong> The ceiling relation
