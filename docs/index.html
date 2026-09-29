@@ -154,10 +154,10 @@
   <article class="card c4">
     <div class="card-pills"><span class="pill pill-measured">measured</span></div>
     <p class="stat"><span class="stat-num stat-green">+3 to +13</span>
-      <span class="stat-unit">accuracy points on N-Caltech101 at <em>T</em> = 2 &mdash; 12.8 in the four-block network, 3.1 in the two-block</span></p>
+      <span class="stat-unit">accuracy points on N-Caltech101 at <em>T</em> = 2 &mdash; 12.82 in the four-block network, 3.08 in the two-block</span></p>
     <h3 class="card-title">Removing the cap buys accuracy where it bites hardest</h3>
     <p class="card-claim">This is N-Caltech101 at <em>T</em> = 2, where the cap is severe. The direction holds in both network shapes. The size does not. On N-MNIST the same comparison moves nothing, and at <em>T</em> = 6 it reverses.</p>
-    <div class="card-fig" id="fig-gain"><table class="mini"><thead><tr><th>depth</th><th>count</th><th>uncapped</th><th>gain</th></tr></thead><tbody><tr><td>4 blocks</td><td>0.4543</td><td>0.5825</td><td>+12.8</td></tr><tr><td>2 blocks</td><td>0.4891</td><td>0.5199</td><td>+3.1</td></tr></tbody></table></div>
+    <div class="card-fig" id="fig-gain"><table class="mini"><thead><tr><th>depth</th><th>count</th><th>uncapped</th><th>gain</th></tr></thead><tbody><tr><td>4 blocks</td><td>0.4543</td><td>0.5825</td><td>+12.82</td></tr><tr><td>2 blocks</td><td>0.4891</td><td>0.5199</td><td>+3.08</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m5">
       Full reasoning, caveats and complete tables
       <span class="chev" aria-hidden="true">&rarr;</span></button>
@@ -646,9 +646,9 @@ python scripts/export_dashboard_data.py</pre>
     </p>
     <p>
       <strong>The headline accuracy gain does not replicate in magnitude.</strong> At
-      C = 101, T = 2 removing the cap is worth <strong>+12.8 points at four blocks and
-      +3.1 at two</strong> — a fourfold difference, though it stays positive in every seed at
-      both. So "removing the cap helps accuracy where it binds hard" replicates; "by 12.8
+      C = 101, T = 2 removing the cap is worth <strong>+12.82 points at four blocks and
+      +3.08 at two</strong> — a fourfold difference, though it stays positive in every seed at
+      both. So "removing the cap helps accuracy where it binds hard" replicates; "by 12.82
       points" does not. That also undercuts the mechanism offered for it: a cross-entropy
       floor dominating the gradient has no architectural term, and if it were the whole story
       the gain would not depend on the network.
@@ -1123,9 +1123,9 @@ python scripts/export_dashboard_data.py</pre>
     </p>
     <p>
       <strong>Where the cap is severe it costs accuracy, not just calibration.</strong> At
-      T = 2 the uncapped accumulator beats the count readout by <strong>12.8 accuracy
+      T = 2 the uncapped accumulator beats the count readout by <strong>12.82 accuracy
       points</strong> — in every seed (+15.2, +9.6, +13.7) — with this architecture. At the
-      other architecture tested the gain is <strong>+3.1 points</strong>, still positive in
+      other architecture tested the gain is <strong>+3.08 points</strong>, still positive in
       3 of 3 seeds: the direction replicates and the magnitude does not, so this is an
       architecture-specific number (see the matched-architecture panel below). At C = 10 the
       same comparison was worth 0.1 points and the readouts were indistinguishable. The cross-entropy floor is

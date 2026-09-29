@@ -257,35 +257,54 @@ def figure_ece_by_arm(rows, stats, out_dir):
 
 
 def figure_paired_difference(rows, stats, out_dir):
-    """Paired isotonic-minus-temperature ECE difference with 95% bootstrap intervals."""
+    """Paired isotonic-minus-temperature ECE difference, 95% bootstrap intervals, per estimator.
+
+    The two panels share their rows, so a run that resolved because the calibrators truly
+    differed would be marked in both. The title counts the runs that are.
+    """
     plt = _style()
     entries = sorted(
         (r for r in rows if r["arm"] == "isotonic-top-label"),
         key=lambda r: (int(r["timesteps"]), int(r["seed"])),
     )
-    fig, ax = plt.subplots(figsize=(6.8, 5.4))
-    ax.axvline(0.0, color=INK_SOFT, lw=1.2, zorder=1)
-    labels = []
-    for i, r in enumerate(entries):
-        d = float(r["iso_minus_temp_ece_ew"])
-        lo, hi = float(r["iso_minus_temp_ci_low"]), float(r["iso_minus_temp_ci_high"])
-        resolvable = r["iso_minus_temp_resolvable"] == "True"
-        colour = PALETTE["orange"] if resolvable else PALETTE["blue"]
-        ax.plot([lo, hi], [i, i], color=colour, lw=2, solid_capstyle="round", zorder=2)
-        ax.plot([d], [i], "o", color=colour, mec=SURFACE, mew=1.6, zorder=3)
-        if resolvable:
-            winner = "isotonic" if hi < 0 else "temperature"
-            ax.annotate(f"  resolvable: {winner} better", xy=(hi, i), fontsize=8,
-                        color=PALETTE["orange"], va="center")
-        labels.append(f"T={r['timesteps']}  seed {r['seed']}")
-    ax.set_yticks(range(len(entries)))
-    ax.set_yticklabels(labels, fontsize=8.5)
-    ax.invert_yaxis()
-    ax.set_xlabel("isotonic ECE − temperature ECE   (negative = isotonic better)")
-    ax.grid(axis="y", visible=False)
-    n_straddle = sum(r["iso_minus_temp_resolvable"] != "True" for r in entries)
-    ax.set_title(f"{n_straddle} of {len(entries)} equal-width intervals straddle zero",
-                 fontsize=10.5, color=INK, pad=10)
+    estimators = (
+        ("equal-width", "iso_minus_temp_ece_ew", "iso_minus_temp_ci_low",
+         "iso_minus_temp_ci_high", "iso_minus_temp_resolvable"),
+        ("equal-mass", "iso_minus_temp_ece_em", "iso_minus_temp_em_ci_low",
+         "iso_minus_temp_em_ci_high", "iso_minus_temp_em_resolvable"),
+    )
+    fig, axes = plt.subplots(1, 2, figsize=(6.4, 3.8), sharey=True)
+    for ax, (name, key, lo_key, hi_key, res_key) in zip(axes, estimators):
+        ax.axvline(0.0, color=INK_SOFT, lw=1.2, zorder=1)
+        for i, r in enumerate(entries):
+            d = float(r[key])
+            lo, hi = float(r[lo_key]), float(r[hi_key])
+            resolvable = r[res_key] == "True"
+            colour = PALETTE["orange"] if resolvable else PALETTE["blue"]
+            ax.plot([lo, hi], [i, i], color=colour, lw=2, solid_capstyle="round", zorder=2)
+            ax.plot([d], [i], "o", color=colour, mec=SURFACE, mew=1.6, zorder=3)
+            if resolvable:
+                # Label on the side facing zero's far half, so it stays inside the panel.
+                isotonic = hi < 0
+                ax.annotate("isotonic better" if isotonic else "temperature better",
+                            xy=(hi if isotonic else lo, i), xytext=(4 if isotonic else -4, 0),
+                            textcoords="offset points", ha="left" if isotonic else "right",
+                            fontsize=7.5, color=PALETTE["orange"], va="center",
+                            path_effects=_halo(), zorder=4)
+        n_straddle = sum(r[res_key] != "True" for r in entries)
+        ax.set_title(f"{name}: {n_straddle} of {len(entries)} straddle zero",
+                     fontsize=9.5, color=INK, pad=6)
+        ax.grid(axis="y", visible=False)
+        ax.tick_params(axis="x", labelsize=8)
+    axes[0].set_yticks(range(len(entries)))
+    axes[0].set_yticklabels([f"T={r['timesteps']}  seed {r['seed']}" for r in entries],
+                            fontsize=8.5)
+    axes[0].invert_yaxis()
+    fig.supxlabel("isotonic ECE − temperature ECE   (negative = isotonic better)",
+                  fontsize=10, y=-0.02)
+    n_both = sum(all(r[e[4]] == "True" for e in estimators) for r in entries)
+    both = "No run" if n_both == 0 else f"{n_both} of {len(entries)} runs"
+    fig.suptitle(f"{both} resolves under both estimators", fontsize=10.5, color=INK, y=0.99)
     return save(fig, out_dir, "fig4-paired-difference")
 
 

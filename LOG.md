@@ -3034,3 +3034,57 @@ that figure was regenerated.
 - README omits the calibrator result from its findings, and its reproduce block omits
   `rerun_paired_bootstrap.py` and `extract_readout_stats.py`.
 - The Acknowledgements drop "on verification" from the disclosure wording NOTES prescribes.
+
+## 2026-09-29 — One precision per number, the Figure 1 caption, the related-work scope, and the paired-difference figure in the paper
+
+**Did: removed mixed precision from Section 5.3.** "Accuracy, and its narrow scope" gave the two
+`T = 2` N-Caltech101 gains at one decimal (+12.8, +3.1) and the two `T = 6` costs at two
+(−2.24, −4.52), while Table 2 gives all four at two. The short-form macros
+`\gainNcFourTwoShort` and `\gainNcTwoTwoShort` existed only to do that rounding and are
+deleted; the prose now uses `\gainNcFourTwo` and `\gainNcTwoTwo` (+12.82, +3.08).
+
+**Did: swept the paper for the same defect.** Every used macro was compared pairwise for two
+printings of one value at different precisions. One more was found: Limitations gave the
+N-Caltech101 accuracy range as 0.45 to 0.64, whose endpoints are the Table 1 cells 0.4543 and
+0.6435. `\ncAccMin` and `\ncAccMax` are now printed at four decimals. The remaining matches
+were coincidences between different quantities. `\roCountOps` (about 9) beside
+`\roCountOpsExact` (9.3) is deliberate and stated as such. No number is hardcoded in prose.
+
+**Did: the dashboard had the same mismatch.** Its prose and gain card said +12.8 and +3.1
+beside its own table's +12.82 and +3.08. Seven strings in `docs/index.html` now use two
+decimals. The per-seed gains (+15.2, +9.6, +13.7) and the "+3 to +13" headline tile are
+unchanged: neither has a two-decimal counterpart.
+
+**Did: Figure 1 caption.** It now reads "The derived ceiling … shown against the measured test
+accuracy and the largest observed confidence"; the dangling "which is derived" is gone.
+
+**Did: Related work states its scope.** One sentence says the search covered calibration of
+spiking networks, confidence-based early exit and stopping, and post-hoc bounds on output
+probabilities, and that the three entries are the works bearing directly on the claim. No
+citation was added.
+
+**Did: Acknowledgements give the reason for the withdrawals.** "Two were withdrawn" became "two
+were withdrawn because no primary document supported them". This is accurate for both cases in
+`SOURCES.md`: one identifier belonged to a different paper, and the other paper could not be
+found. The disclosure wording that NOTES.md prescribed is amended there, with the reason for
+the change, so that the two files agree.
+
+**Did: the paired-difference figure is in the paper, redrawn first.** As drawn, fig4 showed
+only the equal-width intervals. That shows two resolvable runs; it cannot show that they are
+disjoint from the equal-mass ones, which is the argument. It is now two panels with shared
+rows, equal-width on the left and equal-mass on the right, and resolvable intervals in orange.
+Each panel title counts its straddling intervals, and the figure title counts runs resolvable
+under both estimators; all three are computed from the data. The panels have separate
+horizontal scales, and the caption says so. In the paper it is Figure 2 in Section 5.4, with
+`\straddleW`, `\straddleM`, `\runsTotal` and `\resolveBoth` in the caption. Its definition sits
+before the Section 5.4 heading so that it floats to the top of the page on which the section
+opens.
+
+**Ran.**
+- `pytest -q` → **230 passed**.
+- `numbers.tex` changes only by the two deleted macros and the two re-precisioned ones.
+- `data.js` regenerated in the project venv: byte-identical, since no result changed.
+- Paper compiled with tectonic: **10 pages**, 0 LaTeX warnings, 0 overfull/underfull boxes.
+  The figure costs about half a page. Sections 1–7 and Code and data end on page 9; page 10
+  holds the last two lines of the Acknowledgements and the references. Nothing was cut to win
+  the page back.

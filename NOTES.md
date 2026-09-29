@@ -1836,8 +1836,14 @@ The paper, `paper/main.tex`, carries this in its Acknowledgements, once, in thes
 
 > AI assistance was used for implementation and drafting. All research design, hypotheses,
 > the pre-registered prediction and its outcome, and all verification decisions are the
-> author's. Every citation was checked against primary documents; two were withdrawn on
-> verification and one energy constant was reclassified from cited to derived.
+> author's. Every citation was checked against primary documents; two were withdrawn because
+> no primary document supported them, and one energy constant was reclassified from cited to
+> derived.
+
+(Amended 2026-09-29: "withdrawn on verification" told a reader nothing, since the withdrawn
+references do not appear in the paper. The clause now states the reason, which covers both
+cases in `SOURCES.md`: one identifier belonged to a different paper, the other paper could not
+be found.)
 
 It is not to be softened and not to be expanded, and it belongs in the paper rather than on
 the dashboard. Both of its factual claims are supported here: the two withdrawn references
@@ -1890,5 +1896,5 @@ Not implemented: DVS-Gesture and CIFAR10-DVS, which raise `NotImplementedError` 
 loader. DVS-Gesture remains the interesting one — its ~330-sample calibration split is the
 regime where the calibrator null result could plausibly break.
 
-The paper is written: `paper/main.tex`, nine pages, with every measured value a macro that
+The paper is written: `paper/main.tex`, ten pages, with every measured value a macro that
 `paper/make_numbers.py` regenerates from `results/`. A preprint is in preparation.

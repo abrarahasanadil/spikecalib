@@ -85,7 +85,9 @@ Code, result artifacts and an interactive view of every number are available at
 \section{Related work}
 \label{sec:related}
 
-This study claims novelty over none of the following. Each is described by what it does,
+The search covered calibration of spiking networks, confidence-based early exit and stopping,
+and post-hoc bounds on output probabilities; the three works below are those that bear directly
+on the claim. This study claims novelty over none of them. Each is described by what it does,
 what this study does on the same question, and how the two differ.
 
 \paragraph{Confidence in converted networks.}
@@ -268,9 +270,9 @@ network. Figure~\ref{fig:ceiling} shows it on N-MNIST.
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.72\linewidth]{figures/fig1-ceiling.png} % figures/fig1-ceiling.png, drawn by scripts/make_figures.py from results/readout_stats.json
-\caption{The ceiling $e^{T}/(e^{T}+C-1)$ for $C=10$, which is derived, with the test accuracy
-and the largest observed confidence of the N-MNIST count readout (two convolutional blocks,
-seed~0). The shaded region is accuracy that no spike-count output can express as confidence.}
+\caption{The derived ceiling $e^{T}/(e^{T}+C-1)$ for $C=10$, shown against the measured test
+accuracy and the largest observed confidence of the N-MNIST count readout (two convolutional
+blocks, seed~0). The shaded region is accuracy that no spike-count output can express as confidence.}
 \label{fig:ceiling}
 \end{figure}
 
@@ -355,7 +357,7 @@ accumulator & 10 & \ncAccTenConfAcc   & \ncAccTenEceW   & \ncAccTenEceM   & \ncA
 \paragraph{Accuracy, and its narrow scope.}
 Removing the cap also changes accuracy, but only in a narrow regime (Table~\ref{tab:gain}). On
 N-Caltech101 at $T=2$, replacing the count readout with the accumulator gains
-\gainNcFourTwoShort{} accuracy points with four convolutional blocks and \gainNcTwoTwoShort{} % src: results/arch_matched.json
+\gainNcFourTwo{} accuracy points with four convolutional blocks and \gainNcTwoTwo{} % src: results/arch_matched.json
 with two. On N-Caltech101 at $T=6$ the same change costs accuracy: \gainNcTwoSix{} points with % src: results/arch_matched.json
 two blocks and \gainNcFourSix{} with four. On N-MNIST at $T=2$ it moves accuracy by between % src: results/arch_matched.json
 \gainNmFourTwo{} and \gainNmTwoTwo{} points. The direction of the N-Caltech101 gain at $T=2$ % src: results/arch_matched.json
@@ -382,6 +384,17 @@ N-MNIST      & 2 & 6 & \accCountNmTwoSix  & \accAccumNmTwoSix  & \gainNmTwoSix  
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\linewidth]{figures/fig4-paired-difference.png} % figures/fig4-paired-difference.png, drawn by spikecalib/figures.py from results/sweep_nmnist.csv
+\caption{Isotonic minus temperature ECE with its paired 95\% bootstrap interval, for every % src: results/sweep_nmnist.csv
+N-MNIST run (two convolutional blocks). Left: equal-width binning, where \straddleW{} of % src: results/sweep_nmnist.csv iso_minus_temp_resolvable
+\runsTotal{} intervals straddle zero. Right: equal-mass binning, where \straddleM{} of % src: results/sweep_nmnist.csv iso_minus_temp_em_resolvable
+\runsTotal{} do. The panels share rows but not horizontal scales. Orange marks an interval
+that excludes zero; \resolveBoth{} of \runsTotal{} rows are orange in both panels.} % src: results/sweep_nmnist.csv
+\label{fig:paired}
+\end{figure}
 
 \subsection{The choice of calibrator does not matter}
 \label{sec:calibrators}
@@ -414,8 +427,9 @@ equal-width binning and \isoMinusTempTwoM{} under equal-mass. % src: results/swe
 \paragraph{The runs that resolve are disjoint.}
 Under equal-width binning the resolvable runs are $T=2$ seed~1, favouring temperature scaling, % src: results/sweep_nmnist.csv iso_minus_temp_resolvable
 and $T=6$ seed~0, favouring isotonic regression. Under equal-mass binning they are $T=4$ seeds~1 % src: results/sweep_nmnist.csv iso_minus_temp_resolvable, iso_minus_temp_em_resolvable
-and~2 and $T=8$ seed~0, all favouring isotonic regression (Table~\ref{tab:calibrators}, lower). % src: results/sweep_nmnist.csv iso_minus_temp_em_resolvable
-\resolveEither{} runs resolve under one estimator or the other. \resolveBoth{} resolve under both. % src: results/sweep_nmnist.csv
+and~2 and $T=8$ seed~0, all favouring isotonic regression (Table~\ref{tab:calibrators}, lower; % src: results/sweep_nmnist.csv iso_minus_temp_em_resolvable
+Figure~\ref{fig:paired}). \resolveEither{} runs resolve under one estimator or the other. % src: results/sweep_nmnist.csv
+\resolveBoth{} resolve under both. % src: results/sweep_nmnist.csv
 
 \paragraph{Conclusion.}
 The disjointness, not either count, is the evidence. The two estimators score identical
@@ -534,8 +548,9 @@ fingerprint \texttt{\splitFingerprint}. % src: results/sweep_nmnist.csv split_fi
 \section*{Acknowledgements}
 AI assistance was used for implementation and drafting. All research design, hypotheses, the
 pre-registered prediction and its outcome, and all verification decisions are the author's.
-Every citation was checked against primary documents; two were withdrawn and one energy
-constant was reclassified from cited to derived.
+Every citation was checked against primary documents; two were withdrawn because no
+primary document supported them, and one energy constant was
+reclassified from cited to derived.
 
 \bibliographystyle{plainnat}
 \bibliography{refs}

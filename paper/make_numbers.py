@@ -221,8 +221,8 @@ for T, k in ((2, "Two"), (6, "Six"), (10, "Ten")):
     put(f"ncCount{k}Levels", thousands(round(cm("count", T, "n_distinct"))), "results/caltech_experiment.json n_distinct")
     put(f"ncAcc{k}Levels", thousands(round(cm("accumulator", T, "n_distinct"))), "results/caltech_experiment.json n_distinct")
 nc_acc = [cm("count", T, "test_accuracy") for T in (2, 6, 10)] + [cm("accumulator", T, "test_accuracy") for T in (2, 6, 10)]
-put("ncAccMin", f(min(nc_acc), 2), "results/caltech_experiment.json test_accuracy")
-put("ncAccMax", f(max(nc_acc), 2), "results/caltech_experiment.json test_accuracy")
+put("ncAccMin", f(min(nc_acc)), "results/caltech_experiment.json test_accuracy")
+put("ncAccMax", f(max(nc_acc)), "results/caltech_experiment.json test_accuracy")
 
 # accuracy scope, matched grid
 def gain(ds, b, T):
@@ -236,8 +236,6 @@ for ds, dk in (("ncaltech101", "Nc"), ("nmnist", "Nm")):
             put(f"gain{dk}{bk}{tk}", f(g, 2, sign=True), "results/arch_matched.json test_accuracy (accumulator - count)")
             put(f"accCount{dk}{bk}{tk}", f(c), "results/arch_matched.json test_accuracy")
             put(f"accAccum{dk}{bk}{tk}", f(a), "results/arch_matched.json test_accuracy")
-put("gainNcFourTwoShort", f(gain("ncaltech101", 4, 2)[2], 1, sign=True), "results/arch_matched.json")
-put("gainNcTwoTwoShort", f(gain("ncaltech101", 2, 2)[2], 1, sign=True), "results/arch_matched.json")
 put("residNcFourSix", f(st.mean(r["residual"] for r in arch if r["dataset"] == "ncaltech101" and r["n_blocks"] == 4 and r["timesteps"] == 6 and r["readout"] == "count")), "results/arch_matched.json residual")
 put("residNcTwoSix", f(st.mean(r["residual"] for r in arch if r["dataset"] == "ncaltech101" and r["n_blocks"] == 2 and r["timesteps"] == 6 and r["readout"] == "count")), "results/arch_matched.json residual")
 
