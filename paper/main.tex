@@ -13,8 +13,6 @@
 \usepackage{xurl}
 \usepackage[hidelinks]{hyperref}
 
-\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
-
 % Every measured value in this file is a macro defined in numbers.tex. That file is
 % regenerated from results/ by paper/make_numbers.py, and each definition there names the
 % artifact it was read from. The comment beside each use below names the same file.
@@ -165,7 +163,7 @@ winner's count by $T$:
 \begin{equation}
 p^{*}_{\mathrm{cond}}(c) = \frac{e^{T}}{e^{T}+\sum_{j\ne w} e^{c_j}} \;\le\; p^{*}(T,C).
 \end{equation}
-The two coincide when competitors are silent, which is nearly always the case at $C=10$. Over
+The two coincide when competitors are silent, and at $C=10$ they nearly coincide. Over
 the N-MNIST test inputs, the mean conditional ceiling falls below the theoretical one by at
 most \condGapTenMax{} averaged over seeds, and by \condGapTenWorstSeed{} in the worst single % src: results/conditional_ceiling.json
 seed. The conditional form matters when many competitors fire, which is what a large $C$
@@ -191,7 +189,7 @@ random number generators only, so both reproduce exactly.
 
 \paragraph{Networks.}
 All models are convolutional networks of leaky integrate-and-fire neurons built with
-SpikingJelly~\citep{spikingjelly}. The membrane time constant is $\tau=\lifTau$, the % src: results/nmnist_T2_seed0_record.json model_config
+SpikingJelly~\citep{fang2023spikingjelly}. The membrane time constant is $\tau=\lifTau$, the % src: results/nmnist_T2_seed0_record.json model_config
 threshold \lifThreshold, and the hidden layer has \hiddenUnits{} units. Training uses the ATan % src: results/nmnist_T2_seed0_record.json model_config
 surrogate gradient as implemented in SpikingJelly 0.0.0.0.14, % version: pip show spikingjelly
 $g'(x)=\alpha/\big(2\,(1+(\tfrac{\pi}{2}\alpha x)^2)\big)$, with $\alpha=\surrogateAlpha$. Two depths are used: two % formula: spikingjelly/activation_based/surrogate.py atan_backward; alpha: results/nmnist_T2_seed0_record.json
@@ -269,7 +267,7 @@ network. Figure~\ref{fig:ceiling} shows it on N-MNIST.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.36\linewidth]{figures/fig1-ceiling.png} % figures/fig1-ceiling.png, drawn by scripts/make_figures.py from results/readout_stats.json
+\includegraphics[width=0.72\linewidth]{figures/fig1-ceiling.png} % figures/fig1-ceiling.png, drawn by scripts/make_figures.py from results/readout_stats.json
 \caption{The ceiling $e^{T}/(e^{T}+C-1)$ for $C=10$, which is derived, with the test accuracy
 and the largest observed confidence of the N-MNIST count readout (two convolutional blocks,
 seed~0). The shaded region is accuracy that no spike-count output can express as confidence.}
@@ -287,6 +285,12 @@ $\min\{1,\ \max(0,\,a-p^{*})/(a-\bar p)\}$, averaged over seeds.
 At $T=2$ this gap is the calibration error. On N-MNIST the gap is \residTenTwo, and ECE is % src: results/conditional_ceiling.json residual
 \swUncTwoW{} under equal-width binning and \swUncTwoM{} under equal-mass. On N-Caltech101 the % src: results/sweep_nmnist.csv ece_equal_width, ece_equal_mass
 gap is \residHundredOneTwo, and ECE is \ncCountTwoEceW{} and \ncCountTwoEceM{} respectively. % src: results/conditional_ceiling.json; results/caltech_experiment.json
+The three agree by construction, not by coincidence. ECE is never smaller than the gap between
+accuracy and mean confidence, and it equals that gap when no bin is overconfident, since then no
+bin's error offsets another's. Where the cap binds, every confidence lies below the ceiling and
+so below the accuracy the bins attain. In every $T=2$ count-readout cell of the matched grid,
+both estimators differ from the gap by at most $\eceGapMaxDev$. This is why the shares below % src: results/arch_matched.json ece_equal_width, ece_equal_mass, residual
+hold under either binning estimator.
 
 Where the cap binds hardest, it accounts for nearly all
 of the error: \shareTenTwo\% on N-MNIST at $T=2$ with two blocks (\shareTenTwoFour\% with % src: results/conditional_ceiling.json; results/arch_matched.json
@@ -312,7 +316,7 @@ equal-width binning, and \roWcEceM{} against \roCountEceM{} under equal-mass. Re
 not the cause. The cap is.
 
 Removing the cap removes the underconfidence and exposes the opposite failure. The accumulator,
-which is unbounded and has no leak, is unsigned at $T=2$ on N-MNIST (\roAccConfAcc) and grows % src: results/readout_experiment.json
+which is unbounded and has no leak, is neither over- nor underconfident at $T=2$ on N-MNIST (\roAccConfAcc) and grows % src: results/readout_experiment.json
 overconfident with $T$, reaching \roAccConfAccSix{} at $T=6$ and \roAccConfAccTen{} at $T=10$. % src: results/readout_experiment.json
 On N-Caltech101 it is overconfident at every $T$ measured: by \ncAccTwoConfAcc, % src: results/caltech_experiment.json
 \ncAccSixConfAcc{} and \ncAccTenConfAcc{} at $T=2$, $6$ and $10$. The leaky membrane readout % src: results/caltech_experiment.json
@@ -336,14 +340,14 @@ weighted-count & capped           & \roWcConfAcc    & \roWcEceW    & \roWcEceM  
 membrane       & unbounded, leaky & \roMemConfAcc   & \roMemEceW   & \roMemEceM   & \roMemLevels   & \roMemAcc   \\ % src: results/readout_experiment.json
 accumulator    & unbounded        & \roAccConfAcc   & \roAccEceW   & \roAccEceM   & \roAccLevels   & \roAccAcc   \\ % src: results/readout_experiment.json
 \midrule
-readout & $T$ & conf$-$acc & ECE (w) & ECE (m) & & accuracy \\
+readout & $T$ & conf$-$acc & ECE (w) & ECE (m) & distinct values & accuracy \\
 \midrule
-count       & 2  & \ncCountTwoConfAcc & \ncCountTwoEceW & \ncCountTwoEceM & & \ncCountTwoAcc \\ % src: results/caltech_experiment.json
-count       & 6  & \ncCountSixConfAcc & \ncCountSixEceW & \ncCountSixEceM & & \ncCountSixAcc \\ % src: results/caltech_experiment.json
-count       & 10 & \ncCountTenConfAcc & \ncCountTenEceW & \ncCountTenEceM & & \ncCountTenAcc \\ % src: results/caltech_experiment.json
-accumulator & 2  & \ncAccTwoConfAcc   & \ncAccTwoEceW   & \ncAccTwoEceM   & & \ncAccumTwoAcc \\ % src: results/caltech_experiment.json
-accumulator & 6  & \ncAccSixConfAcc   & \ncAccSixEceW   & \ncAccSixEceM   & & \ncAccumSixAcc \\ % src: results/caltech_experiment.json
-accumulator & 10 & \ncAccTenConfAcc   & \ncAccTenEceW   & \ncAccTenEceM   & & \ncAccumTenAcc \\ % src: results/caltech_experiment.json
+count       & 2  & \ncCountTwoConfAcc & \ncCountTwoEceW & \ncCountTwoEceM & \ncCountTwoLevels & \ncCountTwoAcc \\ % src: results/caltech_experiment.json
+count       & 6  & \ncCountSixConfAcc & \ncCountSixEceW & \ncCountSixEceM & \ncCountSixLevels & \ncCountSixAcc \\ % src: results/caltech_experiment.json
+count       & 10 & \ncCountTenConfAcc & \ncCountTenEceW & \ncCountTenEceM & \ncCountTenLevels & \ncCountTenAcc \\ % src: results/caltech_experiment.json
+accumulator & 2  & \ncAccTwoConfAcc   & \ncAccTwoEceW   & \ncAccTwoEceM   & \ncAccTwoLevels & \ncAccumTwoAcc \\ % src: results/caltech_experiment.json
+accumulator & 6  & \ncAccSixConfAcc   & \ncAccSixEceW   & \ncAccSixEceM   & \ncAccSixLevels & \ncAccumSixAcc \\ % src: results/caltech_experiment.json
+accumulator & 10 & \ncAccTenConfAcc   & \ncAccTenEceW   & \ncAccTenEceM   & \ncAccTenLevels & \ncAccumTenAcc \\ % src: results/caltech_experiment.json
 \bottomrule
 \end{tabular}
 \end{table}
@@ -517,8 +521,8 @@ nothing about power on any physical device.
 Counting spikes limits how confident a spiking network can be. At few timesteps the limit sits
 below the accuracy such networks reach, and in the lowest-timestep settings studied here the limit,
 not training, accounts for nearly all of the miscalibration. The readout decides whether
-confidence errs low or high. Post-hoc calibration removes almost all of the error, and on N-MNIST
-the choice of calibrator does not matter. $T_{\min}=\ln\big((C-1)a/(1-a)\big)$ is the fewest
+confidence errs low or high. On N-MNIST, post-hoc calibration removes almost all of the error,
+and the choice of calibrator does not matter. $T_{\min}=\ln\big((C-1)a/(1-a)\big)$ is the fewest
 timesteps at which a spike-count readout can express its own accuracy.
 
 \section*{Code and data}

@@ -58,7 +58,6 @@ def mean(rows, key):
 # ------------------------------------------------------------------ the bound [DERIVED]
 put("ceilTenTwo", f(ceiling(2, 10)), DERIVED)
 put("ceilHundredOneTwo", f(ceiling(2, 101)), DERIVED)
-put("ceilTenSix", f(ceiling(6, 10)), DERIVED)
 put("floorTenTwo", f(-math.log(ceiling(2, 10))), DERIVED)
 put("floorTenSix", f(-math.log(ceiling(6, 10))), DERIVED)
 put("floorTenTen", f(-math.log(ceiling(10, 10))), DERIVED)
@@ -66,7 +65,6 @@ tmin = lambda C, a: math.log((C - 1) * a / (1 - a))
 put("tminTenExact", f(tmin(10, 0.95), 3), DERIVED)
 put("tminTen", str(math.ceil(tmin(10, 0.95))), DERIVED)
 put("tminHundredOne", str(math.ceil(tmin(101, 0.95))), DERIVED)
-put("tminHundredOneExact", f(tmin(101, 0.95), 3), DERIVED)
 c80 = np.exp(np.float64(80)) / (np.exp(np.float64(80)) + np.float64(9))
 assert c80 == 1.0, c80
 put("ceilEightyIsOne", "1.0", DERIVED + " (float64 e^80/(e^80+9) == 1.0)")
@@ -78,7 +76,8 @@ for key, fn in (("nm", "nmnist_T2_seed0_split.npz"), ("nc", "ncaltech101_T2_seed
     sizes = {k: int(d[k].size) for k in ("train", "val", "cal", "test")}
     for k, v in sizes.items():
         put(f"{key}Split{k.capitalize()}", thousands(v), f"results/{fn}")
-    put(f"{key}SplitTotal", thousands(sum(sizes.values())), f"results/{fn} (sum)")
+    if key == "nc":
+        put(f"{key}SplitTotal", thousands(sum(sizes.values())), f"results/{fn} (sum)")
 
 weights = glob.glob(os.path.join(R, "*_weights.pt"))
 put("modelsTotal", str(len(weights)), "results/*_weights.pt (file count)")
@@ -98,7 +97,6 @@ records = [json.load(open(p)) for p in glob.glob(os.path.join(R, "*_record.json"
 gaps = {r["epochs_run"] - r["best_epoch"] for r in records if r.get("early_stopped")}
 assert len(gaps) == 1, gaps
 gap = gaps.pop()
-put("epochsAfterBest", str(gap), "results/*_record.json (epochs_run - best_epoch, all early-stopped)")
 # best_epoch is 0-indexed and epochs_run is a count (spikecalib/train.py), so a constant gap
 # of `gap` means every run stopped after gap - 1 epochs without improvement.
 put("patienceEpochs", str(gap - 1),
@@ -106,8 +104,8 @@ put("patienceEpochs", str(gap - 1),
 assert rec["model_config"]["channels"] == [32, 64]
 nc_rec = json.load(open(os.path.join(R, "ncaltech101_T2_seed0_record.json")))
 assert nc_rec["model_config"]["channels"] == [32, 64, 128, 128], nc_rec["model_config"]
-put("recordsEarlyStopped", str(sum(1 for r in records if r.get("early_stopped"))), "results/*_record.json")
-put("recordsTotal", str(len(records)), "results/*_record.json")
+# "Every run stopped early" in the Method section rests on this.
+assert all(r.get("early_stopped") for r in records), [r.get("early_stopped") for r in records]
 
 sweep = list(csv.DictReader(open(os.path.join(R, "sweep_nmnist.csv"))))
 put("epochCap", sweep[0]["epochs_requested"], "results/sweep_nmnist.csv epochs_requested")
@@ -170,6 +168,13 @@ def ashare(ds, b, T):
     return 100 * mean(rs, "share_explained_theoretical")
 put("shareTenTwoFour", f"{ashare('nmnist', 4, 2):.1f}", "results/arch_matched.json share_explained_theoretical")
 put("shareHundredOneTwoTwo", f"{ashare('ncaltech101', 2, 2):.1f}", "results/arch_matched.json share_explained_theoretical")
+# ECE equals the gap a - mean confidence exactly when no bin is overconfident. Where the cap
+# binds, that holds in every T=2 count cell of the matched grid, under both estimators.
+t2 = [r for r in arch if r["readout"] == "count" and r["timesteps"] == 2]
+dev = max(abs(r[k] - r["residual"]) for r in t2 for k in ("ece_equal_width", "ece_equal_mass"))
+assert dev < 1e-4, dev
+put("eceGapMaxDev", f"{dev:.0e}".replace("e-05", r"\times 10^{-5}"),
+    "results/arch_matched.json max |ece - residual|, count readout, T=2")
 def cmean(ds, T, key):
     return st.mean(r[key] for r in cond if r["dataset"] == ds and r["timesteps"] == T)
 put("residTenTwo", f(cmean("nmnist", 2, "residual")), "results/conditional_ceiling.json residual")
@@ -196,8 +201,6 @@ for name, k in NAMES.items():
     put(f"ro{k}Acc", f(rmean(name, 2, "test_accuracy")), "results/readout_experiment.json T=2 test_accuracy")
 put("roAccConfAccSix", f(rmean("accumulator", 6, "mean_conf_minus_acc"), sign=True), "results/readout_experiment.json")
 put("roAccConfAccTen", f(rmean("accumulator", 10, "mean_conf_minus_acc"), sign=True), "results/readout_experiment.json")
-put("roAccEceWTen", f(rmean("accumulator", 10, "ece_equal_width")), "results/readout_experiment.json")
-put("roAccEceMTen", f(rmean("accumulator", 10, "ece_equal_mass")), "results/readout_experiment.json")
 put("roCountOpsExact", f"{rmean('count', 2, 'n_achievable_coverage_levels'):.1f}", "results/readout_experiment.json")
 # leak: share of membrane's AUROC deficit against count that the accumulator closes
 for T, k in ((6, "Six"), (10, "Ten")):
@@ -215,6 +218,8 @@ for T, k in ((2, "Two"), (6, "Six"), (10, "Ten")):
     put(f"ncAcc{k}EceW", f(cm("accumulator", T, "ece_equal_width")), "results/caltech_experiment.json")
     put(f"ncAcc{k}EceM", f(cm("accumulator", T, "ece_equal_mass")), "results/caltech_experiment.json")
     put(f"ncCount{k}Acc", f(cm("count", T, "test_accuracy")), "results/caltech_experiment.json test_accuracy")
+    put(f"ncCount{k}Levels", thousands(round(cm("count", T, "n_distinct"))), "results/caltech_experiment.json n_distinct")
+    put(f"ncAcc{k}Levels", thousands(round(cm("accumulator", T, "n_distinct"))), "results/caltech_experiment.json n_distinct")
 nc_acc = [cm("count", T, "test_accuracy") for T in (2, 6, 10)] + [cm("accumulator", T, "test_accuracy") for T in (2, 6, 10)]
 put("ncAccMin", f(min(nc_acc), 2), "results/caltech_experiment.json test_accuracy")
 put("ncAccMax", f(max(nc_acc), 2), "results/caltech_experiment.json test_accuracy")
@@ -280,10 +285,6 @@ put("nSeeds", str(len({r['seed'] for r in sweep})), "results/sweep_nmnist.csv se
 fp0 = {r["split_fingerprint"] for r in sweep if r["seed"] == "0"}
 assert len(fp0) == 1, fp0
 put("splitFingerprint", fp0.pop(), "results/sweep_nmnist.csv split_fingerprint, seed 0")
-put("shareTenEight", f"{share('nmnist', 8):.1f}", "results/conditional_ceiling.json")
-put("shareTenTen", f"{share('nmnist', 10):.1f}", "results/conditional_ceiling.json")
-put("shareHundredOneSix", f"{share('ncaltech101', 6):.1f}", "results/conditional_ceiling.json")
-put("shareHundredOneTen", f"{share('ncaltech101', 10):.1f}", "results/conditional_ceiling.json")
 for T, k in ((2, "Two"), (6, "Six"), (10, "Ten")):
     put(f"ncAccum{k}Acc", f(cm("accumulator", T, "test_accuracy")), "results/caltech_experiment.json test_accuracy")
 

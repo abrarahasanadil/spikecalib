@@ -83,7 +83,7 @@ Python 3.13 on Apple silicon (MPS). Every pinned version is in `requirements.txt
 ```sh
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python -m pytest tests/ -q          # 214 tests
+python -m pytest tests/ -q          # 230 tests
 ```
 
 Verify the environment. This runs a real forward pass through a SpikingJelly `LIFNode` on

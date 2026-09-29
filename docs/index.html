@@ -142,7 +142,7 @@
   </article>
   <article class="card c12">
     <div class="card-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span><span class="pill pill-lit">lit</span></div>
-    <p class="stat"><span class="stat-num stat-purple">−0.5386 / +0.0047</span>
+    <p class="stat"><span class="stat-num stat-purple">−0.5386 / +0.0000</span>
       <span class="stat-unit">N-MNIST, T = 2 &mdash; capped vs unbounded readout, confidence minus accuracy</span></p>
     <h3 class="card-title">The readout decides which way it fails</h3>
     <p class="card-claim">A readout turns spikes into an answer. A capped one is underconfident where the cap bites. It is right more often than it claims. An unbounded one goes the other way as <em>T</em> grows. The readout sets the direction, not the network.</p>
@@ -310,7 +310,8 @@
       would not settle the question. Amber marks a run whose interval excludes zero.</p>
     <p class="chart-note"><b>What this does not show:</b> a corrected significance level.
       These are independent 95% intervals with no multiple-comparison adjustment, which is
-      exactly why one exclusion in fifteen is unremarkable rather than a finding.</p>
+      exactly why two exclusions in fifteen under equal-width binning, and three under
+      equal-mass, are unremarkable rather than a finding.</p>
   </section>
 
   <section class="panel"><div class="prose">
@@ -412,8 +413,8 @@
         it with a scalar &alpha;.</p>
       <p><b>What this study does.</b> Measures four readouts on directly-trained SNNs over
         event data. The unbounded accumulator is <b>overconfident and rises with
-        <em>T</em></b>, mean confidence minus accuracy +0.0047 at <em>T</em> = 2 and growing,
-        and temperature scaling removes it.</p>
+        <em>T</em></b>, mean confidence minus accuracy +0.0000 at <em>T</em> = 2, +0.0032 at
+        <em>T</em> = 6 and +0.0047 at <em>T</em> = 10.</p>
       <p class="diff"><b>How they differ.</b> Converted rather than directly trained, static
         frames rather than event data, and a stopping rule built on a confidence signal
         rather than the calibration of the signal itself. Their accumulator is real-valued,
@@ -684,7 +685,7 @@ python scripts/export_dashboard_data.py</pre>
       accuracy cannot emit a confidence near its own correctness rate, so it is forced into
       underconfidence before any calibrator is involved. The gap between accuracy and the
       ceiling accounts for <strong>99.2%</strong> of uncalibrated expected calibration error
-      at <em>T</em> = 2, 90.0% at <em>T</em> = 4 and 44.2% at <em>T</em> = 6.
+      at <em>T</em> = 2, 90.1% at <em>T</em> = 4 and 44.5% at <em>T</em> = 6.
     </p>
     <p style="color:var(--ink-3);font-size:13.5px">
       That comparison is not exact and should not be read as one. The 99.2% sets a single
@@ -731,8 +732,8 @@ python scripts/export_dashboard_data.py</pre>
     <p>
       <strong>The half about C = 10 held.</strong> There the two ceilings differ by at most
       0.0067 at any T — with nine competitors silent 95–99% of the time the extreme vector is
-      nearly reachable, so the simple bound was nearly tight. At C = 101 the gap is up to
-      <strong>26 times larger</strong>. That is exactly why the study never needed the
+      nearly reachable, so the simple bound was nearly tight. At C = 101 and T = 6 the gap is
+      0.121, <strong>26 times</strong> the N-MNIST gap at the same T. That is exactly why the study never needed the
       refinement before and does now.
     </p>
     <p>
@@ -831,9 +832,9 @@ python scripts/export_dashboard_data.py</pre>
     </div>
     <p>
       The recommendation is therefore narrow. Where the ceiling binds — accuracy above
-      e<sup>T</sup>/(e<sup>T</sup>+C−1), which for 10 classes means T ≤ 4 — a membrane
-      readout removes a large structural error and ranks at least as well. Above that the cap
-      is inert, count ranks better, and there is no reason to change it.
+      e<sup>T</sup>/(e<sup>T</sup>+C−1), which for 10 classes means T ≤ 6 — a membrane
+      readout removes a large structural error, and at T ≤ 4 it also ranks at least as well. From T = 6 count ranks
+      better, and above T = 6 the cap is inert and there is no reason to change it.
       <strong>T<sub>min</sub> is exactly the test for which regime you are in.</strong>
       A second consequence points the same way at low T: count gives 9 achievable selective
       operating points at T = 2 across 10,000 samples, membrane gives 9,998 — effectively a

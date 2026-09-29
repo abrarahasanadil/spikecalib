@@ -53,7 +53,19 @@ DOI 10.3389/fnins.2017.00309
 *Taken from it:* the CIFAR10-DVS dataset; 10,000 samples, 10 classes, 128x128.
 *Used in:* `spikecalib/datasets.py`, `NOTES.md` (Scope, per-dataset hazards).
 
-**Fang et al. SpikingJelly (software).** Version 0.0.0.0.14, PKU MLG / PCL and
+**Fang, Chen, Ding, Yu, Masquelier, Chen, Huang, Zhou, Li & Tian (2023). "SpikingJelly: An
+open-source machine learning infrastructure platform for spike-based intelligence." *Science
+Advances* 9(40), eadi1480.** DOI 10.1126/sciadv.adi1480. `[LIT]` verified 2026-09-28 against
+the open-access full text, PubMed Central PMC10558124 (PMID 37801497): title, the ten authors in
+this order, volume 9, issue 40, article eadi1480 and publication date 6 October 2023 read from
+the article record, and the abstract states "We present the SpikingJelly framework". The
+Crossref record for the DOI agrees on every field, and the project's own README asks users to
+cite this article. The article states no SpikingJelly version and does not name the ATan
+surrogate, so neither is taken from it: the version and the surrogate formula come from the
+installed software, below. *Used in:* `paper/refs.bib` (`fang2023spikingjelly`), the Networks
+paragraph of `paper/main.tex`.
+
+**SpikingJelly (software).** Version 0.0.0.0.14, PKU MLG / PCL and
 contributors, https://github.com/fangwei123456/spikingjelly
 *Verification:* `pip show spikingjelly` in this environment.
 *Taken from it:* dataset loaders, `LIFNode`, the `ATan` surrogate implementation, the
@@ -62,8 +74,9 @@ verify N-MNIST archives.
 *Used in:* throughout `spikecalib/` and `scripts/`.
 *Year and author, for citation:* PyPI records the 0.0.0.0.14 upload on **20 March 2023**
 and lists the author as **"PKU MLG, PCL, and other contributors"**
-(https://pypi.org/pypi/spikingjelly/0.0.0.0.14/json). `paper/refs.bib` uses both. The
-accompanying journal paper is not cited, because it has not been read.
+(https://pypi.org/pypi/spikingjelly/0.0.0.0.14/json). The paper states the version in its
+text and cites the journal article above, which replaced a software entry in `paper/refs.bib`
+on 2026-09-28.
 
 **Guo, Pleiss, Sun & Weinberger (2017). "On Calibration of Modern Neural Networks."
 *ICML 2017*, PMLR 70:1321-1330.** `[LIT]` verified 2026-09-12 against the proceedings PDF

@@ -283,7 +283,9 @@ def figure_paired_difference(rows, stats, out_dir):
     ax.invert_yaxis()
     ax.set_xlabel("isotonic ECE − temperature ECE   (negative = isotonic better)")
     ax.grid(axis="y", visible=False)
-    ax.set_title("14 of 15 intervals straddle zero", fontsize=10.5, color=INK, pad=10)
+    n_straddle = sum(r["iso_minus_temp_resolvable"] != "True" for r in entries)
+    ax.set_title(f"{n_straddle} of {len(entries)} equal-width intervals straddle zero",
+                 fontsize=10.5, color=INK, pad=10)
     return save(fig, out_dir, "fig4-paired-difference")
 
 

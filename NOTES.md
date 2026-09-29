@@ -1832,8 +1832,7 @@ added.
 
 ## AI disclosure, for the paper
 
-The paper is not yet written. When it is, this goes in the methods or an acknowledgements
-note, once, in these words:
+The paper, `paper/main.tex`, carries this in its Acknowledgements, once, in these words:
 
 > AI assistance was used for implementation and drafting. All research design, hypotheses,
 > the pre-registered prediction and its outcome, and all verification decisions are the
@@ -1870,7 +1869,7 @@ revised after the fact:
 
 | # | subject | outcome |
 |---|---|---|
-| 1 | the isotonic advantage grows as `T` falls | **falsified in the letter**; its substance — that the two calibrators tie — held |
+| 1 | temperature scaling matches or beats top-label isotonic at every `T`, and no isotonic advantage is resolvable | **falsified in the letter**; its substance — that the two calibrators tie — held |
 | 2 | membrane removes the cap and most of the error | **held**, both halves, at every seed |
 | 3 | the leak explains the high-`T` ranking deficit | **passed its own falsification threshold, failed its headline wording** — it closes half the deficit, it does not close it |
 | 4 | a conditional ceiling explains the `C = 101` residual | **falsified in its central claim**; its secondary claim, that the two ceilings coincide at `C = 10`, held |
@@ -1889,5 +1888,7 @@ first genuinely uncertain accuracy regime in the study, 0.43–0.66 against N-MN
 
 Not implemented: DVS-Gesture and CIFAR10-DVS, which raise `NotImplementedError` at the
 loader. DVS-Gesture remains the interesting one — its ~330-sample calibration split is the
-regime where the calibrator null result could plausibly break. A preprint is in
-preparation.
+regime where the calibrator null result could plausibly break.
+
+The paper is written: `paper/main.tex`, nine pages, with every measured value a macro that
+`paper/make_numbers.py` regenerates from `results/`. A preprint is in preparation.
