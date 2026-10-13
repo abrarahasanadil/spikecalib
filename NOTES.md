@@ -1679,6 +1679,185 @@ the author's; the rule for 1,000 and 5,000 is its mirror and was written with it
 favour of temperature under equal-width binning and not under equal-mass, which is a tie
 under the definition above. Nothing has been fitted on a subsample.
 
+## Outcome of predictions 6a to 11, recorded 2026-10-14 after the runs
+
+The predictions above are unedited. They were committed at 23:29 on 2026-10-13 (`293d73c`);
+the first model was trained after that, and every experiment below ran between then and the
+first minutes of 2026-10-14. Each script evaluates its prediction against the registered
+condition and stores the verdict beside the numbers.
+
+| prediction | outcome | what was measured |
+|---|---|---|
+| 6a | **held** | N-MNIST, `T = 2`: mean signed gap +0.0044 |
+| 6b | **held** | N-Caltech101, `T = 2`: mean signed gap +0.1259, positive in 3 of 3 seeds |
+| 7 | **falsified** | N-Caltech101, `T = 2`: accuracy 0.4969 against a threshold of 0.5184; 33% of the gap recovered |
+| 8 | **held**, by overshooting | N-Caltech101, `T = 6`: mean signed gap +0.1655, overconfident; its magnitude is not below 0.05 |
+| 9 | **falsified** | count resolution below the accumulator's in 4 of 12 comparisons |
+| 10 | **falsified** | calibrators tie in 4 of 9 runs; isotonic is better in the other 5 |
+| 11 | **falsified** | at 100 samples temperature is better in 9, 9 and 8 of 20 draws; the ties at 1,000 and 5,000 held |
+
+Three held and four were falsified. Two of the falsifications change what the study claims.
+
+### The learned-scale arm (predictions 6a, 6b, 7, 8)
+
+`[MEASURED]` `scripts/scaled_count_experiment.py`, nine runs, each on the split of the
+existing count run (fingerprints checked before training).
+
+| cell | seed | learned `s` | `s` at the last epoch | `s_min` | accuracy | count acc. | accum. acc. | `conf − acc` | ECE (ew) | ECE (em) | levels |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| N-MNIST, `T = 2` | 0 | 4.444 | 5.089 | 3.015 | 0.9788 | 0.9852 | 0.9864 | +0.0026 | 0.0048 | 0.0026 | 9 |
+| N-MNIST, `T = 2` | 1 | 4.996 | 5.456 | 3.052 | 0.9803 | 0.9843 | 0.9876 | +0.0060 | 0.0067 | 0.0060 | 9 |
+| N-MNIST, `T = 2` | 2 | 5.200 | 5.573 | 3.124 | 0.9829 | 0.9854 | 0.9844 | +0.0046 | 0.0046 | 0.0046 | 10 |
+| N-Caltech101, `T = 2` | 0 | 6.002 | 6.251 | 2.307 | 0.5023 | 0.4323 | 0.5838 | +0.1228 | 0.1231 | 0.1228 | 65 |
+| N-Caltech101, `T = 2` | 1 | 5.285 | 5.829 | 2.283 | 0.4902 | 0.4816 | 0.5775 | +0.1454 | 0.1474 | 0.1454 | 62 |
+| N-Caltech101, `T = 2` | 2 | 4.338 | 5.105 | 2.299 | 0.4983 | 0.4489 | 0.5861 | +0.1097 | 0.1125 | 0.1135 | 62 |
+| N-Caltech101, `T = 6` | 0 | 1.840 | 2.505 | 0.794 | 0.5390 | 0.6372 | 0.5614 | +0.0916 | 0.1022 | 0.0930 | 1,114 |
+| N-Caltech101, `T = 6` | 1 | 3.054 | 3.195 | 0.825 | 0.5850 | 0.6349 | 0.6142 | +0.2098 | 0.2098 | 0.2098 | 924 |
+| N-Caltech101, `T = 6` | 2 | 3.151 | 3.354 | 0.835 | 0.6005 | 0.6561 | 0.6171 | +0.1951 | 0.1951 | 0.1951 | 948 |
+
+**The network uses the scale, in every run.** The learned `s` exceeds that run's `s_min` in 9
+of 9, by a factor of 1.5 to 3.8. So the cap, where it bound, was a cap the network would move
+if it could. **The scale had not settled.** In all nine runs it was still rising at the last
+epoch: early stopping watches validation accuracy and ended training first. The values above
+are where training stopped.
+
+**6a held.** On N-MNIST the underconfidence is gone, +0.0044 against −0.5386, with ECE of
+0.0054 equal-width and 0.0044 equal-mass. It costs accuracy, 0.9807 against the count
+readout's 0.9850. The count of distinct confidences is 9 or 10, as before: the scale moved
+the values and added none.
+
+**6b held, and it is the accumulator's result again.** On N-Caltech101 at `T = 2` the readout
+is overconfident by +0.1259, more than the accumulator's +0.0816. The first draft of this
+prediction, |gap| < 0.05, would have failed.
+
+**7 is falsified.** The learned scale reaches 0.4969, a third of the way from the count
+readout's 0.4543 to the accumulator's 0.5825. Removing the cap, with the threshold left in
+place, does not recover half of the accuracy. The cross-entropy-floor account of the gain
+failed prediction 5 on its dependence on architecture, and it fails here on its size.
+
+**8 held, by overshooting, which was the stated risk.** At `T = 6` the gap goes from −0.1534
+to +0.1655. The underconfidence that neither ceiling explained is removed by freeing the
+logit range, so it is tied to the bounded range. It is not replaced by calibration. It is
+replaced by overconfidence of about the same size, and accuracy falls from 0.6427 to 0.5748.
+"Underconfident because capped" and "overconfident because uncapped" are the two states
+measured on this dataset; nothing here lands between them without a calibrator.
+
+### Resolution (prediction 9, and the check)
+
+`[MEASURED]` `scripts/resolution_experiment.py`, no training.
+
+**The check passes.** In all 45 count and scaled-count cells the number of distinct
+confidences is within `binomial(T + C − 1, C − 1)`. In the 18 cells where the bound is below
+the test-set size the models use at most 18% of it.
+
+**9 is falsified, in 8 of 12 comparisons.** N-MNIST, `T = 2`, two blocks, three-seed means:
+
+| count readout | state | estimator | count `RES` | accumulator `RES` | count below? |
+|---|---|---|---|---|---|
+| `s = 1` | uncalibrated | equal-width | 0.003951 | 0.003833 | **no** |
+| `s = 1` | uncalibrated | equal-mass | 0.000000 | 0.002182 | yes |
+| `s = 1` | temperature | equal-width | 0.003695 | 0.003715 | yes |
+| `s = 1` | temperature | equal-mass | 0.000000 | 0.002182 | yes |
+| `s = 1` | isotonic-top-label | equal-width | 0.004544 | 0.003484 | **no** |
+| `s = 1` | isotonic-top-label | equal-mass | 0.000000 | 0.001936 | yes |
+| learned scale | uncalibrated | equal-width | 0.006836 | 0.003833 | **no** |
+| learned scale | uncalibrated | equal-mass | 0.002506 | 0.002182 | **no** |
+| learned scale | temperature | equal-width | 0.006949 | 0.003715 | **no** |
+| learned scale | temperature | equal-mass | 0.002506 | 0.002182 | **no** |
+| learned scale | isotonic-top-label | equal-width | 0.007058 | 0.003484 | **no** |
+| learned scale | isotonic-top-label | equal-mass | 0.002506 | 0.001936 | **no** |
+
+- Under equal-width binning the count readout's resolution is **not** below the
+  accumulator's: 0.0040 against 0.0038, or 0.27 against 0.28 of their uncertainty terms.
+- Under equal-mass binning it is zero, because the count readout's confidences fall into a
+  single equal-mass bin in every seed. Three of the four comparisons that go the predicted
+  way are this artefact. The fourth is equal-width after temperature scaling, by 0.00002.
+- With the learned scale the count readout is above the accumulator in all six. Part of that
+  is its lower accuracy, which leaves a larger uncertainty term to resolve (0.0190 against
+  0.0137).
+
+**What this does to the thesis.** "Resolution is a timestep problem" is true of the *number*
+of confidence values and false of the Murphy resolution term. Eight to ten values separate
+correct from incorrect predictions, in the Brier sense, as well as ten thousand do. What the
+count readout gives up at `T = 2` is ranking, AUROC 0.9204 against 0.9698, and deterministic
+operating points. Those are different quantities from resolution, and this document had been
+treating them as one.
+
+**The derived claims about calibrators hold on the data.** Grouped by exact value, the count
+readout's resolution is 0.0048 before and after temperature scaling in every seed, with the
+same 8 to 10 groups. Isotonic merges them to 4 to 6 and lowers it to 0.0046. Temperature
+scaling does change AUROC, in 34 of 36 count cells and by at most 0.0052: it keeps the groups
+and reorders them.
+
+### Calibrators on N-Caltech101 (prediction 10)
+
+`[MEASURED]` `scripts/caltech_calibrators.py`, no training. Count readout, four blocks,
+calibration set 1,010, test set 1,742.
+
+| `T` | accuracy | uncalibrated (ew / em) | temperature (ew / em) | isotonic top-label (ew / em) | fitted `t` | runs that differ |
+|---|---|---|---|---|---|---|
+| 2 | 0.4543 | 0.3969 / 0.3969 | 0.1449 / 0.1523 | **0.0320 / 0.0349** | 0.413 | 3 of 3, all favouring isotonic |
+| 6 | 0.6427 | 0.1539 / 0.1534 | 0.0579 / 0.0532 | **0.0375 / 0.0379** | 0.837 | 2 of 3, all favouring isotonic |
+| 10 | 0.6435 | 0.0442 / 0.0462 | 0.0324 / 0.0261 | **0.0300 / 0.0311** | 1.104 | 0 of 3 |
+
+**10 is falsified, and this is the most consequential result of the set.** The calibrators
+tie in 4 of 9 runs. In the other five, all three at `T = 2` and two at `T = 6`, isotonic is
+better under both estimators. At `T = 2` temperature scaling leaves an ECE of about 0.15 where
+isotonic leaves 0.03. The fitted temperature there, 0.413, is a scale of 2.42, above `s_min`,
+so the cap is lifted and the error that remains is not one a single scale removes.
+
+Three things follow, and none may be softened.
+
+- **"Which calibrator you use does not matter" is an N-MNIST result.** It does not hold at 101
+  classes where the cap binds.
+- **"One scale fixes calibration" is false on N-Caltech101 at `T = 2`**, both post hoc (this
+  table) and learned (prediction 6b). The cap is a scale problem. The miscalibration is not
+  only the cap.
+- **The study's starting hypothesis is what these nine runs show.** It predicted an isotonic
+  advantage that grows as `T` falls. On N-MNIST it failed. Here the advantage is 0.11 at
+  `T = 2`, 0.02 at `T = 6` and nothing at `T = 10`. The capacity mechanism offered for it was
+  not tested here, and nine runs of one architecture do not establish it.
+
+Calibrators were also fitted to the unbounded readouts, for the first time. For the
+accumulator the two differ in 6 of 9 runs, always favouring isotonic. For the learned-scale
+readout, of 6 runs, 3 tie, 2 favour temperature and 1 favours isotonic.
+
+### Calibration-set size (prediction 11)
+
+`[MEASURED]` `scripts/calibration_size_experiment.py`, no training. N-MNIST, `T = 2`.
+
+| calibration samples | seed | temperature better | isotonic better | tie |
+|---|---|---|---|---|
+| 100 | 0 | 9 of 20 | 2 of 20 | 9 of 20 |
+| 1,000 | 0 | 4 of 20 | 1 of 20 | 15 of 20 |
+| 5,000 | 0 | 0 of 20 | 0 of 20 | 20 of 20 |
+| 100 | 1 | 9 of 20 | 0 of 20 | 11 of 20 |
+| 1,000 | 1 | 7 of 20 | 1 of 20 | 12 of 20 |
+| 5,000 | 1 | 0 of 20 | 0 of 20 | 20 of 20 |
+| 100 | 2 | 8 of 20 | 1 of 20 | 11 of 20 |
+| 1,000 | 2 | 6 of 20 | 0 of 20 | 14 of 20 |
+| 5,000 | 2 | 0 of 20 | 0 of 20 | 20 of 20 |
+
+**11 is falsified on its first clause.** At 100 samples temperature scaling is better in 9, 9
+and 8 of 20 draws, and the registered bar was 10 in two of three seeds. The ties at 1,000 and
+5,000 held. The direction is the predicted one and it is graded: temperature is better in 26
+of 60 draws at 100 samples, 17 of 60 at 1,000 and none at 5,000, while isotonic is better in
+3, 2 and none. The mean ECE at 100 samples is 0.0079 against 0.0114 equal-width and 0.0061
+against 0.0090 equal-mass. Scarce calibration data leans towards the one-parameter method,
+less decisively than predicted.
+
+### What changes in what the study says
+
+- The calibrator result is stated per regime: a tie on N-MNIST with ample calibration data,
+  a lean to temperature when that data is scarce, and isotonic on N-Caltech101 where the cap
+  binds.
+- The taxonomy is conditional on where the cap sits relative to accuracy. A learned scale
+  moves a count readout from one side to the other.
+- The `T = 6` residual on N-Caltech101 is no longer wholly unexplained: it goes when the
+  logit range is freed. Why the capped network was underconfident when nothing forced it is
+  still open.
+- "Resolution" is no longer used for the number of confidence values.
+
 ## Does the ceiling bind in published work? Resolved: no, and the reason is informative
 
 The verification pass left one consequential question open. Li, Jones & Furber report
@@ -1938,6 +2117,13 @@ problem, different quantity.
 
 **The SNN literature reports overconfidence as the characteristic calibration failure.
 This study measures the opposite.**
+
+*(Pointer added 2026-10-14. The first sentence is too strong. Chen, Park & Simeone,
+arXiv:2305.11322, report that a spike-count softmax is "first under-confident and then
+over-confident" as time passes, so early underconfidence of this readout is a published
+observation and not this study's own. What this study adds is the reason, the cap
+`e^t / (e^t + C − 1)` on a count read after `t` steps, and the measurement at `T = 2` to 10.
+See `SOURCES.md`, "Literature check, 2026-10-13".)*
 
 `[MEASURED]` `scripts/run_sweep.py`, seeds 0–2, 2026-09-10: mean confidence minus
 accuracy is **−0.5386 at `T = 2`** and **−0.1446 at `T = 4`** on N-MNIST, averaged over the
@@ -2219,3 +2405,18 @@ regime where the calibrator null result could plausibly break.
 
 The paper is written: `paper/main.tex`, ten pages, with every measured value a macro that
 `paper/make_numbers.py` regenerates from `results/`. A preprint is in preparation.
+
+**Added 2026-10-14.** Four further experiments have run, on seven further predictions (6a,
+6b, 7, 8, 9, 10, 11), of which three held and four were falsified; see "Outcome of predictions
+6a to 11". Nine more models were trained, the learned-scale arm, which makes 105: 69 on
+N-MNIST and 36 on N-Caltech101. Twelve predictions have now been registered in all.
+
+| experiment | scale |
+|---|---|
+| learned-scale arm | 3 cells × 3 seeds, 9 runs |
+| resolution and the bound check | 45 cells checked, 675 decomposition rows, no training |
+| calibrators on N-Caltech101 | 3 readouts × up to 3 `T` × 3 seeds × 4 calibrators, no training |
+| calibration-set size | 3 seeds × 3 sizes × 20 draws, no training |
+
+The bound itself is prior work and is cited as such; see "The cap is a scale problem". The
+paper was revised around these results on 2026-10-14 and is thirteen pages.

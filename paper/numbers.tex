@@ -10,6 +10,14 @@
 \newcommand{\tminHundredOne}{8}% [DERIVED] arithmetic in paper/make_numbers.py
 \newcommand{\ceilEightyIsOne}{1.0}% [DERIVED] arithmetic in paper/make_numbers.py (float64 e^80/(e^80+9) == 1.0)
 \newcommand{\ceilTwentyTen}{0.99999998}% [DERIVED] arithmetic in paper/make_numbers.py
+\newcommand{\ceilTenOne}{0.2320}% [DERIVED] arithmetic in paper/make_numbers.py
+\newcommand{\ceilTenThree}{0.6906}% [DERIVED] arithmetic in paper/make_numbers.py
+\newcommand{\rateCeilTen}{0.2320}% [DERIVED] arithmetic in paper/make_numbers.py (width 1)
+\newcommand{\rateCeilHundredOne}{0.0265}% [DERIVED] arithmetic in paper/make_numbers.py (width 1)
+\newcommand{\levelsTenTwo}{55}% [DERIVED] arithmetic in paper/make_numbers.py binomial(T+C-1, C-1)
+\newcommand{\levelsTenFour}{715}% [DERIVED] arithmetic in paper/make_numbers.py binomial(T+C-1, C-1)
+\newcommand{\levelsTenSix}{5{,}005}% [DERIVED] arithmetic in paper/make_numbers.py binomial(T+C-1, C-1)
+\newcommand{\levelsHundredOneTwo}{5{,}151}% [DERIVED] arithmetic in paper/make_numbers.py binomial(T+C-1, C-1)
 \newcommand{\nmSplitTrain}{50{,}000}% results/nmnist_T2_seed0_split.npz
 \newcommand{\nmSplitVal}{5{,}000}% results/nmnist_T2_seed0_split.npz
 \newcommand{\nmSplitCal}{5{,}000}% results/nmnist_T2_seed0_split.npz
@@ -19,15 +27,16 @@
 \newcommand{\ncSplitCal}{1{,}010}% results/ncaltech101_T2_seed0_split.npz
 \newcommand{\ncSplitTest}{1{,}742}% results/ncaltech101_T2_seed0_split.npz
 \newcommand{\ncSplitTotal}{8{,}709}% results/ncaltech101_T2_seed0_split.npz (sum)
-\newcommand{\modelsTotal}{96}% results/*_weights.pt (file count)
-\newcommand{\modelsNm}{66}% results/nmnist_*_weights.pt (file count)
-\newcommand{\modelsNc}{30}% results/ncaltech101_*_weights.pt (file count)
+\newcommand{\modelsTotal}{105}% results/*_weights.pt (file count)
+\newcommand{\modelsNm}{69}% results/nmnist_*_weights.pt (file count)
+\newcommand{\modelsNc}{36}% results/ncaltech101_*_weights.pt (file count)
 \newcommand{\hiddenUnits}{256}% results/nmnist_T2_seed0_record.json model_config
 \newcommand{\lifTau}{2.0}% results/nmnist_T2_seed0_record.json model_config
 \newcommand{\lifThreshold}{1.0}% results/nmnist_T2_seed0_record.json model_config
 \newcommand{\surrogateAlpha}{2.0}% results/nmnist_T2_seed0_record.json model_config
 \newcommand{\learningRate}{10^{-3}}% results/nmnist_T2_seed0_record.json lr
 \newcommand{\batchSize}{128}% results/nmnist_T2_seed0_record.json batch_size
+\newcommand{\batchSizeNc}{32}% results/ncaltech101_*_record.json batch_size (one value across all runs)
 \newcommand{\patienceEpochs}{5}% results/*_record.json epochs_run - best_epoch, less one for the 0-indexed best_epoch in spikecalib/train.py
 \newcommand{\epochCap}{50}% results/sweep_nmnist.csv epochs_requested
 \newcommand{\epochsMin}{10}% results/sweep_nmnist.csv epochs_run
@@ -210,3 +219,181 @@
 \newcommand{\ncAccumTwoAcc}{0.5825}% results/caltech_experiment.json test_accuracy
 \newcommand{\ncAccumSixAcc}{0.5976}% results/caltech_experiment.json test_accuracy
 \newcommand{\ncAccumTenAcc}{0.6072}% results/caltech_experiment.json test_accuracy
+\newcommand{\gapScNm}{$+$0.0044}% results/scaled_count_experiment.json mean_conf_minus_acc, mean of seeds
+\newcommand{\accScNm}{0.9807}% results/scaled_count_experiment.json test_accuracy
+\newcommand{\eceWScNm}{0.0054}% results/scaled_count_experiment.json ece_equal_width
+\newcommand{\eceMScNm}{0.0044}% results/scaled_count_experiment.json ece_equal_mass
+\newcommand{\scaleMinScNm}{4.44}% results/scaled_count_experiment.json logit_scale
+\newcommand{\scaleMaxScNm}{5.20}% results/scaled_count_experiment.json logit_scale
+\newcommand{\sminMinScNm}{3.01}% results/scaled_count_experiment.json s_min
+\newcommand{\sminMaxScNm}{3.12}% results/scaled_count_experiment.json s_min
+\newcommand{\accCountRefScNm}{0.9850}% results/scaled_count_experiment.json count_test_accuracy (the existing count runs)
+\newcommand{\accAccumRefScNm}{0.9861}% results/scaled_count_experiment.json accumulator_test_accuracy
+\newcommand{\gapCountRefScNm}{$-$0.5386}% results/scaled_count_experiment.json count_mean_conf_minus_acc
+\newcommand{\gapAccumRefScNm}{$+$0.0000}% results/scaled_count_experiment.json accumulator_mean_conf_minus_acc
+\newcommand{\accDeltaScNm}{$-$0.43}% results/scaled_count_experiment.json test_accuracy minus count_test_accuracy, in points
+\newcommand{\levelsMinScNm}{9}% results/scaled_count_experiment.json n_distinct
+\newcommand{\levelsMaxScNm}{10}% results/scaled_count_experiment.json n_distinct
+\newcommand{\gapScNcTwo}{$+$0.1259}% results/scaled_count_experiment.json mean_conf_minus_acc, mean of seeds
+\newcommand{\accScNcTwo}{0.4969}% results/scaled_count_experiment.json test_accuracy
+\newcommand{\eceWScNcTwo}{0.1277}% results/scaled_count_experiment.json ece_equal_width
+\newcommand{\eceMScNcTwo}{0.1272}% results/scaled_count_experiment.json ece_equal_mass
+\newcommand{\scaleMinScNcTwo}{4.34}% results/scaled_count_experiment.json logit_scale
+\newcommand{\scaleMaxScNcTwo}{6.00}% results/scaled_count_experiment.json logit_scale
+\newcommand{\sminMinScNcTwo}{2.28}% results/scaled_count_experiment.json s_min
+\newcommand{\sminMaxScNcTwo}{2.31}% results/scaled_count_experiment.json s_min
+\newcommand{\accCountRefScNcTwo}{0.4543}% results/scaled_count_experiment.json count_test_accuracy (the existing count runs)
+\newcommand{\accAccumRefScNcTwo}{0.5825}% results/scaled_count_experiment.json accumulator_test_accuracy
+\newcommand{\gapCountRefScNcTwo}{$-$0.3969}% results/scaled_count_experiment.json count_mean_conf_minus_acc
+\newcommand{\gapAccumRefScNcTwo}{$+$0.0816}% results/scaled_count_experiment.json accumulator_mean_conf_minus_acc
+\newcommand{\accDeltaScNcTwo}{$+$4.27}% results/scaled_count_experiment.json test_accuracy minus count_test_accuracy, in points
+\newcommand{\levelsMinScNcTwo}{62}% results/scaled_count_experiment.json n_distinct
+\newcommand{\levelsMaxScNcTwo}{65}% results/scaled_count_experiment.json n_distinct
+\newcommand{\gapScNcSix}{$+$0.1655}% results/scaled_count_experiment.json mean_conf_minus_acc, mean of seeds
+\newcommand{\accScNcSix}{0.5748}% results/scaled_count_experiment.json test_accuracy
+\newcommand{\eceWScNcSix}{0.1690}% results/scaled_count_experiment.json ece_equal_width
+\newcommand{\eceMScNcSix}{0.1660}% results/scaled_count_experiment.json ece_equal_mass
+\newcommand{\scaleMinScNcSix}{1.84}% results/scaled_count_experiment.json logit_scale
+\newcommand{\scaleMaxScNcSix}{3.15}% results/scaled_count_experiment.json logit_scale
+\newcommand{\sminMinScNcSix}{0.79}% results/scaled_count_experiment.json s_min
+\newcommand{\sminMaxScNcSix}{0.84}% results/scaled_count_experiment.json s_min
+\newcommand{\accCountRefScNcSix}{0.6427}% results/scaled_count_experiment.json count_test_accuracy (the existing count runs)
+\newcommand{\accAccumRefScNcSix}{0.5976}% results/scaled_count_experiment.json accumulator_test_accuracy
+\newcommand{\gapCountRefScNcSix}{$-$0.1534}% results/scaled_count_experiment.json count_mean_conf_minus_acc
+\newcommand{\gapAccumRefScNcSix}{$+$0.1843}% results/scaled_count_experiment.json accumulator_mean_conf_minus_acc
+\newcommand{\accDeltaScNcSix}{$-$6.79}% results/scaled_count_experiment.json test_accuracy minus count_test_accuracy, in points
+\newcommand{\levelsMinScNcSix}{924}% results/scaled_count_experiment.json n_distinct
+\newcommand{\levelsMaxScNcSix}{1{,}114}% results/scaled_count_experiment.json n_distinct
+\newcommand{\verdictSixA}{held}% results/scaled_count_experiment.json predictions.6a
+\newcommand{\verdictSixB}{held}% results/scaled_count_experiment.json predictions.6b
+\newcommand{\verdictSeven}{falsified}% results/scaled_count_experiment.json predictions.7
+\newcommand{\verdictEight}{held}% results/scaled_count_experiment.json predictions.8
+\newcommand{\shareRecovered}{33}% results/scaled_count_experiment.json predictions.7 share_of_gap_recovered
+\newcommand{\thresholdSeven}{0.5184}% NOTES.md, prediction 7 (0.4543 + 0.1282 / 2)
+\newcommand{\scRuns}{9}% results/scaled_count_experiment.json
+\newcommand{\scRunsAboveSmin}{9}% results/scaled_count_experiment.json scale_exceeds_s_min
+\newcommand{\scRunsPositiveGapNc}{6}% results/scaled_count_experiment.json N-Caltech101 runs with a positive gap
+\newcommand{\scRunsNc}{6}% results/scaled_count_experiment.json
+\newcommand{\scRunsStillRising}{9}% results/scaled_count_experiment.json logit_scale_last_epoch > logit_scale
+\newcommand{\checkCells}{45}% results/resolution_experiment.json check.cells (count and scaled-count cells)
+\newcommand{\checkInformative}{18}% results/resolution_experiment.json check.cells_where_bound_is_below_n_test
+\newcommand{\levelsObsMinNmTwo}{8}% results/resolution_experiment.json check rows, N-MNIST T=2, count and scaled-count, both depths
+\newcommand{\levelsObsMaxNmTwo}{10}% results/resolution_experiment.json check rows, N-MNIST T=2
+\newcommand{\shareOfBoundMax}{18}% results/resolution_experiment.json check rows where the bound is below n_test: largest observed/bound, per cent
+\newcommand{\verdictNine}{falsified}% results/resolution_experiment.json prediction_9
+\newcommand{\nineBelow}{4}% results/resolution_experiment.json prediction_9.comparisons
+\newcommand{\nineTotal}{12}% results/resolution_experiment.json prediction_9.comparisons
+\newcommand{\nineBelowCount}{4}% results/resolution_experiment.json
+\newcommand{\nineBelowDegenerate}{3}% results/resolution_experiment.json prediction_9.comparisons: count readout, equal-mass, where it forms one bin
+\newcommand{\nineBelowScaled}{0}% results/resolution_experiment.json
+\newcommand{\resCountW}{0.0040}% results/resolution_experiment.json resolution, N-MNIST T=2, count, equal_width
+\newcommand{\resRatioCountW}{0.27}% results/resolution_experiment.json res_over_unc, count, equal_width
+\newcommand{\resCountM}{0.0000}% results/resolution_experiment.json resolution, N-MNIST T=2, count, equal_mass
+\newcommand{\resRatioCountM}{0.00}% results/resolution_experiment.json res_over_unc, count, equal_mass
+\newcommand{\uncCount}{0.0148}% results/resolution_experiment.json uncertainty, count
+\newcommand{\aurocCountNmTwo}{0.9204}% results/resolution_experiment.json auroc, count, uncalibrated
+\newcommand{\resAccumW}{0.0038}% results/resolution_experiment.json resolution, N-MNIST T=2, accumulator, equal_width
+\newcommand{\resRatioAccumW}{0.28}% results/resolution_experiment.json res_over_unc, accumulator, equal_width
+\newcommand{\resAccumM}{0.0022}% results/resolution_experiment.json resolution, N-MNIST T=2, accumulator, equal_mass
+\newcommand{\resRatioAccumM}{0.16}% results/resolution_experiment.json res_over_unc, accumulator, equal_mass
+\newcommand{\uncAccum}{0.0137}% results/resolution_experiment.json uncertainty, accumulator
+\newcommand{\aurocAccumNmTwo}{0.9698}% results/resolution_experiment.json auroc, accumulator, uncalibrated
+\newcommand{\resScaledW}{0.0068}% results/resolution_experiment.json resolution, N-MNIST T=2, scaled-count, equal_width
+\newcommand{\resRatioScaledW}{0.36}% results/resolution_experiment.json res_over_unc, scaled-count, equal_width
+\newcommand{\resScaledM}{0.0025}% results/resolution_experiment.json resolution, N-MNIST T=2, scaled-count, equal_mass
+\newcommand{\resRatioScaledM}{0.13}% results/resolution_experiment.json res_over_unc, scaled-count, equal_mass
+\newcommand{\uncScaled}{0.0190}% results/resolution_experiment.json uncertainty, scaled-count
+\newcommand{\aurocScaledNmTwo}{0.9479}% results/resolution_experiment.json auroc, scaled-count, uncalibrated
+\newcommand{\resCountExact}{0.0048}% results/resolution_experiment.json resolution, exact, count, uncalibrated and after temperature (equal per seed)
+\newcommand{\resCountExactIso}{0.0046}% results/resolution_experiment.json resolution, exact, count, after top-label isotonic
+\newcommand{\groupsCountExactMin}{8}% results/resolution_experiment.json n_groups, exact, count
+\newcommand{\groupsCountExactMax}{10}% results/resolution_experiment.json n_groups, exact, count
+\newcommand{\groupsCountIsoMin}{4}% results/resolution_experiment.json n_groups, exact, count after isotonic
+\newcommand{\groupsCountIsoMax}{6}% results/resolution_experiment.json n_groups, exact, count after isotonic
+\newcommand{\aurocChangedSeeds}{3}% results/resolution_experiment.json auroc of the count readout before and after temperature scaling, N-MNIST T=2
+\newcommand{\aurocMovedCells}{34}% results/resolution_experiment.json count cells whose AUROC differs after temperature scaling
+\newcommand{\aurocCells}{36}% results/resolution_experiment.json count cells
+\newcommand{\aurocMovedMax}{0.0052}% results/resolution_experiment.json largest |change in AUROC| after temperature scaling, count cells
+\newcommand{\ncResRatioCountW}{0.28}% results/resolution_experiment.json res_over_unc, N-Caltech101 T=2, count, equal_width
+\newcommand{\ncResRatioCountM}{0.44}% results/resolution_experiment.json res_over_unc, N-Caltech101 T=2, count, equal_mass
+\newcommand{\ncResRatioAccumW}{0.47}% results/resolution_experiment.json res_over_unc, N-Caltech101 T=2, accumulator, equal_width
+\newcommand{\ncResRatioAccumM}{0.46}% results/resolution_experiment.json res_over_unc, N-Caltech101 T=2, accumulator, equal_mass
+\newcommand{\ncResRatioScaledW}{0.45}% results/resolution_experiment.json res_over_unc, N-Caltech101 T=2, scaled-count, equal_width
+\newcommand{\ncResRatioScaledM}{0.46}% results/resolution_experiment.json res_over_unc, N-Caltech101 T=2, scaled-count, equal_mass
+\newcommand{\verdictTen}{falsified}% results/caltech_calibrators.json prediction_10
+\newcommand{\ncTies}{4}% results/caltech_calibrators.json prediction_10.ties
+\newcommand{\ncDiffer}{5}% results/caltech_calibrators.json prediction_10
+\newcommand{\ncDifferTwo}{3}% results/caltech_calibrators.json paired, count, T=2
+\newcommand{\ccUncTwoW}{0.3969}% results/caltech_calibrators.json ece_equal_width, count, uncalibrated, T=2
+\newcommand{\ccUncTwoM}{0.3969}% results/caltech_calibrators.json ece_equal_mass, count, uncalibrated, T=2
+\newcommand{\ccAccTwo}{0.4543}% results/caltech_calibrators.json test_accuracy, count, T=2
+\newcommand{\ccTempTwoW}{0.1449}% results/caltech_calibrators.json ece_equal_width, count, temperature, T=2
+\newcommand{\ccTempTwoM}{0.1523}% results/caltech_calibrators.json ece_equal_mass, count, temperature, T=2
+\newcommand{\ccTemperatureTwo}{0.41}% results/caltech_calibrators.json temperature, count, T=2
+\newcommand{\ccIsoTwoW}{0.0320}% results/caltech_calibrators.json ece_equal_width, count, isotonic-top-label, T=2
+\newcommand{\ccIsoTwoM}{0.0349}% results/caltech_calibrators.json ece_equal_mass, count, isotonic-top-label, T=2
+\newcommand{\ncDifferSix}{2}% results/caltech_calibrators.json paired, count, T=6
+\newcommand{\ccUncSixW}{0.1539}% results/caltech_calibrators.json ece_equal_width, count, uncalibrated, T=6
+\newcommand{\ccUncSixM}{0.1534}% results/caltech_calibrators.json ece_equal_mass, count, uncalibrated, T=6
+\newcommand{\ccAccSix}{0.6427}% results/caltech_calibrators.json test_accuracy, count, T=6
+\newcommand{\ccTempSixW}{0.0579}% results/caltech_calibrators.json ece_equal_width, count, temperature, T=6
+\newcommand{\ccTempSixM}{0.0532}% results/caltech_calibrators.json ece_equal_mass, count, temperature, T=6
+\newcommand{\ccTemperatureSix}{0.84}% results/caltech_calibrators.json temperature, count, T=6
+\newcommand{\ccIsoSixW}{0.0375}% results/caltech_calibrators.json ece_equal_width, count, isotonic-top-label, T=6
+\newcommand{\ccIsoSixM}{0.0379}% results/caltech_calibrators.json ece_equal_mass, count, isotonic-top-label, T=6
+\newcommand{\ncDifferTen}{0}% results/caltech_calibrators.json paired, count, T=10
+\newcommand{\ccUncTenW}{0.0442}% results/caltech_calibrators.json ece_equal_width, count, uncalibrated, T=10
+\newcommand{\ccUncTenM}{0.0462}% results/caltech_calibrators.json ece_equal_mass, count, uncalibrated, T=10
+\newcommand{\ccAccTen}{0.6435}% results/caltech_calibrators.json test_accuracy, count, T=10
+\newcommand{\ccTempTenW}{0.0324}% results/caltech_calibrators.json ece_equal_width, count, temperature, T=10
+\newcommand{\ccTempTenM}{0.0261}% results/caltech_calibrators.json ece_equal_mass, count, temperature, T=10
+\newcommand{\ccTemperatureTen}{1.10}% results/caltech_calibrators.json temperature, count, T=10
+\newcommand{\ccIsoTenW}{0.0300}% results/caltech_calibrators.json ece_equal_width, count, isotonic-top-label, T=10
+\newcommand{\ccIsoTenM}{0.0311}% results/caltech_calibrators.json ece_equal_mass, count, isotonic-top-label, T=10
+\newcommand{\ccCalSize}{1{,}010}% results/caltech_calibrators.json n_cal
+\newcommand{\ccTestSize}{1{,}742}% results/caltech_calibrators.json n_test
+\newcommand{\ccAccumDiffer}{6}% results/caltech_calibrators.json paired, accumulator
+\newcommand{\ccAccumRuns}{9}% results/caltech_calibrators.json paired, accumulator
+\newcommand{\ccScaledRuns}{6}% results/caltech_calibrators.json paired, scaled-count
+\newcommand{\ccScaledIso}{1}% results/caltech_calibrators.json paired, scaled-count
+\newcommand{\ccScaledTemp}{2}% results/caltech_calibrators.json paired, scaled-count
+\newcommand{\ccScaledTie}{3}% results/caltech_calibrators.json paired, scaled-count
+\newcommand{\ccAccumTempTwoW}{0.0528}% results/caltech_calibrators.json ece_equal_width, accumulator, temperature, T=2
+\newcommand{\ccAccumTempTwoM}{0.0504}% results/caltech_calibrators.json ece_equal_mass, accumulator, temperature, T=2
+\newcommand{\ccAccumIsoTwoW}{0.0398}% results/caltech_calibrators.json ece_equal_width, accumulator, isotonic-top-label, T=2
+\newcommand{\ccAccumIsoTwoM}{0.0391}% results/caltech_calibrators.json ece_equal_mass, accumulator, isotonic-top-label, T=2
+\newcommand{\ccScaledTempTwoW}{0.0879}% results/caltech_calibrators.json ece_equal_width, scaled-count, temperature, T=2
+\newcommand{\ccScaledTempTwoM}{0.0915}% results/caltech_calibrators.json ece_equal_mass, scaled-count, temperature, T=2
+\newcommand{\ccScaledIsoTwoW}{0.0886}% results/caltech_calibrators.json ece_equal_width, scaled-count, isotonic-top-label, T=2
+\newcommand{\ccScaledIsoTwoM}{0.0908}% results/caltech_calibrators.json ece_equal_mass, scaled-count, isotonic-top-label, T=2
+\newcommand{\verdictEleven}{falsified}% results/calibration_size_experiment.json prediction_11
+\newcommand{\csDraws}{20}% results/calibration_size_experiment.json draws
+\newcommand{\csTempWinsHundred}{26}% results/calibration_size_experiment.json summary, n_cal=100
+\newcommand{\csIsoWinsHundred}{3}% results/calibration_size_experiment.json summary, n_cal=100
+\newcommand{\csTempWinsMaxHundred}{9}% results/calibration_size_experiment.json summary, n_cal=100, largest per-seed count
+\newcommand{\csDifferMaxHundred}{11}% results/calibration_size_experiment.json summary, n_cal=100, largest per-seed count
+\newcommand{\csTempWHundred}{0.0079}% results/calibration_size_experiment.json temp_ece_ew, n_cal=100, mean over seeds and draws
+\newcommand{\csTempMHundred}{0.0061}% results/calibration_size_experiment.json temp_ece_em, n_cal=100, mean over seeds and draws
+\newcommand{\csIsoWHundred}{0.0114}% results/calibration_size_experiment.json iso_ece_ew, n_cal=100, mean over seeds and draws
+\newcommand{\csIsoMHundred}{0.0090}% results/calibration_size_experiment.json iso_ece_em, n_cal=100, mean over seeds and draws
+\newcommand{\csTempWinsThousand}{17}% results/calibration_size_experiment.json summary, n_cal=1000
+\newcommand{\csIsoWinsThousand}{2}% results/calibration_size_experiment.json summary, n_cal=1000
+\newcommand{\csTempWinsMaxThousand}{7}% results/calibration_size_experiment.json summary, n_cal=1000, largest per-seed count
+\newcommand{\csDifferMaxThousand}{8}% results/calibration_size_experiment.json summary, n_cal=1000, largest per-seed count
+\newcommand{\csTempWThousand}{0.0032}% results/calibration_size_experiment.json temp_ece_ew, n_cal=1000, mean over seeds and draws
+\newcommand{\csTempMThousand}{0.0018}% results/calibration_size_experiment.json temp_ece_em, n_cal=1000, mean over seeds and draws
+\newcommand{\csIsoWThousand}{0.0055}% results/calibration_size_experiment.json iso_ece_ew, n_cal=1000, mean over seeds and draws
+\newcommand{\csIsoMThousand}{0.0031}% results/calibration_size_experiment.json iso_ece_em, n_cal=1000, mean over seeds and draws
+\newcommand{\csTempWinsFull}{0}% results/calibration_size_experiment.json summary, n_cal=5000
+\newcommand{\csIsoWinsFull}{0}% results/calibration_size_experiment.json summary, n_cal=5000
+\newcommand{\csTempWinsMaxFull}{0}% results/calibration_size_experiment.json summary, n_cal=5000, largest per-seed count
+\newcommand{\csDifferMaxFull}{0}% results/calibration_size_experiment.json summary, n_cal=5000, largest per-seed count
+\newcommand{\csTempWFull}{0.0018}% results/calibration_size_experiment.json temp_ece_ew, n_cal=5000, mean over seeds and draws
+\newcommand{\csTempMFull}{0.0008}% results/calibration_size_experiment.json temp_ece_em, n_cal=5000, mean over seeds and draws
+\newcommand{\csIsoWFull}{0.0042}% results/calibration_size_experiment.json iso_ece_ew, n_cal=5000, mean over seeds and draws
+\newcommand{\csIsoMFull}{0.0015}% results/calibration_size_experiment.json iso_ece_em, n_cal=5000, mean over seeds and draws
+\newcommand{\csDrawsTotal}{60}% results/calibration_size_experiment.json 3 seeds x 20 draws
+\newcommand{\predictionsNew}{7}% NOTES.md predictions 6a, 6b, 7, 8, 9, 10, 11
+\newcommand{\predictionsHeld}{3}% verdict blocks of the four experiment files
+\newcommand{\predictionsFalsified}{4}% verdict blocks of the four experiment files
+\newcommand{\csSeedsCounting}{0}% results/calibration_size_experiment.json prediction_11

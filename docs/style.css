@@ -755,6 +755,12 @@ pre .c { color: var(--ink-3); }
 .pre-reg blockquote { margin: 0 0 var(--s3); font-size: 14px; color: var(--ink); line-height: 1.55; }
 .pre-reg .verdict-text { margin: 0; font-size: 13.5px; color: var(--ink-2); }
 .pre-reg .verdict-text strong { color: var(--ink); }
+/* Outcome of a registered prediction. The word carries the meaning; the colour repeats it. */
+.verdict-held, .verdict-falsified { font-family: var(--sans); font-weight: 600; }
+/* a table cell that holds a sentence, not a number */
+tbody td.t, thead th.t { text-align: left; white-space: normal; font-family: var(--sans); color: var(--ink-2); line-height: 1.45; }
+.verdict-held { color: var(--sys-green); }
+.verdict-falsified { color: var(--status); }
 
 section.panel > .prose[style] { max-width: none; }
 

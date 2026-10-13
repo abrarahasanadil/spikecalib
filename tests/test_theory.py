@@ -332,6 +332,27 @@ def test_temperature_scaling_can_merge_groups_only_at_special_temperatures():
     assert only_merges(before, special) and n_distinct(special) < n_distinct(before)
 
 
+def test_temperature_keeps_the_groups_but_can_reorder_them():
+    """Resolution is safe under temperature scaling; ranking is not.
+
+    A two-way tie for first place and a lone winner one step ahead swap order as the scale
+    falls: at s = 1 the lone winner is the more confident, at s = 0.25 the tie is. The
+    partition is the same at both scales, so resolution is unchanged, but any quantity that
+    depends on the ORDER of the groups, AUROC or the area under the risk-coverage curve,
+    can move. Temperature scaling must not be described as ranking-preserving.
+    """
+    tie_for_first = np.array([[0.0, 0.0, 2.0, 2.0]])
+    lone_winner = np.array([[0.0, 0.0, 0.0, 1.0]])
+
+    def conf(v, s):
+        return float(softmax_probs(s * v).max())
+
+    assert conf(tie_for_first, 1.0) < conf(lone_winner, 1.0)
+    assert conf(tie_for_first, 0.25) > conf(lone_winner, 0.25)
+    vectors = all_count_vectors(2, 4)
+    assert is_same_partition(softmax_probs(vectors).max(axis=1), softmax_probs(0.25 * vectors).max(axis=1))
+
+
 def test_top_label_isotonic_only_merges_groups_and_so_cannot_raise_resolution():
     for seed in range(4):
         cal, test = synthetic_counts(seed=20 + seed), synthetic_counts(seed=30 + seed)

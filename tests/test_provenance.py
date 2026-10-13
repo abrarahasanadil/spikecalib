@@ -157,6 +157,117 @@ def test_count_cells_are_counted_once() -> None:
     assert f'<span data-n="grid-all">{len(grid)}</span>' in page
 
 
+# --------------------------------------------------------------------------- registered predictions
+
+def _result(name: str) -> dict:
+    return json.loads(_read("results", name))
+
+
+def _mean(rows: list[dict], key: str) -> float:
+    return sum(r[key] for r in rows) / len(rows)
+
+
+def test_learned_scale_verdicts_follow_from_the_rows() -> None:
+    """Predictions 6a, 6b, 7 and 8, re-evaluated against the conditions in NOTES.md."""
+    d = _result("scaled_count_experiment.json")
+    cell = lambda ds, T: [r for r in d["rows"] if r["dataset"] == ds and r["timesteps"] == T]  # noqa: E731
+    nm, c2, c6 = cell("nmnist", 2), cell("ncaltech101", 2), cell("ncaltech101", 6)
+    assert [len(x) for x in (nm, c2, c6)] == [3, 3, 3]
+    v = d["predictions"]
+    assert v["6a"]["held"] == (abs(_mean(nm, "mean_conf_minus_acc")) < 0.05)
+    assert v["6b"]["held"] == (_mean(c2, "mean_conf_minus_acc") > 0)
+    assert v["7"]["held"] == (_mean(c2, "test_accuracy") >= 0.5184)
+    assert v["8"]["held"] == (_mean(c6, "mean_conf_minus_acc") > -0.05)
+    for r in d["rows"]:
+        # a scaled-count readout is still capped, at the scale it learned, and still on the lattice
+        assert r["max_confidence_observed"] <= r["ceiling_at_learned_scale"] + 1e-9
+        assert r["n_distinct"] <= r["max_distinct_bound"]
+        assert r["scale_exceeds_s_min"] == (r["logit_scale"] > r["s_min"])
+
+
+def test_learned_scale_runs_used_the_count_runs_splits() -> None:
+    """The arm is a like-for-like comparison only on the split the count run was trained on."""
+    for r in _result("scaled_count_experiment.json")["rows"]:
+        stem = f"{r['dataset']}_T{r['timesteps']}_seed{r['seed']}"
+        count = json.loads(_read("results", stem + "_record.json"))
+        scaled = json.loads(_read("results", stem + "_scaled-count_record.json"))
+        assert r["split_fingerprint"] == count["split_fingerprint"] == scaled["split_fingerprint"]
+        assert scaled["batch_size"] == count["batch_size"] and scaled["lr"] == count["lr"]
+        assert scaled["model_config"]["channels"] == count["model_config"]["channels"]
+
+
+def test_resolution_verdict_and_bound_check_follow_from_the_rows() -> None:
+    d = _result("resolution_experiment.json")
+    assert d["check"]["violations"] == sum(not c["within_bound"] for c in d["check"]["rows"]) == 0
+    for c in d["check"]["rows"]:
+        assert c["n_distinct_confidences"] <= c["bound"]
+        assert c["n_distinct_gap_multisets"] <= c["bound"]
+        # one confidence per gap multiset, so there cannot be more confidences than multisets
+        assert c["n_distinct_confidences"] <= c["n_distinct_gap_multisets"]
+    p9 = d["prediction_9"]
+    assert len(p9["comparisons"]) == 12
+    for c in p9["comparisons"]:
+        assert c["count_below_accumulator"] == (c["count_resolution"] < c["accumulator_resolution"])
+    assert p9["held"] == all(c["count_below_accumulator"] for c in p9["comparisons"])
+    for r in d["rows"]:
+        gres = r["resolution"] - r["within_bin_variance"] + r["within_bin_covariance"]
+        assert abs(r["brier"] - (r["reliability"] - gres + r["uncertainty"])) < 1e-9
+        assert r["split_fingerprint"]
+
+
+def test_calibrator_verdicts_apply_the_tie_rule_as_registered() -> None:
+    """Differ only if both intervals exclude zero on the same side; otherwise a tie."""
+    def side(ci: list[float]) -> int:
+        return -1 if ci[1] < 0 else (1 if ci[0] > 0 else 0)
+
+    d = _result("caltech_calibrators.json")
+    for p in d["paired"]:
+        ew, em = side(p["ew_ci"]), side(p["em_ci"])
+        assert p["differ"] == (ew != 0 and ew == em) and p["tie"] == (not p["differ"])
+        assert p["favours"] == ((("isotonic" if ew < 0 else "temperature")) if p["differ"] else None)
+    count = [p for p in d["paired"] if p["readout"] == "count"]
+    assert len(count) == 9
+    assert d["prediction_10"]["ties"] == sum(p["tie"] for p in count)
+    assert d["prediction_10"]["held"] == (d["prediction_10"]["ties"] >= 7)
+
+    s = _result("calibration_size_experiment.json")
+    assert len(s["rows"]) == 3 * 3 * 20
+    for r in s["rows"]:
+        ew, em = side(r["ew_ci"]), side(r["em_ci"])
+        assert r["differ"] == (ew != 0 and ew == em)
+    at = lambda n: [x for x in s["summary"] if x["n_cal"] == n]  # noqa: E731
+    for x in s["summary"]:
+        cell = [r for r in s["rows"] if r["seed"] == x["seed"] and r["n_cal"] == x["n_cal"]]
+        assert x["temperature_wins"] == sum(r["favours"] == "temperature" for r in cell)
+        assert x["differ"] == sum(r["differ"] for r in cell)
+    v = s["prediction_11"]
+    assert v["part_100_held"] == (sum(x["temperature_wins"] >= 10 for x in at(100)) >= 2)
+    assert v["tie_at_1000"] == all(x["differ"] < 10 for x in at(1000))
+    assert v["tie_at_5000"] == all(x["differ"] < 10 for x in at(5000))
+    assert v["held"] == (v["part_100_held"] and v["tie_at_1000"] and v["tie_at_5000"])
+
+
+def test_notes_and_readme_report_each_verdict_as_the_artifact_has_it() -> None:
+    """A falsified prediction must read as falsified in the documents, not as something softer."""
+    verdicts = {**{k: v["held"] for k, v in _result("scaled_count_experiment.json")["predictions"].items()
+                   if isinstance(v, dict)},
+                "9": _result("resolution_experiment.json")["prediction_9"]["held"],
+                "10": _result("caltech_calibrators.json")["prediction_10"]["held"],
+                "11": _result("calibration_size_experiment.json")["prediction_11"]["held"]}
+    assert set(verdicts) == {"6a", "6b", "7", "8", "9", "10", "11"}
+    notes = _read("NOTES.md")
+    table = notes[notes.index("## Outcome of predictions 6a to 11"):][:1800]
+    for key, held in verdicts.items():
+        word = "held" if held else "falsified"
+        assert re.search(rf"^\| {key} \| \*\*{word}\*\*", table, re.M), (
+            f"NOTES.md does not record prediction {key} as {word}"
+        )
+    n_held = sum(verdicts.values())
+    words = {3: "Three", 4: "Four"}
+    assert f"{words[n_held]} held and {words[7 - n_held].lower()} were falsified" in table
+    assert f"{words[n_held]} held and {words[7 - n_held].lower()} were" in " ".join(_read("README.md").split())
+
+
 # --------------------------------------------------------------------------- energy
 
 def test_dashboard_energy_ranges_match_the_sweep() -> None:

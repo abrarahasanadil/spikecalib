@@ -254,6 +254,10 @@ def train(
             "val_accuracy": val_accuracy,
             "val_tie_rate": val_tie_rate,
         }
+        # A scaled-count model's logit scale is a result in its own right, so its path is
+        # kept. Other readouts have no scale and their records are unchanged.
+        if hasattr(model, "log_scale"):
+            record["logit_scale"] = model.scale
         history.append(record)
         if cfg.log_every and (epoch % cfg.log_every == 0 or epoch == cfg.epochs - 1):
             print(

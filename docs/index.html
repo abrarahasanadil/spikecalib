@@ -6,7 +6,7 @@
 <title>SpikeCalib — confidence calibration for event-driven spiking neural networks</title>
 <meta name="description" content="A measurement instrument for spiking neural networks: the attainable-confidence ceiling, the cross-entropy floor it implies, and a 15-run calibration sweep on N-MNIST.">
 <meta name="color-scheme" content="dark">
-<link rel="stylesheet" href="style.css?v=20261013">
+<link rel="stylesheet" href="style.css?v=20261014">
 </head>
 <body>
 
@@ -24,7 +24,9 @@
     <h3>The claim</h3>
     <p>It is not a training problem. Reading a network by counting spikes caps how confident
       it can ever be, at e<sup>T</sup>/(e<sup>T</sup>&nbsp;+&nbsp;C&minus;1). Where a model's
-      accuracy exceeds that cap, no reachable output could have been correctly confident.</p>
+      accuracy exceeds that cap, no reachable output could have been correctly confident.
+      The bound itself is known for bounded logits; what is measured here is what it costs a
+      spike count.</p>
   </div>
   <div class="rail-arg">
     <h3>What was hard</h3>
@@ -36,12 +38,13 @@
   </div>
   <div class="rail-arg">
     <h3>What it establishes</h3>
-    <p>Across 96 trained models on two datasets, the cap held in all
+    <p>Across 105 trained models on two datasets, the cap held in all
       <span data-n="cells-all">36</span> distinct count-readout cells and saturates to float
       precision in <span data-n="cells-sat">33</span> of them. Where it
       bites it accounts for 99.2% and 97.1% of the error before calibration; where it does not
       bite it accounts for none. The readout family, not the network, sets the direction of
-      the failure. On N-MNIST, which calibration method is used does not matter.</p>
+      the failure. Which calibration method to use depends on the regime: a tie on N-MNIST,
+      isotonic regression on N-Caltech101 where the cap bites.</p>
   </div>
 
   <details class="prov-note">
@@ -89,10 +92,12 @@
       to 0.0018 after calibration at the same <em>T</em>, and the uncalibrated error is only
       0.0029 by <em>T</em>&nbsp;=&nbsp;10 once the cap stops binding. Those are equal-width
       figures; under equal-mass binning the same three are 0.5386, 0.0008 and 0.0019, and
-      both estimators are reported throughout. On N-MNIST, where the calibrators were
-      fitted, which one does the removing does not matter: temperature scaling and isotonic regression are statistically indistinguishable
+      both estimators are reported throughout. On N-MNIST, which calibrator does the
+      removing does not matter: temperature scaling and isotonic regression are statistically indistinguishable
       in 13 of 15 runs under equal-width binning and 12 of 15 under equal-mass, across five
-      timestep settings and three seeds.
+      timestep settings and three seeds. On N-Caltech101 it does matter: isotonic regression
+      is better in <span data-n="nc-differ">5</span> of <span data-n="nc-runs">9</span> runs,
+      all of them where the cap binds or nearly binds.
     </p>
       </div>
       <ul class="masthead-links">
@@ -168,7 +173,7 @@
     <p class="stat"><span class="stat-num stat-purple">0</span>
       <span class="stat-unit">runs show a difference under both ways of measuring error</span></p>
     <h3 class="card-title">On N-MNIST, which calibration method you pick does not matter</h3>
-    <p class="card-claim">Temperature and isotonic are two calibration methods. Measured two ways, 13 of 15 and 12 of 15 runs show no difference. The runs that do differ are different runs each time. A real difference would appear in the same run both times.</p>
+    <p class="card-claim">Temperature and isotonic are two calibration methods. Measured two ways, 13 of 15 and 12 of 15 runs show no difference. The runs that do differ are different runs each time. A real difference would appear in the same run both times. On N-Caltech101 one does: see the registered predictions below.</p>
     <div class="card-fig" id="fig-bootstrap"><table class="mini"><thead><tr><th>outcome</th><th>eq-width</th><th>eq-mass</th></tr></thead><tbody><tr><td>straddle zero</td><td>13</td><td>12</td></tr><tr><td>favour temperature</td><td>1</td><td>0</td></tr><tr><td>favour isotonic</td><td>1</td><td>3</td></tr><tr><td>resolve under both</td><td colspan="2">0</td></tr></tbody></table></div>
     <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m6">
       Full reasoning, caveats and complete tables
@@ -229,8 +234,8 @@
     <div class="preset-row segmented" role="radiogroup" aria-label="Instrument preset">
       <button type="button" class="chip" role="radio" data-preset="2,10" aria-checked="true">N-MNIST, C=10</button>
       <button type="button" class="chip" role="radio" data-preset="2,101" aria-checked="false">N-Caltech101, C=101</button>
-      <button type="button" class="chip" role="radio" data-preset="2,11" aria-checked="false">DVS-Gesture, C=11</button>
-      <button type="button" class="chip" role="radio" data-preset="4,100" aria-checked="false">CIFAR-100</button>
+      <button type="button" class="chip" role="radio" data-preset="2,11" aria-checked="false">DVS-Gesture, C=11, calculated</button>
+      <button type="button" class="chip" role="radio" data-preset="4,100" aria-checked="false">CIFAR-100, calculated</button>
     </div>
       </div>
     <div class="well"><div id="ceiling-chart"></div></div>
@@ -361,6 +366,81 @@
       none is drawn here; read the small markers as suggestive only.</p>
   </section>
 
+  <div class="band"><h2>Scale and resolution</h2>
+    <p class="sub">seven predictions recorded before these runs &mdash; every verdict is read
+    from the result file that produced it</p></div>
+
+  <section class="panel c12"><div class="prose wide">
+    <h3>Seven predictions, as they fell<span class="pill pill-measured">measured</span></h3>
+    <p>The cap depends on the width of the interval the logits live in. For a spike count
+      that width is <em>T</em>; multiply the count by a scale <em>s</em> and it is
+      <em>sT</em>. So the cap is a matter of scale, and one learnable number moves it. These
+      experiments ask what follows. The predictions were committed to the repository before
+      the first model was trained, and <span data-n="pred-falsified">4</span> of the
+      <span data-n="pred-total">7</span> were falsified.</p>
+    <div class="scroll panel-table"><table id="pred-table"></table></div>
+    <p class="chart-note">Gaps are mean confidence minus accuracy on the test split, before
+      any calibrator, averaged over three seeds. Two calibrators "differ" on a run only if the
+      paired 95% bootstrap interval excludes zero under both ECE estimators, in the same
+      direction; otherwise they tie. That rule was fixed before any calibrator was fitted on
+      N-Caltech101.</p>
+  </div></section>
+
+  <section class="panel c12"><div class="prose wide">
+    <h3>A learned scale lifts the cap. It does not calibrate.<span class="pill pill-measured">measured</span></h3>
+    <p>A count readout with one trainable logit scale, started at 1. The network raised it
+      above the minimum the bound requires in <span data-n="sc-above">9</span> of
+      <span data-n="sc-runs">9</span> runs. On N-MNIST the underconfidence goes. On
+      N-Caltech101 it turns into overconfidence, as it does for the unbounded accumulator.
+      The number of confidence values does not change.</p>
+    <div class="scroll panel-table"><table id="scaled-table"></table></div>
+    <p class="chart-note">Rendered from <code>results/scaled_count_experiment.json</code>.
+      The scale was still rising when early stopping ended every run, so these are the values
+      at which training stopped.</p>
+  </div></section>
+
+  <section class="panel c7"><div class="prose">
+    <h3>Which calibrator depends on the regime<span class="pill pill-measured">measured</span></h3>
+    <p>On N-Caltech101, count readout. Where the cap binds, temperature scaling lifts it and
+      leaves an error that isotonic regression removes. At <em>T</em> = 10 the cap is slack
+      and the two tie.</p>
+    <div class="scroll panel-table"><table id="ncal-table"></table></div>
+    <p class="chart-note">Rendered from <code>results/caltech_calibrators.json</code>. ECE
+      as equal-width / equal-mass, mean of three seeds. "differ" counts seeds; of the
+      <span data-n="nc-differ">5</span> runs that differ, <span data-n="nc-iso">5</span>
+      favour isotonic regression. Calibration set 1,010, test set 1,742.</p>
+  </div></section>
+
+  <section class="panel c5"><div class="prose">
+    <h3>With little calibration data it leans the other way<span class="pill pill-measured">measured</span></h3>
+    <p>On N-MNIST at <em>T</em> = 2, shrinking the calibration set leans towards the
+      one-parameter method, though less often than predicted.</p>
+    <div class="scroll panel-table"><table id="size-table"></table></div>
+    <p class="chart-note">Rendered from <code>results/calibration_size_experiment.json</code>.
+      Twenty stratified subsamples per seed and size. Each column counts the draws, out of
+      60, in which that calibrator was better under both estimators, or neither was.</p>
+  </div></section>
+
+  <section class="panel c12"><div class="prose wide">
+    <h3>Few confidence values are not poor resolution<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
+    <p>A count readout can emit at most (T+C&minus;1 choose C&minus;1) distinct confidences at
+      any logit scale: 55 at <em>T</em> = 2 with ten classes. Observed counts are within that
+      bound in <span data-n="check-ok">45</span> of <span data-n="check-cells">45</span>
+      cells; this is a check, not a prediction, because the counts were on file before the
+      bound was derived. The prediction was that so few values would resolve correct from
+      incorrect predictions worse than an unbounded readout's ten thousand. It was wrong: on
+      N-MNIST at <em>T</em> = 2 the count readout's Brier resolution is below the
+      accumulator's in only <span data-n="p9-below">4</span> of
+      <span data-n="p9-total">12</span> comparisons, and three of those are an artefact of
+      equal-mass binning, which puts every count-readout confidence in one bin. What the
+      count readout gives up is ranking and deterministic operating points, not
+      resolution.</p>
+    <div class="scroll panel-table"><table id="res-table"></table></div>
+    <p class="chart-note">Rendered from <code>results/resolution_experiment.json</code>.
+      Resolution is the between-bin variance of accuracy at 15 bins, mean of three seeds.
+      Readouts are compared only under the same binning.</p>
+  </div></section>
+
   <div class="band"><h2>Related work</h2>
     <p class="sub">this study claims novelty over none of the following</p></div>
 
@@ -376,8 +456,9 @@
         e<sup>T</sup>/(e<sup>T</sup>+C&minus;1), set by <em>T</em> and <em>C</em> before any
         training happens.</p>
       <p class="diff"><b>How they differ.</b> Theirs is a bound put onto a model to improve
-        its calibration. This one is a bound the readout already has: not fitted, not
-        adjustable, and saturated to within 4e-13 by every model trained here.</p>
+        its calibration. This one is a bound the readout already has: not fitted, and reached
+        to float precision in <span data-n="cells-sat">33</span> of the
+        <span data-n="cells-all">36</span> count cells measured here.</p>
     </div>
 
     <div class="cite">
@@ -410,7 +491,7 @@
     </div>
 
     <div class="cite">
-      <h4>Unleashing the Potential of SNNs by Dynamic Confidence</h4>
+      <h4>Unleashing the Potential of SNNs with Dynamic Confidence</h4>
       <p class="venue">Li, Jones &amp; Furber, ICCV 2023, pp. 13350&ndash;13360 &nbsp;<span class="ver">verified against the full text</span></p>
       <p><b>What it does.</b> Builds a runtime confidence signal for early exit, on
         ANN-to-SNN conversion over static images with an ANN as the calibration reference.
@@ -432,14 +513,48 @@
 
     <div class="cite">
       <h4>Knowing When to Stop: Delay-Adaptive SNN Classifiers with Reliability Guarantees</h4>
-      <p class="venue">Chen, Park &amp; Simeone, arXiv:2305.11322, 2023 &nbsp;<span class="ver">verified</span></p>
-      <p><b>What it does.</b> Applies conformal prediction to the SNN stopping problem,
-        producing coverage guarantees for early exit.</p>
-      <p><b>What this study does.</b> Measures scalar confidence calibration by expected
-        calibration error, and the selective-prediction operating points a readout allows.</p>
-      <p class="diff"><b>How they differ.</b> Conformal methods return a set with a coverage
-        guarantee; this measures how closely a single confidence number tracks accuracy.
-        Related problem, different object.</p>
+      <p class="venue">Chen, Park &amp; Simeone, <em>IEEE J. Sel. Topics Signal Process.</em> 19(1):88&ndash;102, 2025 &nbsp;<span class="ver">verified against the full text</span></p>
+      <p><b>What it does.</b> Applies conformal prediction to the SNN stopping problem. It
+        reads the network by a softmax over spike counts and observes that its decisions
+        <b>"tend to be first under-confident and then over-confident"</b> as time passes.</p>
+      <p><b>What this study does.</b> Gives the reason for the first half. Read after
+        <em>t</em> steps a count lies in [0,&nbsp;<em>t</em>], so confidence cannot exceed
+        e<sup>t</sup>/(e<sup>t</sup>+C&minus;1): 0.2320, 0.4509 and 0.6906 after one, two and
+        three steps with ten classes.</p>
+      <p class="diff"><b>How they differ.</b> Early underconfidence of this readout is their
+        observation, not this study's. Theirs is an observation at <em>T</em> = 80 with a
+        conformal remedy; this is the bound that forces the start of the pattern, measured at
+        <em>T</em> = 2 to 10. The bound does not say where confidence overtakes accuracy.</p>
+    </div>
+
+    <div class="cite">
+      <h4>The bound itself: AdaCos, NormFace, LogitNorm, LogitClip, CosFace</h4>
+      <p class="venue">Zhang et al., CVPR 2019 &middot; Wang et al., ACM MM 2017 &middot; Wei et al., ICML 2022 and 2023 &middot; Wang et al., CVPR 2018 &nbsp;<span class="ver">verified against the full text</span></p>
+      <p><b>What they do.</b> State, for normalised or clipped logits in non-spiking networks,
+        that a softmax over logits in a bounded range cannot reach a probability of one.
+        AdaCos gives P&nbsp;&le;&nbsp;e<sup>s</sup>/(e<sup>s</sup>+C&minus;1) for logits in
+        [0,&nbsp;s]. NormFace gives the cap at width two as "0.45 when n = 10" and adds a
+        learnable scale as the remedy. LogitNorm proves the loss floor and quotes 0.7966 at
+        ten classes. CosFace inverts the bound into a minimum scale.</p>
+      <p><b>What this study does.</b> Reads a spike count as such a logit, with the number of
+        timesteps as the width. Its ceiling of 0.4509 and loss floor of 0.7966 at
+        <em>T</em> = 2 are those same two numbers.</p>
+      <p class="diff"><b>How they differ.</b> The inequality, the loss floor, the minimum
+        scale and the learnable scale are theirs. What is measured here is what the bound
+        costs a spike-count readout in calibration, and what a learned scale does about it.</p>
+    </div>
+
+    <div class="cite">
+      <h4>Training High-Performance Low-Latency SNNs by Differentiation on Spike Representation</h4>
+      <p class="venue">Meng, Xiao, Yan, Wang, Lin &amp; Luo, CVPR 2022 &nbsp;<span class="ver">verified against the full text</span></p>
+      <p><b>What it does.</b> Trains directly, takes the threshold-weighted firing rate of a
+        spiking output layer as the output under cross-entropy, and makes the thresholds
+        trainable so that the rate is not confined to "a small range".</p>
+      <p><b>What this study does.</b> Trains a count readout with one learnable logit scale
+        and measures what it does to confidence, accuracy and the number of confidence
+        values.</p>
+      <p class="diff"><b>How they differ.</b> A learned scale on a spiking output is theirs.
+        They give no bound; here the scale is a probe of what the bound was costing.</p>
     </div>
   </div></div></section>
 
@@ -474,6 +589,11 @@ python scripts/quantisation_test.py   --seeds 0 1 2
 python scripts/caltech_experiment.py  --seeds 0 1 2
 python scripts/arch_matched.py        --seeds 0 1 2
 python scripts/conditional_ceiling.py
+<span class="c"># the scale and resolution experiments; only the first trains</span>
+python scripts/scaled_count_experiment.py
+python scripts/resolution_experiment.py
+python scripts/caltech_calibrators.py
+python scripts/calibration_size_experiment.py
 
 <span class="c"># the equal-mass paired bootstrap (no training; reuses the weights)</span>
 <span class="c"># runs single-process: 6 DataLoader workers deadlock this on Apple silicon</span>
@@ -526,8 +646,8 @@ python scripts/export_dashboard_data.py</pre>
         <strong>The calibrator comparison saw no genuinely uncertain regime.</strong> All
         fifteen models in that sweep reached roughly 0.99 test accuracy, and differences
         between calibration methods may only emerge where a model is actually unsure.
-        N-Caltech101 does supply that regime at 0.43–0.66 accuracy, but no calibrators have
-        been fitted there, so this is now a gap in coverage rather than in available data.
+        N-Caltech101 supplies that regime at 0.43–0.66 accuracy, and there the calibrators
+        do differ: the N-MNIST tie did not carry over.
       </li>
       <li>
         <strong>One energy constant is a convention, not a citation.</strong> Verified
@@ -544,28 +664,41 @@ python scripts/export_dashboard_data.py</pre>
         timestep settings on one dataset. None should be extrapolated.
       </li>
       <li>
-        <strong>The number of classes was fixed at 10 until this session.</strong> The
+        <strong>Two class counts.</strong> The
         ceiling e<sup>T</sup>/(e<sup>T</sup>+C−1) and T<sub>min</sub> are general in C, and
-        N-Caltech101 now tests C = 101. Two values of C is still two points: nothing here
+        the study measures C = 10 and C = 101. Two values of C are two points: nothing here
         establishes how the crossover moves with C in general.
       </li>
       <li>
         <strong>The residual miscalibration at C = 101 is unexplained.</strong> At T = 6 the
         ceiling does not bind — accuracy 0.6427 against 0.8014 — and the readout is still
-        underconfident by 0.1534. The ceiling accounts for none of that and nothing else here
-        accounts for it either. It is the study's largest unexplained quantity and it sits
-        directly beneath its central claim.
+        underconfident by 0.1534. The ceiling accounts for none of that. A learned logit scale
+        removes it and leaves overconfidence of about the same size, so it is tied to the
+        bounded logit range, but why a network that could have been more confident was not is
+        still open.
       </li>
       <li>
-        <strong>Only two readouts were run at C = 101.</strong> Count and accumulator.
-        Whether the leak result and the granularity result transfer to 101 classes is
-        untested, and was skipped for time rather than for a reason.
+        <strong>Three readouts were run at C = 101.</strong> Count, accumulator and, at
+        T = 2 and 6, the learned-scale count. Whether the leak result and the granularity
+        result transfer to 101 classes is untested.
       </li>
       <li>
-        <strong>No calibrators have been fitted on N-Caltech101.</strong> The null result on
-        calibrator choice remains a C = 10, 0.99-accuracy finding. A 1,010-sample calibration
-        set across 101 classes — about 10 per class — is exactly the regime where it might
-        break, and one-vs-rest isotonic should not be trusted there at all.
+        <strong>The N-Caltech101 calibrator result is nine runs.</strong> That isotonic
+        regression beats temperature scaling there rests on one architecture, three timestep
+        settings and three seeds, with a 1,010-sample calibration set, about 10 per class.
+        One-vs-rest isotonic was fitted and should not be trusted at that size. Nine runs do
+        not establish where between 10 and 101 classes the answer changes.
+      </li>
+      <li>
+        <strong>The learned scale was not tuned, and had not settled.</strong> It shared the
+        network's optimiser and learning rate and was still rising when early stopping ended
+        every run. A different learning rate or stopping rule could change both the
+        calibration and the accuracy it reaches.
+      </li>
+      <li>
+        <strong>The rate cap is derived, not trained.</strong> No network with a rate readout
+        was trained. e/(e+C&minus;1) says what such a readout cannot express, not how a
+        network trained under it behaves.
       </li>
       <li>
         <strong>Two architectures, and they differ in depth and size at once.</strong>
@@ -1214,6 +1347,17 @@ python scripts/export_dashboard_data.py</pre>
       manipulation the mechanism named. The advantage was flat and near zero across all of it.
     </p>
 </section>
+<section class="modal-part"><h3>This is an N-MNIST result<span class="pill pill-measured">measured</span></h3>
+<p>
+  Everything in this panel is N-MNIST: ten classes, about 0.99 accuracy and a 5,000-sample
+  calibration set. It did not carry over. On N-Caltech101 a tie in at least 7 of 9 runs was
+  predicted, and the calibrators tie in <span data-n="nc-ties">4</span>; in the other
+  <span data-n="nc-differ">5</span>, all where the cap binds or nearly binds, isotonic
+  regression is better under both estimators. The hypothesis this study began with, an
+  isotonic advantage that grows as <em>T</em> falls, fails here and is the pattern there.
+  The tables are under "Scale and resolution" on the main page.
+</p>
+</section>
 <section class="modal-part"><h3>Two estimators, no shared exception<span class="pill pill-measured">measured</span></h3>
 <p>
   The paired bootstrap was run under both ECE estimators on the same calibrated confidences,
@@ -1310,9 +1454,12 @@ python scripts/export_dashboard_data.py</pre>
   <div class="modal-body">
 <section class="modal-part"><h3>The sign of the miscalibration differs from the literature's<span class="pill pill-lit">lit</span><span class="pill pill-measured">measured</span></h3>
 <p>
-      The SNN literature reports <strong>over</strong>confidence as the characteristic
+      The SNN literature mostly reports <strong>over</strong>confidence as the characteristic
       calibration failure, and "Agreeing to Stop" says so using the <em>same readout this
-      study uses</em>. This study measures the opposite: mean confidence minus accuracy is
+      study uses</em>. The same authors' "Knowing When to Stop" reports that readout as
+      "first under-confident and then over-confident" as time passes, so early
+      underconfidence is a published observation and not this study's. This study measures
+      it directly at low <em>T</em>: mean confidence minus accuracy is
       <strong>−0.5386 at T = 2</strong> and −0.1446 at T = 4, averaged over three
       seeds. That is severe
       <strong>under</strong>confidence, and it is structural — the ceiling at T = 2 is
@@ -1425,7 +1572,7 @@ python scripts/export_dashboard_data.py</pre>
 
 </main>
 
-<script src="data.js?v=20261013"></script>
-<script src="app.js?v=20261013"></script>
+<script src="data.js?v=20261014"></script>
+<script src="app.js?v=20261014"></script>
 </body>
 </html>

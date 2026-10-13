@@ -185,6 +185,44 @@ def main() -> int:
     conditional_rows = optional("conditional_ceiling.json")
     arch_rows = optional("arch_matched.json")
 
+    # The scale and resolution experiments (NOTES.md, predictions 6a to 11). Each file carries
+    # its own verdict block, computed by the script that ran the experiment against the
+    # condition registered beforehand; the page renders that block and decides nothing.
+    def whole(name):
+        path = source(os.path.join(args.results, name))
+        if not os.path.exists(path):
+            print(f"  {name} absent -- the page will hide that section")
+            return None
+        with open(path) as fh:
+            return json.load(fh)
+
+    scaled = whole("scaled_count_experiment.json")
+    if scaled:
+        for r in scaled["rows"]:
+            r.pop("logit_scale_by_epoch", None)      # per-epoch path; the record keeps it
+    resolution = whole("resolution_experiment.json")
+    if resolution:
+        # 675 rows of decomposition are not all needed in the browser: keep the cells the
+        # page tabulates, T = 2 on both datasets at their main architecture.
+        main_arch = {"nmnist": 2, "ncaltech101": 4}
+        resolution["rows"] = [
+            {k: r[k] for k in ("dataset", "timesteps", "seed", "readout", "state", "estimator",
+                               "resolution", "reliability", "uncertainty", "res_over_unc",
+                               "n_groups", "ece", "auroc", "test_accuracy")}
+            for r in resolution["rows"]
+            if r["timesteps"] == 2 and r["n_blocks"] == main_arch[r["dataset"]]
+        ]
+        resolution["check"]["rows"] = [
+            {k: c[k] for k in ("dataset", "n_blocks", "timesteps", "seed", "readout",
+                               "n_distinct_confidences", "bound", "within_bound",
+                               "bound_below_n_test", "n_test")}
+            for c in resolution["check"]["rows"]
+        ]
+    caltech_cal = whole("caltech_calibrators.json")
+    cal_size = whole("calibration_size_experiment.json")
+    if cal_size:
+        cal_size.pop("rows", None)                    # 180 per-draw rows; the summary is rendered
+
     newest = max(sources, key=os.path.getmtime)
     payload = {
         "dataset": spec.key,
@@ -199,6 +237,10 @@ def main() -> int:
         "caltech": caltech_rows,
         "conditional": conditional_rows,
         "arch": arch_rows,
+        "scaled": scaled,
+        "resolution": resolution,
+        "caltech_calibrators": caltech_cal,
+        "calibration_size": cal_size,
         "measured": [
             {
                 "T": int(t),

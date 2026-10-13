@@ -5,10 +5,13 @@ A preprint describing this work is in preparation.
 
 ## What the study found
 
-**Softmax over spike counts is bounded.** A count readout gives each class an integer in
-`[0, T]`, so the largest confidence the network can emit is `e^T / (e^T + C − 1)` — 0.4509
-at `T = 2` with 10 classes, 0.0688 with 101. This is arithmetic, not an empirical trend, and
-it holds. **Respected and saturated are different claims and both are reported.**
+**The bound is not new. Its consequences for spike counts are what is measured here.** A
+softmax over logits confined to an interval of width `W` cannot exceed
+`e^W / (e^W + C − 1)`. That is a known result for normalised and clipped logits (AdaCos,
+NormFace, LogitNorm, LogitClip; see `SOURCES.md`). A count readout gives each class an integer
+in `[0, T]`, so its width is the number of timesteps and the largest confidence it can emit is
+`e^T / (e^T + C − 1)`: 0.4509 at `T = 2` with 10 classes, 0.0688 with 101. **Respected and
+saturated are different claims and both are reported.**
 
 - *Respected* — the observed maximum never exceeds the bound: **36 of 36** distinct
   count-readout cells, a cell being one dataset, architecture, `T` and seed.
@@ -32,31 +35,56 @@ uncalibrated ECE at `T = 2, C = 10` and 97.1% at `T = 2, C = 101`. At `T = 6, C 
 ceiling is slack — accuracy 0.64 against a ceiling of 0.80 — and 0.1159 to 0.1534 of
 underconfidence survives that the ceiling explains nothing of. A ceiling conditioned on
 measured competitor activity was pre-registered as the explanation and **falsified**: it sits
-*above* accuracy, so the residual is genuine miscalibration.
+*above* accuracy.
 
-**The readout family, not the network, determines the direction of the failure.** A capped
-readout is *under*confident wherever the cap binds; an unbounded accumulating readout is
-*over*confident, saturating towards 1 as `T` grows. The published work read for this study
-reports only the overconfident direction — Li, Jones & Furber observe an unbounded
-accumulating readout saturating towards 1, and Chen, Park & Simeone report overconfidence at
-`T = 80`. The underconfident direction is this study's own observation, and no verified
-published result is constrained by the cap, because the conversion work uses a real-valued
-readout. Which direction a paper reports is predicted by its readout and its timestep count
-rather than by anything about spiking networks.
+**A softmax over firing rates is capped at `e / (e + C − 1)` at every `T`.** `[DERIVED]`
+Dividing the count by `T` puts the logits in `[0, 1]` whatever `T` is, so the cap is 0.2320
+for ten classes and 0.0265 for 101, and more timesteps add no confidence. No rate-readout
+model was trained here; this is arithmetic.
 
-**On N-MNIST, which post-hoc calibrator is used does not matter.** Calibration removes
-almost all of the error the cap forces. `[MEASURED]` mean ECE at `T = 2` falls from 0.5386
-to 0.0018 with temperature scaling and 0.0042 with top-label isotonic regression under
-equal-width binning, and from 0.5386 to 0.0008 and 0.0015 under equal-mass. The paired 95%
-bootstrap interval on isotonic minus temperature straddles zero in **13 of 15** runs under
-equal-width and **12 of 15** under equal-mass, and the runs that resolve are disjoint: two
-under equal-width (`T = 2` seed 1 favouring temperature, `T = 6` seed 0 favouring
-isotonic), three under equal-mass (`T = 4` seeds 1 and 2 and `T = 8` seed 0, all favouring
-isotonic), and none under both. A real difference between the calibrators would be found by
-both estimators in the same run. The hypothesis the study began with, that isotonic's
-advantage grows as `T` falls, is not supported: at `T = 2` temperature is ahead. No
-calibrator was fitted on N-Caltech101, so this is a ten-class result at about 0.99 accuracy
-with a 5,000-sample calibration set.
+**Where the cap sits, not the readout's name, sets the direction of the failure.** A readout
+whose cap is below its accuracy is *under*confident. One whose cap is far above it, because it
+is unbounded or because its logit scale was learned, is *over*confident on N-Caltech101 in
+every run measured. Early underconfidence of a spike-count softmax is a published observation:
+Chen, Park & Simeone (arXiv:2305.11322) report that its decisions "tend to be first
+under-confident and then over-confident" as time passes. This study gives the reason, the cap
+on a count read after `t` steps, and measures the early regime directly. Li, Jones & Furber
+report the overconfident side for an accumulating readout.
+
+**A learnable logit scale lifts the cap. It does not calibrate.** `[MEASURED]` A count
+readout with one trainable scale, initialised at 1, raises it above the minimum the bound
+requires in 9 of 9 runs. On N-MNIST at `T = 2` the gap goes from −0.5386 to +0.0044. On
+N-Caltech101 it goes from −0.3969 to **+0.1259** at `T = 2` and from −0.1534 to **+0.1655** at
+`T = 6`: overconfident. It recovers 33% of the accuracy the cap costs at `T = 2` there, where
+half was predicted.
+
+**Which calibrator to use depends on the regime.** Both ECE estimators are given, and two
+calibrators are said to differ on a run only if the paired 95% bootstrap interval excludes
+zero under both, in the same direction.
+
+- *N-MNIST, 5,000 calibration samples: a tie.* Mean ECE at `T = 2` falls from 0.5386 to 0.0018
+  with temperature scaling and 0.0042 with top-label isotonic regression under equal-width
+  binning, and to 0.0008 and 0.0015 under equal-mass. The interval straddles zero in **13 of
+  15** runs under equal-width and **12 of 15** under equal-mass, and the runs that resolve are
+  disjoint, so all 15 are ties.
+- *N-Caltech101: isotonic regression is better where the cap binds.* At `T = 2` temperature
+  scaling leaves an ECE of 0.1449 (0.1523 equal-mass) and isotonic 0.0320 (0.0349). The two
+  differ in **5 of 9** runs, all at `T ≤ 6` and all favouring isotonic; at `T = 10` they tie.
+  A tie in at least 7 of 9 was predicted, and that prediction is **falsified**.
+- *N-MNIST with 100 calibration samples: a lean to temperature scaling.* It is better in 26 of
+  60 subsample draws and isotonic in 3. At least half the draws in two of three seeds was
+  predicted; no seed reaches half, so that prediction is **falsified** too.
+
+**The number of confidence values is fixed by `T` and `C`, and few values are not poor
+resolution.** `[DERIVED]` A count readout emits at most `binomial(T + C − 1, C − 1)` distinct
+confidences at any logit scale, 55 at `T = 2, C = 10`; observed counts are within the bound
+in 45 of 45 cells. `[MEASURED]` A prediction that the count readout's Brier resolution would
+be below the accumulator's on N-MNIST was **falsified**: it is below in 4 of 12 comparisons,
+three of them an artefact of equal-mass binning. What the count readout gives up is ranking
+(AUROC 0.9204 against 0.9698) and deterministic operating points, not resolution.
+
+Seven predictions were recorded before these last experiments. Three held and four were
+falsified, and each is reported as it fell (`NOTES.md`, "Outcome of predictions 6a to 11").
 
 ## The readout taxonomy
 
@@ -69,6 +97,7 @@ Same architecture, same data, same training — only the final aggregation diffe
 | `weighted-count` | `Σ_t w_t s_t`, `Σw = T` | **same cap**, finer grain | 0.5385 | 0.5385 | −0.5385 | 17 |
 | `membrane` | leaky integrator, `τ = 2` | unbounded, one-step half-life | 0.0290 | 0.0289 | −0.0289 | 9,998 |
 | `accumulator` | `Σ_t z_t`, no leak | unbounded, equal weight per step | 0.0031 | 0.0016 | +0.0000 | 10,000 |
+| `scaled-count` | `s·Σ_t s_t`, `s` learned | capped at `e^(sT)/(e^(sT)+C−1)` | 0.0054 | 0.0044 | +0.0044 | 9 |
 
 Both estimators are given because correctness rule 2 requires it. They agree to four
 decimals wherever the cap binds — the confidences are clustered against it, so equal-width
@@ -77,7 +106,8 @@ calibrator has spread the distribution out, as `accumulator` shows.
 
 `weighted-count` is the control that matters: it shares the cap exactly while taking roughly
 twice as many values, and its ECE differs from `count`'s by 0.0001. **Granularity buys
-nothing; the bound does all the work.**
+nothing; the bound does all the work.** `scaled-count` is the opposite control: the same nine
+values as `count`, moved by a learned scale of 4.44 to 5.20, and the error is gone.
 
 The sign flips with the family. `conf − acc` for `count` is −0.5386, −0.0272, −0.0008 at
 `T` = 2, 6, 10; for `accumulator` it is +0.0000, +0.0032, +0.0047 — positive in 3 of 3 seeds
@@ -99,7 +129,7 @@ Python 3.13 on Apple silicon (MPS). Every pinned version is in `requirements.txt
 ```sh
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python -m pytest tests/ -q          # 231 tests
+python -m pytest tests/ -q          # 354 tests
 ```
 
 Verify the environment. This runs a real forward pass through a SpikingJelly `LIFNode` on
@@ -128,11 +158,17 @@ python scripts/caltech_experiment.py --epochs 50            # the C axis, 101 cl
 python scripts/conditional_ceiling.py                       # ceiling given real competitors
 python scripts/arch_matched.py --epochs 50                  # both depths, both datasets
 python scripts/rerun_paired_bootstrap.py --num-workers 0    # equal-mass paired bootstrap
+python scripts/scaled_count_experiment.py                   # the learned-scale arm, 9 runs
+python scripts/resolution_experiment.py                     # bound check and decomposition
+python scripts/caltech_calibrators.py                       # calibrators at 101 classes
+python scripts/calibration_size_experiment.py               # 100 / 1,000 / 5,000 samples
 ```
 
 `rerun_paired_bootstrap.py` trains nothing: it reuses the sweep's weights and adds the
 equal-mass columns to the sweep CSV. It runs single-process because six DataLoader workers
-deadlock it on Apple silicon.
+deadlock it on Apple silicon. Of the last four, only `scaled_count_experiment.py` trains. The
+others reuse weights, hold the data in memory with no worker processes, and cache each
+model's outputs in `results/` so a second run is quick.
 
 Then regenerate the figures, the dashboard payload and the paper's numbers.
 `extract_readout_stats.py` comes first: it writes `results/readout_stats.json`, the
@@ -153,7 +189,7 @@ that produced it.
 
 | file | purpose |
 |---|---|
-| [NOTES.md](NOTES.md) | The authoritative research design. The claim under test, five dated pre-registered predictions with their outcomes recorded unedited, the correctness rules every number depends on, scope and per-dataset hazards. |
+| [NOTES.md](NOTES.md) | The authoritative research design. The claim under test, twelve dated pre-registered predictions with their outcomes recorded unedited, the correctness rules every number depends on, scope and per-dataset hazards. |
 | [LOG.md](LOG.md) | The append-only working log — what was run, what broke, what was chosen and why, what remains open. Strictly append-only: no line has ever been edited or removed. |
 | [SOURCES.md](SOURCES.md) | Provenance for every number. Each is tagged `[LIT]`, `[DERIVED]`, `[MEASURED]` or `[UNVERIFIED]`, with a record of what was checked against a primary document and what is still unverified. |
 
@@ -165,9 +201,11 @@ withdrawals are recorded.
 ## Status
 
 Implemented and run on N-MNIST and N-Caltech101: acquisition, splits, model, training, both
-ECE estimators, four calibrators, bootstrap intervals, selective prediction, four readouts,
-and the figures. 60 sweep rows, 54 readout runs, 18 C-axis runs, 48 matched-architecture
-cells. DVS-Gesture and CIFAR10-DVS are registered but not implemented.
+ECE estimators, four calibrators, bootstrap intervals, selective prediction, five readouts,
+the Brier decomposition, and the figures. 60 sweep rows, 54 readout runs, 18 C-axis runs, 48
+matched-architecture cells, 9 learned-scale runs, and calibrators fitted on N-Caltech101. 105
+models trained. DVS-Gesture and CIFAR10-DVS are registered but not implemented, and no
+rate-readout model has been trained.
 
 **A preprint is in preparation.**
 

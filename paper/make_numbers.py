@@ -69,6 +69,16 @@ c80 = np.exp(np.float64(80)) / (np.exp(np.float64(80)) + np.float64(9))
 assert c80 == 1.0, c80
 put("ceilEightyIsOne", "1.0", DERIVED + " (float64 e^80/(e^80+9) == 1.0)")
 put("ceilTwentyTen", f"{ceiling(20, 10):.8f}", DERIVED)
+put("ceilTenOne", f(ceiling(1, 10)), DERIVED)
+put("ceilTenThree", f(ceiling(3, 10)), DERIVED)
+# the rate convention: logits c/T lie in [0, 1] whatever T is, so the width is 1
+put("rateCeilTen", f(ceiling(1, 10)), DERIVED + " (width 1)")
+put("rateCeilHundredOne", f(ceiling(1, 101)), DERIVED + " (width 1)")
+levels = lambda T, C: math.comb(T + C - 1, C - 1)
+put("levelsTenTwo", str(levels(2, 10)), DERIVED + " binomial(T+C-1, C-1)")
+put("levelsTenFour", str(levels(4, 10)), DERIVED + " binomial(T+C-1, C-1)")
+put("levelsTenSix", thousands(levels(6, 10)), DERIVED + " binomial(T+C-1, C-1)")
+put("levelsHundredOneTwo", thousands(levels(2, 101)), DERIVED + " binomial(T+C-1, C-1)")
 
 # ------------------------------------------------------------------ splits and models
 for key, fn in (("nm", "nmnist_T2_seed0_split.npz"), ("nc", "ncaltech101_T2_seed0_split.npz")):
@@ -92,6 +102,10 @@ put("lifThreshold", f"{mc['v_threshold']:.1f}", "results/nmnist_T2_seed0_record.
 put("surrogateAlpha", f"{mc['surrogate_alpha']:.1f}", "results/nmnist_T2_seed0_record.json model_config")
 put("learningRate", f"{rec['lr']:g}".replace("0.001", "10^{-3}"), "results/nmnist_T2_seed0_record.json lr")
 put("batchSize", str(rec["batch_size"]), "results/nmnist_T2_seed0_record.json batch_size")
+nc_batches = {json.load(open(p))["batch_size"] for p in glob.glob(os.path.join(R, "ncaltech101_*_record.json"))}
+nm_batches = {json.load(open(p))["batch_size"] for p in glob.glob(os.path.join(R, "nmnist_*_record.json"))}
+assert nm_batches == {rec["batch_size"]} and len(nc_batches) == 1, (nm_batches, nc_batches)
+put("batchSizeNc", str(nc_batches.pop()), "results/ncaltech101_*_record.json batch_size (one value across all runs)")
 
 records = [json.load(open(p)) for p in glob.glob(os.path.join(R, "*_record.json"))]
 gaps = {r["epochs_run"] - r["best_epoch"] for r in records if r.get("early_stopped")}
@@ -165,7 +179,8 @@ for r in arch:
 assert len(cells) == sum(per_artifact.values()) - shared
 # every distinct cell is a count-readout model on disk, and there are no others
 n_count_weights = sum(1 for p in glob.glob(os.path.join(R, "*_weights.pt"))
-                      if not any(t in os.path.basename(p) for t in ("membrane", "weighted-count", "accumulator")))
+                      if not any(t in os.path.basename(p)
+                                 for t in ("membrane", "weighted-count", "accumulator", "scaled-count")))
 assert n_count_weights in (0, len(cells)), (n_count_weights, len(cells))  # 0: weights absent in a clone
 src_union = "results/readout_experiment.json + caltech_experiment.json + arch_matched.json (count readout, distinct cells)"
 violations = sum(1 for o, c, *_ in cells.values() if o > c + 1e-12)
@@ -316,6 +331,208 @@ assert len(fp0) == 1, fp0
 put("splitFingerprint", fp0.pop(), "results/sweep_nmnist.csv split_fingerprint, seed 0")
 for T, k in ((2, "Two"), (6, "Six"), (10, "Ten")):
     put(f"ncAccum{k}Acc", f(cm("accumulator", T, "test_accuracy")), "results/caltech_experiment.json test_accuracy")
+
+# ------------------------------------------------------------------ the learned-scale arm
+# Predictions 6a, 6b, 7 and 8 (NOTES.md, recorded 2026-10-13). The verdicts are read from the
+# block the experiment script wrote against the registered conditions, and re-derived here
+# from the rows so that a verdict and the numbers beside it cannot disagree.
+sc = load("scaled_count_experiment.json")
+sc_rows, sc_pred = sc["rows"], sc["predictions"]
+assert len(sc_rows) == 9 and {r["seed"] for r in sc_rows} == {0, 1, 2}
+SRC_SC = "results/scaled_count_experiment.json"
+
+
+def sc_cell(ds, T):
+    rs = [r for r in sc_rows if r["dataset"] == ds and r["timesteps"] == T]
+    assert len(rs) == 3
+    return rs
+
+
+for ds, T, key in (("nmnist", 2, "ScNm"), ("ncaltech101", 2, "ScNcTwo"), ("ncaltech101", 6, "ScNcSix")):
+    rs = sc_cell(ds, T)
+    put(f"gap{key}", f(mean(rs, "mean_conf_minus_acc"), sign=True), SRC_SC + " mean_conf_minus_acc, mean of seeds")
+    put(f"acc{key}", f(mean(rs, "test_accuracy")), SRC_SC + " test_accuracy")
+    put(f"eceW{key}", f(mean(rs, "ece_equal_width")), SRC_SC + " ece_equal_width")
+    put(f"eceM{key}", f(mean(rs, "ece_equal_mass")), SRC_SC + " ece_equal_mass")
+    put(f"scaleMin{key}", f"{min(r['logit_scale'] for r in rs):.2f}", SRC_SC + " logit_scale")
+    put(f"scaleMax{key}", f"{max(r['logit_scale'] for r in rs):.2f}", SRC_SC + " logit_scale")
+    put(f"sminMin{key}", f"{min(r['s_min'] for r in rs):.2f}", SRC_SC + " s_min")
+    put(f"sminMax{key}", f"{max(r['s_min'] for r in rs):.2f}", SRC_SC + " s_min")
+    put(f"accCountRef{key}", f(mean(rs, "count_test_accuracy")), SRC_SC + " count_test_accuracy (the existing count runs)")
+    put(f"accAccumRef{key}", f(mean(rs, "accumulator_test_accuracy")), SRC_SC + " accumulator_test_accuracy")
+    put(f"gapCountRef{key}", f(mean(rs, "count_mean_conf_minus_acc"), sign=True), SRC_SC + " count_mean_conf_minus_acc")
+    put(f"gapAccumRef{key}", f(mean(rs, "accumulator_mean_conf_minus_acc"), sign=True), SRC_SC + " accumulator_mean_conf_minus_acc")
+    put(f"accDelta{key}", f(100 * (mean(rs, "test_accuracy") - mean(rs, "count_test_accuracy")), 2, sign=True),
+        SRC_SC + " test_accuracy minus count_test_accuracy, in points")
+    put(f"levelsMin{key}", thousands(min(r["n_distinct"] for r in rs)), SRC_SC + " n_distinct")
+    put(f"levelsMax{key}", thousands(max(r["n_distinct"] for r in rs)), SRC_SC + " n_distinct")
+
+nm, c2, c6 = sc_cell("nmnist", 2), sc_cell("ncaltech101", 2), sc_cell("ncaltech101", 6)
+assert sc_pred["6a"]["held"] == (abs(mean(nm, "mean_conf_minus_acc")) < 0.05)
+assert sc_pred["6b"]["held"] == (mean(c2, "mean_conf_minus_acc") > 0)
+assert sc_pred["7"]["held"] == (mean(c2, "test_accuracy") >= 0.5184)
+assert sc_pred["8"]["held"] == (mean(c6, "mean_conf_minus_acc") > -0.05)
+verdict = lambda held: "held" if held else "falsified"
+put("verdictSixA", verdict(sc_pred["6a"]["held"]), SRC_SC + " predictions.6a")
+put("verdictSixB", verdict(sc_pred["6b"]["held"]), SRC_SC + " predictions.6b")
+put("verdictSeven", verdict(sc_pred["7"]["held"]), SRC_SC + " predictions.7")
+put("verdictEight", verdict(sc_pred["8"]["held"]), SRC_SC + " predictions.8")
+put("shareRecovered", f"{100 * sc_pred['7']['share_of_gap_recovered']:.0f}", SRC_SC + " predictions.7 share_of_gap_recovered")
+put("thresholdSeven", f(0.5184), "NOTES.md, prediction 7 (0.4543 + 0.1282 / 2)")
+put("scRuns", str(len(sc_rows)), SRC_SC)
+put("scRunsAboveSmin", str(sum(r["scale_exceeds_s_min"] for r in sc_rows)), SRC_SC + " scale_exceeds_s_min")
+put("scRunsPositiveGapNc", str(sum(r["mean_conf_minus_acc"] > 0 for r in c2 + c6)), SRC_SC + " N-Caltech101 runs with a positive gap")
+put("scRunsNc", str(len(c2 + c6)), SRC_SC)
+# The scale was still climbing when early stopping ended each run: last epoch against best epoch.
+rising = sum(r["logit_scale_last_epoch"] > r["logit_scale"] for r in sc_rows)
+put("scRunsStillRising", str(rising), SRC_SC + " logit_scale_last_epoch > logit_scale")
+# every learned-scale run stays within the cap at its own scale, to within the float32 the
+# logits are computed in
+assert max(r["ceiling_signed_excess"] for r in sc_rows) < 1e-9
+assert all(r["n_distinct"] <= r["max_distinct_bound"] for r in sc_rows)
+
+# ------------------------------------------------------------------ resolution and the bound check
+rs_all = load("resolution_experiment.json")
+SRC_RES = "results/resolution_experiment.json"
+chk = rs_all["check"]
+assert chk["violations"] == 0
+put("checkCells", str(chk["cells"]), SRC_RES + " check.cells (count and scaled-count cells)")
+put("checkInformative", str(chk["cells_where_bound_is_below_n_test"]), SRC_RES + " check.cells_where_bound_is_below_n_test")
+nm_t2_levels = [c["n_distinct_confidences"] for c in chk["rows"]
+                if c["dataset"] == "nmnist" and c["timesteps"] == 2]
+put("levelsObsMinNmTwo", str(min(nm_t2_levels)), SRC_RES + " check rows, N-MNIST T=2, count and scaled-count, both depths")
+put("levelsObsMaxNmTwo", str(max(nm_t2_levels)), SRC_RES + " check rows, N-MNIST T=2")
+put("shareOfBoundMax", f"{100 * max(c['share_of_bound_used'] for c in chk['rows'] if c['bound_below_n_test']):.0f}",
+    SRC_RES + " check rows where the bound is below n_test: largest observed/bound, per cent")
+
+
+def res_rows(readout, state, est, ds="nmnist", blocks=2, T=2):
+    out = [r for r in rs_all["rows"] if r["dataset"] == ds and r["n_blocks"] == blocks and r["timesteps"] == T
+           and r["readout"] == readout and r["state"] == state and r["estimator"] == est]
+    assert len(out) == 3, (readout, state, est, ds, blocks, T, len(out))
+    return out
+
+
+p9 = rs_all["prediction_9"]
+assert p9["complete"]
+for c in p9["comparisons"]:
+    a = mean(res_rows(c["readout"], c["state"], c["estimator"]), "resolution")
+    b = mean(res_rows("accumulator", c["state"], c["estimator"]), "resolution")
+    assert c["count_below_accumulator"] == (a < b)
+put("verdictNine", verdict(p9["held"]), SRC_RES + " prediction_9")
+put("nineBelow", str(sum(c["count_below_accumulator"] for c in p9["comparisons"])), SRC_RES + " prediction_9.comparisons")
+put("nineTotal", str(len(p9["comparisons"])), SRC_RES + " prediction_9.comparisons")
+put("nineBelowCount", str(sum(c["count_below_accumulator"] for c in p9["comparisons"] if c["readout"] == "count")), SRC_RES)
+put("nineBelowDegenerate", str(sum(c["count_below_accumulator"] for c in p9["comparisons"]
+                                    if c["readout"] == "count" and c["estimator"] == "equal_mass")),
+    SRC_RES + " prediction_9.comparisons: count readout, equal-mass, where it forms one bin")
+held = [sc_pred[k]["held"] for k in ("6a", "6b", "7", "8")] + [p9["held"]]
+put("nineBelowScaled", str(sum(c["count_below_accumulator"] for c in p9["comparisons"] if c["readout"] == "scaled-count")), SRC_RES)
+for readout, key in (("count", "Count"), ("accumulator", "Accum"), ("scaled-count", "Scaled")):
+    for est, ek in (("equal_width", "W"), ("equal_mass", "M")):
+        rr = res_rows(readout, "uncalibrated", est)
+        put(f"res{key}{ek}", f(mean(rr, "resolution")), SRC_RES + f" resolution, N-MNIST T=2, {readout}, {est}")
+        put(f"resRatio{key}{ek}", f"{mean(rr, 'res_over_unc'):.2f}", SRC_RES + f" res_over_unc, {readout}, {est}")
+    rr = res_rows(readout, "uncalibrated", "equal_width")
+    put(f"unc{key}", f(mean(rr, "uncertainty")), SRC_RES + f" uncertainty, {readout}")
+    put(f"auroc{key}NmTwo", f(mean(rr, "auroc")), SRC_RES + f" auroc, {readout}, uncalibrated")
+# the count readout collapses to one equal-mass bin in every seed, which is why its resolution there is zero
+assert all(r["n_groups"] == 1 for r in res_rows("count", "uncalibrated", "equal_mass"))
+# exact resolution of the count readout: unchanged by temperature scaling, not raised by isotonic
+ex_u, ex_t, ex_i = (res_rows("count", st_, "exact") for st_ in ("uncalibrated", "temperature", "isotonic-top-label"))
+by_seed = lambda rows: {r["seed"]: r for r in rows}
+for seed in (0, 1, 2):
+    assert abs(by_seed(ex_u)[seed]["resolution"] - by_seed(ex_t)[seed]["resolution"]) < 1e-12
+    assert by_seed(ex_u)[seed]["n_groups"] == by_seed(ex_t)[seed]["n_groups"]
+    assert by_seed(ex_i)[seed]["resolution"] <= by_seed(ex_u)[seed]["resolution"] + 1e-12
+    assert by_seed(ex_i)[seed]["n_groups"] <= by_seed(ex_u)[seed]["n_groups"]
+put("resCountExact", f(mean(ex_u, "resolution")), SRC_RES + " resolution, exact, count, uncalibrated and after temperature (equal per seed)")
+put("resCountExactIso", f(mean(ex_i, "resolution")), SRC_RES + " resolution, exact, count, after top-label isotonic")
+put("groupsCountExactMin", str(min(r["n_groups"] for r in ex_u)), SRC_RES + " n_groups, exact, count")
+put("groupsCountExactMax", str(max(r["n_groups"] for r in ex_u)), SRC_RES + " n_groups, exact, count")
+put("groupsCountIsoMin", str(min(r["n_groups"] for r in ex_i)), SRC_RES + " n_groups, exact, count after isotonic")
+put("groupsCountIsoMax", str(max(r["n_groups"] for r in ex_i)), SRC_RES + " n_groups, exact, count after isotonic")
+# temperature scaling changes AUROC of the count readout: the groups are kept and reordered
+au_u, au_t = (res_rows("count", st_, "equal_width") for st_ in ("uncalibrated", "temperature"))
+changed = sum(abs(by_seed(au_u)[k]["auroc"] - by_seed(au_t)[k]["auroc"]) > 1e-9 for k in (0, 1, 2))
+put("aurocChangedSeeds", str(changed), SRC_RES + " auroc of the count readout before and after temperature scaling, N-MNIST T=2")
+all_count = [r for r in rs_all["rows"] if r["readout"] == "count" and r["estimator"] == "equal_width"]
+cells_u = {(r["dataset"], r["n_blocks"], r["timesteps"], r["seed"]): r["auroc"] for r in all_count if r["state"] == "uncalibrated"}
+cells_t = {(r["dataset"], r["n_blocks"], r["timesteps"], r["seed"]): r["auroc"] for r in all_count if r["state"] == "temperature"}
+moved = [abs(cells_u[k] - cells_t[k]) for k in cells_u]
+put("aurocMovedCells", str(sum(m > 1e-9 for m in moved)), SRC_RES + " count cells whose AUROC differs after temperature scaling")
+put("aurocCells", str(len(moved)), SRC_RES + " count cells")
+put("aurocMovedMax", f(max(moved)), SRC_RES + " largest |change in AUROC| after temperature scaling, count cells")
+# N-Caltech101, descriptive only
+for readout, key in (("count", "Count"), ("accumulator", "Accum"), ("scaled-count", "Scaled")):
+    for est, ek in (("equal_width", "W"), ("equal_mass", "M")):
+        rr = res_rows(readout, "uncalibrated", est, ds="ncaltech101", blocks=4)
+        put(f"ncResRatio{key}{ek}", f"{mean(rr, 'res_over_unc'):.2f}", SRC_RES + f" res_over_unc, N-Caltech101 T=2, {readout}, {est}")
+
+# ------------------------------------------------------------------ calibrators on N-Caltech101
+cc = load("caltech_calibrators.json")
+SRC_CC = "results/caltech_calibrators.json"
+p10 = cc["prediction_10"]
+cc_count = [p_ for p_ in cc["paired"] if p_["readout"] == "count"]
+assert len(cc_count) == 9 and p10["ties"] == sum(p_["tie"] for p_ in cc_count)
+put("verdictTen", verdict(p10["held"]), SRC_CC + " prediction_10")
+put("ncTies", str(p10["ties"]), SRC_CC + " prediction_10.ties")
+put("ncDiffer", str(9 - p10["ties"]), SRC_CC + " prediction_10")
+assert all(p_["favours"] == "isotonic" for p_ in cc_count if p_["differ"])
+for T, k in ((2, "Two"), (6, "Six"), (10, "Ten")):
+    put(f"ncDiffer{k}", str(sum(p_["differ"] for p_ in cc_count if p_["timesteps"] == T)), SRC_CC + f" paired, count, T={T}")
+    for arm, ak in (("uncalibrated", "Unc"), ("temperature", "Temp"), ("isotonic-top-label", "Iso")):
+        rr = [r for r in cc["rows"] if r["readout"] == "count" and r["timesteps"] == T and r["arm"] == arm]
+        assert len(rr) == 3
+        put(f"cc{ak}{k}W", f(mean(rr, "ece_equal_width")), SRC_CC + f" ece_equal_width, count, {arm}, T={T}")
+        put(f"cc{ak}{k}M", f(mean(rr, "ece_equal_mass")), SRC_CC + f" ece_equal_mass, count, {arm}, T={T}")
+        if arm == "temperature":
+            put(f"ccTemperature{k}", f"{mean(rr, 'temperature'):.2f}", SRC_CC + f" temperature, count, T={T}")
+        if arm == "uncalibrated":
+            put(f"ccAcc{k}", f(mean(rr, "test_accuracy")), SRC_CC + f" test_accuracy, count, T={T}")
+put("ccCalSize", thousands(cc["rows"][0]["n_cal"]), SRC_CC + " n_cal")
+put("ccTestSize", thousands(cc["rows"][0]["n_test"]), SRC_CC + " n_test")
+acc_pairs = [p_ for p_ in cc["paired"] if p_["readout"] == "accumulator"]
+assert all(p_["favours"] == "isotonic" for p_ in acc_pairs if p_["differ"])
+put("ccAccumDiffer", str(sum(p_["differ"] for p_ in acc_pairs)), SRC_CC + " paired, accumulator")
+put("ccAccumRuns", str(len(acc_pairs)), SRC_CC + " paired, accumulator")
+sc_pairs = [p_ for p_ in cc["paired"] if p_["readout"] == "scaled-count"]
+put("ccScaledRuns", str(len(sc_pairs)), SRC_CC + " paired, scaled-count")
+put("ccScaledIso", str(sum(p_["favours"] == "isotonic" for p_ in sc_pairs)), SRC_CC + " paired, scaled-count")
+put("ccScaledTemp", str(sum(p_["favours"] == "temperature" for p_ in sc_pairs)), SRC_CC + " paired, scaled-count")
+put("ccScaledTie", str(sum(p_["tie"] for p_ in sc_pairs)), SRC_CC + " paired, scaled-count")
+# the residual the accumulator and the learned scale leave after temperature scaling, T = 2
+for readout, key in (("accumulator", "Accum"), ("scaled-count", "Scaled")):
+    for arm, ak in (("temperature", "Temp"), ("isotonic-top-label", "Iso")):
+        rr = [r for r in cc["rows"] if r["readout"] == readout and r["timesteps"] == 2 and r["arm"] == arm]
+        put(f"cc{key}{ak}TwoW", f(mean(rr, "ece_equal_width")), SRC_CC + f" ece_equal_width, {readout}, {arm}, T=2")
+        put(f"cc{key}{ak}TwoM", f(mean(rr, "ece_equal_mass")), SRC_CC + f" ece_equal_mass, {readout}, {arm}, T=2")
+
+# ------------------------------------------------------------------ calibration-set size
+cs = load("calibration_size_experiment.json")
+SRC_CS = "results/calibration_size_experiment.json"
+p11 = cs["prediction_11"]
+put("verdictEleven", verdict(p11["held"]), SRC_CS + " prediction_11")
+put("csDraws", str(cs["draws"]), SRC_CS + " draws")
+for n, k in ((100, "Hundred"), (1000, "Thousand"), (5000, "Full")):
+    cell = [x for x in cs["summary"] if x["n_cal"] == n]
+    assert len(cell) == 3
+    total = sum(x["draws"] for x in cell)
+    put(f"csTempWins{k}", str(sum(x["temperature_wins"] for x in cell)), SRC_CS + f" summary, n_cal={n}")
+    put(f"csIsoWins{k}", str(sum(x["isotonic_wins"] for x in cell)), SRC_CS + f" summary, n_cal={n}")
+    put(f"csTempWinsMax{k}", str(max(x["temperature_wins"] for x in cell)), SRC_CS + f" summary, n_cal={n}, largest per-seed count")
+    put(f"csDifferMax{k}", str(max(x["differ"] for x in cell)), SRC_CS + f" summary, n_cal={n}, largest per-seed count")
+    rr = [r for r in cs["rows"] if r["n_cal"] == n]
+    assert len(rr) == total == 60
+    for col, ck in (("temp_ece_ew", "TempW"), ("temp_ece_em", "TempM"), ("iso_ece_ew", "IsoW"), ("iso_ece_em", "IsoM")):
+        put(f"cs{ck}{k}", f(mean(rr, col)), SRC_CS + f" {col}, n_cal={n}, mean over seeds and draws")
+put("csDrawsTotal", "60", SRC_CS + " 3 seeds x 20 draws")
+assert p11["seeds_where_temperature_wins_at_100"] == sum(x["temperature_wins"] >= 10 for x in cs["summary"] if x["n_cal"] == 100)
+held += [p10["held"], p11["held"]]
+put("predictionsNew", str(len(held)), "NOTES.md predictions 6a, 6b, 7, 8, 9, 10, 11")
+put("predictionsHeld", str(sum(held)), "verdict blocks of the four experiment files")
+put("predictionsFalsified", str(len(held) - sum(held)), "verdict blocks of the four experiment files")
+put("csSeedsCounting", str(p11["seeds_where_temperature_wins_at_100"]), SRC_CS + " prediction_11")
 
 # ------------------------------------------------------------------ write
 with open(OUT, "w") as fh:

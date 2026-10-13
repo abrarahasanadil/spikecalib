@@ -1,0 +1,174 @@
+{
+  "seed": 1,
+  "eval_seed": 0,
+  "dataset": "nmnist",
+  "timesteps": 2,
+  "split_fingerprint": "4f693d12682b2b57",
+  "epochs_requested": 50,
+  "epochs_run": 20,
+  "best_val_accuracy": 0.9814,
+  "final_val_accuracy": 0.9804,
+  "final_val_tie_rate": 0.0206,
+  "best_epoch": 14,
+  "early_stopped": true,
+  "lr": 0.001,
+  "batch_size": 128,
+  "device": "mps",
+  "n_parameters": 1070869,
+  "seconds": 176.7756097316742,
+  "mps_nondeterministic": true,
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 0.7792573336791992,
+      "val_accuracy": 0.9676,
+      "val_tie_rate": 0.0282,
+      "logit_scale": 1.5159218311309814
+    },
+    {
+      "epoch": 1,
+      "train_loss": 0.30649285099983214,
+      "val_accuracy": 0.9656,
+      "val_tie_rate": 0.0332,
+      "logit_scale": 2.066927909851074
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.14937124450445174,
+      "val_accuracy": 0.9744,
+      "val_tie_rate": 0.0248,
+      "logit_scale": 2.535438299179077
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.0936740461397171,
+      "val_accuracy": 0.9776,
+      "val_tie_rate": 0.0242,
+      "logit_scale": 2.9097774028778076
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.06889996423006058,
+      "val_accuracy": 0.976,
+      "val_tie_rate": 0.0242,
+      "logit_scale": 3.2148334980010986
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.05357123326063156,
+      "val_accuracy": 0.977,
+      "val_tie_rate": 0.027,
+      "logit_scale": 3.472599506378174
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.04843725828409195,
+      "val_accuracy": 0.9778,
+      "val_tie_rate": 0.022,
+      "logit_scale": 3.696746587753296
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.0382435507696867,
+      "val_accuracy": 0.9754,
+      "val_tie_rate": 0.0236,
+      "logit_scale": 3.901516914367676
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.03466703296899796,
+      "val_accuracy": 0.9742,
+      "val_tie_rate": 0.0232,
+      "logit_scale": 4.087222576141357
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.029559339356273414,
+      "val_accuracy": 0.98,
+      "val_tie_rate": 0.021,
+      "logit_scale": 4.274485111236572
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.027324155044555664,
+      "val_accuracy": 0.9796,
+      "val_tie_rate": 0.0216,
+      "logit_scale": 4.42755651473999
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.029269603820741178,
+      "val_accuracy": 0.9794,
+      "val_tie_rate": 0.0238,
+      "logit_scale": 4.561436653137207
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.02269539387404919,
+      "val_accuracy": 0.9776,
+      "val_tie_rate": 0.025,
+      "logit_scale": 4.736242771148682
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.02504180222839117,
+      "val_accuracy": 0.9792,
+      "val_tie_rate": 0.022,
+      "logit_scale": 4.8434529304504395
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.02115152235865593,
+      "val_accuracy": 0.9814,
+      "val_tie_rate": 0.0202,
+      "logit_scale": 4.99629545211792
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.023279796892404555,
+      "val_accuracy": 0.977,
+      "val_tie_rate": 0.0244,
+      "logit_scale": 5.088545322418213
+    },
+    {
+      "epoch": 16,
+      "train_loss": 0.022537302236258983,
+      "val_accuracy": 0.9798,
+      "val_tie_rate": 0.022,
+      "logit_scale": 5.138132572174072
+    },
+    {
+      "epoch": 17,
+      "train_loss": 0.019196068177074192,
+      "val_accuracy": 0.98,
+      "val_tie_rate": 0.0224,
+      "logit_scale": 5.20819091796875
+    },
+    {
+      "epoch": 18,
+      "train_loss": 0.017042418553829194,
+      "val_accuracy": 0.9802,
+      "val_tie_rate": 0.0202,
+      "logit_scale": 5.353404998779297
+    },
+    {
+      "epoch": 19,
+      "train_loss": 0.01699693955898285,
+      "val_accuracy": 0.9804,
+      "val_tie_rate": 0.0206,
+      "logit_scale": 5.455713748931885
+    }
+  ],
+  "model_config": {
+    "channels": [
+      32,
+      64
+    ],
+    "hidden": 256,
+    "tau": 2.0,
+    "v_threshold": 1.0,
+    "surrogate_alpha": 2.0,
+    "readout": "scaled-count"
+  },
+  "logit_scale": 4.99629530669535
+}

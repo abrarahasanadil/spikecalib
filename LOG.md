@@ -3241,3 +3241,107 @@ definition.** Changes from the first drafts, all made before any run:
 (a rate readout, a `tau` sweep) is deferred.
 
 **Ran.** `pytest -q`: 325 passed.
+
+## 2026-10-14 — Seven predictions: three held, four falsified, and the calibrator result reversed at 101 classes
+
+**Order of events.** The predictions were committed at 23:29 on 2026-10-13 (`293d73c`). The
+first model was trained after that. Every run below finished within the following half hour;
+the write-up is dated the 14th.
+
+**Did: the learned-scale readout, and four experiments, each with its own script and result
+file.** `scaled-count` is the count readout with logits `s·c`, `s = exp(theta)`, `theta`
+initialised at 0 and trained by the one optimiser. `spikecalib/experiments.py` is new shared
+plumbing: data held in RAM with no worker processes, a model refused if its record's split
+fingerprint is not the split rebuilt from the seed, tie-breaks seeded as the sweep seeds
+them, and each model's outputs cached. Each script evaluates its own prediction against the
+registered condition and stores the verdict beside the rows.
+
+| | prediction | outcome |
+|---|---|---|
+| 6a | N-MNIST `T = 2`: learned-scale |gap| < 0.05 | **held**, +0.0044 |
+| 6b | N-Caltech101 `T = 2`: learned-scale gap above 0 | **held**, +0.1259 |
+| 7 | N-Caltech101 `T = 2`: accuracy at least 0.5184 | **falsified**, 0.4969, 33% of the gap |
+| 8 | N-Caltech101 `T = 6`: gap above −0.05 | **held** by overshooting, +0.1655 |
+| 9 | N-MNIST `T = 2`: count resolution below the accumulator's, 12 comparisons | **falsified**, below in 4 |
+| 10 | N-Caltech101: calibrators tie in at least 7 of 9 | **falsified**, tie in 4 |
+| 11 | N-MNIST `T = 2`: temperature better at 100 samples in 10 of 20 draws, 2 of 3 seeds | **falsified**, 9, 9 and 8 |
+
+**Found: on N-Caltech101 the choice of calibrator matters.** Isotonic regression beats
+temperature scaling in 5 of 9 count runs under both estimators, all three at `T = 2` and two
+at `T = 6`. At `T = 2` temperature leaves an ECE of 0.1449 (0.1523 equal-mass) and isotonic
+0.0320 (0.0349). The fitted temperature there is 0.413, a scale above `s_min`, so the cap is
+lifted and the error left is not one a single scale removes. "Which calibrator you use does
+not matter" was an N-MNIST result and every statement of it is now scoped to N-MNIST. The
+hypothesis the study began with, an isotonic advantage growing as `T` falls, is the pattern
+of these nine runs.
+
+**Found: a learned scale lifts the cap and does not calibrate.** The network raised `s` above
+`s_min` in 9 of 9 runs. On N-MNIST the underconfidence goes. On N-Caltech101 it becomes
+overconfidence, +0.1259 at `T = 2` and +0.1655 at `T = 6`, as the accumulator's did. At `T = 6`
+that removes the residual neither ceiling explained and replaces it with an error of the same
+size, with accuracy down from 0.6427 to 0.5748. In all nine runs `s` was still rising at the
+last epoch: early stopping watches validation accuracy and ended training first.
+
+**Found: few confidence values are not poor resolution.** The count readout's binned
+resolution is not below the accumulator's under equal-width binning (0.0040 against 0.0038).
+Under equal-mass it is zero only because all its confidences land in one bin, which accounts
+for three of the four comparisons that went the predicted way. What it gives up is AUROC,
+0.9204 against 0.9698. The thesis as first put, "resolution is a timestep problem", holds for
+the number of confidence values and not for the Murphy term, and the documents no longer use
+"resolution" for the former.
+
+**Checked: the derived claims about calibrators.** Grouped by exact value, the count readout's
+resolution is identical before and after temperature scaling in every seed, isotonic lowers
+it, and temperature scaling changes AUROC in 34 of 36 count cells. A test now shows the
+reason by enumeration: a two-way tie for first place and a lone winner one step ahead swap
+order between `s = 1` and `s = 0.25`.
+
+**Did: the paper, revised around the outcomes.**
+- The bound is a cited lemma for logits in an interval of width `W`, with the count, scaled
+  and rate readouts as three widths. Seventeen references added, each verified in
+  `SOURCES.md` first.
+- Related work adds SpikeCP and says what the bound does and does not explain of it. The
+  figure in that paper was looked at: confidence is below accuracy over about the first five
+  steps. The cap at ten classes is 0.23, 0.45 and 0.69 after one, two and three steps, so it
+  forces the start of the pattern and does not place the crossover. The paper says exactly
+  that and reads no number off their figure.
+- Section 5.4 is retitled. Its N-MNIST content stands; N-Caltech101 and the calibration-size
+  result are added, with the tie rule stated in the method.
+- New Sections 5.5 and 5.6. Selective prediction now says the count of confidence values
+  limits deterministic thresholds only, and states the risk-coverage tie convention.
+- N-Caltech101's batch size is 32 and the paper said 128 for both. Fixed, from the records.
+- The Li, Jones & Furber title follows the proceedings, "with Dynamic Confidence".
+- The Acknowledgements are untouched.
+
+**Decided, and to be confirmed by the author: ten-point type.** The revision is 15 pages at
+the original eleven-point and 13 at ten-point. One table whose numbers are all in the prose
+was dropped and both figures narrowed. The class option is the only formatting change and is
+one line to revert. The title is unchanged.
+
+**Did: dashboard.** A "Scale and resolution" band renders the seven verdicts and four tables
+from the result files. Related work gains entries for SpikeCP's observation, the prior
+statements of the bound, and DSR. Three Limitations that the new runs made false are
+replaced. The three leftovers from 2026-10-13 are closed: the "until this session" sentence,
+presets that are now labelled "calculated", and the "4e-13" figure, which is computed.
+
+**Ran.**
+- `python scripts/scaled_count_experiment.py`, `resolution_experiment.py`,
+  `caltech_calibrators.py`, `calibration_size_experiment.py`; zero DataLoader workers.
+- `python scripts/make_figures.py`, `export_dashboard_data.py --num-workers 0`,
+  `paper/make_numbers.py`.
+- `pytest -q`: **354 passed**. New tests re-derive every verdict from its result file and
+  check `NOTES.md` and the README record it the same way.
+- Paper: 13 pages, 0 LaTeX warnings, 0 overfull or underfull boxes.
+- Dashboard under headless Chromium at 1920, 1440, 900 and 400: 0 console messages, 8 modals
+  open and close, no horizontal overflow.
+
+**Outstanding, reported not fixed.**
+- Tier 2 was not run: no rate-readout model, no `tau` sweep. The rate cap is arithmetic only.
+- The N-Caltech101 calibrator result is nine runs of one architecture. It was not repeated at
+  two blocks, and the learned-scale arm was not run at two blocks either.
+- Why one scale does not calibrate the count readout at 101 classes is not established.
+- AUROC and Brier resolution disagree about the count readout at `T = 2` and were not
+  reconciled.
+- The embargoed Porto dissertation on SNN calibration could not be read.
+- `export_dashboard_data.py` still re-runs inference on the sweep models instead of using
+  the output cache the new scripts share.

@@ -331,7 +331,8 @@ def test_readout_ceiling_is_none_exactly_for_the_potential_readouts():
         if r in POTENTIAL_READOUTS:
             assert readout_ceiling(r, 2, 10) is None
         else:
-            assert readout_ceiling(r, 2, 10) == pytest.approx(0.45085306, abs=1e-7)
+            # scale = 1 is where the scaled readout coincides with count; the others ignore it
+            assert readout_ceiling(r, 2, 10, scale=1.0) == pytest.approx(0.45085306, abs=1e-7)
 
 
 def test_weighted_count_shares_the_cap_but_not_the_granularity():
@@ -452,3 +453,89 @@ def test_accumulator_shares_the_trunk_so_membrane_checkpoints_load_into_it():
     assert [n for n, _ in membrane.named_parameters()] == \
            [n for n, _ in accumulator.named_parameters()]
     accumulator.load_state_dict(membrane.state_dict())
+
+
+# ---------------------------------------------------------------------------------------
+# The scaled-count readout: a count readout with a learnable logit scale
+# ---------------------------------------------------------------------------------------
+
+
+def test_scaled_count_starts_as_the_count_readout_exactly():
+    """s = exp(0) = 1 at initialisation, so the first forward pass is the count readout's."""
+    torch.manual_seed(0)
+    T = 4
+    count, scaled = _readout_model("count", T), _readout_model("scaled-count", T)
+    missing = scaled.load_state_dict(count.state_dict(), strict=False)
+    assert missing.missing_keys == ["log_scale"] and not missing.unexpected_keys
+    assert scaled.scale == 1.0
+    x = frames(T, 6, scaled.spec)
+    count.eval(), scaled.eval()
+    functional.reset_net(count), functional.reset_net(scaled)
+    with torch.no_grad():
+        assert torch.equal(count(x), scaled(x))
+    assert scaled.ceiling == pytest.approx(count.ceiling, abs=1e-12)
+
+
+def test_scaled_count_is_the_integer_count_times_the_scale():
+    torch.manual_seed(1)
+    T = 5
+    model = _readout_model("scaled-count", T)
+    with torch.no_grad():
+        model.log_scale.fill_(1.2)
+    x = frames(T, 8, model.spec)
+    model.eval()
+    functional.reset_net(model)
+    with torch.no_grad():
+        out = model(x)
+        functional.reset_net(model)
+        counts = model.spike_train(x).sum(dim=0)
+    assert model.scale == pytest.approx(float(np.exp(1.2)), rel=1e-6)
+    assert torch.allclose(out, counts * model.scale, atol=1e-5)
+    assert torch.equal(counts, counts.round()) and counts.min() >= 0 and counts.max() <= T
+
+
+def test_the_scale_is_trained_by_the_same_optimiser_as_the_weights():
+    """It is in model.parameters(), receives a gradient, and moves under one Adam step."""
+    torch.manual_seed(2)
+    T = 4
+    model = _readout_model("scaled-count", T)
+    assert any(p is model.log_scale for p in model.parameters())
+    optimiser = torch.optim.Adam(model.parameters(), lr=1e-3)
+    x = frames(T, 16, model.spec)
+    y = torch.randint(0, model.n_classes, (16,))
+    functional.reset_net(model)
+    loss = torch.nn.functional.cross_entropy(model(x), y)
+    loss.backward()
+    assert model.log_scale.grad is not None and float(model.log_scale.grad.abs()) > 0
+    optimiser.step()
+    assert model.scale != 1.0
+
+
+def test_scaled_count_cap_follows_the_scale_and_no_output_beats_it():
+    from spikecalib.calibration import softmax_probs
+    from spikecalib.models import readout_ceiling
+    from spikecalib.theory import scaled_ceiling
+
+    torch.manual_seed(3)
+    T = 3
+    model = _readout_model("scaled-count", T)
+    x = frames(T, 64, model.spec)
+    model.eval()
+    for log_s in (-1.0, 0.0, 0.7, 2.0):
+        with torch.no_grad():
+            model.log_scale.fill_(log_s)
+            functional.reset_net(model)
+            out = model(x).double().numpy()
+        cap = model.ceiling
+        assert cap == pytest.approx(scaled_ceiling(T, model.n_classes, model.scale), abs=1e-9)
+        assert cap == pytest.approx(readout_ceiling("scaled-count", T, model.n_classes, scale=model.scale))
+        assert softmax_probs(out).max() <= cap + 1e-9
+    with pytest.raises(ValueError):
+        readout_ceiling("scaled-count", T, 10)
+
+
+def test_other_readouts_have_no_scale_parameter_and_report_scale_one():
+    for r in ("count", "weighted-count", "membrane", "accumulator"):
+        model = _readout_model(r, 4)
+        assert not hasattr(model, "log_scale") and model.scale == 1.0
+        assert "log_scale" not in model.state_dict()

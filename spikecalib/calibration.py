@@ -922,6 +922,46 @@ def bootstrap_ece_difference(
     }
 
 
+def paired_verdict(
+    conf_a: np.ndarray,
+    conf_b: np.ndarray,
+    correct: np.ndarray,
+    n_bins: int = 15,
+    n_bootstrap: int = 1000,
+    seed: int = 0,
+) -> dict:
+    """Do two calibrators differ on this run, or tie? Both estimators, one rule.
+
+    The rule was fixed in ``NOTES.md`` on 2026-10-13, before it was applied to any run it
+    had not already been argued on: **two calibrators differ only if the paired 95%
+    interval on their ECE difference excludes zero under both binned estimators, in the
+    same direction. Otherwise they tie.** A difference between calibrators is a property
+    of their outputs, so both estimators, which score the same outputs and differ only in
+    how they bin them, must find it in the same place with the same sign. An interval that
+    excludes zero under one binning and not the other is evidence about the binning.
+
+    ``favours`` is ``"a"`` when ``a`` has the lower ECE under both, ``"b"`` when ``b`` does,
+    and ``None`` for a tie. The same ``seed`` drives both bootstraps, so they resample the
+    same index sets and differ only in the estimator.
+    """
+    out = {
+        est: bootstrap_ece_difference(conf_a, conf_b, correct, n_bins=n_bins,
+                                      n_bootstrap=n_bootstrap, seed=seed, estimator=est)
+        for est in ("equal_width", "equal_mass")
+    }
+
+    def side(result: dict) -> int:
+        low, high = result["ci"]
+        return -1 if high < 0.0 else (1 if low > 0.0 else 0)
+
+    ew, em = side(out["equal_width"]), side(out["equal_mass"])
+    differ = ew != 0 and ew == em
+    out["differ"] = bool(differ)
+    out["tie"] = not differ
+    out["favours"] = ("a" if ew < 0 else "b") if differ else None
+    return out
+
+
 def compute_metrics(
     conf: np.ndarray,
     correct: np.ndarray,

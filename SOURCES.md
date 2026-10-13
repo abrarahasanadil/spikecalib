@@ -705,21 +705,97 @@ covered arXiv titles and abstracts, OpenAlex, Europe PMC full text, Crossref and
 search; Google Scholar and Semantic Scholar were not usable, and arXiv does not index full
 text.
 
-### Decomposition references, bibliographic record only
+### References verified 2026-10-13 for the revision
+
+Each was opened in full text and the quoted passage found in it. Bibliographic fields are
+from Crossref, the proceedings page or the arXiv record, as stated.
 
 **Murphy (1973). "A New Vector Partition of the Probability Score." *Journal of Applied
-Meteorology* 12(4):595-600.** Allan H. Murphy. Title, author, journal, volume, issue and
-pages from the Crossref record for DOI 10.1175/1520-0450(1973)012<0595:ANVPOT>2.0.CO;2.
-**The paper itself was not opened**, so the three-term decomposition is `[UNVERIFIED]` as a
-citation to it and is stated in this repository as `[DERIVED]`.
+Meteorology* 12(4):595-600.** Allan H. Murphy; DOI
+10.1175/1520-0450(1973)012<0595:ANVPOT>2.0.CO;2 (Crossref). `[LIT]` Read as the scanned PDF
+from the AMS site. Abstract: "This partition consists of three terms: 1) a measure of the
+uncertainty inherent in the events ... 2) a measure of the reliability of the forecasts; and
+3) a new measure of the resolution of the forecasts." The partition groups on the distinct
+forecast values actually issued, with no binning. The journal's name in 1973 was *Journal of
+Applied Meteorology*; the AMS site now labels it with the current name.
 
 **Stephenson, Coelho & Jolliffe (2008). "Two Extra Components in the Brier Score
 Decomposition." *Weather and Forecasting* 23(4):752-757.** D. B. Stephenson, C. A. S. Coelho,
-I. T. Jolliffe; DOI 10.1175/2007WAF2006116.1, from the Crossref record. `[LIT]` at the level
-of the abstract, which the record carries: "for such a procedure, an additional two
-within-bin components are needed in addition to the three traditional components of the
-Brier score." The body was not opened, so the formulas for the two terms are `[DERIVED]`
-here and not taken from it.
+I. T. Jolliffe; DOI 10.1175/2007WAF2006116.1 (Crossref). `[LIT]` Read in full. "The Brier
+score has five rather than three components: BS = REL - RES + UNC + WBV - WBC", with the
+within-bin variance and covariance as defined in `spikecalib/theory.py`, and "Both terms
+vanish if only one value of probability is forecast for each bin". The article prints
+initials only; full first names are not confirmed and are not used. The five-term identity
+was derived here independently and is asserted by a test; the paper is cited as its source.
+
+**Gupta & Ramdas (2022). "Top-label calibration and multiclass-to-binary reductions." ICLR
+2022.** Chirag Gupta, Aaditya Ramdas; arXiv:2107.08353; https://openreview.net/forum?id=WqoBaaPHS-.
+`[LIT]` Read in the arXiv PDF (v4). Remark 1: histogram binning "produces discrete
+predictions whose ECE can be estimated without further binning ... we report unbinned ECE
+estimates while assessing HB"; Appendix E.2: "Further binning was not done ... since the
+output is already discrete and sufficiently many points take each of the predicted values.
+Note that due to Jensen's inequality, any further binning will only decrease the ECE
+estimate". *What may be said:* for a discrete-output predictor the ECE is estimated by
+grouping on the output value, with no binning choice, provided enough samples share each
+value. *What may not:* that it is then computed "exactly". The plug-in estimate still has
+finite-sample bias, which Gupta & Ramdas (ICML 2021, arXiv:2105.04656) say in terms. No DOI;
+venue from the OpenReview record.
+
+**Dimitriadis, Gneiting & Jordan (2021). "Stable reliability diagrams for probabilistic
+classifiers." *PNAS* 118(8), e2016191118.** Timo Dimitriadis, Tilmann Gneiting, Alexander I.
+Jordan; DOI 10.1073/pnas.2016191118 (Crossref). `[LIT]` Read as the PubMed Central full text,
+PMC7923594. The CORP approach "is based on nonparametric isotonic regression and implemented
+via the pool-adjacent-violators (PAV) algorithm", with "no need for tuning parameters or
+implementation decisions", and gives a decomposition into miscalibration, discrimination and
+uncertainty: "in the special case of discrete forecasts with nondecreasing CEPs, the MCB,
+DSC, and UNC terms ... agree with the REL, RES, and UNC components, respectively, in the
+classical Murphy decomposition", and "Murphy's decomposition is exact in the discrete case,
+but fails to be exact under continuous forecasts". CORP is defined through four headings
+(consistency, optimality, reproducibility, PAV algorithm-based), not one expanded phrase.
+
+**Fawcett (2006). "An introduction to ROC analysis." *Pattern Recognition Letters*
+27(8):861-874.** Tom Fawcett; DOI 10.1016/j.patrec.2005.10.010 (Crossref). `[LIT]` Read in
+the publisher-typeset PDF. Section 10, "Interpolating classifiers": "Sometimes the
+performance desired of a classifier is not exactly produced by any available classifier, but
+lies between two available classifiers. The desired performance can be obtained by sampling
+the decisions of each classifier." Section 5, on tied scores: the curve "should represent the
+expected performance of the classifier", obtained "by not emitting an ROC point until all
+instances of equal f values have been processed". *What may be said:* an operating point
+between two deterministic ones is reachable by randomising between them. *What may not be
+attributed to it:* that tied scores are themselves to be broken at random. Applying Section
+10 to the two thresholds either side of a tied group is this study's step, `[DERIVED]`.
+
+**Galil, Dabbah & El-Yaniv (2023). "What Can We Learn From The Selective Prediction And
+Uncertainty Estimation Performance Of 523 Imagenet Classifiers." ICLR 2023.** Ido Galil,
+Mohammed Dabbah, Ran El-Yaniv; arXiv:2302.11874; https://openreview.net/forum?id=p66AzKi6Xim.
+`[LIT]` Read in the arXiv PDF (v1). "(a) TS consistently and greatly improves AUROC and
+selective performance ... it also improves the partial order of all instances induced by
+those improved estimations ... (b) While TS is usually beneficial, it could harm some
+models". *What may be said:* temperature scaling changes the ranking a softmax confidence
+induces, usually for the better. *What may not:* anything about AURC by name, which the
+passage does not mention. Title as on the arXiv record; the OpenReview record ends it with
+a question mark and has a lowercase "we".
+
+**Published records for works cited from arXiv above**, from Crossref and the proceedings
+pages. Where the open-access proceedings and the IEEE record paginate differently, the
+open-access pages are used, which are those printed on the PDF.
+- AdaCos: CVPR 2019, pp. 10823-10832; DOI 10.1109/CVPR.2019.01108.
+- NormFace: Proceedings of the 25th ACM International Conference on Multimedia, 2017,
+  pp. 1041-1049; DOI 10.1145/3123266.3123359.
+- LogitNorm: Proceedings of the 39th International Conference on Machine Learning, PMLR
+  162:23631-23644, 2022.
+- LogitClip: Proceedings of the 40th International Conference on Machine Learning, PMLR
+  202:36868-36886, 2023.
+- CosFace: CVPR 2018, pp. 5265-5274; DOI 10.1109/CVPR.2018.00552.
+- Ranjan, Castillo & Chellappa: arXiv:1703.09507 only; no published version was found.
+- DSR: CVPR 2022, pp. 12444-12453; DOI 10.1109/CVPR52688.2022.01212.
+- SpikeCP: *IEEE Journal of Selected Topics in Signal Processing* 19(1):88-102, January 2025;
+  DOI 10.1109/JSTSP.2024.3431996. The published title capitalises "With".
+- Li, Jones & Furber: ICCV 2023, pp. 13350-13360; DOI 10.1109/ICCV51070.2023.01228. The
+  proceedings title is "... **with** Dynamic Confidence".
+- SFOD: CVPR 2024, pp. 17191-17200; DOI 10.1109/CVPR52733.2024.01627.
+- Skatchkovsky, Jang & Simeone: *Frontiers in Computational Neuroscience* 16:1037976, 2022;
+  DOI 10.3389/fncom.2022.1037976.
 
 ## Still to verify
 
@@ -745,6 +821,9 @@ here and not taken from it.
 5. **CIFAR10-DVS 10,000 sample count.** Same.
 6. **The AOT-SNN classification paper**, if one exists, and whether temperature scaling is
    its calibration baseline.
+   *Resolved 2026-10-13:* it is Sun, Yin & Bohté, arXiv:2304.10191, and it does compare against
+   temperature scaling; see "Literature check, 2026-10-13". Its venue, given by a search as
+   ICANN 2023, is not confirmed.
 7. **Loihi compartment-state access cost** and **SpiNNaker recording bandwidth for a small
    output layer** — see "Could NOT be confirmed", item 6.
 8. **Adam `lr = 1e-3`** — an unjustified constant, never tuned.

@@ -43,6 +43,7 @@ from .datasets import DatasetSpec
 __all__ = [
     "READOUTS",
     "POTENTIAL_READOUTS",
+    "SCALED_READOUTS",
     "readout_ceiling",
     "min_timesteps",
     "readout_weights",
@@ -83,7 +84,11 @@ E_MAC_JOULES = 4.6e-12  # [DERIVED] 0.9 + 3.7, the multiply-plus-add convention
 EVENT_POLARITY_CHANNELS = 2
 
 
-READOUTS = ("count", "weighted-count", "membrane", "accumulator")
+READOUTS = ("count", "weighted-count", "membrane", "accumulator", "scaled-count")
+
+#: Readouts whose class scores are a spike count times a positive scalar. Their cap depends
+#: on that scalar, so it cannot be computed from ``T`` and ``C`` alone.
+SCALED_READOUTS = ("scaled-count",)
 
 #: Readouts that integrate a potential instead of aggregating output spikes. These get no
 #: output LIF, have no spike train, and are unbounded above.
@@ -102,8 +107,14 @@ def readout_weights(timesteps: int) -> list[float]:
     return [2.0 * (t + 1) / (timesteps + 1) for t in range(timesteps)]
 
 
-def readout_ceiling(readout: str, timesteps: int, n_classes: int) -> Optional[float]:
+def readout_ceiling(readout: str, timesteps: int, n_classes: int,
+                    scale: Optional[float] = None) -> Optional[float]:
     """Largest confidence each readout can express. ``None`` means unbounded.
+
+    ``scaled-count`` multiplies the count by a positive ``scale``, so its logits lie in
+    ``[0, scale * T]`` and its cap is ``e^(sT) / (e^(sT) + C - 1)``. It is still a capped
+    readout; the cap is simply not fixed by ``T``. ``scale`` is required for it and ignored
+    for the others.
 
     [DERIVED] For any readout whose per-class score is bounded above by ``m`` and below by
     0, the extreme score vector is ``[m, 0, ..., 0]`` and the softmax ceiling is
@@ -113,6 +124,11 @@ def readout_ceiling(readout: str, timesteps: int, n_classes: int) -> Optional[fl
     """
     if readout in POTENTIAL_READOUTS:
         return None
+    if readout in SCALED_READOUTS:
+        if scale is None or scale <= 0:
+            raise ValueError(f"the {readout} readout needs a positive scale; got {scale}")
+        # 1 / (1 + (C-1) e^-W), which does not overflow as the learned scale grows
+        return float(1.0 / (1.0 + (n_classes - 1) * math.exp(-float(scale) * timesteps)))
     if readout not in ("count", "weighted-count"):
         raise ValueError(f"unknown readout {readout!r}; expected one of {READOUTS}")
     m = float(timesteps)
@@ -377,6 +393,14 @@ class SpikingClassifier(nn.Module):
         if cfg.readout not in POTENTIAL_READOUTS:
             blocks.append(self._lif(output_layer=True))
         self.net = nn.Sequential(*blocks)
+        # [DESIGN] The learnable logit scale of the scaled-count readout, held as its log so
+        # it stays positive without a constraint. Initialised at 0, i.e. s = 1, where the
+        # readout is exactly the count readout. It is an ordinary parameter: the one
+        # optimiser trains it at the same learning rate as every weight, with nothing tuned
+        # for it (NOTES.md, "The learned-scale arm"). It lives outside `net`, so the trunk's
+        # parameter names are the count readout's and a count checkpoint loads into it.
+        if cfg.readout in SCALED_READOUTS:
+            self.log_scale = nn.Parameter(torch.zeros(()))
         # Not persistent: the weights are derived from T, so putting them in the state dict
         # would add a key that older checkpoints lack and break strict loading.
         self.register_buffer(
@@ -465,6 +489,9 @@ class SpikingClassifier(nn.Module):
           unbounded, and **leaky** -- weighted towards the most recent steps.
         - ``accumulator``: the same integrator with the leak removed. Unbounded, and
           weights every step equally, as the count readout does.
+        - ``scaled-count``: the count times a learnable positive scalar ``s``. Real-valued,
+          capped at ``e^(sT)/(e^(sT) + C - 1)``, and exactly as many attainable levels as
+          count: the scale moves the values and not their number.
 
         The docstring below describes the count readout specifically, which is the study's
         default and the only one whose output is integral.
@@ -482,6 +509,8 @@ class SpikingClassifier(nn.Module):
         spikes = self.spike_train(x)
         if self.readout == "weighted-count":
             return (spikes * self._w.to(spikes.dtype)).sum(dim=0)
+        if self.readout in SCALED_READOUTS:
+            return spikes.sum(dim=0) * self.log_scale.exp()
         return spikes.sum(dim=0)
 
     @torch.no_grad()
@@ -495,9 +524,16 @@ class SpikingClassifier(nn.Module):
         return self.forward(x).round().to(torch.int64)
 
     @property
+    def scale(self) -> float:
+        """The logit scale: the learned value for scaled-count, 1 for every other readout."""
+        if self.readout in SCALED_READOUTS:
+            return float(self.log_scale.detach().exp().item())
+        return 1.0
+
+    @property
     def ceiling(self) -> Optional[float]:
         """Largest confidence this readout can express, or ``None`` if unbounded."""
-        return readout_ceiling(self.readout, self.timesteps, self.n_classes)
+        return readout_ceiling(self.readout, self.timesteps, self.n_classes, scale=self.scale)
 
 
 def build_model(spec: DatasetSpec, timesteps: int, cfg: Optional[ModelConfig] = None) -> SpikingClassifier:

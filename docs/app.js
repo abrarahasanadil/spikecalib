@@ -186,9 +186,16 @@
     };
     var cal = (D.caltech || []).filter(function (r) { return r.readout === "count"; });
     if (C === D.n_classes) {
-      measured.forEach(function (m) { ring(m.T, m.observed_max); });
+      /* the distance from the curve is computed, like the C = 101 note below; it used to
+         be typed as 4e-13 and would not have moved if the data had */
+      var off = 0;
+      measured.forEach(function (m) {
+        ring(m.T, m.observed_max);
+        off = Math.max(off, Math.abs(ceilingOf(m.T, C) - m.observed_max));
+      });
       hero.measuredNote.textContent =
-        "Rings are this study's five measured maxima. They sit on the curve to within 4e-13.";
+        "Rings are this study's " + measured.length + " measured N-MNIST maxima. They sit on " +
+        "the curve to within " + off.toExponential(0) + ".";
     } else if (cal.length && C === cal[0].n_classes) {
       var onCurve = 0, slack = [];
       uniq(cal.map(function (r) { return +r.timesteps; })).forEach(function (T) {
@@ -206,8 +213,9 @@
         " on the curve to within " + onCurve.toExponential(0) + ".";
     } else {
       hero.measuredNote.textContent =
-        "Measured maxima are hidden: they were recorded at C = " + D.n_classes +
-        (cal.length ? " and C = " + cal[0].n_classes : "") + ", and C is currently " + C + ".";
+        "Calculated only. No model was trained at C = " + C + ": this study measured C = " +
+        D.n_classes + (cal.length ? " and C = " + cal[0].n_classes : "") +
+        ", so the curve here is the formula with nothing measured against it.";
     }
 
     /* selected T marker */
@@ -400,6 +408,134 @@
     Array.prototype.forEach.call(document.querySelectorAll("[data-n]"), function (e) {
       var k = e.getAttribute("data-n");
       if (values[k] !== undefined) e.textContent = values[k];
+    });
+  }
+
+  /* ---------- the registered predictions ----------
+
+     Seven predictions were recorded before these experiments ran. Each result file carries
+     the verdict its own script computed against the registered condition; this renders
+     those blocks and decides nothing. A falsified prediction is shown as falsified. */
+  function setN(values) {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-n]"), function (e) {
+      var k = e.getAttribute("data-n");
+      if (values[k] !== undefined) e.textContent = values[k];
+    });
+  }
+  /* `text` lists the columns that hold sentences, not numbers: those are left-aligned,
+     set in the text face and allowed to wrap, where a numeric cell is none of the three. */
+  function plainTable(id, head, rows, text) {
+    var t = document.getElementById(id);
+    if (!t) return;
+    var cls = function (i) { return (i === 0 ? "k" : "") + (text && text.indexOf(i) >= 0 ? " t" : ""); };
+    t.innerHTML = "<thead><tr>" + head.map(function (h, i) {
+      return '<th style="cursor:default" scope="col" class="' + cls(i) + '">' + h + "</th>"; }).join("") +
+      "</tr></thead><tbody>" +
+      rows.map(function (r) {
+        return "<tr>" + r.map(function (c, i) {
+          return '<td class="' + cls(i) + '">' + c + "</td>"; }).join("") + "</tr>";
+      }).join("") + "</tbody>";
+  }
+  function verdictCell(held, note) {
+    return '<span class="verdict-' + (held ? "held" : "falsified") + '">' +
+      (held ? "held" : "falsified") + "</span>" + (note ? " " + note : "");
+  }
+  function span(rows, key, d) {
+    var v = rows.map(function (r) { return r[key]; });
+    var lo = Math.min.apply(null, v), hi = Math.max.apply(null, v);
+    return d === 0 ? lo.toLocaleString() + "–" + hi.toLocaleString()
+                   : lo.toFixed(d) + "–" + hi.toFixed(d);
+  }
+
+  function renderPredictions() {
+    var sc = D.scaled, res = D.resolution, cc = D.caltech_calibrators, cs = D.calibration_size;
+    if (!sc || !res || !cc || !cs) return;
+    var P = sc.predictions, p9 = res.prediction_9, p10 = cc.prediction_10, p11 = cs.prediction_11;
+    var below = p9.comparisons.filter(function (c) { return c.count_below_accumulator; }).length;
+    var at100 = cs.summary.filter(function (x) { return x.n_cal === 100; });
+    var most100 = Math.max.apply(null, at100.map(function (x) { return x.temperature_wins; }));
+    var verdicts = [P["6a"].held, P["6b"].held, P["7"].held, P["8"].held, p9.held, p10.held, p11.held];
+
+    plainTable("pred-table", ["", "prediction", "measured", "outcome"], [
+      ["6a", "N-MNIST, T = 2: learned-scale count has |gap| below 0.05",
+        signed(P["6a"].mean_signed_gap, 4), verdictCell(P["6a"].held)],
+      ["6b", "N-Caltech101, T = 2: learned-scale count gap is above 0",
+        signed(P["6b"].mean_signed_gap, 4), verdictCell(P["6b"].held)],
+      ["7", "N-Caltech101, T = 2: learned-scale count reaches accuracy " +
+        P["7"].threshold_registered.toFixed(4) + ", half the gap to the accumulator",
+        P["7"].mean_accuracy.toFixed(4) + " (" + (P["7"].share_of_gap_recovered * 100).toFixed(0) + "% of the gap)",
+        verdictCell(P["7"].held)],
+      ["8", "N-Caltech101, T = 6: learned-scale count gap is above −0.05",
+        signed(P["8"].mean_signed_gap, 4) + ", " + P["8"].sign,
+        verdictCell(P["8"].held, P["8"].held && !P["8"].magnitude_below_0p05 ? "by overshooting" : "")],
+      ["9", "N-MNIST, T = 2: count resolution below the accumulator's in all " + p9.comparisons.length + " comparisons",
+        "below in " + below, verdictCell(p9.held)],
+      ["10", "N-Caltech101: calibrators tie in at least 7 of " + p10.runs + " count runs",
+        "tie in " + p10.ties, verdictCell(p10.held)],
+      ["11", "N-MNIST, T = 2, 100 calibration samples: temperature better in at least 10 of " + cs.draws +
+        " draws for 2 of 3 seeds; ties at 1,000 and 5,000",
+        "at most " + most100 + " of " + cs.draws + " in any seed; " +
+        (p11.tie_at_1000 && p11.tie_at_5000 ? "ties at both" : "the larger sizes did not both tie"),
+        verdictCell(p11.held)]
+    ], [1, 2, 3]);
+
+    var cells = [["nmnist", 2, "N-MNIST"], ["ncaltech101", 2, "N-Caltech101"], ["ncaltech101", 6, "N-Caltech101"]];
+    plainTable("scaled-table",
+      ["dataset", "T", "learned s", "s<sub>min</sub>", "gap: count", "learned", "accum.", "acc: count", "learned", "accum.", "values"],
+      cells.map(function (k) {
+        var r = sc.rows.filter(function (x) { return x.dataset === k[0] && x.timesteps === k[1]; });
+        var m = function (key) { return avg(r.map(function (x) { return x[key]; })); };
+        return [k[2], k[1], span(r, "logit_scale", 2), span(r, "s_min", 2),
+          signed(m("count_mean_conf_minus_acc"), 4), "<b>" + signed(m("mean_conf_minus_acc"), 4) + "</b>",
+          signed(m("accumulator_mean_conf_minus_acc"), 4),
+          m("count_test_accuracy").toFixed(4), "<b>" + m("test_accuracy").toFixed(4) + "</b>",
+          m("accumulator_test_accuracy").toFixed(4), span(r, "n_distinct", 0)];
+      }));
+
+    var count = cc.rows.filter(function (x) { return x.readout === "count"; });
+    var pair = function (rows) {
+      return avg(rows.map(function (x) { return x.ece_equal_width; })).toFixed(4) + "\u2009/\u2009" +
+             avg(rows.map(function (x) { return x.ece_equal_mass; })).toFixed(4);
+    };
+    plainTable("ncal-table", ["T", "acc.", "uncal.", "temp.", "isotonic", "differ"],
+      uniq(count.map(function (x) { return x.timesteps; })).map(function (T) {
+        var arm = function (a) { return count.filter(function (x) { return x.timesteps === T && x.arm === a; }); };
+        var d = cc.paired.filter(function (x) { return x.readout === "count" && x.timesteps === T; });
+        var differ = d.filter(function (x) { return x.differ; });
+        return [T, avg(arm("uncalibrated").map(function (x) { return x.test_accuracy; })).toFixed(4),
+          pair(arm("uncalibrated")), pair(arm("temperature")), "<b>" + pair(arm("isotonic-top-label")) + "</b>",
+          differ.length + " of " + d.length];
+      }));
+
+    plainTable("size-table", ["samples", "temp. better", "iso. better", "tie"],
+      uniq(cs.summary.map(function (x) { return x.n_cal; })).map(function (n) {
+        var c = cs.summary.filter(function (x) { return x.n_cal === n; });
+        var sum = function (key) { return c.reduce(function (a, x) { return a + x[key]; }, 0); };
+        var total = sum("draws");
+        return [n.toLocaleString(), sum("temperature_wins") + " of " + total, sum("isotonic_wins") + " of " + total,
+          (total - sum("differ")) + " of " + total];
+      }));
+
+    plainTable("res-table", ["count readout", "state", "binning", "count", "accumulator", "count below?"],
+      p9.comparisons.map(function (c) {
+        return [c.readout === "count" ? "s = 1" : "learned scale", c.state.replace("-top-label", ""),
+          c.estimator.replace("_", "-"), c.count_resolution.toFixed(5), c.accumulator_resolution.toFixed(5),
+          c.count_below_accumulator ? "yes" : "<b>no</b>"];
+      }), [1, 2]);
+
+    var ncCount = cc.paired.filter(function (x) { return x.readout === "count"; });
+    setN({
+      "pred-total": verdicts.length,
+      "pred-falsified": verdicts.filter(function (v) { return !v; }).length,
+      "sc-runs": sc.rows.length,
+      "sc-above": sc.rows.filter(function (r) { return r.scale_exceeds_s_min; }).length,
+      "nc-runs": ncCount.length,
+      "nc-differ": ncCount.filter(function (x) { return x.differ; }).length,
+      "nc-iso": ncCount.filter(function (x) { return x.favours === "isotonic"; }).length,
+      "nc-ties": ncCount.filter(function (x) { return x.tie; }).length,
+      "check-cells": res.check.cells,
+      "check-ok": res.check.cells - res.check.violations,
+      "p9-below": below, "p9-total": p9.comparisons.length
     });
   }
 
@@ -1152,6 +1288,7 @@
   wireModals();
   [updateHero, renderReadoutTable, renderSelectiveTable, renderQuantisation,
    renderCaxis, renderConditional, renderArch, renderUpdated, renderCardFigures, renderCells,
+   renderPredictions,
    render].forEach(function (fn) {
     try { fn(); } catch (err) { console.error("spikecalib: " + fn.name + " failed", err); }
   });
