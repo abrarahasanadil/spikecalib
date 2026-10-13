@@ -1947,6 +1947,15 @@ Inference only, on the existing N-MNIST models. No training.
   modality A, each carrying the mean of its 20 pairings, 1,000 resamples, seeded.
 - **ECE** of each rule's fused confidence is reported under both estimators.
 
+**The dropout rate, fixed 2026-10-14 before any fusion result: `r = 0.50`.**
+`[MEASURED]` `scripts/fusion_experiment.py --select-rate`, seed-0 count model at `T = 2`, on
+the 5,000-sample calibration split. Clean calibration accuracy is
+0.9838, so the target was 0.8838; the grid
+value closest to it is 0.50, at which the accuracy under dropout is
+0.8800. Half of all events are removed from modality B. The
+grid is in `results/fusion_dropout_rate.json`. That step computed no fused prediction, and
+the main run reads the rate from the file and cannot change it.
+
 ## Pre-registered prediction 12, recorded 2026-10-14
 
 > For count readouts at `T = 2`, `delta` is positive with its interval excluding zero in

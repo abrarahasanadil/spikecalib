@@ -44,7 +44,7 @@ from .train import predict_outputs
 
 __all__ = [
     "DEFAULT_CHANNELS", "BATCH_SIZE", "HIDDEN", "stem", "Data", "load_data", "all_cached",
-    "splits_for", "stratified_subsample", "subset",
+    "splits_for", "stratified_subsample", "subset", "forward_scores",
     "loader", "load_trained", "CellOutputs", "cell_outputs",
 ]
 
@@ -245,3 +245,27 @@ def subset(outputs, idx: np.ndarray):
     """The same ``Outputs`` restricted to ``idx``, tie-breaks and all."""
     return dataclasses.replace(outputs, **{
         f.name: getattr(outputs, f.name)[idx] for f in dataclasses.fields(outputs)})
+
+
+@torch.no_grad()
+def forward_scores(model: SpikingClassifier, frames, device, batch_size: int = 1000) -> np.ndarray:
+    """Readout scores for an in-memory array of frames, ``[N, T, C, H, W]``, as float64.
+
+    For inputs that are not a split of a dataset on disk, such as frames after event dropout.
+    It does what :func:`spikecalib.train.predict_outputs` does: eval mode, and neuron state
+    reset before every batch, without which the second batch would start from the first
+    one's membrane potentials.
+    """
+    from spikingjelly.activation_based import functional
+
+    from .train import to_time_first
+
+    model = model.to(device)
+    model.eval()
+    frames = torch.as_tensor(np.asarray(frames)) if not torch.is_tensor(frames) else frames
+    out = []
+    for start in range(0, frames.shape[0], batch_size):
+        functional.reset_net(model)
+        x = to_time_first(frames[start:start + batch_size].float()).to(device)
+        out.append(model(x).cpu().numpy().astype(np.float64))
+    return np.concatenate(out, axis=0)

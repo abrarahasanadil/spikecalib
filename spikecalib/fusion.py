@@ -56,9 +56,47 @@ from .calibration import predict_with_ties, softmax_probs
 from .theory import min_logit_width
 
 __all__ = [
-    "saturated", "reliability_weight", "product_rule", "weighted_vote", "unweighted_vote",
+    "event_dropout", "class_matched_partners", "saturated", "reliability_weight", "product_rule", "weighted_vote", "unweighted_vote",
     "excess_error_on_saturation", "excess_error_as_first_drafted",
 ]
+
+
+def event_dropout(frames: np.ndarray, rate: float, rng: np.random.Generator) -> np.ndarray:
+    """Remove each event independently with probability ``rate``.
+
+    ``frames`` holds integer event counts per pixel, polarity and timestep. Dropping events
+    independently turns a count ``n`` into a draw from ``Binomial(n, 1 - rate)``. This is a
+    degradation of the sensor, applied before the network sees anything, so the degraded
+    modality is still a valid input and the network's readout is still a count readout.
+    Only non-zero entries are sampled, because event frames are mostly empty.
+    """
+    if not (0.0 <= rate < 1.0):
+        raise ValueError(f"rate must lie in [0, 1); got {rate}")
+    frames = np.asarray(frames)
+    if not np.array_equal(frames, np.rint(frames)) or frames.min() < 0:
+        raise ValueError("event dropout is defined on non-negative integer event counts")
+    out = np.zeros_like(frames)
+    nz = frames != 0
+    out[nz] = rng.binomial(frames[nz].astype(np.int64), 1.0 - rate)
+    return out
+
+
+def class_matched_partners(labels: np.ndarray, rng: np.random.Generator) -> np.ndarray:
+    """For every sample, a different sample of the same class, each used exactly once.
+
+    Within each class the samples are put in a random cyclic order and each is paired with
+    the next. Every sample's partner is then uniformly distributed over the other samples of
+    its class, no sample is its own partner, and no sample serves as a partner twice, so
+    the second modality sees the same set of inputs as the first.
+    """
+    labels = np.asarray(labels)
+    partner = np.empty(labels.size, dtype=np.int64)
+    for c in np.unique(labels):
+        members = rng.permutation(np.flatnonzero(labels == c))
+        if members.size < 2:
+            raise ValueError(f"class {c} has {members.size} sample(s); a different partner needs two")
+        partner[members] = np.roll(members, -1)
+    return partner
 
 
 def saturated(counts: np.ndarray, timesteps: int) -> np.ndarray:

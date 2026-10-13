@@ -18,7 +18,7 @@ import pytest
 
 from spikecalib.calibration import softmax_probs
 from spikecalib.fusion import (
-    excess_error_as_first_drafted, excess_error_on_saturation, product_rule, reliability_weight,
+    class_matched_partners, event_dropout, excess_error_as_first_drafted, excess_error_on_saturation, product_rule, reliability_weight,
     saturated, unweighted_vote, weighted_vote,
 )
 from spikecalib.theory import (
@@ -264,3 +264,43 @@ def test_almost_everything_a_count_readout_can_say_is_outside_its_confidence():
     assert n_distinct_probability_vectors(2, 10) == 58_025
     assert max_distinct_confidences(2, 10) == 55
     assert n_distinct_probability_vectors(2, 10) // max_distinct_confidences(2, 10) == 1055
+
+
+# ---------------------------------------------------------------------------------------
+# The second modality: event dropout and class-matched partners
+# ---------------------------------------------------------------------------------------
+
+
+def test_event_dropout_thins_counts_binomially_and_never_adds_an_event():
+    rng = np.random.default_rng(0)
+    frames = rng.poisson(0.4, (300, 2, 2, 34, 34)).astype(np.float32)
+    for rate in (0.0, 0.3, 0.9):
+        out = event_dropout(frames, rate, np.random.default_rng(1))
+        assert out.shape == frames.shape and out.dtype == frames.dtype
+        assert np.array_equal(out, np.rint(out)) and out.min() >= 0
+        assert np.all(out <= frames)                              # an event can only be lost
+        assert np.all(out[frames == 0] == 0)
+        assert out.sum() / frames.sum() == pytest.approx(1.0 - rate, abs=0.004)
+    assert np.array_equal(event_dropout(frames, 0.0, np.random.default_rng(2)), frames)
+    again = event_dropout(frames, 0.3, np.random.default_rng(1))
+    assert np.array_equal(again, event_dropout(frames, 0.3, np.random.default_rng(1)))
+
+
+def test_event_dropout_refuses_what_is_not_an_event_count():
+    with pytest.raises(ValueError):
+        event_dropout(np.array([0.5, 1.0]), 0.2, np.random.default_rng(0))
+    with pytest.raises(ValueError):
+        event_dropout(np.array([1.0, 2.0]), 1.0, np.random.default_rng(0))
+
+
+def test_partners_share_the_class_are_never_the_sample_itself_and_are_used_once():
+    rng = np.random.default_rng(3)
+    labels = rng.integers(0, 10, 5000)
+    partner = class_matched_partners(labels, np.random.default_rng(4))
+    assert np.array_equal(labels[partner], labels)
+    assert np.all(partner != np.arange(labels.size))
+    assert np.array_equal(np.sort(partner), np.arange(labels.size))   # a permutation: each used once
+    other = class_matched_partners(labels, np.random.default_rng(5))
+    assert not np.array_equal(partner, other)
+    with pytest.raises(ValueError):
+        class_matched_partners(np.array([0, 0, 1]), np.random.default_rng(0))
