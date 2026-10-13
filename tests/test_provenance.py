@@ -123,6 +123,40 @@ def test_the_dashboard_states_the_real_column_count(claimed: str) -> None:
     assert claimed == str(n)
 
 
+# --------------------------------------------------------------------------- cell counts
+
+def test_count_cells_are_counted_once() -> None:
+    """The matched grid reuses twelve models. Adding 15 + 9 + 24 counted them twice, as 48."""
+    def rows(name: str) -> list[dict]:
+        return [r for r in json.loads(_read("results", name))["rows"] if r["readout"] == "count"]
+
+    def blocks(stem: str) -> int:
+        return len(json.loads(_read("results", f"{stem}_record.json"))["model_config"]["channels"])
+
+    cells = set()
+    for r in rows("readout_experiment.json"):
+        cells.add(("nmnist", blocks(f"nmnist_T{r['timesteps']}_seed{r['seed']}"),
+                   r["timesteps"], r["seed"]))
+    for r in rows("caltech_experiment.json"):
+        cells.add(("ncaltech101", blocks(f"ncaltech101_T{r['timesteps']}_seed{r['seed']}"),
+                   r["timesteps"], r["seed"]))
+    grid = rows("arch_matched.json")
+    for r in grid:
+        cells.add((r["dataset"], r["n_blocks"], r["timesteps"], r["seed"]))
+    n = len(cells)
+    assert n < len(rows("readout_experiment.json")) + len(rows("caltech_experiment.json")) + len(grid)
+
+    assert f"\\newcommand{{\\cellsUnion}}{{{n}}}" in _read("paper", "numbers.tex"), (
+        f"numbers.tex does not state {n} distinct count-readout cells; re-run make_numbers.py"
+    )
+    assert f"**{n} of {n}** distinct" in _read("README.md")
+    page = _read("docs", "index.html")
+    assert f'<span data-n="cells-all">{n}</span>' in page, (
+        f"the dashboard's fallback cell count is not {n}"
+    )
+    assert f'<span data-n="grid-all">{len(grid)}</span>' in page
+
+
 # --------------------------------------------------------------------------- energy
 
 def test_dashboard_energy_ranges_match_the_sweep() -> None:

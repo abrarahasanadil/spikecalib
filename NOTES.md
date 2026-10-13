@@ -54,6 +54,15 @@ This is observed, not merely argued — on synthetic counts the fitted temperatu
 0.556 at `T = 2` (sharpening) and 1.696 at `T = 10` (softening). `[MEASURED]` —
 `scripts/synthetic_check.py`, seed 0, uniform mode, 2026-09-09; synthetic data.
 
+*(Pointer added 2026-10-13. "At high `T` the ceiling is effectively absent and the familiar
+overconfidence returns" was written before any model was trained and is superseded. On
+N-MNIST the count readout does not become overconfident once the ceiling is slack:
+`conf − acc` is −0.0065 at `T = 8` and −0.0008 at `T = 10`. The sign does flip where the
+task is harder or the readout is unbounded: +0.0344 for the count readout at
+`C = 101, T = 10`, and positive for the accumulator at `T ≥ 6`. See "The sign of the
+miscalibration: a disagreement with the literature" and "The C axis: N-Caltech101 at 101
+classes".)*
+
 #### The ceiling is also a floor on the training loss
 
 A consequence worth stating because it changes how convergence is judged. Cross-entropy on
@@ -466,6 +475,13 @@ that the bound is the mechanism.
 reports a limitation *and* a fix: at low `T`, use a membrane readout. The cost is that the
 output is no longer an integer spike count, which matters for neuromorphic hardware that
 transmits spikes rather than potentials — that trade is real and is not evaluated here.
+
+*(Pointer added 2026-10-13. "At low `T`, use a membrane readout" is superseded as a
+recommendation. At three seeds membrane is not dominant: it ranks worse than count from
+`T = 6`, and its `T = 2` ECE varies fivefold across seeds, which the non-leaky accumulator
+removes. The recommendation as it stands is in "Membrane is NOT strictly dominant, and the
+recommendation narrows accordingly", "Outcome of prediction 3" and "Why the count readout
+exists", part 4. The prediction above and its outcome table are unchanged.)*
 
 ### The connection to prior work: tested, and it does not hold
 
@@ -955,6 +971,14 @@ reach.
 limit on learning itself.** Nothing at `C = 10` showed this, because 0.4509 was never severe
 enough to matter for accuracy. Above `T = 2` the effect reverses and count wins by 4 points,
 so this is a property of the binding regime and not of the readout.
+
+*(Pointer added 2026-10-13. The mechanism offered in this subsection, a cross-entropy floor
+that dominates the gradient, does not survive the matched-architecture run. The gain is
++0.1282 with four blocks and +0.0308 with two, and a mechanism with no architectural term
+cannot produce a fourfold difference between networks. "A capacity limit on learning
+itself" should be read as "removing the cap raises accuracy at `C = 101, T = 2` by 3 to 13
+points depending on the network", with the cause open. See "Outcome of prediction 5",
+part 2.)*
 
 ### The first genuinely uncertain regime, and the first overconfident count readout
 
@@ -1447,6 +1471,14 @@ calibration algorithm". This study's null result — that calibrator choice does
 and temperature is entirely adequate — is consistent with a published method choosing
 temperature for the uncapped case and finding it sufficient.
 
+*(Pointer added 2026-10-13. This overreaches. No calibrator was fitted to the accumulator or
+to any other unbounded readout in this study; the four calibrators were fitted to the count
+readout on N-MNIST only. The null result therefore says nothing about whether temperature
+scaling is adequate for the uncapped case, and Li, Jones & Furber's use of it is their
+finding rather than corroboration of this one. The matching dashboard claim was removed on
+2026-09-28, recorded in `LOG.md`, and the paper's Limitations give the scope under
+"Calibrators were compared on N-MNIST only".)*
+
 ### What the paper may now claim, and what it may not
 
 **May claim.** That no verified published result in this study's reference set is
@@ -1542,6 +1574,13 @@ count monotonicity — and not on an unverified cost model.
   monotone and a stopping rule on them is stable. The cap is then the price of that
   property, and it should be paid knowingly.
 
+*(Pointer added 2026-10-13. Two phrases in the first bullet are superseded. "16x" is seed 0's
+ratio; over three seeds it is 11.9× to 63.5×, mean 30.5×, as "The membrane advantage at
+`T = 2` survives, with a wide spread" records. And "should be avoided" holds only where the
+cap binds, which on N-MNIST is `T ≤ 6`: above that the cap forces no error and the count
+readout ranks better, and membrane's ranking advantage holds at `T ≤ 4` only. See "Membrane
+is NOT strictly dominant, and the recommendation narrows accordingly".)*
+
 The study's contribution here is not "use membrane" but **"the cap is a property of a
 choice, the choice has real reasons behind it, and if you make it you can compute what it
 costs you in timesteps."**
@@ -1568,6 +1607,13 @@ trend that holds on N-MNIST and fails on DVS-Gesture is a finding about where th
 mechanism applies — most likely interacting with calibration-set size or task
 difficulty — and it goes in the paper as such. It is not a failure to be hidden by
 dropping the inconvenient dataset, and any dataset that is run is reported.
+
+*(Pointer added 2026-10-13. This section records the scope as planned on 2026-09-09 and is
+superseded by what was run. The second dataset is N-Caltech101, added for the C axis, not
+DVS-Gesture; DVS-Gesture and CIFAR10-DVS are registered and not implemented. The five-`T`
+calibrator sweep was run on N-MNIST only, so no isotonic-versus-`T` trend is reported
+across datasets, and N-Caltech101 was run at `T` in {2, 6, 10} with no calibrator fitted.
+See "The C axis: N-Caltech101 at 101 classes" and "Status".)*
 
 ## Prior work
 

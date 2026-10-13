@@ -255,9 +255,10 @@ within $10^{-9}$. % saturation threshold applied in paper/make_numbers.py
 
 A cell is one combination of dataset, architecture, timestep count and seed. Across the
 \cellsUnion{} distinct count-readout cells in this study, the bound is respected in all % src: results/readout_experiment.json + caltech_experiment.json + arch_matched.json
-\cellsUnion{} and saturated in \cellsSaturated. The union draws \cellsReadout{} cells from the % src: same union
-N-MNIST readout comparison, \cellsCaltech{} from N-Caltech101 and \cellsMatched{} from the % src: same union
-matched grid. The \cellsSlack{} cells that are respected but not saturated are all $C=101$, % src: same union
+\cellsUnion{} and saturated in \cellsSaturated. The N-MNIST readout comparison contributes % src: same union
+\cellsReadout{} cells, the N-Caltech101 experiment \cellsCaltech{} and the matched grid % src: results/readout_experiment.json; results/caltech_experiment.json
+\cellsMatched; \cellsShared{} of the grid's cells are models it reuses from the other two, and % src: results/arch_matched.json; same union
+each is counted once. The \cellsSlack{} cells that are respected but not saturated are all $C=101$, % src: same union
 $T=10$, one per seed. There the bound exceeds the largest observed confidence by a mean of % src: same union (slack cells asserted C=101, T=10 in paper/make_numbers.py)
 $\slackMeanGap$. Reaching it would need one class to fire at every step while all 100 others % src: same union
 stayed silent for all ten.

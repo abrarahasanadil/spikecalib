@@ -3088,3 +3088,87 @@ opens.
   The figure costs about half a page. Sections 1–7 and Code and data end on page 9; page 10
   holds the last two lines of the Acknowledgements and the references. Nothing was cut to win
   the page back.
+
+## 2026-10-13 — The 48 cells were 36; the outstanding list from 2026-09-28 closed
+
+**Found: "48 distinct count-readout cells" counted twelve models twice.** The figure was
+15 + 9 + 24, the count-readout rows of `readout_experiment.json`, `caltech_experiment.json`
+and `arch_matched.json`. But the matched grid reuses the two-block N-MNIST and four-block
+N-Caltech101 models at `T` in {2, 6}, which the first two experiments had already measured.
+Those twelve rows are the same trained models: observed maximum, accuracy and mean confidence
+agree exactly between the artifacts, and `results/` holds 36 count-readout weight files, not
+48. `make_numbers.py` keyed each cell by the artifact it came from, so an overlap could not
+collide. The entry of 2026-09-12 ("A2") introduced the figure and called the cells distinct;
+that claim is wrong and is corrected here, not there.
+
+**The distinct count is 36: respected in 36, saturated in 33, slack in 3.** The three slack
+cells are unchanged, `C = 101, T = 10`, mean gap 1.489e-3, because none of them is in the
+grid. No conclusion moves: zero violations before, zero now. What changes is the size of the
+claim, and it was overstated by a third.
+
+**Did: corrected it everywhere it appeared.**
+- `paper/make_numbers.py` keys a cell by (dataset, architecture, `T`, seed), reading the depth
+  of the readout and C-axis rows from their run records. It asserts that a repeated cell
+  carries identical numbers, and that the distinct count equals the number of count-readout
+  weight files. New macro `\cellsShared` (12).
+- `paper/main.tex`, Section 5.1: 36 and 33 through the existing macros, and the sentence
+  listing 15, 9 and 24 now says twelve of the grid's cells are reused and counted once.
+- `README.md`: 36 of 36, 33 saturated, with the same explanation.
+- Dashboard rail, card 1 and its modal: 36 of 36, the matched grid's 24 of 24 stated
+  separately, 33 saturated and 3 slack in the modal. These are rendered from the payload by a
+  new `renderCells()`; the typed values are the fallback. Card 1 previously led with the
+  grid's 24.
+- `tests/test_provenance.py::test_count_cells_are_counted_once` recounts from the tracked
+  artifacts and checks `numbers.tex`, the README and the page against it.
+
+**Did: the seven outstanding items.**
+1. *Dashboard Limitations.* "One architecture" and "confounded with depth" are removed; the
+   matched 2×2 resolved both. One item replaces them and states what remains true: two
+   architectures whose depth and size are anti-correlated, and weighted-count and membrane
+   run on the two-block N-MNIST network only.
+2. *Dashboard prose.* The accumulator's overconfidence is no longer "a lead": the page gives
+   the N-Caltech101 values, +0.0816, +0.1843, +0.2254 with four blocks (9 of 9 runs) and
+   +0.0774, +0.2076 with two (6 of 6). The literature-sign modal says regime difference, with
+   `T = 80` and the count readout's +0.0344 at `C = 101, T = 10`. "Should be avoided" is scoped
+   to where the cap binds (N-MNIST, `T ≤ 6`) and to calibration, with the ranking advantage at
+   `T ≤ 4` only. The calibrator headline, its modal title, the rail and the hero say "on
+   N-MNIST".
+3. *Interval chart and tile.* The chart draws equal-width and equal-mass in two panels with
+   shared rows and one horizontal scale, so a run that is amber in one and not the other is
+   visible as that. Each panel counts its own straddling intervals and the note counts runs
+   resolving under both; all three are computed. Below about 170px per panel the two stack.
+   The tile shows both means, +0.0005 and −0.0008: opposite signs, which one number hid.
+   Neither follows the estimator control, and the page says so.
+4. *Presets.* N-Caltech101 at `C = 101` is added, the slider reaches 101, and at that `C` the
+   chart draws the measured maxima from `caltech_experiment.json`, with a computed note that
+   the `T = 10` ring sits below the curve.
+5. *NOTES.md.* Six dated pointers, at the passages listed on 2026-09-28. All are additions;
+   no line was edited or removed and no prediction was touched.
+6. *README.* The calibrator result under both estimators, scoped to N-MNIST, and
+   `rerun_paired_bootstrap.py` and `extract_readout_stats.py` in the reproduce block.
+7. *Card 1.* Done as part of the correction above: 36, not the 48 the item asked for.
+
+**Found: the committed `fig4-paired-difference` was not drawn in the pinned environment.**
+Its SVG metadata says Matplotlib 3.10.1; `requirements.txt` pins 3.11.1. Redrawn in the
+project environment it is 949 pixels wide, not 947, with the same content. The redrawn figure
+replaces it in `figures/` and `paper/figures/`. The other seven figures regenerated with
+byte-identical PNGs; their SVGs differ only in the embedded date and Matplotlib's random
+element ids, so they are left as committed.
+
+**Ran.**
+- `python scripts/make_figures.py`, `python scripts/export_dashboard_data.py --num-workers 0`,
+  `python paper/make_numbers.py`.
+- `docs/data.js`: byte-identical. `numbers.tex`: changed only in the cell-count macros.
+- `pytest -q`: **231 passed** (230, plus the new cell-count test).
+- Paper compiled with tectonic: 10 pages, 0 LaTeX warnings, 0 overfull or underfull boxes.
+- Dashboard under headless Chromium at 1920, 1440, 900 and 400: 0 console messages, all 8
+  modals open and close, no horizontal overflow, the timestep filter and all four presets
+  change the view, and the page's cell arithmetic re-derived from the payload gives 48 rows
+  and 36 distinct.
+
+**Outstanding, reported not fixed.**
+- The dashboard Limitations still say the class count "was fixed at 10 until this session".
+- The presets include DVS-Gesture and CIFAR-100, neither of which was run.
+- The measured-maxima note at `C = 10` still types "to within 4e-13".
+- NOTES.md's "Status" does not mention the cell count; it never stated 48, so nothing there
+  is wrong, but the correction lives only in this log, the README and the paper.

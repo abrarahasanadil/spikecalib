@@ -175,19 +175,39 @@
 
     path(c, d, "var(--accent)", 2.25);
 
-    /* measured maxima — only meaningful at the C this study used */
+    /* measured maxima — only meaningful at a C this study ran: 10 (N-MNIST) and 101
+       (N-Caltech101). At 101 the ring is the largest maximum over the three seeds, read
+       from the count-readout rows of caltech_experiment.json, and the note is computed
+       rather than typed because T = 10 is the one place the bound is not reached. */
     var measured = (D.measured || []);
+    var ring = function (T, v) {
+      el("circle", { cx: X(T), cy: Y(v), r: 5.5, fill: "none",
+        stroke: "var(--d2)", "stroke-width": 2 }, c.svg);
+    };
+    var cal = (D.caltech || []).filter(function (r) { return r.readout === "count"; });
     if (C === D.n_classes) {
-      measured.forEach(function (m) {
-        el("circle", { cx: X(m.T), cy: Y(m.observed_max), r: 5.5, fill: "none",
-          stroke: "var(--d2)", "stroke-width": 2 }, c.svg);
-      });
+      measured.forEach(function (m) { ring(m.T, m.observed_max); });
       hero.measuredNote.textContent =
         "Rings are this study's five measured maxima. They sit on the curve to within 4e-13.";
+    } else if (cal.length && C === cal[0].n_classes) {
+      var onCurve = 0, slack = [];
+      uniq(cal.map(function (r) { return +r.timesteps; })).forEach(function (T) {
+        var top = Math.max.apply(null, cal.filter(function (r) { return +r.timesteps === T; })
+          .map(function (r) { return r.max_confidence_observed; }));
+        var gap = ceilingOf(T, C) - top;
+        ring(T, top);
+        if (gap > 1e-9) slack.push("At T = " + T + " the ring sits " + gap.toExponential(1) +
+          " below the curve, respected but not reached");
+        else onCurve = Math.max(onCurve, Math.abs(gap));
+      });
+      hero.measuredNote.textContent =
+        "Rings are the N-Caltech101 maxima, the largest over three seeds at each T. " +
+        (slack.length ? slack.join(". ") + ". The others sit" : "They sit") +
+        " on the curve to within " + onCurve.toExponential(0) + ".";
     } else {
       hero.measuredNote.textContent =
         "Measured maxima are hidden: they were recorded at C = " + D.n_classes +
-        ", and C is currently " + C + ".";
+        (cal.length ? " and C = " + cal[0].n_classes : "") + ", and C is currently " + C + ".";
     }
 
     /* selected T marker */
@@ -345,6 +365,44 @@
     }
   }
 
+  /* ---------- the cell counts, rendered from the artifacts ----------
+
+     A cell is one (dataset, architecture, T, seed). The page said 48 for a while: 15 + 9 + 24
+     rows across three artifacts. But the matched grid reuses twelve models the readout and
+     C-axis experiments had already measured, so twelve cells were counted twice. The rows
+     of those two experiments do not carry their depth, so a model is recognised here by
+     dataset, T, seed and test accuracy, which a retrained network does not share. Every
+     [data-n] span keeps its typed value as the fallback if the payload is unavailable. */
+  function renderCells() {
+    var seen = {}, per = { readout: 0, caltech: 0, arch: 0 };
+    function add(src, dataset, r) {
+      if (r.readout !== "count") return;
+      per[src]++;
+      seen[[dataset, r.timesteps, r.seed, r.test_accuracy.toFixed(9)].join("|")] =
+        [r.max_confidence_observed, r.ceiling_derived];
+    }
+    (D.readout || []).forEach(function (r) { add("readout", D.dataset, r); });
+    (D.caltech || []).forEach(function (r) { add("caltech", r.dataset, r); });
+    (D.arch || []).forEach(function (r) { add("arch", r.dataset, r); });
+    var cells = Object.keys(seen).map(function (k) { return seen[k]; });
+    if (!cells.length) return;
+    var ok = cells.filter(function (c) { return c[0] <= c[1] + 1e-12; }).length;
+    var gaps = cells.map(function (c) { return c[1] - c[0]; }).filter(function (g) { return Math.abs(g) > 1e-9; });
+    var grid = (D.arch || []).filter(function (r) { return r.readout === "count"; });
+    var values = {
+      "cells-all": cells.length, "cells-ok": ok, "cells-sat": cells.length - gaps.length,
+      "cells-slack": gaps.length, "cells-readout": per.readout, "cells-caltech": per.caltech,
+      "cells-shared": per.readout + per.caltech + per.arch - cells.length,
+      "grid-all": grid.length,
+      "grid-ok": grid.filter(function (r) { return r.max_confidence_observed <= r.ceiling_derived + 1e-12; }).length,
+      "slack-gap": gaps.length ? avg(gaps).toExponential(3) : "0"
+    };
+    Array.prototype.forEach.call(document.querySelectorAll("[data-n]"), function (e) {
+      var k = e.getAttribute("data-n");
+      if (values[k] !== undefined) e.textContent = values[k];
+    });
+  }
+
   function updateHero() {
     hero.T = +hero.tEl.value;
     hero.C = +hero.cEl.value;
@@ -484,6 +542,7 @@
     var cal = rows.filter(function (r) { return r.arm !== "uncalibrated"; });
     var best = cal.length ? Math.min.apply(null, cal.map(function (r) { return num(r, col); })) : NaN;
     var iso = uniqRuns(rows).map(function (r) { return num(r, "iso_minus_temp_ece_ew"); });
+    var isoEm = uniqRuns(rows).map(function (r) { return num(r, "iso_minus_temp_ece_em"); });
     var auroc = uniqRuns(rows).map(function (r) { return num(r, "auroc_raw_test"); });
     var fmt = function (v, d) { return isFinite(v) ? v.toFixed(d === undefined ? 4 : d) : "—"; };
 
@@ -503,12 +562,16 @@
       '<p class="tiles-label">Live &mdash; follows the sweep filters below</p>' +
       tile("Uncalibrated ECE", fmt(mean(unc)), col, span, !unc.length) +
       tile("Best calibrated ECE", fmt(best), col, bestWhere || "no calibrated arm selected", !isFinite(best)) +
-      /* This one cannot follow the estimator toggle: the paired bootstrap was run on the
-         equal-width estimator only, and there is no iso_minus_temp_ece_em column in the
-         artifact to switch to. So it says which estimator it is, rather than appearing to
-         ignore the control. */
-      tile("Isotonic − temperature", (isFinite(mean(iso)) ? (mean(iso) >= 0 ? "+" : "") + fmt(mean(iso)) : "—"),
-        "iso_minus_temp_ece_ew", "positive favours temperature · equal-width only", !iso.length) +
+      /* Both estimators, side by side, whatever the estimator control says. This tile
+         used to show equal-width alone because the paired bootstrap had only been run on
+         that estimator; rerun_paired_bootstrap.py added iso_minus_temp_ece_em, and the two
+         means have opposite signs, which a single number hid. */
+      tile("Isotonic − temperature",
+        (isFinite(mean(iso)) && isFinite(mean(isoEm))
+          ? signed(mean(iso), 4) + "<small> eq-width</small> / " + signed(mean(isoEm), 4) + "<small> eq-mass</small>"
+          : "—"),
+        "iso_minus_temp_ece_ew / _em", "positive favours temperature",
+        !iso.length) +
       tile("AUROC, raw readout", fmt(mean(auroc)), "auroc_raw_test", "confidence vs correctness", !auroc.length);
   }
 
@@ -521,7 +584,20 @@
     return out;
   }
 
-  /* ---------- paired intervals ---------- */
+  /* ---------- paired intervals ----------
+
+     Two panels with shared rows and one horizontal scale: equal-width on the left,
+     equal-mass on the right. The chart used to draw the equal-width interval alone. That
+     shows two resolvable runs and cannot show the argument, which is that the runs
+     resolving under one estimator are not the runs resolving under the other. It does not
+     follow the estimator control: both are always on screen, because the comparison
+     between them is the finding. */
+  var PAIRED = [
+    { label: "equal-width", d: "iso_minus_temp_ece_ew", lo: "iso_minus_temp_ci_low",
+      hi: "iso_minus_temp_ci_high", res: "iso_minus_temp_resolvable" },
+    { label: "equal-mass", d: "iso_minus_temp_ece_em", lo: "iso_minus_temp_em_ci_low",
+      hi: "iso_minus_temp_em_ci_high", res: "iso_minus_temp_em_resolvable" }
+  ];
 
   function renderIntervals(rows) {
     var runs = uniqRuns(rows).sort(function (a, b) {
@@ -529,42 +605,78 @@
     });
     var host = document.getElementById("interval-chart");
     if (!runs.length) { host.textContent = ""; return; }
-    var rowH = 21, h = runs.length * rowH + 42;
-    var c = chart(host, 620, h, { l: 80, r: 104, t: 10, b: 26 });
+    var rowH = 21, top = 38, bottom = 40, block = runs.length * rowH + top + bottom;
+    var padL = 66, padR = 10, gap = 22;
+    /* Side by side where each panel gets room for its axis labels; one above the other
+       where it does not. At phone width two half-panels left about 100px each and the
+       tick labels ran into one another. */
+    var avail = host.clientWidth || (host.parentNode && host.parentNode.clientWidth) || 620;
+    var stacked = (avail - padL - padR - gap) / 2 < 170;
+    var c = chart(host, 620, stacked ? block * 2 : block, { l: padL, r: padR, t: top, b: bottom });
+    var pw = stacked ? c.w - padL - padR : (c.w - padL - padR - gap) / 2;
 
-    var lo = Math.min.apply(null, runs.map(function (r) { return num(r, "iso_minus_temp_ci_low"); }));
-    var hi = Math.max.apply(null, runs.map(function (r) { return num(r, "iso_minus_temp_ci_high"); }));
-    var pad = (hi - lo) * 0.12 || 0.001;
-    lo -= pad; hi += pad;
-    var X = function (v) { return c.ix(v, lo, hi); };
-
-    graticule(c, 6, runs.length);
-    el("line", { x1: X(0), y1: c.pad.t, x2: X(0), y2: h - c.pad.b,
-      stroke: "var(--ink-3)", "stroke-width": 1.5 }, c.svg);
-
-    runs.forEach(function (r, i) {
-      var y = c.pad.t + i * rowH + rowH / 2;
-      var a = num(r, "iso_minus_temp_ci_low"), b = num(r, "iso_minus_temp_ci_high");
-      var res = r.iso_minus_temp_resolvable === "True";
-      var col = res ? "var(--status)" : "var(--d1)";
-      el("line", { x1: X(a), y1: y, x2: X(b), y2: y, stroke: col, "stroke-width": 2.5,
-        "stroke-linecap": "round", opacity: res ? 1 : 0.75 }, c.svg);
-      el("circle", { cx: X(num(r, "iso_minus_temp_ece_ew")), cy: y, r: 3.2, fill: col }, c.svg);
-      axisText(c, c.pad.l - 8, y + 3.5, "T=" + r.timesteps + "  s" + r.seed, "end");
-      if (res) {
-        var t = axisText(c, X(b) + 8, y + 3.5, b < 0 ? "isotonic" : "temperature", "start", 9.5);
-        t.setAttribute("fill", "var(--status)");
-      }
+    /* One scale for both panels, always containing zero, so an interval's distance from
+       zero means the same thing in either. */
+    var lo = 0, hi = 0;
+    runs.forEach(function (r) {
+      PAIRED.forEach(function (p) {
+        lo = Math.min(lo, num(r, p.lo)); hi = Math.max(hi, num(r, p.hi));
+      });
     });
-    for (var k = 0; k <= 4; k++) {
-      var v = lo + (hi - lo) * k / 4;
-      axisText(c, X(v), h - c.pad.b + 15, v.toFixed(4));
-    }
-    c.svg.setAttribute("aria-label", "Paired bootstrap intervals for the isotonic minus temperature ECE difference, " + runs.length + " runs.");
+    var pad = (hi - lo) * 0.08 || 0.001;
+    lo -= pad; hi += pad;
+
+    var counts = PAIRED.map(function (p, k) {
+      var x0 = padL + (stacked ? 0 : k * (pw + gap)), x1 = x0 + pw;
+      var oy = stacked ? k * block : 0, y0 = oy + top, y1 = oy + block - bottom;
+      var X = function (v) { return x0 + (v - lo) / (hi - lo) * pw; };
+      graticule({ svg: c.svg, w: c.w, h: c.h, pad: { l: x0, r: c.w - x1, t: y0, b: c.h - y1 } }, 4, runs.length);
+      el("line", { x1: X(0), y1: y0, x2: X(0), y2: y1,
+        stroke: "var(--ink-3)", "stroke-width": 1.5 }, c.svg);
+
+      var resolved = 0;
+      runs.forEach(function (r, i) {
+        var y = y0 + i * rowH + rowH / 2;
+        var a = num(r, p.lo), b = num(r, p.hi), d = num(r, p.d);
+        var res = r[p.res] === "True";
+        var col = res ? "var(--status)" : "var(--d1)";
+        if (res) resolved++;
+        /* the rows are shared, so they are labelled once unless the panels are stacked */
+        if (stacked || k === 0) axisText(c, padL - 8, y + 3.5, "T=" + r.timesteps + "  s" + r.seed, "end");
+        el("line", { x1: X(a), y1: y, x2: X(b), y2: y, stroke: col, "stroke-width": 2.5,
+          "stroke-linecap": "round", opacity: res ? 1 : 0.75 }, c.svg);
+        el("circle", { cx: X(d), cy: y, r: 3.2, fill: col }, c.svg);
+        /* the whole row is the hover target, not the 2.5px stroke */
+        var hit = el("rect", { x: x0, y: y - rowH / 2, width: pw, height: rowH, fill: "transparent" }, c.svg);
+        el("title", {}, hit).textContent = "T = " + r.timesteps + ", seed " + r.seed + ", " + p.label +
+          ": " + signed(d, 4) + "  [" + signed(a, 4) + ", " + signed(b, 4) + "]" +
+          (res ? "  excludes zero, favours " + (b < 0 ? "isotonic" : "temperature") : "");
+      });
+
+      var head = el("text", { x: x0, y: oy + 14, "text-anchor": "start", fill: "var(--ink-2)",
+        "font-size": 11.5, "font-family": "var(--sans)", "font-weight": 600 }, c.svg);
+      head.textContent = p.label;
+      axisText(c, x0, oy + 28, (runs.length - resolved) + " of " + runs.length + " straddle zero", "start");
+
+      axisText(c, x0, y1 + 15, fmt(lo, 4), "start");
+      axisText(c, x1, y1 + 15, fmt(hi, 4), "end");
+      if (X(0) - x0 > 62 && x1 - X(0) > 62) axisText(c, X(0), y1 + 15, "0");
+      /* Direction is the side of zero, said once on the axis. A tag beside each amber
+         interval collided with the zero line once the panels were half the width. */
+      axisText(c, x0, y1 + 30, "\u2190 isotonic", "start");
+      axisText(c, x1, y1 + 30, "temperature \u2192", "end");
+      return resolved;
+    });
+
+    var both = runs.filter(function (r) {
+      return PAIRED.every(function (p) { return r[p.res] === "True"; });
+    }).length;
+    c.svg.setAttribute("aria-label", "Paired bootstrap intervals for the isotonic minus temperature " +
+      "ECE difference, " + runs.length + " runs, under equal-width and equal-mass binning. " +
+      counts[0] + " exclude zero under equal-width, " + counts[1] + " under equal-mass, " + both + " under both.");
     document.getElementById("interval-count").textContent =
-      runs.length + " run" + (runs.length === 1 ? "" : "s") + " shown; " +
-      runs.filter(function (r) { return r.iso_minus_temp_resolvable === "True"; }).length +
-      " with an interval excluding zero.";
+      runs.length + " run" + (runs.length === 1 ? "" : "s") + " shown. Intervals excluding zero: " +
+      counts[0] + " under equal-width, " + counts[1] + " under equal-mass, " + both + " under both.";
   }
 
   /* ---------- reliability ---------- */
@@ -1039,7 +1151,7 @@
 
   wireModals();
   [updateHero, renderReadoutTable, renderSelectiveTable, renderQuantisation,
-   renderCaxis, renderConditional, renderArch, renderUpdated, renderCardFigures,
+   renderCaxis, renderConditional, renderArch, renderUpdated, renderCardFigures, renderCells,
    render].forEach(function (fn) {
     try { fn(); } catch (err) { console.error("spikecalib: " + fn.name + " failed", err); }
   });

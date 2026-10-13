@@ -40,10 +40,10 @@
 \newcommand{\paramsNmFour}{375{,}060}% results/arch_matched.json n_parameters
 \newcommand{\paramsNcTwo}{2{,}749{,}130}% results/arch_matched.json n_parameters
 \newcommand{\paramsNcFour}{464{,}074}% results/arch_matched.json n_parameters
-\newcommand{\cellsUnion}{48}% results/readout_experiment.json + caltech_experiment.json + arch_matched.json (count readout)
-\newcommand{\cellsSaturated}{45}% results/readout_experiment.json + caltech_experiment.json + arch_matched.json (count readout) |max - ceiling| < 1e-9
-\newcommand{\cellsSlack}{3}% results/readout_experiment.json + caltech_experiment.json + arch_matched.json (count readout)
-\newcommand{\slackMeanGap}{1.489\times 10^{-3}}% results/readout_experiment.json + caltech_experiment.json + arch_matched.json (count readout)
+\newcommand{\cellsUnion}{36}% results/readout_experiment.json + caltech_experiment.json + arch_matched.json (count readout, distinct cells)
+\newcommand{\cellsSaturated}{33}% results/readout_experiment.json + caltech_experiment.json + arch_matched.json (count readout, distinct cells) |max - ceiling| < 1e-9
+\newcommand{\cellsSlack}{3}% results/readout_experiment.json + caltech_experiment.json + arch_matched.json (count readout, distinct cells)
+\newcommand{\slackMeanGap}{1.489\times 10^{-3}}% results/readout_experiment.json + caltech_experiment.json + arch_matched.json (count readout, distinct cells)
 \newcommand{\cellsMatched}{24}% results/arch_matched.json (count readout)
 \newcommand{\matchedMaxDev}{3.83\times 10^{-13}}% results/arch_matched.json
 \newcommand{\shareTenTwo}{99.2}% results/conditional_ceiling.json share_explained_theoretical, mean of seeds
@@ -201,8 +201,9 @@
 \newcommand{\resMEightZeroHi}{$-$0.0003}% results/sweep_nmnist.csv interval
 \newcommand{\isoMinusTempTwoW}{$+$0.0024}% results/sweep_nmnist.csv
 \newcommand{\isoMinusTempTwoM}{$+$0.0007}% results/sweep_nmnist.csv
-\newcommand{\cellsReadout}{15}% results/readout_experiment.json + caltech_experiment.json + arch_matched.json (count readout)
-\newcommand{\cellsCaltech}{9}% results/readout_experiment.json + caltech_experiment.json + arch_matched.json (count readout)
+\newcommand{\cellsReadout}{15}% results/readout_experiment.json (count readout)
+\newcommand{\cellsCaltech}{9}% results/caltech_experiment.json (count readout)
+\newcommand{\cellsShared}{12}% results/readout_experiment.json + caltech_experiment.json + arch_matched.json (count readout, distinct cells), rows of arch_matched.json that repeat a cell of the other two
 \newcommand{\expectedFalse}{0.75}% [DERIVED] run count in results/sweep_nmnist.csv x 0.05
 \newcommand{\nSeeds}{3}% results/sweep_nmnist.csv seed
 \newcommand{\splitFingerprint}{e524beccace851af}% results/sweep_nmnist.csv split_fingerprint, seed 0

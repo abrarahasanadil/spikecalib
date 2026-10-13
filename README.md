@@ -10,19 +10,21 @@ A preprint describing this work is in preparation.
 at `T = 2` with 10 classes, 0.0688 with 101. This is arithmetic, not an empirical trend, and
 it holds. **Respected and saturated are different claims and both are reported.**
 
-- *Respected* — the observed maximum never exceeds the bound: **48 of 48** distinct
-  count-readout cells, the union of `readout_experiment.json` (15), `caltech_experiment.json`
-  (9) and `arch_matched.json` (24), across two datasets, two architectures, five timestep
-  settings and both class counts. Zero violations.
-- *Saturated* — the observed maximum reaches the bound to within `1e-9`: **45 of those 48**.
+- *Respected* — the observed maximum never exceeds the bound: **36 of 36** distinct
+  count-readout cells, a cell being one dataset, architecture, `T` and seed.
+  `readout_experiment.json` holds 15, `caltech_experiment.json` 9 and `arch_matched.json` 24;
+  12 of the grid's 24 are models it reuses from the other two, and each is counted once.
+  They span two datasets, two architectures, five timestep settings and both class counts.
+  Zero violations.
+- *Saturated* — the observed maximum reaches the bound to within `1e-9`: **33 of those 36**.
 - The **3 that are respected but slack** are `C = 101, T = 10`, one per seed, sitting a mean
   of `1.489e-3` below the bound (2.347e-3, 1.269e-3, 8.496e-4). Reaching it there would need
   one class firing at every step while **all 100 others stayed silent for all 10**, which is
   a statement about tightness, not validity.
 
-The dashboard's card 1 reports **24**, which is the matched 2×2 grid in `arch_matched.json`
-alone — the subset where architecture is controlled. Both numbers are correct for what they
-count; each says which.
+The dashboard's card 1 reports the same **36 of 36**, and states separately that **24** of
+them form the matched 2×2 grid in `arch_matched.json`, the subset where architecture is
+controlled.
 
 **Where the bound binds it accounts for almost all of the miscalibration, and where it does
 not bind it accounts for none.** The gap between accuracy and the ceiling is 99.2% of
@@ -41,6 +43,20 @@ accumulating readout saturating towards 1, and Chen, Park & Simeone report overc
 published result is constrained by the cap, because the conversion work uses a real-valued
 readout. Which direction a paper reports is predicted by its readout and its timestep count
 rather than by anything about spiking networks.
+
+**On N-MNIST, which post-hoc calibrator is used does not matter.** Calibration removes
+almost all of the error the cap forces. `[MEASURED]` mean ECE at `T = 2` falls from 0.5386
+to 0.0018 with temperature scaling and 0.0042 with top-label isotonic regression under
+equal-width binning, and from 0.5386 to 0.0008 and 0.0015 under equal-mass. The paired 95%
+bootstrap interval on isotonic minus temperature straddles zero in **13 of 15** runs under
+equal-width and **12 of 15** under equal-mass, and the runs that resolve are disjoint: two
+under equal-width (`T = 2` seed 1 favouring temperature, `T = 6` seed 0 favouring
+isotonic), three under equal-mass (`T = 4` seeds 1 and 2 and `T = 8` seed 0, all favouring
+isotonic), and none under both. A real difference between the calibrators would be found by
+both estimators in the same run. The hypothesis the study began with, that isotonic's
+advantage grows as `T` falls, is not supported: at `T = 2` temperature is ahead. No
+calibrator was fitted on N-Caltech101, so this is a ten-class result at about 0.99 accuracy
+with a 5,000-sample calibration set.
 
 ## The readout taxonomy
 
@@ -83,7 +99,7 @@ Python 3.13 on Apple silicon (MPS). Every pinned version is in `requirements.txt
 ```sh
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python -m pytest tests/ -q          # 230 tests
+python -m pytest tests/ -q          # 231 tests
 ```
 
 Verify the environment. This runs a real forward pass through a SpikingJelly `LIFNode` on
@@ -111,13 +127,22 @@ python scripts/quantisation_test.py                         # is coarseness the 
 python scripts/caltech_experiment.py --epochs 50            # the C axis, 101 classes
 python scripts/conditional_ceiling.py                       # ceiling given real competitors
 python scripts/arch_matched.py --epochs 50                  # both depths, both datasets
+python scripts/rerun_paired_bootstrap.py --num-workers 0    # equal-mass paired bootstrap
 ```
 
-Then regenerate the figures and the dashboard payload:
+`rerun_paired_bootstrap.py` trains nothing: it reuses the sweep's weights and adds the
+equal-mass columns to the sweep CSV. It runs single-process because six DataLoader workers
+deadlock it on Apple silicon.
+
+Then regenerate the figures, the dashboard payload and the paper's numbers.
+`extract_readout_stats.py` comes first: it writes `results/readout_stats.json`, the
+observed maximum confidence at each `T`, which the figures and the dashboard payload read.
 
 ```sh
+python scripts/extract_readout_stats.py
 python scripts/make_figures.py
-python scripts/export_dashboard_data.py
+python scripts/export_dashboard_data.py --num-workers 0
+python paper/make_numbers.py
 ```
 
 Training runs need an MPS device; everything else is CPU and deterministic. Splits are

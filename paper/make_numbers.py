@@ -126,18 +126,48 @@ for ds, key in (("nmnist", "Nm"), ("ncaltech101", "Nc")):
         put(f"params{key}{bk}", thousands(int(r["n_parameters"])), "results/arch_matched.json n_parameters")
 
 # ------------------------------------------------------------------ 5.1 the bound holds
+# A cell is one (dataset, architecture, T, seed). The three artifacts overlap: the matched
+# grid reuses the two-block N-MNIST and four-block N-Caltech101 models at T in {2, 6} that the
+# readout and C-axis experiments already measured. Keying each row by its artifact counted
+# those models twice (15 + 9 + 24 = 48); keying by the cell counts each once. The depth of
+# the readout and C-axis rows is read from the run record, which those rows do not carry.
+def n_blocks(stem: str) -> int:
+    return len(load(f"{stem}_record.json")["model_config"]["channels"])
+
+
 cells = {}
+per_artifact = {"readout": 0, "caltech": 0, "arch": 0}
+shared = 0
+
+
+def add_cell(artifact, dataset, blocks, r, n_classes):
+    global shared
+    key = (dataset, blocks, r["timesteps"], r["seed"])
+    val = (r["max_confidence_observed"], r["ceiling_derived"], n_classes, r["timesteps"])
+    per_artifact[artifact] += 1
+    if key in cells:
+        # the same trained model measured in two experiments must give the same numbers
+        assert cells[key] == val, (key, cells[key], val)
+        shared += 1
+    cells[key] = val
+
+
 for r in load("readout_experiment.json")["rows"]:
     if r["readout"] == "count":
-        cells[("readout", r["timesteps"], r["seed"])] = (r["max_confidence_observed"], r["ceiling_derived"], 101 if False else 10, r["timesteps"])
+        add_cell("readout", "nmnist", n_blocks(f"nmnist_T{r['timesteps']}_seed{r['seed']}"), r, 10)
 for r in load("caltech_experiment.json")["rows"]:
     if r["readout"] == "count":
-        cells[("caltech", r["timesteps"], r["seed"])] = (r["max_confidence_observed"], r["ceiling_derived"], 101, r["timesteps"])
+        add_cell("caltech", "ncaltech101",
+                 n_blocks(f"ncaltech101_T{r['timesteps']}_seed{r['seed']}"), r, r["n_classes"])
 for r in arch:
     if r["readout"] == "count":
-        cells[("arch", r["dataset"], r["n_blocks"], r["timesteps"], r["seed"])] = (
-            r["max_confidence_observed"], r["ceiling_derived"], r["n_classes"], r["timesteps"])
-src_union = "results/readout_experiment.json + caltech_experiment.json + arch_matched.json (count readout)"
+        add_cell("arch", r["dataset"], r["n_blocks"], r, r["n_classes"])
+assert len(cells) == sum(per_artifact.values()) - shared
+# every distinct cell is a count-readout model on disk, and there are no others
+n_count_weights = sum(1 for p in glob.glob(os.path.join(R, "*_weights.pt"))
+                      if not any(t in os.path.basename(p) for t in ("membrane", "weighted-count", "accumulator")))
+assert n_count_weights in (0, len(cells)), (n_count_weights, len(cells))  # 0: weights absent in a clone
+src_union = "results/readout_experiment.json + caltech_experiment.json + arch_matched.json (count readout, distinct cells)"
 violations = sum(1 for o, c, *_ in cells.values() if o > c + 1e-12)
 assert violations == 0
 slack = [(c - o, C, T) for o, c, C, T in cells.values() if abs(c - o) > 1e-9]
@@ -276,8 +306,9 @@ for k in ew | em:
 put("isoMinusTempTwoW", f(smean(2, "isotonic-top-label", "ece_equal_width") - smean(2, "temperature", "ece_equal_width"), sign=True), "results/sweep_nmnist.csv")
 put("isoMinusTempTwoM", f(smean(2, "isotonic-top-label", "ece_equal_mass") - smean(2, "temperature", "ece_equal_mass"), sign=True), "results/sweep_nmnist.csv")
 
-put("cellsReadout", str(sum(1 for k in cells if k[0] == "readout")), src_union)
-put("cellsCaltech", str(sum(1 for k in cells if k[0] == "caltech")), src_union)
+put("cellsReadout", str(per_artifact["readout"]), "results/readout_experiment.json (count readout)")
+put("cellsCaltech", str(per_artifact["caltech"]), "results/caltech_experiment.json (count readout)")
+put("cellsShared", str(shared), src_union + ", rows of arch_matched.json that repeat a cell of the other two")
 put("expectedFalse", f"{len(runs) * 0.05:.2f}", "[DERIVED] run count in results/sweep_nmnist.csv x 0.05")
 put("nSeeds", str(len({r['seed'] for r in sweep})), "results/sweep_nmnist.csv seed")
 fp0 = {r["split_fingerprint"] for r in sweep if r["seed"] == "0"}
