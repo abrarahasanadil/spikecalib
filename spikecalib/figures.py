@@ -54,6 +54,7 @@ __all__ = [
     "figure_energy",
     "figure_risk_coverage",
     "figure_quantisation",
+    "figure_fusion",
     "load_quantisation",
     "ALL_FIGURES",
 ]
@@ -532,6 +533,48 @@ def figure_quantisation(rows, stats, out_dir, quantisation_path=None):
     return save(fig, out_dir, "fig8-quantisation")
 
 
+def figure_fusion(rows, stats, out_dir, fusion_path=None):
+    """What per-modality calibration buys the product rule, against T, for two readouts.
+
+    ``delta`` is the accuracy of the product rule after per-modality temperature scaling
+    minus its accuracy on the raw outputs. Each seed is drawn with its 95% bootstrap
+    interval, and the seed means are joined. The open markers are not a fit: they are the
+    value the proposition gives for the part of ``delta`` that comes from inputs on which
+    both readouts saturate, ``0.5 P(S) (a_A,S - a_B,S)``, computed from the same runs.
+    """
+    plt = _style()
+    with open(fusion_path) as fh:
+        fusion = json.load(fh)
+    series = (("count", PALETTE["blue"], "count readout", -0.18),
+              ("accumulator", PALETTE["orange"], "accumulator", 0.18))
+    fig, ax = plt.subplots(figsize=(5.6, 3.5))
+    ax.axhline(0.0, color=INK_SOFT, lw=1.0, zorder=1)
+    for readout, colour, label, shift in series:
+        by_t = defaultdict(list)
+        for r in fusion["rows"]:
+            if r["readout"] == readout:
+                by_t[int(r["timesteps"])].append(r)
+        ts = sorted(by_t)
+        means = [float(np.mean([r["delta"] for r in by_t[t]])) for t in ts]
+        ax.plot([t + shift for t in ts], means, "-", color=colour, lw=1.6, zorder=2, label=label)
+        for t in ts:
+            cell = sorted(by_t[t], key=lambda r: r["seed"])
+            for k, r in enumerate(cell):
+                x = t + shift + (k - (len(cell) - 1) / 2) * 0.13
+                ax.plot([x, x], r["delta_ci"], color=colour, lw=1.6, solid_capstyle="round", zorder=3)
+                ax.plot([x], [r["delta"]], "o", color=colour, mec=SURFACE, mew=1.2, ms=5, zorder=4)
+        if readout == "count":
+            predicted = [float(np.mean([r["predicted_on_s"] for r in by_t[t]])) for t in ts]
+            ax.plot([t + shift for t in ts], predicted, "D", mfc=SURFACE, mec=INK, mew=1.1, ms=5.5,
+                    zorder=5, ls="none", label="proposition, on-$S$ part (count)")
+    ax.set_xticks(sorted({int(r["timesteps"]) for r in fusion["rows"]}))
+    ax.set_xlabel("timesteps $T$")
+    ax.set_ylabel("accuracy gained by calibrating\neach modality before fusion")
+    ax.legend(loc="upper right", fontsize=8.5)
+    ax.grid(axis="x", visible=False)
+    return save(fig, out_dir, "fig9-fusion")
+
+
 ALL_FIGURES = (
     figure_ceiling,
     figure_loss_floor,
@@ -541,4 +584,5 @@ ALL_FIGURES = (
     figure_energy,
     figure_risk_coverage,
     figure_quantisation,
+    figure_fusion,
 )

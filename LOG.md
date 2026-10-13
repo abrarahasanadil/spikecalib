@@ -3393,3 +3393,125 @@ run.
 
 **Not done yet.** No dropout rate chosen, no model run on a dropped-out input, no fused
 prediction computed.
+
+## 2026-10-14 — Fusion: predictions 12 and 13 held, 14 and 15 falsified; the section is in the paper
+
+**Why.** The proposition of the previous entry needed a measurement, and the paper needed to
+say what the cap costs when two capped readouts are combined.
+
+**The dropout rate was fixed first.** `scripts/fusion_experiment.py --select-rate`, on the
+calibration split with the seed-0 count model at `T = 2`, chose `r = 0.50`: calibration
+accuracy 0.9838 clean, 0.8800 with half of all events removed, the grid value closest to a
+ten-point drop. It was written to `results/fusion_dropout_rate.json` and committed (1ee4d58)
+before any fused prediction was computed. The main run reads the rate from that file.
+
+**Result.** `[MEASURED]` `results/fusion_experiment.json`, 24 runs, 20 pairings each, no
+training.
+
+| | outcome | measured |
+|---|---|---|
+| 12 | **held** | count, `T = 2`: `delta` +0.0064, +0.0033, +0.0032; interval lower ends +0.0058, +0.0028, +0.0026 |
+| 13 | **held** | corrected identity inside the on-`S` interval in 3 of 3 seeds; the drafted expression in 0 of 3 |
+| 14 | **falsified** | mean `delta` +0.00429, +0.00007, +0.00001, −0.00001, +0.00001 at `T` = 2, 4, 6, 8, 10; the value at 10 is not below the value at 6; no interval excludes zero at 8 or 10 |
+| 15 | **falsified** | one accumulator run of nine excludes zero: `T = 2`, seed 2, −0.00016 [−0.00026, −0.00005] |
+
+Fused accuracy at `T = 2`, three-seed mean: raw product rule 0.9911, product rule after
+per-modality temperature scaling 0.9954, reliability-weighted vote 0.9850; the modalities
+alone 0.9850 and 0.9142. ECE of the fused confidence, equal-width / equal-mass: 0.1801 /
+0.1801 raw, 0.0027 / 0.0015 calibrated.
+
+**What it means, stated at its size.** The identity is confirmed. The cost is real at `T = 2`
+and small in absolute terms, 0.43 points, because both modalities are accurate on N-MNIST; it
+is 48% of the fused errors. From `T = 4` there is nothing measurable. `P(S)` is still 0.50 at
+`T = 4`, but two saturated modalities disagree on 0.03% of pairs there against 0.81% at
+`T = 2`. The effect needs saturation and disagreement together.
+
+**Prediction 14 failed on a clause that was badly written.** It required a strict ordering of
+means, and the means at `T = 6` and `T = 10` are exactly equal, a net 6 pairs in 600,000 each.
+Every interval from `T = 4` on includes zero, so the ordering was being asked of noise. The
+prediction is reported as falsified and is not reworded. *Lesson:* a prediction about a
+quantity expected to reach zero should say "interval includes zero", not "is smaller than the
+last one".
+
+**Prediction 15 failed by one run in nine, in the direction against calibration.** With nine
+95% intervals one exclusion is unremarkable, and the prediction allowed none. Reported as
+falsified. No accumulator run shows `delta` above +0.00004.
+
+**Found, not predicted.**
+- Reliability-weighted voting with two voters is modality A alone, and is 0.0061 *below* the
+  raw product rule at `T = 2`. Part (b) compares rules on `S` only. The paper says this in
+  the section itself, so the proposition is not read as "voting beats the product rule".
+- Temperature scaling gave the event-dropped modality the larger scale in 9 of 9 count runs
+  at `T ≥ 6`. Dropping events lowers the counts, and the fitted temperature compensates. So
+  "calibrate each modality" and "weight the more accurate modality more" are not the same
+  thing under this degradation. At `T = 2` the clean modality got the larger scale in 3 of 3.
+
+**Decisions taken overnight, with reasons.**
+
+1. *The section goes into `main.tex`.* The instruction was to hold it out if prediction 12 was
+   falsified or the posting date was threatened. Prediction 12 held and the date is 17 days
+   off. The section is a separate file, `paper/fusion_section.tex`, pulled in by one
+   `\input` line before Limitations, so it can be removed by deleting that line, the four
+   table rows for predictions 12 to 15, one contribution, one abstract sentence, one
+   limitation and one sentence of the conclusion.
+2. *The paper is now 16 pages, and the brief asked for roughly 10 to 12.* It was 13 before
+   this section, at ten-point type. The section, its table and its figure add about two and a
+   half pages. Nothing else was cut to make room, because what to cut is the author's call.
+   Candidates, in order of least loss: the fusion table's `T ≥ 4` rows (they are all zero and
+   the figure shows them); the second "What follows" paragraph on population codes; Table 5.
+3. *Wording on Zhang et al. and Cao et al.* The brief's phrase was that their assumption
+   "fails by construction". Their theorems concern the whole input distribution, and the
+   weights of both methods are not the maximum softmax probability: one uses an energy score,
+   the other predicts weights from features. So the paper says less: a weight computed from a
+   modality's output is constant on `S`; a constant has zero covariance with loss; restricted
+   to `S` the first paper's condition holds only with equality and the second's strict
+   condition does not hold; their theorems are not contradicted; feature-based weights are
+   not affected. *Reason:* the stronger sentence could not be supported from the primary
+   documents, and the methods were not run.
+4. *Wording on Ma et al.* Their paragraph is about a nonlinearity for a population code of a
+   continuous variable. The paper quotes nine words of it, says the setting differs, and says
+   the identity names a case where saturation is not cheap for a count readout. Nothing about
+   perception or behaviour is claimed, and the paper says so.
+5. *Nitzan and Paroush (1982) and Chair and Varshney (1986) could not be opened.* Each is
+   cited for one thing a verified source states: the first as the independent discovery
+   Shapley and Grofman credit in their note 8, the second for a phrase quoted from its
+   abstract. `SOURCES.md` and comments in `refs.bib` record that they were not read.
+   Genest and Zidek (1986) could not be opened and is not cited.
+6. *Two prior statements were added that the brief did not list.* Ju, Bibaut and van der Laan
+   (2018) say that when all models are over-confident the unweighted average "is identical to
+   the majority vote", the closest prior statement of part (a). Kumar, Ma, Liang and
+   Raghunathan (2022), Proposition 4.1, is the closest to part (c). Both are cited where the
+   corollary is stated. *Reason:* a corollary presented without its nearest neighbours reads
+   as a claim of novelty.
+7. *The exchange argument of part (a) was not found in print.* It is elementary and is tagged
+   `[DERIVED]` without a claim that it is new.
+8. *"Shapley and Grofman" is cited for the two-alternative case only*, which is what their
+   Theorem II covers; the multiclass weight is cited to Kuncheva and Rodríguez and to Li and
+   Yu, whose Corollary 9 has it exactly and requires balanced classes.
+9. *Part (d) of the proposition is not in the fusion section.* The count of distinct
+   confidences is already in Section 3. The count of distinct probability vectors, 58,025,
+   has no use in the argument and was left to `NOTES.md` and the tests.
+10. *The title was not changed and the Acknowledgements were not touched.*
+
+**Did.** `paper/fusion_section.tex`; one contribution, one abstract sentence, four rows in the
+predictions table, one limitation and one sentence of the conclusion in `paper/main.tex`;
+the abstract now counts all eleven predictions, five held and six falsified. 14 references
+added to `refs.bib`, each recorded in `SOURCES.md`. `figure_fusion` draws
+`fig9-fusion`. The dashboard has a "Fusing two capped readouts" band rendered from
+`data.js`; checked in headless Chromium at 1920, 1440, 900 and 400 wide, no console output,
+no page overflow. `README.md` has the result and the two reproduce steps. Three tests
+re-derive the four verdicts and the identity from the rows and check that `NOTES.md` words
+each verdict as the artifact has it.
+
+**Verified.** `pytest -q`: 414 passed. `tectonic`: 0 warnings, 16 pages. `make_numbers.py`:
+541 macros, with assertions on every claim the fusion paragraphs make about which runs are
+exceptions. No tracked file names local tooling.
+
+**Outstanding, for the author.**
+- Page count, item 2 above.
+- Ten-point type, from the previous entry, still unconfirmed.
+- The Acknowledgements say two citations "were withdrawn because no primary document
+  supported them". Both papers were found on 2026-10-13 and are in `SOURCES.md`. The
+  sentence is unchanged because the instruction was to leave the disclosure word for word.
+- Three title options are in the morning report; none is applied.
+- Tier 2 was not run.

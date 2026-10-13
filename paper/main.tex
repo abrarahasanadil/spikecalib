@@ -4,6 +4,7 @@
 \usepackage{lmodern}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
+\usepackage{array}
 \usepackage{graphicx}
 \usepackage[numbers,sort&compress]{natbib}
 \setlength{\bibsep}{2pt}
@@ -45,8 +46,11 @@ on N-Caltech101 wherever the cap binds.
 A count readout emits at most $\binom{T+C-1}{C-1}$ distinct confidences at any scale, yet on
 N-MNIST its few values resolve correct from incorrect predictions as well as an unbounded
 readout's.
-Of \predictionsNew{} predictions recorded before these experiments, \predictionsHeld{} held and % src: NOTES.md; results/*_experiment.json verdict blocks
-\predictionsFalsified{} were falsified. % src: NOTES.md; results/*_experiment.json verdict blocks
+When two capped readouts are fused, known decision-fusion theory implies that the product rule
+cannot weight them where both saturate; at $T=2$ calibrating each first removes \fuTwoErrCut\% % src: results/fusion_experiment.json
+of the fused errors, \fuTwoDeltaPoints{} points of accuracy, and from $T=4$ nothing measurable. % src: results/fusion_experiment.json
+Of \predictionsAll{} predictions recorded before these experiments, \predictionsAllHeld{} held and % src: NOTES.md; results/*_experiment.json verdict blocks
+\predictionsAllFalsified{} were falsified. % src: NOTES.md; results/*_experiment.json verdict blocks
 \end{abstract}
 
 % =========================================================================================
@@ -74,7 +78,7 @@ out-of-distribution work derived for normalised and clipped logits, with the num
 timesteps in the place of the logit scale (Section~\ref{sec:related}). What has not been done is
 to read a spike count as a bounded logit and measure the consequences.
 
-The contributions are five.
+The contributions are six.
 \begin{enumerate}
 \item A measurement. The known bound, restated for a spike-count readout as
   $e^{T}/(e^{T}+C-1)$, is respected in all \cellsUnion{} count-readout configurations measured, % src: results/readout_experiment.json + caltech_experiment.json + arch_matched.json
@@ -93,9 +97,13 @@ The contributions are five.
   at any logit scale; temperature scaling cannot change its resolution and isotonic regression
   cannot raise it; and, against a recorded prediction, so few values do not resolve worse than
   an unbounded readout's (Sections~\ref{sec:bound} and~\ref{sec:resolution}).
+\item A consequence for fusion, as a corollary of known decision-fusion theory. Where two count
+  readouts both saturate, the product rule reduces to an unweighted vote, and calibrating each
+  modality restores the weighting. The measured cost is confined to $T=2$
+  (Section~\ref{sec:fusion}).
 \end{enumerate}
-The last three rest on \predictionsNew{} predictions recorded before the experiments that test % src: NOTES.md
-them; \predictionsFalsified{} were falsified, and each is reported as such % src: results/*_experiment.json verdict blocks
+The last four rest on \predictionsAll{} predictions recorded before the experiments that test % src: NOTES.md
+them; \predictionsAllFalsified{} were falsified, and each is reported as such % src: results/*_experiment.json verdict blocks
 (Table~\ref{tab:predictions}).
 Code, result artifacts and an interactive view of every number are available at
 \url{https://github.com/abrarahasanadil/spikecalib}.
@@ -521,10 +529,10 @@ N-Caltech101 & 6 & \scaleMinScNcSix--\scaleMaxScNcSix & \sminMinScNcSix--\sminMa
 \centering
 \caption{Predictions recorded before the corresponding runs, with the condition each had to
 meet and what was measured. Gaps are mean confidence minus accuracy; ``tie'' and ``differ''
-follow the rule of Section~\ref{sec:method}.}
+follow the rule of Section~\ref{sec:method}; $\delta$ is defined in Section~\ref{sec:fusion}.}
 \label{tab:predictions}
 \small
-\begin{tabular}{lp{0.47\linewidth}p{0.25\linewidth}l}
+\begin{tabular}{l>{\raggedright\arraybackslash}p{0.47\linewidth}>{\raggedright\arraybackslash}p{0.25\linewidth}l}
 \toprule
  & prediction & measured & outcome \\
 \midrule
@@ -535,6 +543,11 @@ follow the rule of Section~\ref{sec:method}.}
 9 & N-MNIST, $T=2$: count resolution below the accumulator's in all \nineTotal{} comparisons & below in \nineBelow{} & \verdictNine \\ % src: results/resolution_experiment.json
 10 & N-Caltech101: calibrators tie in at least 7 of 9 count runs & tie in \ncTies{} & \verdictTen \\ % threshold: NOTES.md prediction 10; src: results/caltech_calibrators.json
 11 & N-MNIST, $T=2$, 100 calibration samples: temperature better in at least 10 of \csDraws{} draws for 2 of 3 seeds; ties at 1,000 and 5,000 & at most \csTempWinsMaxHundred{} of \csDraws{} in any seed; ties at both & \verdictEleven \\ % thresholds and sizes: NOTES.md prediction 11; src: results/calibration_size_experiment.json
+\midrule
+12 & Fusion, count, $T=2$: $\delta>0$ with its interval excluding zero in every seed & lower ends \fuTwoCiLowMin{} to \fuTwoCiLowMax & \verdictTwelve \\ % src: results/fusion_experiment.json predictions.12
+13 & Fusion, count, $T=2$: Eq.~\eqref{eq:fusioncost} inside the interval of the on-$S$ part of $\delta$ in every seed & inside in \fuThirteenWithin{} of 3 & \verdictThirteen \\ % src: results/fusion_experiment.json predictions.13
+14 & Fusion, count: mean $\delta$ falls over $T=2,4,6$, is lower at 8 and 10, and its interval includes zero at 8 and 10 & equal at $T=6$ and 10; \fuHighTExcl{} intervals exclude zero & \verdictFourteen \\ % src: results/fusion_experiment.json predictions.14
+15 & Fusion, accumulator: the interval on $\delta$ includes zero in all \fuAccumRuns{} runs & \fuAccumExcl{} excludes zero & \verdictFifteen \\ % src: results/fusion_experiment.json predictions.15
 \bottomrule
 \end{tabular}
 \end{table}
@@ -738,6 +751,8 @@ the input alone. Risk-coverage curves in this study are evaluated at the determi
 only: a tied group enters whole, the area is the trapezoidal integral between those points, and
 coverage below the first point is assigned the first point's risk.
 
+\input{fusion_section}
+
 % =========================================================================================
 \section{Limitations}
 \label{sec:limitations}
@@ -767,6 +782,14 @@ stopping, which watches validation accuracy, ended each of the \scRuns{} runs. A
 learning rate, a penalty or a different stopping rule could change both the calibration and the
 accuracy it reaches, and the overconfidence it produces on N-Caltech101 may be reducible. It
 was trained in three cells, one architecture each.
+
+\paragraph{The fusion result is one dataset and a constructed second modality.}
+The two modalities of Section~\ref{sec:fusion} are the same network reading two samples of one
+class from one sensor, the second with half its events removed. Independence given the class
+holds by construction, which real sensor pairs do not offer, and no fusion network was trained.
+The cost appears at $T=2$ only and is \fuTwoDeltaPoints{} points of accuracy; on a task where % src: results/fusion_experiment.json
+saturated modalities disagree more often it would be larger, and that was not measured. The
+methods of Zhang et al.\ and Cao et al.\ were not run.
 
 \paragraph{The rate cap is derived, not trained.}
 No network with a rate readout was trained. Equation~\eqref{eq:rate} says what such a readout
@@ -811,7 +834,9 @@ matter of scale: one learnable scalar lifts it. Lifting it is not the same as ca
 N-MNIST the scale, learned or fitted afterwards, removes the error; on N-Caltech101 a learned
 scale overshoots into overconfidence, and a fitted one leaves an error that isotonic regression
 removes. The number of confidence values a count readout can emit is fixed by $T$ and $C$ and by
-no scale, though few values turned out not to mean poor resolution.
+no scale, though few values turned out not to mean poor resolution. Two capped readouts that
+both saturate cannot be weighted against each other by the product rule; calibrating each
+first restores the weighting, at a measured gain that is real at $T=2$ and absent from $T=4$.
 $T_{\min}=\ln\big((C-1)a/(1-a)\big)$ is the smallest logit width, and with an unscaled count
 the fewest timesteps, at which a readout can express its own accuracy.
 

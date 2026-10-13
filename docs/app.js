@@ -539,6 +539,67 @@
     });
   }
 
+  /* ---------- fusion: predictions 12 to 15 ----------
+
+     The same rule as above: the verdicts are the ones the experiment script stored, and the
+     page decides nothing. If the result file is absent the band is hidden. */
+  function renderFusion() {
+    var fu = D.fusion;
+    var band = document.getElementById("fusion-band"), panel = document.getElementById("fusion-panel");
+    if (!fu) {
+      if (band) band.style.display = "none";
+      if (panel) panel.style.display = "none";
+      return;
+    }
+    var P = fu.predictions;
+    var cell = function (readout, T) {
+      return fu.rows.filter(function (r) { return r.readout === readout && r.timesteps === T; });
+    };
+    var m = function (rows, key) { return avg(rows.map(function (r) { return r[key]; })); };
+    var excl = function (rows) {
+      return rows.filter(function (r) { return r.delta_ci[0] > 0 || r.delta_ci[1] < 0; }).length;
+    };
+    var t2 = cell("count", 2);
+    var within = t2.filter(function (r) { return r.predicted_within_on_s_interval; }).length;
+    var lows = t2.map(function (r) { return r.delta_ci[0]; });
+    var means = P["14"].mean_delta_by_t;
+
+    plainTable("fusion-pred-table", ["", "prediction", "measured", "outcome"], [
+      ["12", "Count, T = 2: δ positive with its interval excluding zero in every seed",
+        "lower ends " + lows.map(function (v) { return signed(v, 4); }).join(", "), verdictCell(P["12"].held)],
+      ["13", "Count, T = 2: the on-S part of δ agrees with ½·P(S)·(a<sub>A,S</sub> − a<sub>B,S</sub>) within its interval in every seed",
+        "within in " + within + " of " + t2.length + "; as first drafted, in " +
+        P["13"].drafted_within_interval.filter(Boolean).length, verdictCell(P["13"].held)],
+      ["14", "Count: mean δ falls over T = 2, 4, 6, is lower still at 8 and 10, and its interval includes zero at 8 and 10",
+        "means " + ["2", "4", "6", "8", "10"].map(function (T) { return signed(means[T], 5); }).join(", ") +
+        "; " + P["14"].intervals_excluding_zero_at_8_and_10 + " intervals exclude zero at 8 and 10",
+        verdictCell(P["14"].held)],
+      ["15", "Accumulator: the interval on δ includes zero in all " + P["15"].runs + " runs",
+        P["15"].intervals_excluding_zero + " of " + P["15"].runs + " exclude zero", verdictCell(P["15"].held)]
+    ], [1, 2, 3]);
+
+    var order = [["count", 2], ["count", 4], ["count", 6], ["count", 8], ["count", 10],
+                 ["accumulator", 2], ["accumulator", 6], ["accumulator", 10]];
+    plainTable("fusion-table",
+      ["readout", "T", "A", "B", "R0", "R1", "R2", "P(S)", "δ", "on S", "predicted", "excl."],
+      order.map(function (k) {
+        var r = cell(k[0], k[1]), count = k[0] === "count";
+        return [k[0], k[1], m(r, "accuracy_a").toFixed(4), m(r, "accuracy_b").toFixed(4),
+          m(r, "acc_r0").toFixed(4), "<b>" + m(r, "acc_r1").toFixed(4) + "</b>", m(r, "acc_r2").toFixed(4),
+          count ? m(r, "p_s").toFixed(3) : "–", signed(m(r, "delta"), 4),
+          count ? signed(m(r, "delta_on_s"), 4) : "–", count ? signed(m(r, "predicted_on_s"), 4) : "–",
+          excl(r) + " of " + r.length];
+      }), [0]);
+
+    var e0 = 1 - m(t2, "acc_r0"), e1 = 1 - m(t2, "acc_r1");
+    setN({
+      "fu-rate": (100 * fu.dropout.rate).toFixed(0),
+      "fu-ps": (100 * m(t2, "p_s")).toFixed(0),
+      "fu-cut": (100 * (1 - e1 / e0)).toFixed(0),
+      "fu-delta": signed(100 * m(t2, "delta"), 2)
+    });
+  }
+
   function updateHero() {
     hero.T = +hero.tEl.value;
     hero.C = +hero.cEl.value;
@@ -1289,6 +1350,7 @@
   [updateHero, renderReadoutTable, renderSelectiveTable, renderQuantisation,
    renderCaxis, renderConditional, renderArch, renderUpdated, renderCardFigures, renderCells,
    renderPredictions,
+   renderFusion,
    render].forEach(function (fn) {
     try { fn(); } catch (err) { console.error("spikecalib: " + fn.name + " failed", err); }
   });

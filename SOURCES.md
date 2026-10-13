@@ -797,6 +797,199 @@ open-access pages are used, which are those printed on the PDF.
 - Skatchkovsky, Jang & Simeone: *Frontiers in Computational Neuroscience* 16:1037976, 2022;
   DOI 10.3389/fncom.2022.1037976.
 
+## Literature check, 2026-10-14: fusion
+
+For "Consequence for multisensory fusion" in `NOTES.md`. Each entry was read in full text and
+the quoted passage found in the extracted text of the downloaded document, unless marked.
+Bibliographic fields are from Crossref, PMLR or the arXiv record as stated.
+
+### Decision fusion: the theory the proposition is a corollary of
+
+**Kittler, Hatef, Duin & Matas (1998). "On Combining Classifiers." *IEEE TPAMI*
+20(3):226-239.** Josef Kittler, Mohamad Hatef, Robert P. W. Duin, Jiri Matas; DOI
+10.1109/34.667881 (Crossref). `[LIT]` Read in full. "Let us assume that the representations
+used are conditionally statistically independent", from which the product rule on the
+classifiers' posteriors follows (Eq. 7), and with it the sum, max, min, median and majority
+vote rules. On hardening: replacing each posterior by a one-hot vector "results in combining
+decision outcomes rather than combining a posteriori probabilities", and the sum rule then
+"simply counts the votes".
+
+**Shapley & Grofman (1984). "Optimizing group judgmental accuracy in the presence of
+interdependencies." *Public Choice* 43(3):329-343.** Lloyd Shapley, Bernard Grofman; DOI
+10.1007/BF00118940 (Crossref). `[LIT]` Read in the scan on the second author's site.
+"Theorem II: (The Bayesian Optimal Decision Rule) In a heterogeneous group, in which
+individual choices are mutually independent ... the decision rule that maximizes P_N is a
+majority weighted voting rule, obtained by assigning weights, w_i proportional to
+log(p_i / (1 - p_i))." No proof is given; note 8 says the result "was also independently
+discovered by two economists (Nitzan and Paroush, 1980a, 1982)" and was known earlier in
+pattern recognition.
+
+**Nitzan & Paroush (1982). "Optimal Decision Rules in Uncertain Dichotomous Choice
+Situations." *International Economic Review* 23(2):289-297.** Shmuel Nitzan, Jacob Paroush;
+DOI 10.2307/2526438 (Crossref; pages from the RePEc record). **The paper could not be
+opened** (JSTOR). `[LIT]` *by a verified secondary source only:* Shapley & Grofman (1984),
+read in full, give it as the published proof of their Theorem II and as an independent
+discovery of the log-odds weights. That, and no more, is what may be said of it.
+
+**Chair & Varshney (1986). "Optimal Data Fusion in Multiple Sensor Detection Systems." *IEEE
+Transactions on Aerospace and Electronic Systems* AES-22(1):98-101.** Z. Chair, P. K.
+Varshney; DOI 10.1109/TAES.1986.310699 (Crossref). **The paper could not be opened** (IEEE
+Xplore). `[LIT]` *by its abstract and a verified secondary source:* the abstract, as carried
+by the OpenAlex record, says "Individual decisions are weighted according to the reliability
+of the detector and then a threshold comparison is performed to obtain the global decision."
+Mirjalily, Luo & Davidson (*IEEE Trans. AES* 39(1):34-52, 2003), read in an author-hosted
+copy, restate the weights as logarithms of each detector's miss and false-alarm
+probabilities. Only the abstract's statement is used in the paper.
+
+**Kuncheva & Rodríguez (2014). "A weighted voting framework for classifiers ensembles."
+*Knowledge and Information Systems* 38(2):259-275.** Ludmila I. Kuncheva, Juan J. Rodríguez;
+DOI 10.1007/s10115-012-0586-6 (Crossref). `[LIT]` Read in full. Under independence given the
+class, "When P(s_i = w_k | w_k) = p_i and P(s_i = w_j | w_k) = (1 - p_i)/(c - 1) ... then the
+weighted majority vote is the optimal combiner", with weights `w_i = log(p_i/(1 - p_i))` and,
+in Eq. (15), a further term of `log(c - 1)` per vote and a class-prior term. Folding the
+`log(c - 1)` into the weight gives `log((c - 1) p_i / (1 - p_i))`. There is no numbered
+proposition in the paper; the result is a stated condition and a derivation.
+
+**Li & Yu (2014). "Error Rate Bounds and Iterative Weighted Majority Voting for
+Crowdsourcing." arXiv:1411.4086.** Hongwei Li, Bin Yu. `[LIT]` Read in full. "Corollary 9 (The
+oracle MAP rule under Homogenous Dawid-Skene model) Suppose the task assignment is based on a
+constant probability q in (0, 1], and the prevalence of the true labels are balanced. Then the
+oracle MAP rule is a weighted majority voting rule ... where nu_i = ln((L - 1) w_i / (1 -
+w_i))". *This is the weight in part (b) of the proposition, exactly, and it carries the
+condition that classes are balanced.* No journal version was found; cited as a preprint.
+
+**Brümmer, Burget, Černocký, Glembek, Grézl, Karafiát, van Leeuwen, Matějka, Schwarz &
+Strasheim (2007). "Fusion of Heterogeneous Speaker Recognition Systems in the STBU Submission
+for the NIST Speaker Recognition Evaluation 2006." *IEEE Transactions on Audio, Speech, and
+Language Processing* 15(7):2072-2084.** DOI 10.1109/TASL.2007.902870 (Crossref). `[LIT]` Read
+in the author-hosted preprint, so cited by section. Sec. IV: scores are fused by a linear
+combination whose weights "were obtained by logistic regression", so that the fused score
+"functions as a well-calibrated log-likelihood-ratio"; and "each sub-system on its own was
+subjected to an affine calibration transformation, also trained via logistic regression". The
+remedy in part (c), calibrate each source and then combine, is this.
+
+**Kuncheva (2002). "A theoretical study on six classifier fusion strategies." *IEEE TPAMI*
+24(2):281-286.** DOI 10.1109/34.982906 (Crossref). `[LIT]` Read in full. It derives error
+formulas for the average, minimum, maximum, median and majority vote rules for two classes,
+and leaves the product rule out. It notes, of a simulation, that when one estimate is 1 and
+another 0 "both the minimum and the maximum will produce a tie, and the random tie break will
+induce bias". It does not state the proposition.
+
+**Genest & Zidek (1986). "Combining Probability Distributions: A Critique and an Annotated
+Bibliography." *Statistical Science* 1(1).** DOI 10.1214/ss/1177013825 (Crossref). **Could not
+be opened** (Project Euclid). `[UNVERIFIED]` for content, and not cited.
+
+### Prior statements of parts of the proposition
+
+The proposition is not found assembled anywhere. Its parts are.
+
+**Ju, Bibaut & van der Laan (2018). "The relative performance of ensemble methods with deep
+convolutional neural networks for image classification." *Journal of Applied Statistics*
+45(15):2800-2818.** Cheng Ju, Aurélien Bibaut, Mark van der Laan; DOI
+10.1080/02664763.2018.1441383 (Crossref); read as arXiv:1704.01664. `[LIT]` Sec. 4.4.4: "When
+all the models are over-confident, the unweighted average is identical to the majority vote."
+**The closest prior statement of part (a).** It is asserted for the average of probabilities
+that have saturated towards one, without proof and without the link to reliability weights.
+Part (a) here concerns a cap below one and is stated for any symmetric rule.
+
+**Kumar, Ma, Liang & Raghunathan (2022). "Calibrated ensembles can mitigate accuracy
+tradeoffs under distribution shift." UAI 2022, PMLR 180:1041-1051.** Ananya Kumar, Tengyu Ma,
+Percy Liang, Aditi Raghunathan; read as arXiv:2207.08977. `[LIT]` Proposition 4.1: for two
+calibrated models whose outputs are conditionally independent given the label, with balanced
+classes, the ensemble that adds their logits "is better than any such combination
+classifier". **The closest prior statement of part (c)**: calibrate, then apply the product
+rule. Author list and pages from the search's reading of the PMLR record; the proposition was
+found in the arXiv text.
+
+**Not found by the search:** the exchange argument of part (a), that a rule treating two
+classifiers and all classes alike cannot separate two reports that are permutations of each
+other. It is elementary, and is stated in this repository as `[DERIVED]`, without a claim that
+it is new. May (1952) on simple majority rule may be its classical antecedent and was not
+opened.
+
+### Dynamic multimodal fusion
+
+**Zhang, Wu, Zhang, Hu, Fu, Zhou & Peng (2023). "Provable Dynamic Fusion for Low-Quality
+Multimodal Data." Proceedings of the 40th International Conference on Machine Learning, PMLR
+202:41753-41769.** Qingyang Zhang, Haitao Wu, Changqing Zhang, Qinghua Hu, Huazhu Fu, Joey
+Tianyi Zhou, Xi Peng; arXiv:2306.02050. `[LIT]` Theorem 2 compares **upper bounds** on
+generalisation error for two-class late fusion: the dynamic bound is no larger than the
+static one if the mean dynamic weight equals the static weight and
+"r(w^m_dynamic, l(f^m)) <= 0 ... for all input modalities, where r is the Pearson correlation
+coefficient which measures the correlation between fusion weights ... and unimodal loss".
+The paper adds: "in static multimodal fusion w^m_static is a constant, which means Term-Cov =
+0 for any static fusion methods." *What may be said:* weights that are constant across
+samples have zero covariance with every loss, so the advantage the theorem establishes for
+dynamic fusion is zero. *What may not:* that the theorem "fails" or is contradicted, or that
+QMF's own weights are constant. QMF takes its weights from a regularised energy score of the
+logits, not from the maximum softmax probability, which appears only as a baseline in its
+Table 3.
+
+**Cao, Xia, Ding, Zhang & Hu (2024). "Predictive Dynamic Fusion." Proceedings of the 41st
+International Conference on Machine Learning, PMLR 235:5608-5628.** Bing Cao, Yinan Xia, Yi
+Ding, Changqing Zhang, Qinghua Hu; arXiv:2406.04802. `[LIT]` Theorem 3.1 bounds the
+generalisation error with a term in the covariance of each modality's weight with its own
+loss and with the others', and concludes: "Corollary 3.2. A negative correlation should exist
+between a modality's weight and its loss. Corollary 3.3. A positive correlation is desirable
+between a modality's weight and the losses of the other modalities." The stated requirement
+is strict, `Cov(w^m, l^m) < 0`. *What may be said:* constant weights have zero covariance and
+do not meet it. *What may not:* that this method's weights are constant under a capped
+readout; it predicts them from encoder features with a separately trained predictor of the
+true-class probability.
+
+### Probabilistic population codes
+
+**Ma, Beck, Latham & Pouget (2006). "Bayesian inference with probabilistic population codes."
+*Nature Neuroscience* 9(11):1432-1438.** Wei Ji Ma, Jeffrey M. Beck, Peter E. Latham,
+Alexandre Pouget; DOI 10.1038/nn1790 (Crossref). `[LIT]` Read in the publisher-typeset PDF
+hosted by the third author. With Poisson-like variability, "taking the sum of the two
+population codes, r1 and r2, is equivalent to optimal Bayesian inference", and the gain of a
+population encodes its reliability. On saturation, one paragraph of the Discussion, in full:
+"One limitation of our scheme, and of any scheme that reduces Bayesian inference to addition
+of activities, is that neural activities are likely to saturate when sequential inferences
+are required. To circumvent this problem, a nonlinearity is needed to keep neurons within
+their dynamical range. A nonlinearity like divisive normalization would be ideal because it is
+near linear for low firing rates, where uncertainty is large and thus there is much to be
+gained from performing exact inference, and saturating at high firing rates, where
+uncertainty is small and there is little to be gained from exact inference". *What may be
+said:* the paper argues, qualitatively and without a number, that saturation at high rates
+costs little because uncertainty is small there. *What may not:* that it analyses a hard
+ceiling, the relative weighting of two saturated cues, or a categorical readout. Its setting
+is a population code for a continuous variable. Nothing about human or animal behaviour is
+taken from it here.
+
+**Beck, Ma, Kiani, Hanks, Churchland, Roitman, Shadlen, Latham & Pouget (2008).
+"Probabilistic Population Codes for Bayesian Decision Making." *Neuron* 60(6):1142-1152.**
+DOI 10.1016/j.neuron.2008.09.021 (Crossref). `[LIT]` Read in the publisher PDF. Networks "can
+accumulate evidence without loss of information through linear integration of neural
+activity", and: "The problem with this simple summing operation, however, is that LIP
+activity would saturate very quickly. Fortunately, it is possible to show that global
+inhibition can be used to alleviate this problem while preserving optimality". It proposes a
+way to avoid saturation and gives no cost for it.
+
+### Calibration is not enough
+
+**Perez-Lebel, Le Morvan & Varoquaux (2023). "Beyond calibration: estimating the grouping
+loss of modern neural networks." ICLR 2023.** Alexandre Perez-Lebel, Marine Le Morvan, Gaël
+Varoquaux; arXiv:2210.16315; https://openreview.net/forum?id=6w1k-IixnL8. `[LIT]` "even a
+perfectly calibrated classifier with the best possible accuracy can have confidence scores
+that are far from the true posterior probabilities. This is due to the grouping loss, created
+by samples with the same confidence scores but different true posterior probabilities." The
+decomposition into calibration, grouping and irreducible loss is attributed by them to Kull
+and Flach (2015), which was not opened and is not cited.
+
+### Read and found not to bear on the proposition
+
+**Tenali, Sidheekh, Mathur, Saravanan, Blasch, Kersting & Natarajan. "Reliable Fusion of
+Conflicting Experts." arXiv:2609.27913.** `[LIT]` Dynamic aggregation of large language
+models with learned credibility on multiple-choice questions. It does not concern saturated
+confidence, bounded logits or spiking networks, and does not state the proposition.
+
+**Not found by the search:** any statement that confidence-weighted or uncertainty-weighted
+multimodal fusion degenerates to constant weights when unimodal confidences are saturated,
+clipped or quantised. Eight searches were run and every candidate opened. The nearest is the
+remark in Zhang et al. quoted above. A failed search is not proof of absence.
+
 ## Still to verify
 
 1. **Amir et al. CVPR 2017 — full author list** for DVS-Gesture. Only "Amir et al." and the

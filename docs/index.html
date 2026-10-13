@@ -6,7 +6,7 @@
 <title>SpikeCalib — confidence calibration for event-driven spiking neural networks</title>
 <meta name="description" content="A measurement instrument for spiking neural networks: the attainable-confidence ceiling, the cross-entropy floor it implies, and a 15-run calibration sweep on N-MNIST.">
 <meta name="color-scheme" content="dark">
-<link rel="stylesheet" href="style.css?v=20261014">
+<link rel="stylesheet" href="style.css?v=20261014b">
 </head>
 <body>
 
@@ -441,6 +441,35 @@
       Readouts are compared only under the same binning.</p>
   </div></section>
 
+  <div class="band" id="fusion-band"><h2>Fusing two capped readouts</h2>
+    <p class="sub">a corollary of known decision-fusion theory, not a new theorem &mdash; four
+    predictions recorded before the run</p></div>
+
+  <section class="panel c12" id="fusion-panel"><div class="prose wide">
+    <h3>Two saturated readouts vote; they cannot weigh<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
+    <p>A count readout that fires its winner at every step and nothing else reports one fixed
+      vector, the same for every such input. When two modalities both do this, a rule that
+      multiplies their probabilities has nothing to tell them apart by, and on a disagreement
+      it flips a coin, however unequal their reliabilities. Calibrating each modality first
+      gives the more reliable one the larger scale and the coin goes. Tested on N-MNIST
+      without training anything: modality A is a test sample, modality B a different sample of
+      the same class with <span data-n="fu-rate">50</span>% of its events removed. At
+      <em>T</em> = 2, both saturate on <span data-n="fu-ps">70</span>% of pairs, and
+      calibrating first removes <span data-n="fu-cut">50</span>% of the fused errors,
+      <span data-n="fu-delta">+0.43</span> points of accuracy. From <em>T</em> = 4 the effect
+      is at or near zero, and an accumulator, which has no cap, shows none.</p>
+    <div class="scroll panel-table"><table id="fusion-pred-table"></table></div>
+    <div class="scroll panel-table"><table id="fusion-table"></table></div>
+    <p class="chart-note">Rendered from <code>results/fusion_experiment.json</code>. Mean of
+      three seeds and 20 random pairings. R0 is the product rule on raw outputs, R1 the
+      product rule after temperature scaling each modality, R2 a reliability-weighted vote,
+      which with two voters is modality A alone. &delta; is R1 minus R0; "on S" is the part
+      from pairs where both modalities saturate, and "predicted" is
+      &frac12;&middot;P(S)&middot;(a<sub>A,S</sub> &minus; a<sub>B,S</sub>). "excl." counts
+      seeds whose 95% bootstrap interval on &delta; excludes zero. The dropout rate was fixed
+      on the calibration split before any fused prediction was computed.</p>
+  </div></section>
+
   <div class="band"><h2>Related work</h2>
     <p class="sub">this study claims novelty over none of the following</p></div>
 
@@ -694,6 +723,13 @@ python scripts/export_dashboard_data.py</pre>
         network's optimiser and learning rate and was still rising when early stopping ended
         every run. A different learning rate or stopping rule could change both the
         calibration and the accuracy it reaches.
+      </li>
+      <li>
+        <strong>The fusion result is one dataset and a constructed second modality.</strong>
+        Both modalities are the same network reading two samples of one class from one
+        sensor, the second with half its events removed. They are independent given the class
+        by construction, which real sensor pairs are not, and no fusion network was trained.
+        The cost appears at <em>T</em> = 2 only and is under half a point of accuracy.
       </li>
       <li>
         <strong>The rate cap is derived, not trained.</strong> No network with a rate readout
@@ -1572,7 +1608,7 @@ python scripts/export_dashboard_data.py</pre>
 
 </main>
 
-<script src="data.js?v=20261014"></script>
-<script src="app.js?v=20261014"></script>
+<script src="data.js?v=20261014b"></script>
+<script src="app.js?v=20261014b"></script>
 </body>
 </html>

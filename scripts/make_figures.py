@@ -45,6 +45,8 @@ def main() -> int:
                                  "python scripts/extend_sweep_selective.py"),
         "figure_quantisation": ("quantisation_path", "quantisation_test.json",
                                 "python scripts/quantisation_test.py"),
+        "figure_fusion": ("fusion_path", "fusion_experiment.json",
+                          "python scripts/fusion_experiment.py"),
     }
     drawn = 0
     for fn in ALL_FIGURES:

@@ -2013,6 +2013,79 @@ the count readout's test predictions sit at the ceiling (`LOG.md`, 2026-09-28), 
 is common for the clean modality. No dropout rate had been chosen, no model had been run on a
 dropped-out input, and no fused prediction had been computed when these were recorded.
 
+## Outcome of predictions 12 to 15, recorded 2026-10-14 after the run
+
+`[MEASURED]` `scripts/fusion_experiment.py`, written to `results/fusion_experiment.json`,
+which carries the verdict block the script computed against the conditions above.
+`tests/test_provenance.py` re-derives each verdict from the rows. The predictions above are
+as they were registered; nothing in them was edited.
+
+| | outcome | registered condition | measured |
+|---|---|---|---|
+| 12 | **held** | count, `T = 2`: lower end of the interval on `delta` above zero in every seed | `delta` +0.0064, +0.0033, +0.0032; lower ends +0.0058, +0.0028, +0.0026 |
+| 13 | **held** | count, `T = 2`: `0.5 · P(S) · (a_{1,S} − a_{2,S})` inside the interval of the on-`S` part of `delta` in every seed | predicted +0.0041, +0.0018, +0.0020 against measured +0.0043, +0.0019, +0.0020; inside in 3 of 3 |
+| 14 | **falsified** | count: mean `delta` strictly decreasing over `T` = 2, 4, 6, lower again at 8 and 10, and no interval excluding zero at 8 or 10 | means +0.00429, +0.00007, +0.00001, −0.00001, +0.00001; `T = 10` is not below `T = 6`; no interval excludes zero at 8 or 10 |
+| 15 | **falsified** | accumulator: no interval on `delta` excluding zero in nine runs | one of nine excludes zero: `T = 2`, seed 2, `delta` −0.00016 [−0.00026, −0.00005] |
+
+Two held and two were falsified.
+
+**Prediction 12 held.** Calibrating each modality before the product rule raised fused
+accuracy at `T = 2` in every seed: 0.9911 to 0.9954 on the three-seed mean, 0.43 points. Both
+modalities saturate on 64% to 77% of pairs. In absolute terms the gain is small, because both
+modalities are accurate on N-MNIST and the raw product rule already beats either alone
+(0.9850 and 0.9142). In relative terms it removes 48% of the fused errors, 0.89% to 0.46%.
+
+**Prediction 13 held, and the draft would not have.** The corrected expression lies inside
+the interval of the measured on-`S` part in all three seeds. The expression as first drafted
+gives +0.00007, +0.00002 and +0.00002, outside the interval in all three: it is short by the
+factor `P(disagree | S)`, which is 0.012 here. Temperature scaling gave modality A the larger
+scale in all three seeds at `T = 2`, which the identity needs. 63% of `delta` comes from
+pairs in `S`; the remaining +0.0016 comes from pairs outside it, which the proposition does
+not describe.
+
+**Prediction 14 was falsified, on its ordering clause.** The three-seed means at `T = 6` and
+`T = 10` are equal: each is a net 6 pairs in 600,000, +0.00001. The prediction required the value at
+`T = 10` to be below the value at `T = 6`, and equal is not below. Its other clause held: no
+interval excludes zero at `T = 8` or `T = 10`. What the data show is a fall from +0.0043 at
+`T = 2` to nothing measurable from `T = 4`, where all twelve intervals include zero. The
+prediction asked for a strict ordering among values that cannot be told from zero, and that
+is a fault in how it was written, recorded here and not corrected. `P(S)` falls more slowly
+than the effect, 0.70, 0.50, 0.20, 0.03, 0.01: at `T = 4` half of all pairs still saturate,
+but two saturated modalities disagree on 0.03% of pairs against 0.81% at `T = 2`. The effect
+needs saturation and disagreement together, and from `T = 4` saturated readouts are almost
+never wrong.
+
+**Prediction 15 was falsified, by one run of nine.** At `T = 2`, seed 2, temperature scaling
+made the accumulator fusion worse by 0.00016, a net 32 pairs in 200,000, with an interval that
+excludes zero. The other eight intervals include it, and no accumulator run has `delta` above
++0.00004. With nine intervals at the 95% level one exclusion is not surprising, and the
+prediction allowed none; it is reported as falsified. The direction is against calibration,
+not for it: there is no sign of the count readout's gain in the accumulator.
+
+**Two things the run showed that were not predicted.**
+
+- *Reliability-weighted voting is not the better rule overall.* With two voters the heavier
+  vote decides every disagreement, so R2 is modality A alone, 0.9850 at `T = 2`, which is
+  0.0061 below the raw product rule. Outside `S` the counts carry graded evidence that a vote
+  throws away. Part (b) compares rules on `S` only, and the paper says so.
+- *Temperature scaling does not always favour the more accurate modality.* At `T = 2` it gave
+  A the larger scale in 3 of 3 seeds. At `T ≥ 6` it gave the event-dropped modality B the
+  larger scale in 9 of 9 count runs: dropping events lowers the counts themselves, and the
+  fitted temperature compensates for the smaller logits. There the identity has the wrong sign
+  for R1, as the note under prediction 13 said it would, and it falls outside the measured
+  interval in three runs, each resting on fewer than ten saturated disagreements in 200,000
+  pairs. Across all 15 count runs it lies inside in 12.
+
+ECE of the fused confidence at `T = 2`, equal-width / equal-mass, three-seed mean: raw
+product rule 0.1801 / 0.1801, after per-modality temperature scaling 0.0027 / 0.0015,
+reliability-weighted vote 0.0013 / 0.0013.
+
+**What the paper may say.** That the proposition's identity was confirmed at `T = 2`; that the
+cost is real there, about half the fused errors and under half a point of accuracy; that it is
+absent from `T = 4` on this dataset; that two of four predictions were falsified. It may not
+say that calibration before fusion matters in general for spiking networks: one dataset, a
+constructed second modality, and an effect at one timestep setting.
+
 ## Does the ceiling bind in published work? Resolved: no, and the reason is informative
 
 The verification pass left one consequential question open. Li, Jones & Furber report
@@ -2575,3 +2648,9 @@ N-MNIST and 36 on N-Caltech101. Twelve predictions have now been registered in a
 
 The bound itself is prior work and is cited as such; see "The cap is a scale problem". The
 paper was revised around these results on 2026-10-14 and is thirteen pages.
+
+**Added 2026-10-14, later.** A fifth experiment has run, fusion of two readouts, on four
+further predictions (12 to 15), of which two held and two were falsified; see "Outcome of
+predictions 12 to 15". It trained nothing: 24 runs of inference, 20 pairings each. Sixteen
+predictions have now been registered in all. The fusion section is in the paper, which is
+sixteen pages with it.

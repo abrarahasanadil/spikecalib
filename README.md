@@ -86,6 +86,21 @@ three of them an artefact of equal-mass binning. What the count readout gives up
 Seven predictions were recorded before these last experiments. Three held and four were
 falsified, and each is reported as it fell (`NOTES.md`, "Outcome of predictions 6a to 11").
 
+**Two capped readouts that both saturate cannot be weighted against each other.** This is a
+corollary of known decision-fusion theory applied to spike counts, not a new theorem.
+`[DERIVED]` A count readout that fires its winner at every step and nothing else reports one
+fixed vector, so where two modalities both do this the product rule is an unweighted vote, a
+coin flip on every disagreement, and it gives up `0.5 · P(S) · (a_1 − a_2)` in accuracy on
+those pairs. A per-modality scale restores the weighting. `[MEASURED]` On N-MNIST, fusing a
+clean sample with an event-dropped sample of the same class and training nothing, calibrating
+each modality before the product rule lifts fused accuracy from 0.9911 to 0.9954 at `T = 2`,
+which is 48% of the fused errors and 0.43 points of accuracy, and the identity matches the
+measured part in 3 of 3 seeds. From `T = 4` the gain is not measurable. Four predictions were
+recorded before the run. Two held; two were **falsified**: one asked for a strict ordering
+among values that turned out to be indistinguishable from zero, and one allowed no
+accumulator run to show an effect where 1 of 9 did, in the direction against calibration
+(`NOTES.md`, "Outcome of predictions 12 to 15").
+
 ## The readout taxonomy
 
 Same architecture, same data, same training — only the final aggregation differs.
@@ -129,7 +144,7 @@ Python 3.13 on Apple silicon (MPS). Every pinned version is in `requirements.txt
 ```sh
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python -m pytest tests/ -q          # 354 tests
+python -m pytest tests/ -q          # 414 tests
 ```
 
 Verify the environment. This runs a real forward pass through a SpikingJelly `LIFNode` on
@@ -162,11 +177,13 @@ python scripts/scaled_count_experiment.py                   # the learned-scale 
 python scripts/resolution_experiment.py                     # bound check and decomposition
 python scripts/caltech_calibrators.py                       # calibrators at 101 classes
 python scripts/calibration_size_experiment.py               # 100 / 1,000 / 5,000 samples
+python scripts/fusion_experiment.py --select-rate           # fix the event-dropout rate
+python scripts/fusion_experiment.py                         # fusion of two readouts
 ```
 
 `rerun_paired_bootstrap.py` trains nothing: it reuses the sweep's weights and adds the
 equal-mass columns to the sweep CSV. It runs single-process because six DataLoader workers
-deadlock it on Apple silicon. Of the last four, only `scaled_count_experiment.py` trains. The
+deadlock it on Apple silicon. Of the last six, only `scaled_count_experiment.py` trains. The
 others reuse weights, hold the data in memory with no worker processes, and cache each
 model's outputs in `results/` so a second run is quick.
 

@@ -268,6 +268,76 @@ def test_notes_and_readme_report_each_verdict_as_the_artifact_has_it() -> None:
     assert f"{words[n_held]} held and {words[7 - n_held].lower()} were" in " ".join(_read("README.md").split())
 
 
+def test_fusion_verdicts_follow_from_the_rows() -> None:
+    """Predictions 12 to 15, re-evaluated against the conditions in NOTES.md."""
+    d = _result("fusion_experiment.json")
+    rows = d["rows"]
+    cell = lambda readout, T: sorted((r for r in rows if r["readout"] == readout and r["timesteps"] == T),  # noqa: E731
+                                     key=lambda r: r["seed"])
+    excludes_zero = lambda ci: ci[0] > 0 or ci[1] < 0  # noqa: E731
+    assert len(rows) == 5 * 3 + 3 * 3
+    assert all(r["pairings"] == 20 and r["dropout_rate"] == d["dropout"]["rate"] for r in rows)
+    # the rate is the one fixed on the calibration split before the run, not one chosen after it
+    assert d["dropout"]["rate"] == _result("fusion_dropout_rate.json")["rate"]
+
+    v, t2 = d["predictions"], cell("count", 2)
+    assert v["12"]["held"] == all(r["delta_ci"][0] > 0 for r in t2)
+    for r in t2:
+        lo, hi = r["delta_on_s_ci"]
+        assert r["predicted_within_on_s_interval"] == (lo <= r["predicted_on_s"] <= hi)
+        assert r["drafted_within_on_s_interval"] == (lo <= r["predicted_on_s_as_first_drafted"] <= hi)
+    assert v["13"]["held"] == all(r["predicted_within_on_s_interval"] for r in t2)
+
+    mean = {T: _mean(cell("count", T), "delta") for T in (2, 4, 6, 8, 10)}
+    ordering = mean[2] > mean[4] > mean[6] and mean[8] < mean[6] and mean[10] < mean[6]
+    high = cell("count", 8) + cell("count", 10)
+    assert v["14"]["ordering_held"] == ordering
+    assert v["14"]["intervals_excluding_zero_at_8_and_10"] == sum(excludes_zero(r["delta_ci"]) for r in high)
+    assert v["14"]["held"] == (ordering and not any(excludes_zero(r["delta_ci"]) for r in high))
+
+    accum = [r for T in (2, 6, 10) for r in cell("accumulator", T)]
+    assert len(accum) == 9
+    assert v["15"]["intervals_excluding_zero"] == sum(excludes_zero(r["delta_ci"]) for r in accum)
+    assert v["15"]["held"] == (not any(excludes_zero(r["delta_ci"]) for r in accum))
+
+
+def test_fusion_rows_are_consistent_with_the_proposition() -> None:
+    """What part (b) says must hold of the numbers, whatever the verdicts are."""
+    from spikecalib.fusion import excess_error_as_first_drafted, excess_error_on_saturation
+
+    for r in _result("fusion_experiment.json")["rows"]:
+        assert abs(r["delta"] - (r["delta_on_s"] + r["delta_off_s"])) < 1e-12
+        assert abs(r["delta"] - (r["acc_r1"] - r["acc_r0"])) < 1e-12
+        if r["readout"] == "accumulator":
+            # an accumulator has no counts, so nothing saturates and nothing of delta is on S
+            assert r["p_s"] == 0 and r["delta_on_s"] == 0 and r["predicted_on_s"] == 0
+            continue
+        assert 0 <= r["p_s_and_disagree"] <= min(r["p_s"], r["p_disagree"])
+        if r["p_s"] == 0:
+            continue
+        a, b = r["accuracy_a_on_s"], r["accuracy_b_on_s"]
+        assert abs(r["predicted_on_s"] - excess_error_on_saturation(r["p_s"], a, b)) < 1e-12
+        drafted = excess_error_as_first_drafted(r["p_s_and_disagree"], a, b)
+        assert abs(r["predicted_on_s_as_first_drafted"] - drafted) < 1e-12
+        # the draft is the corrected value times P(disagree | S), so never the larger in size
+        assert abs(drafted) <= abs(r["predicted_on_s"]) + 1e-12
+        # two voters: the heavier vote decides every disagreement, so R2 is modality A alone
+        if r["weight_a"] > r["weight_b"]:
+            assert abs(r["acc_r2"] - r["accuracy_a"]) < 1e-12
+
+
+def test_notes_record_each_fusion_verdict_as_the_artifact_has_it() -> None:
+    verdicts = {k: v["held"] for k, v in _result("fusion_experiment.json")["predictions"].items()}
+    assert set(verdicts) == {"12", "13", "14", "15"}
+    notes = _read("NOTES.md")
+    table = notes[notes.index("## Outcome of predictions 12 to 15"):][:1800]
+    for key, held in verdicts.items():
+        word = "held" if held else "falsified"
+        assert re.search(rf"^\| {key} \| \*\*{word}\*\*", table, re.M), (
+            f"NOTES.md does not record prediction {key} as {word}"
+        )
+
+
 # --------------------------------------------------------------------------- energy
 
 def test_dashboard_energy_ranges_match_the_sweep() -> None:

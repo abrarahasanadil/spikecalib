@@ -534,6 +534,134 @@ put("predictionsHeld", str(sum(held)), "verdict blocks of the four experiment fi
 put("predictionsFalsified", str(len(held) - sum(held)), "verdict blocks of the four experiment files")
 put("csSeedsCounting", str(p11["seeds_where_temperature_wins_at_100"]), SRC_CS + " prediction_11")
 
+# ------------------------------------------------------------------ fusion (predictions 12 to 15)
+fu = load("fusion_experiment.json")
+SRC_FU = "results/fusion_experiment.json"
+fu_rows, fu_pred = fu["rows"], fu["predictions"]
+
+
+def fu_cell(readout, T):
+    rs = sorted((r for r in fu_rows if r["readout"] == readout and r["timesteps"] == T), key=lambda r: r["seed"])
+    assert len(rs) == 3, (readout, T, len(rs))
+    return rs
+
+
+TKEY = {2: "Two", 4: "Four", 6: "Six", 8: "Eight", 10: "Ten"}
+put("fuRate", f"{fu['dropout']['rate']:.2f}", SRC_FU + " dropout.rate (results/fusion_dropout_rate.json)")
+put("fuRatePercent", f"{100 * fu['dropout']['rate']:.0f}", SRC_FU + " dropout.rate")
+put("fuCalClean", f(fu["dropout"]["clean_calibration_accuracy"]), SRC_FU + " dropout.clean_calibration_accuracy")
+put("fuCalDropped", f(fu["dropout"]["calibration_accuracy_at_rate"]), SRC_FU + " dropout.calibration_accuracy_at_rate")
+put("fuPairings", str(fu["pairings"]), SRC_FU + " pairings")
+for T in (2, 4, 6, 8, 10):
+    rs = fu_cell("count", T)
+    k = "fuCount" + TKEY[T]
+    put(k + "AccA", f(mean(rs, "accuracy_a")), SRC_FU + f" accuracy_a, count, T={T}")
+    put(k + "AccB", f(mean(rs, "accuracy_b")), SRC_FU + f" accuracy_b, count, T={T}")
+    put(k + "RZero", f(mean(rs, "acc_r0")), SRC_FU + f" acc_r0, count, T={T}")
+    put(k + "ROne", f(mean(rs, "acc_r1")), SRC_FU + f" acc_r1, count, T={T}")
+    put(k + "RTwo", f(mean(rs, "acc_r2")), SRC_FU + f" acc_r2, count, T={T}")
+    put(k + "PS", f"{mean(rs, 'p_s'):.3f}", SRC_FU + f" p_s, count, T={T}")
+    put(k + "Delta", f(mean(rs, "delta"), sign=True), SRC_FU + f" delta, count, T={T}, mean of seeds")
+    put(k + "DeltaOnS", f(mean(rs, "delta_on_s"), sign=True), SRC_FU + f" delta_on_s, count, T={T}")
+    put(k + "DeltaOffS", f(mean(rs, "delta_off_s"), sign=True), SRC_FU + f" delta_off_s, count, T={T}")
+    put(k + "Predicted", f(mean(rs, "predicted_on_s"), sign=True), SRC_FU + f" predicted_on_s, count, T={T}")
+    put(k + "Excl", str(sum(r["delta_ci"][0] > 0 or r["delta_ci"][1] < 0 for r in rs)),
+        SRC_FU + f" seeds whose delta interval excludes zero, count, T={T}")
+for T in (2, 6, 10):
+    rs = fu_cell("accumulator", T)
+    k = "fuAccum" + TKEY[T]
+    put(k + "AccA", f(mean(rs, "accuracy_a")), SRC_FU + f" accuracy_a, accumulator, T={T}")
+    put(k + "AccB", f(mean(rs, "accuracy_b")), SRC_FU + f" accuracy_b, accumulator, T={T}")
+    put(k + "RZero", f(mean(rs, "acc_r0")), SRC_FU + f" acc_r0, accumulator, T={T}")
+    put(k + "ROne", f(mean(rs, "acc_r1")), SRC_FU + f" acc_r1, accumulator, T={T}")
+    put(k + "RTwo", f(mean(rs, "acc_r2")), SRC_FU + f" acc_r2, accumulator, T={T}")
+    put(k + "Delta", f(mean(rs, "delta"), sign=True), SRC_FU + f" delta, accumulator, T={T}")
+    put(k + "Excl", str(sum(r["delta_ci"][0] > 0 or r["delta_ci"][1] < 0 for r in rs)),
+        SRC_FU + f" seeds whose delta interval excludes zero, accumulator, T={T}")
+t2 = fu_cell("count", 2)
+excl_ = lambda ci: ci[0] > 0 or ci[1] < 0  # noqa: E731
+put("fuTwoDeltaMin", f(min(r["delta"] for r in t2), sign=True), SRC_FU + " delta, count, T=2, smallest seed")
+put("fuTwoDeltaMax", f(max(r["delta"] for r in t2), sign=True), SRC_FU + " delta, count, T=2, largest seed")
+put("fuTwoCiLowMin", f(min(r["delta_ci"][0] for r in t2), sign=True), SRC_FU + " delta_ci lower end, count, T=2, smallest")
+put("fuTwoAccAOnS", f(mean(t2, "accuracy_a_on_s")), SRC_FU + " accuracy_a_on_s, count, T=2")
+put("fuTwoAccBOnS", f(mean(t2, "accuracy_b_on_s")), SRC_FU + " accuracy_b_on_s, count, T=2")
+put("fuTwoDrafted", f(mean(t2, "predicted_on_s_as_first_drafted"), sign=True), SRC_FU + " predicted_on_s_as_first_drafted, count, T=2")
+put("fuTwoPDisagreeGivenS", f"{st.mean(r['p_s_and_disagree'] / r['p_s'] for r in t2):.3f}", SRC_FU + " p_s_and_disagree / p_s, count, T=2")
+put("fuTwoTempA", f"{mean(t2, 'temperature_a'):.2f}", SRC_FU + " temperature_a, count, T=2")
+put("fuTwoTempB", f"{mean(t2, 'temperature_b'):.2f}", SRC_FU + " temperature_b, count, T=2")
+put("fuTwoShareOnS", f"{100 * mean(t2, 'delta_on_s') / mean(t2, 'delta'):.0f}", SRC_FU + " delta_on_s / delta, count, T=2, per cent")
+put("fuTwoPSMin", f"{min(r['p_s'] for r in t2):.3f}", SRC_FU + " p_s, count, T=2, smallest seed")
+put("fuTwoPSMax", f"{max(r['p_s'] for r in t2):.3f}", SRC_FU + " p_s, count, T=2, largest seed")
+err0, err1 = 1 - mean(t2, "acc_r0"), 1 - mean(t2, "acc_r1")
+put("fuTwoErrZero", f"{100 * err0:.2f}", SRC_FU + " 1 - acc_r0, count, T=2, per cent")
+put("fuTwoErrOne", f"{100 * err1:.2f}", SRC_FU + " 1 - acc_r1, count, T=2, per cent")
+put("fuTwoErrCut", f"{100 * (1 - err1 / err0):.0f}", SRC_FU + " share of R0's errors that R1 removes, count, T=2, per cent")
+put("fuTwoDeltaPoints", f"{100 * mean(t2, 'delta'):.2f}", SRC_FU + " delta, count, T=2, percentage points")
+put("fuTwoDeltaOffS", f(mean(t2, "delta_off_s"), sign=True), SRC_FU + " delta_off_s, count, T=2")
+put("fuTwoRZeroMinusRTwo", f(-mean(t2, "r2_minus_r0")), SRC_FU + " -r2_minus_r0, count, T=2")
+assert mean(t2, "r2_minus_r0") < 0
+for rule, rk in (("r0", "RZero"), ("r1", "ROne"), ("r2", "RTwo")):
+    put(f"fuTwoEce{rk}W", f(mean(t2, f"ece_{rule}_ew")), SRC_FU + f" ece_{rule}_ew, count, T=2")
+    put(f"fuTwoEce{rk}M", f(mean(t2, f"ece_{rule}_em")), SRC_FU + f" ece_{rule}_em, count, T=2")
+put("fuThirteenWithin", str(sum(r["predicted_within_on_s_interval"] for r in t2)), SRC_FU + " predicted_within_on_s_interval, count, T=2")
+fu_count_all = [r for r in fu_rows if r["readout"] == "count"]
+put("fuCountScaleOrderRuns", str(sum(r["r1_gives_a_the_larger_scale"] for r in fu_count_all)), SRC_FU + " r1_gives_a_the_larger_scale, count")
+put("fuCountRuns", str(len(fu_count_all)), SRC_FU + " count rows")
+put("fuTwoScaleOrderRuns", str(sum(r["r1_gives_a_the_larger_scale"] for r in t2)), SRC_FU + " r1_gives_a_the_larger_scale, count, T=2")
+acc_all = [r for r in fu_rows if r["readout"] == "accumulator"]
+put("fuAccumDeltaMin", f(min(r["delta"] for r in acc_all), d=5, sign=True), SRC_FU + " delta, accumulator, smallest run")
+put("fuAccumDeltaMax", f(max(r["delta"] for r in acc_all), d=5, sign=True), SRC_FU + " delta, accumulator, largest run")
+high = [r for r in fu_count_all if r["timesteps"] >= 4]
+put("fuHighDeltaMin", f(min(r["delta"] for r in high), sign=True), SRC_FU + " delta, count, T>=4, smallest run")
+put("fuHighDeltaMax", f(max(r["delta"] for r in high), sign=True), SRC_FU + " delta, count, T>=4, largest run")
+put("fuHighRuns", str(len(high)), SRC_FU + " count rows at T>=4")
+put("fuHighExclAll", str(sum(excl_(r["delta_ci"]) for r in high)), SRC_FU + " count rows at T>=4 whose delta interval excludes zero")
+for T in (4, 6, 8, 10):
+    put(f"fuCount{TKEY[T]}DeltaFine", f(fu_pred["14"]["mean_delta_by_t"][str(T)], d=5, sign=True),
+        SRC_FU + f" predictions.14 mean_delta_by_t, T={T}, five decimals")
+    assert abs(fu_pred["14"]["mean_delta_by_t"][str(T)] - mean(fu_cell("count", T), "delta")) < 1e-15
+acc_excl = [r for r in acc_all if excl_(r["delta_ci"])]
+assert len(acc_excl) == fu_pred["15"]["intervals_excluding_zero"]
+if len(acc_excl) == 1:
+    put("fuAccumExclT", str(acc_excl[0]["timesteps"]), SRC_FU + " the accumulator run whose delta interval excludes zero")
+    put("fuAccumExclDelta", f(acc_excl[0]["delta"], d=5, sign=True), SRC_FU + " delta of that run")
+    put("fuAccumExclLo", f(acc_excl[0]["delta_ci"][0], d=5, sign=True), SRC_FU + " delta_ci of that run")
+    put("fuAccumExclHi", f(acc_excl[0]["delta_ci"][1], d=5, sign=True), SRC_FU + " delta_ci of that run")
+put("fuPredWithinAll", str(sum(r["predicted_within_on_s_interval"] for r in fu_count_all)),
+    SRC_FU + " predicted_within_on_s_interval, all count rows")
+missed = [r for r in fu_count_all if not r["predicted_within_on_s_interval"]]
+put("fuPredMissAll", str(len(missed)), SRC_FU + " count rows whose identity lies outside the on-S interval")
+# what the paper says of those runs: T >= 6, B given the larger scale, a handful of pairs
+assert all(r["timesteps"] >= 6 and not r["r1_gives_a_the_larger_scale"]
+           and r["p_s_and_disagree"] * r["n_test"] * r["pairings"] < 10 for r in missed)
+assert all(r["n_test"] * r["pairings"] == 200000 for r in fu_rows)
+late = [r for r in fu_count_all if r["timesteps"] >= 6]
+put("fuLateRuns", str(len(late)), SRC_FU + " count rows at T>=6")
+put("fuLateScaleB", str(sum(not r["r1_gives_a_the_larger_scale"] for r in late)),
+    SRC_FU + " count rows at T>=6 where temperature scaling gave B the larger scale")
+put("fuTwoPSDisagree", f(mean(t2, "p_s_and_disagree")), SRC_FU + " p_s_and_disagree, count, T=2")
+put("fuFourPSDisagree", f(mean(fu_cell("count", 4), "p_s_and_disagree"), d=5), SRC_FU + " p_s_and_disagree, count, T=4")
+put("fuTwoCiLowMax", f(max(r["delta_ci"][0] for r in t2), sign=True), SRC_FU + " delta_ci lower end, count, T=2, largest")
+for r in fu_rows:
+    assert abs(r["delta"] - (r["delta_on_s"] + r["delta_off_s"])) < 1e-12
+excl = lambda ci: ci[0] > 0 or ci[1] < 0
+assert fu_pred["12"]["held"] == all(r["delta_ci"][0] > 0 for r in t2)
+assert fu_pred["13"]["held"] == all(r["delta_on_s_ci"][0] <= r["predicted_on_s"] <= r["delta_on_s_ci"][1] for r in t2)
+assert fu_pred["15"]["held"] == (not any(excl(r["delta_ci"]) for T in (2, 6, 10) for r in fu_cell("accumulator", T)))
+for key, name in (("12", "Twelve"), ("13", "Thirteen"), ("14", "Fourteen"), ("15", "Fifteen")):
+    put("verdict" + name, verdict(fu_pred[key]["held"]), SRC_FU + f" predictions.{key}")
+put("fuThirteenDraftWithin", str(sum(fu_pred["13"]["drafted_within_interval"])), SRC_FU + " predictions.13 drafted_within_interval")
+put("fuHighTExcl", str(fu_pred["14"]["intervals_excluding_zero_at_8_and_10"]), SRC_FU + " predictions.14")
+put("fuAccumExcl", str(fu_pred["15"]["intervals_excluding_zero"]), SRC_FU + " predictions.15")
+put("fuAccumRuns", str(fu_pred["15"]["runs"]), SRC_FU + " predictions.15")
+put("fuScaleOrderRuns", str(sum(r["r1_gives_a_the_larger_scale"] for r in fu_rows)), SRC_FU + " r1_gives_a_the_larger_scale")
+put("fuRuns", str(len(fu_rows)), SRC_FU)
+put("probVectorsTenTwo", thousands((2 + 1) ** 10 - 2 ** 10), DERIVED + " (T+1)^C - T^C")
+held += [fu_pred[k_]["held"] for k_ in ("12", "13", "14", "15")]
+put("predictionsAll", str(len(held)), "NOTES.md predictions 6a to 15")
+put("predictionsAllHeld", str(sum(held)), "verdict blocks of the five experiment files")
+put("predictionsAllFalsified", str(len(held) - sum(held)), "verdict blocks of the five experiment files")
+
 # ------------------------------------------------------------------ write
 with open(OUT, "w") as fh:
     fh.write("% Generated by paper/make_numbers.py from results/ -- do not edit by hand.\n")

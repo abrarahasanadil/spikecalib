@@ -222,6 +222,7 @@ def main() -> int:
     cal_size = whole("calibration_size_experiment.json")
     if cal_size:
         cal_size.pop("rows", None)                    # 180 per-draw rows; the summary is rendered
+    fusion = whole("fusion_experiment.json")
 
     newest = max(sources, key=os.path.getmtime)
     payload = {
@@ -241,6 +242,7 @@ def main() -> int:
         "resolution": resolution,
         "caltech_calibrators": caltech_cal,
         "calibration_size": cal_size,
+        "fusion": fusion,
         "measured": [
             {
                 "T": int(t),
