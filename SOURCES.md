@@ -280,6 +280,50 @@ binomial share with standard deviation `sqrt(0.25/4000) = 0.0079`, so the `0.45 
 0.55` window in the test is over six standard deviations wide and cannot fail by chance.
 *Used in:* `tests/test_calibration.py`.
 
+**The cap for logits bounded in an interval (added 2026-10-13).** If every logit lies in an
+interval of width `W`, the largest softmax probability is `e^W / (e^W + C - 1)`: the winner's
+probability is `1 / (1 + sum_{j != w} e^(z_j - z_w))` and each of the `C - 1` exponents is at
+least `-W`. The count readout's ceiling is the case `W = T`; a scaled count readout
+`z = s c` has `W = sT`; a rate readout `z = c/T` has `W = 1` and so a cap of
+`e / (e + C - 1)` that contains no `T`, 0.2320 at ten classes and 0.0265 at a hundred and
+one. The loss floor is `ln(1 + (C - 1) e^(-W))`. *Used in:* `spikecalib/theory.py`
+(`bounded_logit_ceiling`, `scaled_ceiling`, `rate_ceiling`, `loss_floor`), `NOTES.md` "The
+cap is a scale problem". Asserted by enumeration of every count vector and by random search
+over intervals in `tests/test_theory.py`. **Whether this bound is already in print for
+non-spiking networks is recorded under "Literature check, 2026-10-13" below; the derivation
+here is independent of that and is not a claim of priority.**
+
+**The minimum scale (added 2026-10-13).** `s_min = ln((C - 1) a / (1 - a)) / T`, from
+requiring the cap at width `sT` to reach `a`. `T_min` is the same number read at `s = 1`, so
+the constraint is on the product `sT`. *Used in:* `spikecalib/theory.py` (`min_logit_width`,
+`min_scale`), and asserted against `spikecalib.models.min_timesteps`.
+
+**The number of distinct top-label confidences of a count readout (added 2026-10-13).** At
+most `binomial(T + C - 1, C - 1)` for every scale `s > 0`: the confidence depends only on
+the multiset of the `C - 1` gaps between the winning count and each other count, each an
+integer in `[0, T]`. 55 at `T = 2, C = 10`. Counting by winning count and the multiset of
+the other counts instead gives `binomial(T + C, C)`, 66, which is valid and loose because
+softmax does not distinguish `c` from `c + k`; the difference is `binomial(T + C - 1, C)`.
+*Used in:* `spikecalib/theory.py` (`max_distinct_confidences`,
+`distinct_confidence_bound_unreduced`). Asserted by enumeration, which gives exactly 55 at
+three different scales, and by a case (`e^s = 2`, `T = 2`, `C = 4`) where a special scale
+merges two values.
+
+**The Murphy decomposition by exact confidence value, and its binned form (added
+2026-10-13).** Grouping samples by exact confidence gives
+`Brier = REL - RES + UNC` with no remainder. Over any coarser grouping the identity is
+`Brier = REL - RES + UNC + WBV - WBC`, with `WBV` the within-group variance of the forecast
+and `WBC` twice the within-group covariance of forecast and outcome; it follows from
+expanding `(f - o)^2` about the group means, where the cross terms against the constant
+`fbar - obar` sum to zero. Temperature scaling keeps the partition by exact value at all but
+finitely many temperatures, so it leaves exact resolution unchanged; top-label isotonic is a
+monotone map and can only merge groups, so it cannot raise it; one-versus-rest isotonic can
+split a group and is not covered. *Used in:* `spikecalib/theory.py` (`murphy_exact`,
+`murphy_binned`). Each statement is asserted in `tests/test_theory.py` against the real
+calibrator classes. *Not cited:* the three-term decomposition is usually attributed to
+Murphy (1973) and the two extra terms to later work on binned forecasts; neither source has
+been opened, so neither is cited and the result is stated here as derived.
+
 ---
 
 ## Measured in this repository
@@ -465,6 +509,217 @@ secondary but peer-reviewed sources:
 softened to say what is actually known, and both claims stay `[UNVERIFIED]`.
 
 ---
+
+## Literature check, 2026-10-13: is the bound already in print?
+
+Run before any change to the paper's novelty wording. Each entry was read in the arXiv PDF,
+and the statement quoted was found in the extracted text of that PDF; titles, authors and
+dates are from the arXiv record's `citation_*` metadata. **The answer is yes.** The
+inequality, the loss floor and the minimum scale are all published for non-spiking networks,
+two of them with the same numbers this study reports at `T = 2, C = 10`. None of these may
+be presented as new. What none of them contains is recorded at the end.
+
+### The cap and the loss floor for bounded logits
+
+**Wei, Xie, Cheng, Feng, An & Li. "Mitigating Neural Network Overconfidence with Logit
+Normalization." ICML 2022, arXiv:2205.09310 (19 May 2022).** `[LIT]` Hongxin Wei, Renchunzi
+Xie, Hao Cheng, Lei Feng, Bo An, Yixuan Li. Logits are normalised to norm `1/tau`, so each
+lies in `[-1/tau, 1/tau]`. **Proposition 3.3 (Lower Bound of Loss):** "the per-sample loss
+defined in Eq. (4) has a lower bound: L_logit_norm >= log(1 + (k - 1)e^{-2/tau}), where k is
+the number of classes." The proof in Appendix C states the probability cap
+`1 / (1 + (k - 1) e^{-2/tau})` on the way. The text continues: "when k = 10 and tau = 1 ...
+the lower bound is about **0.7966**. The high lower bound can cause optimization difficulty."
+*That is this study's cross-entropy floor at `T = 2, C = 10`, to four decimals, because
+`2/tau = 2 = T`.* Venue from the PDF's footer, "Proceedings of the 39th International
+Conference on Machine Learning".
+
+**Wei, Zhuang, Xie, Feng, Niu, An & Li. "Mitigating Memorization of Noisy Labels by Clipping
+the Model Prediction." ICML 2023, arXiv:2212.04055 (8 December 2022).** `[LIT]` Hongxin Wei,
+Huiping Zhuang, Renchunzi Xie, Lei Feng, Gang Niu, Bo An, Yixuan Li. Eq. (2) bounds the loss
+by the logit range directly: `L_CE <= log(1 + (K - 1) e^{z_max - z_min})`, with the remark
+that "if z_max - z_min is upper bounded, L_CE could not reach infinity". **Proposition 2.1:**
+"log(1+(K-1)e^{-2tau}) <= L_CE^tau(z, y) <= log(1+(K-1)e^{2tau})" for logits clipped to
+`[-tau, tau]`. This is the floor for width `W = 2 tau`.
+
+**Zhang, Zhao, Qiao, Wang & Li. "AdaCos: Adaptively Scaling Cosine Logits for Effectively
+Learning Deep Face Representations." CVPR 2019, arXiv:1905.00292 (1 May 2019).** `[LIT]` Xiao
+Zhang, Rui Zhao, Yu Qiao, Xiaogang Wang, Hongsheng Li. **Eq. (5):** "Given scale parameter s,
+the range of probabilities in all cosine-based softmax losses is
+1/(1 + (C - 1) e^s) <= P_{i,j} <= e^s/(e^s + (C - 1))", the upper bound "achieved when
+f_{i,j} = s and f_{i,k} = 0 for all k != j", and: "when s is too small ... the maximal value
+of P_{i,y_i} could not reach 1." *This is the cap in the form this study writes it, with
+logits in `[0, s]` in place of `[0, T]`.* Venue from the arXiv record's comments field,
+"CVPR 2019 Oral".
+
+**Wang, Xiang, Cheng & Yuille. "NormFace: L2 Hypersphere Embedding for Face Verification."
+ACM Multimedia 2017, arXiv:1704.06369 (21 April 2017).** `[LIT]` Feng Wang, Xiang Xiang, Jian
+Cheng, Alan L. Yuille. With features and weights normalised the logits lie in `[-1, 1]`, and
+Section 3.2 says: "In the extreme case, e^1 / (e^1 + (n-1)e^{-1}) is very small (**0.45 when
+n = 10**; 0.007 when n = 1000)". *That is this study's ceiling at `T = 2, C = 10`, 0.4509.*
+**Proposition 2** gives the matching loss bound, `log(1 + (n - 1) e^{-(n/(n-1)) l^2})` for
+norm `l`, and the remedy: "we may implement this by directly appending a scale layer after
+the cosine layer. The scale layer has only one learnable parameter s = l^2."
+
+### The minimum scale
+
+**Wang, Wang, Zhou, Ji, Gong, Zhou, Li & Liu. "CosFace: Large Margin Cosine Loss for Deep
+Face Recognition." CVPR 2018, arXiv:1801.09414 (29 January 2018).** `[LIT]` Hao Wang, Yitong
+Wang, Zheng Zhou, Xing Ji, Dihong Gong, Jingchao Zhou, Zhifeng Li, Wei Liu. **Eq. (6):** with
+`P_W` "the expected minimum posterior probability of class center", "the lower bound of s is
+given by: s >= ((C - 1)/C) log((C - 1) P_W / (1 - P_W))". *This is `s_min` with the target
+posterior in place of the accuracy and `C/(C - 1)` in place of `T`.* Venue from the arXiv
+record's comments field, "Accepted by CVPR 2018".
+
+**Ranjan, Castillo & Chellappa. "L2-constrained Softmax Loss for Discriminative Face
+Verification." arXiv:1703.09507 (28 March 2017).** `[LIT]` Rajeev Ranjan, Carlos D. Castillo,
+Rama Chellappa. **Eq. (9):** "we can obtain the lower bound on alpha to achieve a
+probability score of p ... alpha_low = log(p(C - 2)/(1 - p))". The same inversion with
+`C - 2` from their geometric assumption. The paper also trains the scale as a parameter and
+reports that the network then drives it high.
+
+**He, Zhang, Zhang, Zhang, Xie & Li. "Bag of Tricks for Image Classification with
+Convolutional Neural Networks." arXiv:1812.01187 (4 December 2018).** `[LIT]` Tong He, Zhi
+Zhang, Hang Zhang, Zhongyue Zhang, Junyuan Xie, Mu Li. **Eq. (5):** under label smoothing the
+optimal logit gap is `log((K - 1)(1 - eps)/eps)`. With `a = 1 - eps` this is the expression
+`ln((C - 1) a / (1 - a))`, as an optimum instead of a requirement. *Venue not confirmed
+here:* it is commonly given as CVPR 2019, which the arXiv record does not state.
+
+### Checked and found not to state the bound
+
+- **Guo et al. (2017)**, arXiv:1706.04599: no bound on confidence from the logit range; only
+  the limits of temperature scaling as `T -> 0` and `T -> infinity`.
+- **Atarashi et al. (2025)**, arXiv:2506.10572: bounds the output probabilities directly and
+  learns them; its Proposition 4.1 runs from probability bounds to logit clip levels, and no
+  closed-form cap from a logit range is given. The entry under "Verified 2026-09-12" stands.
+- **Müller, Kornblith & Hinton (2019)**, arXiv:1906.02629: says label smoothing makes the
+  logit gap "a constant dependent on alpha" and does not write the constant.
+
+### What this leaves, and what it does not
+
+Not found in any of the above, as far as the search went: the statement for a spike-count
+readout, where the width is the number of timesteps; the calibration reading, in which the
+quantity that must be reachable is the model's own accuracy; the count of distinct
+confidences; and any measurement of the calibration error the cap forces. **A failed search
+is not proof of absence.** The paper may claim the application and the measurements. It may
+not claim the inequality, the loss floor, the minimum scale, or the idea of a learnable
+scale as a remedy.
+
+### Spiking networks: who has seen underconfidence, a scale, or a cap
+
+Each entry below was read in the arXiv PDF and the quoted sentence found in its extracted
+text, unless marked otherwise.
+
+**Chen, Park & Simeone. "Knowing When to Stop" (SpikeCP), arXiv:2305.11322v4.** Already
+listed above for its conformal method. **Read again for calibration on 2026-10-13, and it
+changes what this study may claim.** It uses the softmax over spike counts,
+`p_c = e^{r_c} / sum e^{r_c'}`, and says in its introduction, of a pre-trained SNN on
+MNIST-DVS as a function of time `t`: "It is observed that the SNN's classification decisions
+tend to be **first under-confident and then over-confident** with respect to the decision's
+ground-truth, unknown, test accuracy." The Figure 1 caption repeats it. Experiments use
+`T = 80`. `[LIT]` *Consequence:* underconfidence of a spike-count softmax at early timesteps
+is a published observation. The README's sentence that the underconfident direction "is
+this study's own observation" is wrong and must be withdrawn, and the paper's Related work,
+which describes these authors as reporting overconfidence only, is incomplete. What the paper offers is the reason: read at step `t`, their counts lie in
+`[0, t]`, so the cap is `e^t / (e^t + C - 1)`. That reading is `[DERIVED]` here and is not in
+their text.
+
+**Meng, Xiao, Yan, Wang, Lin & Luo. "Training High-Performance Low-Latency Spiking Neural
+Networks by Differentiation on Spike Representation" (DSR). arXiv:2205.00459v2; CVPR 2022
+per the search, not confirmed by me.** `[LIT]` Qingyan Meng, Mingqing Xiao, Shen Yan, Yisen
+Wang, Zhouchen Lin, Zhi-Quan Luo. Directly trained; the output is the spike train of the
+last layer, its threshold-weighted firing rate is the network output, and "We use
+cross-entropy as the loss function". The thresholds are trained: "using small spike
+thresholds ... weakens the approximation capacity of the SNNs, since the scaled (weighted)
+firing rate will be in a small range then ... we treat the spike threshold of each layer as
+parameters to be trained". *Consequence:* a trained multiplicative scale on output firing
+rates under cross-entropy, in a directly trained SNN, is published. A learnable logit scale
+may not be presented as new. DSR gives no bound on confidence or loss.
+
+**Fan, Zhang, Liu, Li & Lu. "SFOD: Spiking Fusion Object Detector." arXiv:2403.15192v1; CVPR
+2024 per the search, not confirmed by me.** `[LIT]` Section 3.3: "SNNs produce limited
+discrete output values. This leads to optimization issues in the neurons when using CE loss
+... consider two cases with decoded outputs of [0.2, 0.8] and [0.2, 1.0]. Using CE, the
+results of the softmax computations are [0.35, 0.65] and [0.31, 0.69], respectively." The
+closest published anticipation of the rate cap: a worked example, no formula, no statement
+that it is independent of `T`, and the remedy offered is a squared-error loss.
+
+**Wu, Chua, Zhang, Yang, Li & Li. "Deep Spiking Neural Network with Spike Count based
+Learning Rule." arXiv:1902.05705v1.** `[LIT]` "the output spike counts are upper bounded by
+the maximum time steps r_max := T/dt ... we have not noticed any performance drop due to
+r_max". Cross-entropy on spike counts and the bound on the counts in one paper, with the
+consequence for confidence not drawn.
+
+**Sun, Yin & Bohté. "Efficient Uncertainty Estimation in Spiking Neural Networks via
+MC-dropout." arXiv:2304.10191v1, 20 April 2023.** `[LIT]` Tao Sun, Bojian Yin, Sander Bohté.
+**This is the AOT-SNN classification paper that item 4 of "Could NOT be confirmed" left
+unread.** AOT is Average-Over-Time. The readout is a membrane potential, not a spike count:
+"probabilities of AOT-SNNs are computed based on the membrane potentials of readout
+integrator neurons". It reports ECE, Brier score and NLL at one to ten timesteps on
+CIFAR-10, and compares against "the temperature scaling method that re-calibrates
+probabilities output by the LTS-SNN". So the brief's original claim, that this line uses
+temperature scaling as a calibration baseline, was right about the paper and wrong about the
+identifier. ICANN 2023 per the search's Crossref check, not confirmed by me. The cap does
+not apply to its readout.
+
+**Skatchkovsky, Jang & Simeone. "Bayesian Continual Learning via Spiking Neural Networks."
+arXiv:2208.13723v2.** `[LIT]` Nicolas Skatchkovsky, Hyeryung Jang, Osvaldo Simeone. **This is
+very probably the "Skatchkovsky & Simeone on SNN overconfidence" reference withdrawn as item
+5.** It reports reliability diagrams and ECE and says: "frequentist learning algorithms
+produce overconfident decisions, while Bayesian learning outputs decisions whose confidence
+levels match well the test accuracies", and "frequentist learning tends to be more confident
+in its decisions, especially when a few samples t have been observed." Its confidence is a
+time-average of per-step softmax outputs through fixed random weights, not a softmax over
+spike counts, and it runs for 50 to 100 timesteps. Frontiers in Computational Neuroscience
+2022 per the search, not confirmed by me.
+
+**Katti, Nimbekar, Li, Acharyya, Al-Hashimi & Rajendran. "Bayesian Inference Accelerator for
+Spiking Neural Networks." arXiv:2401.15453.** `[LIT]` Converted Bayesian binary networks on
+CIFAR-10; "The spike outputs of the networks are accumulated and processed (softmax)"; ECE
+against timestep, with "a slow increase of ECE for Bayesian SNNs after 4 timesteps". Nothing
+about a cap or about underconfidence below four steps.
+
+**Li, Jones & Furber, title.** The PDF of arXiv:2303.10276v3 is headed "Unleashing the
+Potential of Spiking Neural Networks **with** Dynamic Confidence"; the arXiv record says
+"by". The entry under "Verified 2026-09-12" noted the same split with the ICCV listing.
+`paper/refs.bib` uses "by" and should follow the published title.
+
+**The two withdrawn references, revisited.** Both exist, under identifiers and author lists
+the brief did not give. The withdrawals were correct as made, since neither could be tied to
+a document at the time, and the test that keeps the old strings out of live files should stay
+until the author decides whether to cite the papers under their real records.
+
+**Reported by the search and not opened by me. `[UNVERIFIED]`; not to be cited until
+opened.** Sajid, Aburaed & Maskeliūnas, "ConvSNN", *Scientific Reports* 2026 (said to report
+an underconfident spiking classifier head with fitted temperature below 1, attributed to
+label smoothing); Jang & Simeone, arXiv:2007.11894 (ECE for a probabilistic SNN); Katti et
+al., arXiv:2302.01302; Yang et al., "SpikeMatch", arXiv:2509.22581; Abdennadher & Garner,
+arXiv:2604.08624; Banteywalu & Leroux, *Engineering Reports* 2026, a Bayesian SNN evaluated
+with ECE on N-MNIST, abstract only; and an embargoed University of Porto dissertation,
+"Calibration of Spiking Neural Networks for Ordinal Classification" (2026), whose content is
+unknown.
+
+**Not found by any search:** a statement of `e^T / (e^T + C - 1)` or an equivalent ceiling
+for a spike-count softmax; the `T`-independent cap of a rate readout as a formula; any
+comparison of temperature scaling with isotonic regression on a spiking network. Searches
+covered arXiv titles and abstracts, OpenAlex, Europe PMC full text, Crossref and general web
+search; Google Scholar and Semantic Scholar were not usable, and arXiv does not index full
+text.
+
+### Decomposition references, bibliographic record only
+
+**Murphy (1973). "A New Vector Partition of the Probability Score." *Journal of Applied
+Meteorology* 12(4):595-600.** Allan H. Murphy. Title, author, journal, volume, issue and
+pages from the Crossref record for DOI 10.1175/1520-0450(1973)012<0595:ANVPOT>2.0.CO;2.
+**The paper itself was not opened**, so the three-term decomposition is `[UNVERIFIED]` as a
+citation to it and is stated in this repository as `[DERIVED]`.
+
+**Stephenson, Coelho & Jolliffe (2008). "Two Extra Components in the Brier Score
+Decomposition." *Weather and Forecasting* 23(4):752-757.** D. B. Stephenson, C. A. S. Coelho,
+I. T. Jolliffe; DOI 10.1175/2007WAF2006116.1, from the Crossref record. `[LIT]` at the level
+of the abstract, which the record carries: "for such a procedure, an additional two
+within-bin components are needed in addition to the three traditional components of the
+Brier score." The body was not opened, so the formulas for the two terms are `[DERIVED]`
+here and not taken from it.
 
 ## Still to verify
 

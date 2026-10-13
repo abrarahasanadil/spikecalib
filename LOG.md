@@ -3172,3 +3172,72 @@ element ids, so they are left as committed.
 - The measured-maxima note at `C = 10` still types "to within 4e-13".
 - NOTES.md's "Status" does not mention the cell count; it never stated 48, so nothing there
   is wrong, but the correction lives only in this log, the README and the paper.
+
+## 2026-10-13 — The bound is prior work; predictions 6 to 11 registered before any run
+
+**Why this session.** The paper goes to arXiv on 31 October. The aim is to make its claim
+harder to dismiss, around a thesis in two halves: the confidence cap is a scale problem, and
+resolution is a timestep problem. Before any novelty wording changed, the literature was
+checked for the first half.
+
+**Found: the inequality, the loss floor, the minimum scale and the learnable scale are all
+published.** Every entry was read in its arXiv PDF and is recorded in `SOURCES.md`,
+"Literature check, 2026-10-13".
+- AdaCos, Eq. (5), states `P <= e^s/(e^s + C - 1)` for logits in `[0, s]`. That is this
+  study's ceiling with `s` where it has `T`.
+- NormFace gives the same cap at width 2 as "0.45 when n = 10". This study's headline ceiling
+  is 0.4509.
+- LogitNorm, Proposition 3.3, gives the loss floor and quotes "about 0.7966" at ten classes.
+  This study's floor at `T = 2` is 0.7966.
+- LogitClip bounds the loss by `z_max - z_min`. CosFace, Eq. (6), and Ranjan et al., Eq. (9),
+  give the minimum scale. NormFace proposes a one-parameter scale layer as the remedy, and
+  DSR trains a scale on output firing rates in a directly trained spiking network.
+
+**Found: underconfidence of a spike-count softmax is a published observation.** SpikeCP
+(Chen, Park & Simeone, arXiv:2305.11322) says its network's decisions "tend to be first
+under-confident and then over-confident". The README's sentence that the underconfident
+direction "is this study's own observation" is wrong. It is corrected with the paper, in the
+revision that follows the runs.
+
+**Found: both references withdrawn on 2026-09-12 exist.** Sun, Yin & Bohté,
+arXiv:2304.10191, is the AOT-SNN classification paper, and it does use temperature scaling
+as a baseline. Skatchkovsky, Jang & Simeone, arXiv:2208.13723, does report overconfident
+frequentist SNNs. Neither uses a spike-count readout. The withdrawals were right when made:
+neither could be tied to a document under the identifiers supplied.
+
+**Decided, by the author: reframe.** The bound is presented as a known result restated for
+spike counts, with `T` as the logit range, and cited. What the study claims is the
+measurement of what the cap costs, the `T`-independent cap of a rate readout, the taxonomy,
+the calibrator comparison and the resolution results.
+
+**Did: the theory, with a test for each part.** `spikecalib/theory.py`, 94 tests in
+`tests/test_theory.py`. Each result is checked against enumeration of every count vector,
+random search over an interval, or an identity, never against its own formula.
+- The cap for logits in any interval of width `W`, and the rate case `e/(e + C - 1)`.
+- `s_min`, and that `T_min` is the same number at `s = 1`.
+- The count of distinct confidences. The form first proposed, a sum over the winning count,
+  gives 66 at `T = 2, C = 10`. It is valid and loose, because softmax cannot tell `c` from
+  `c + k`. The tight count is `binomial(T + C - 1, C - 1)`, 55, and enumeration gives exactly
+  55 at three scales. A hand value for `s_min` in the first draft of a test, 3.092, was
+  wrong; the function gives 3.191 and the test now says so.
+- The Murphy decomposition by exact value, and the five-term form under binning. Temperature
+  scaling keeps the partition; top-label isotonic only merges; one-versus-rest isotonic can
+  split a group, and a test shows it doing so.
+
+**Did: registered predictions 6a, 6b, 7, 8, 9, 10 and 11 in `NOTES.md`, and the tie
+definition.** Changes from the first drafts, all made before any run:
+- Prediction 6 was split by dataset and stated in signed gaps, because the accumulator's
+  +0.0816 on N-Caltech101 was already on record and contradicted the draft.
+- Prediction 8 was restated the same way.
+- Prediction 9 lost its first half. Whether observed distinct values respect the bound can
+  be read from files that already exist, so it is a check. The resolution half is restricted
+  to N-MNIST, where the two readouts' accuracies match.
+- The tie definition for predictions 10 and 11 is that two calibrators differ only if the
+  paired interval excludes zero under both estimators in the same direction. By the draft's
+  definition N-MNIST itself tied in only 10 of 15 runs, so 7 of 9 would have been expected to
+  fail on binning noise alone.
+
+**Not done yet.** No model has been trained and no calibrator fitted for any of these. Tier 2
+(a rate readout, a `tau` sweep) is deferred.
+
+**Ran.** `pytest -q`: 325 passed.

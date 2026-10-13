@@ -1404,6 +1404,281 @@ depth with a corrected ratio; the ceiling verification holds at both depths; the
 ceiling result holds at both depths. The one claim that did not survive is the magnitude of
 the `T = 2` accuracy gain, which is now reported as a range across architectures.
 
+## The cap is a scale problem; resolution is a timestep problem
+
+Recorded 2026-10-13, before any run described under predictions 6 to 11. The derivations are
+in `spikecalib/theory.py` and each is checked by `tests/test_theory.py` against enumeration
+or an identity, not against its own formula.
+
+**None of the inequalities in parts 1 and 2 is new, and this document does not claim them.**
+A literature check on 2026-10-13 (`SOURCES.md`, "Literature check, 2026-10-13") found each of
+them in print for non-spiking networks. `[LIT]` The cap for logits in `[0, s]` is Eq. (5) of
+Zhang et al. (AdaCos); NormFace gives it at width 2 as "0.45 when n = 10", which is this
+study's 0.4509; the loss floor is Proposition 3.3 of Wei et al. (LogitNorm), who quote
+0.7966 at ten classes, this study's floor at `T = 2`; Wei et al. (LogitClip) bound the loss
+by the logit range directly; the minimum scale is Eq. (6) of Wang et al. (CosFace) and
+Eq. (9) of Ranjan et al.; and a trainable scale as the remedy is NormFace's scale layer and,
+in directly trained spiking networks, the trained threshold of Meng et al. (DSR). What this
+study adds is the reading of `T` as the logit range of a spike-count readout, the
+measurement of what that costs in calibration, the rate case in part 1, and parts 3 and 4.
+
+The thesis under test is in two halves, and the experiments below are chosen to separate
+them.
+
+> **The confidence cap is a scale problem.** One scalar on the logits moves it.
+> **Resolution is a timestep problem.** The number of distinct confidence values, and so the
+> number of usable operating points, is fixed by `T` and `C` and no scalar changes it.
+
+### 1. The cap depends on the width of the logit interval, not on `T`
+
+`[DERIVED]` Write the winner's softmax probability as
+`1 / (1 + Σ_{j≠w} e^{z_j − z_w})`. If every logit lies in an interval of width `W`, each of
+the `C − 1` exponents is at least `−W`, so
+
+    p_max ≤ 1 / (1 + (C − 1) e^{−W}) = e^W / (e^W + C − 1)
+
+with equality when the winner is at the top of the interval and every competitor at the
+bottom. Three cases of it:
+
+| convention | logits | width `W` | cap | at `C = 10` |
+|---|---|---|---|---|
+| sum (this study so far) | `c_j`, in `[0, T]` | `T` | `e^T / (e^T + C − 1)` | 0.4509 at `T = 2` |
+| scaled | `s·c_j`, `s > 0` | `sT` | `e^{sT} / (e^{sT} + C − 1)` | any value below 1 |
+| rate | `c_j / T`, in `[0, 1]` | 1 | `e / (e + C − 1)` | **0.2320 at every `T`** |
+
+The rate convention's cap contains no `T`: adding timesteps to a rate readout buys
+resolution and no confidence. At `C = 101` it is 0.0265. The argument uses nothing about
+spikes, so it also covers clipped or quantised logits in a non-spiking network. The
+cross-entropy floor follows as before, `ln(1 + (C − 1) e^{−W})`.
+
+### 2. `T_min` is a constraint on the product `sT`
+
+`[DERIVED]` Requiring the cap to reach an accuracy `a` gives `W ≥ ln((C − 1) a / (1 − a))`,
+so for a count readout
+
+    s_min = ln((C − 1) a / (1 − a)) / T .
+
+What this document has called `T_min` is the minimum *width*, read at `s = 1`. Halving `T`
+and doubling `s` leaves the cap where it was. For the cells the predictions name: `s_min` is
+3.191 on N-MNIST at `T = 2` (`a = 0.9850`), 2.211 on N-Caltech101 at `T = 2` (`a = 0.4543`),
+and 0.865 at `T = 6` (`a = 0.6427`).
+
+`[MEASURED]`, already on record: the temperatures fitted in the N-MNIST sweep imply scales
+`1/t` of 3.57 to 3.66 at `T = 2`, 1.98 to 2.08 at `T = 4`, 1.39 to 1.51 at `T = 6`, 1.15 to
+1.26 at `T = 8` and 1.01 to 1.10 at `T = 10`, and `1/t` exceeds that run's `s_min` in all
+fifteen. So the post-hoc half of "one scale fixes calibration" is not a prediction. It is
+the existing calibrator result, read as a scale.
+
+### 3. The number of distinct confidences is at most `binomial(T + C − 1, C − 1)`, for any `s`
+
+`[DERIVED]` Under scale `s` the top-label confidence of a count vector is
+`1 / (1 + Σ_{j≠w} e^{−s(m − c_j)})` with `m` the largest count. It depends only on the
+multiset of the `C − 1` gaps `m − c_j`, each an integer in `[0, T]`. There are
+
+    binomial(T + C − 1, C − 1)
+
+such multisets: **55 at `T = 2, C = 10`**, 715 at `T = 4`, 5,005 at `T = 6`. The scale
+changes each value and not how many there are.
+
+Counting instead by the winning count `m` and the multiset of the other counts in `[0, m]`
+gives `Σ_{m=0}^{T} binomial(m + C − 1, C − 1) = binomial(T + C, C)`, which is 66 at
+`T = 2, C = 10`. That is a valid upper bound and a loose one: it counts `c` and `c + k`
+separately, and softmax cannot tell them apart. Removing the shifted duplicates telescopes
+the sum to the figure above, which is the bound this study uses. Enumerating every count
+vector at `T = 2, C = 10` gives exactly 55 distinct confidences at `s = 1`, at `s = 0.37`
+and at `s = 2.5`.
+
+**Where the bound says something.** It is informative only while it is below the number of
+test samples: on N-MNIST (10,000 test samples) at `T ≤ 6`. At `C = 101` it is 5,151 at
+`T = 2`, above N-Caltech101's 1,742 test samples, so there the sample count is the binding
+limit and the bound cannot be violated.
+
+**A check, not a prediction.** Whether observed distinct values stay within the bound is
+already answerable from the result files, so it is not registered: 8 to 10 against 55 on
+N-MNIST at `T = 2`, 35 to 39 against 715 at `T = 4`, 95 to 112 against 5,005 at `T = 6`, and
+59 to 154 against 5,151 on N-Caltech101 at `T = 2`. It is recomputed over every count cell,
+including the learned-scale runs, and reported as a check beside prediction 9.
+
+### 4. A decomposition with no binning choice, where the values are few
+
+`[DERIVED]` Group the test samples by their exact confidence value. With `f_k` the value,
+`ō_k` the accuracy and `n_k` the size of group `k`, and `ō` the overall accuracy,
+
+    Brier = REL − RES + UNC
+    REL = Σ_k (n_k/n)(f_k − ō_k)²    RES = Σ_k (n_k/n)(ō_k − ō)²    UNC = ō(1 − ō)
+
+exactly, and `Σ_k (n_k/n)|f_k − ō_k|` is a calibration error with no bins. This is
+meaningful only while distinct values are few relative to the sample size. With one sample
+per value every group's accuracy is 0 or 1, `RES = UNC`, and the identity says nothing. A
+count readout at low `T` is in the first regime (9 values on 10,000 samples); the accumulator
+(10,000 values on 10,000 samples) is in the second and has to be binned. Under binning the
+identity needs two further terms, the within-bin forecast variance and covariance:
+`Brier = REL − RES + UNC + WBV − WBC`.
+
+**Rule adopted: two readouts' resolutions are compared only under the same estimator.** Exact
+against exact, or equal-width against equal-width and equal-mass against equal-mass at the
+same bin count. Both binned estimators are reported wherever a binned resolution is, as rule
+2 requires for ECE.
+
+What each calibrator can do to resolution, `[DERIVED]`:
+
+- **Temperature scaling keeps the partition, so it cannot change exact resolution.** Two
+  samples share a confidence exactly when they share a gap multiset, and that stays true at
+  every temperature except finitely many, those at which two different multisets happen to
+  give the same sum. `t = 1/ln 2` is one: three competitors one step behind then equal one
+  tied competitor and two two steps behind. At such a temperature groups merge; they never
+  split.
+- **Top-label isotonic can only merge groups, so it cannot raise exact resolution.** It maps
+  confidence through a monotone function, equal inputs stay equal, and merging groups never
+  increases a between-group variance.
+- **One-versus-rest isotonic is not covered.** It maps each class through its own function,
+  so samples that shared a confidence can come apart.
+
+So no post-hoc calibrator in this study can add resolution to a count readout, and the one
+that changes nothing about it is the one-parameter method.
+
+## The tie definition for predictions 10 and 11, fixed 2026-10-13
+
+Fixed before any calibrator was fitted on N-Caltech101 and before any calibration-set
+subsample was drawn.
+
+> **Two calibrators differ on a run only if the paired 95% bootstrap interval on their ECE
+> difference excludes zero under both binned estimators, equal-width and equal-mass, in the
+> same direction. Otherwise they tie.**
+
+This is the argument already made under "The paired bootstrap under both estimators": a
+difference that is real is found by both estimators, in the same place and with the same
+sign. Under this definition all fifteen N-MNIST runs at the full calibration set are ties,
+since no run resolves under both. Intervals are the paired bootstrap of
+`spikecalib.calibration.bootstrap_ece_difference`, 1,000 resamples of the test set, 15 bins,
+top-label isotonic against temperature scaling.
+
+## The learned-scale arm, as registered 2026-10-13
+
+A count readout with a learnable logit scale: logits `z_j = s·c_j`, `s = exp(θ)`, `θ`
+initialised at 0 so that `s = 1`, trained jointly with the network by the same optimiser at
+the same learning rate. Everything else is the existing count run's: architecture, neuron
+settings, batch size, epoch cap and patience, seeds 0 to 2, and the split, which must
+reproduce the existing run's fingerprint. Three cells are trained, nine runs: N-MNIST at
+`T = 2` with two blocks, and N-Caltech101 at `T = 2` and `T = 6` with four.
+
+The learned `s` is logged for every run and compared with that run's own
+`s_min = ln((C − 1) a / (1 − a)) / T`, with `a` its test accuracy. The comparison is
+reported. It is not one of the falsification criteria below.
+
+Throughout, the gap is signed: mean confidence minus accuracy on the test split, before any
+calibrator, averaged over the three seeds. Negative is underconfident.
+
+## Pre-registered prediction 6a, recorded 2026-10-13
+
+> On N-MNIST at `T = 2` (2 blocks), the learned-scale count readout has
+> |mean confidence − accuracy| < 0.05, against 0.5386 at `s = 1`.
+
+*Falsification.* Wrong if the magnitude of the three-seed mean signed gap is 0.05 or more.
+
+*Known before registration.* The accumulator, which is also unbounded and trained by the
+same loss, has a gap of +0.0000 in this cell (−0.0015, +0.0001, +0.0014).
+
+## Pre-registered prediction 6b, recorded 2026-10-13
+
+> On N-Caltech101 at `T = 2` (4 blocks), the learned-scale count readout has
+> mean confidence − accuracy above −0.05, and above 0: it is overconfident, against −0.3969
+> at `s = 1`.
+
+*Falsification.* Wrong if the three-seed mean signed gap is 0 or below.
+
+*Known before registration.* The accumulator's gap in this cell is **+0.0816** (+0.0634,
++0.0802, +0.1012). This prediction was first drafted as |gap| < 0.05 and was changed, before
+any learned-scale model was trained, because that result was already on record and pointed
+the other way.
+
+## Pre-registered prediction 7, recorded 2026-10-13
+
+> On N-Caltech101 at `T = 2` (4 blocks), the learned-scale count readout recovers at least
+> half of the 12.82-point accuracy gap to the accumulator.
+
+*Falsification.* Wrong if its three-seed mean test accuracy is below 0.5184, which is the
+count readout's 0.4543 plus half of 0.1282.
+
+*Known before registration.* The gap is 3.08 points with two blocks, so its size depends on
+the network. The mechanism first offered for it, a cross-entropy floor that dominates the
+gradient, did not survive prediction 5. This prediction is that mechanism's second test: a
+learnable scale removes the floor and leaves the threshold in place.
+
+## Pre-registered prediction 8, recorded 2026-10-13
+
+> On N-Caltech101 at `T = 6` (4 blocks), the learned-scale count readout has
+> mean confidence − accuracy above −0.05, against −0.1534 at `s = 1`. The sign is reported.
+
+*Falsification.* Wrong if the three-seed mean signed gap is −0.05 or below.
+
+*What it would show.* If it holds, the residual that neither ceiling explains is removed by
+freeing the logit range during training, which would make it an effect of the bounded range
+on what the network learns and not of anything the readout forbids.
+
+*Known before registration.* The cap is slack in this cell, 0.8014 against an accuracy of
+0.6427, and the conditional ceiling is above accuracy too. The accumulator in the same cell
+is **+0.1843**, overconfident. A learned scale that behaves as the accumulator does meets
+this prediction by overshooting, which is why the sign is reported with it.
+
+## Pre-registered prediction 9, recorded 2026-10-13
+
+> On N-MNIST at `T = 2` (2 blocks), the count readout's resolution term stays below the
+> accumulator's under both binned estimators, with or without the learned scale and after
+> either calibrator.
+
+*Definitions.* Resolution is `RES` of `spikecalib.theory.murphy_binned` at 15 bins, on the
+test split, averaged over the three seeds. There are twelve comparisons: the count readout
+at `s = 1` and with the learned scale, each uncalibrated, after temperature scaling and
+after top-label isotonic, each against the accumulator in the same state, under equal-width
+and under equal-mass binning. Calibrators are fitted on the calibration split, on CPU.
+
+*Falsification.* Wrong if the count readout's mean resolution is at or above the
+accumulator's in any of the twelve.
+
+*Scope.* Restricted to N-MNIST because the two readouts' accuracies match there (0.9850 and
+0.9861), so their uncertainty terms match and a difference in resolution is not a difference
+in accuracy. On N-Caltech101 the accuracies differ by 13 points; resolution there is
+reported descriptively as `RES/UNC` and no prediction is made about it.
+
+*Known before registration.* The AUROC of confidence for correctness at `T = 2` on N-MNIST is
+0.9204 for count and 0.9698 for the accumulator, which points the same way. No resolution
+had been computed for any model when this was recorded.
+
+## Pre-registered prediction 10, recorded 2026-10-13
+
+> On N-Caltech101, temperature scaling and top-label isotonic tie in at least 7 of 9
+> count-readout runs (`T` in {2, 6, 10}, 3 seeds, 4 blocks).
+
+*Falsification.* Wrong if the two calibrators differ, under the tie definition above, in
+three or more of the nine runs.
+
+*Known before registration.* No calibrator had been fitted on N-Caltech101. The calibration
+set is 1,010 samples, ten per class. On N-MNIST, with 5,000, fifteen of fifteen runs tie
+under this definition.
+
+## Pre-registered prediction 11, recorded 2026-10-13
+
+> On N-MNIST at `T = 2`, subsampling the calibration set to 100 samples makes temperature
+> scaling beat isotonic in at least 2 of 3 seeds; at 1,000 and 5,000 samples they tie.
+
+*Definitions.* For each seed and each size, 20 subsamples of the 5,000-sample calibration
+split are drawn without replacement, stratified so that each class supplies a tenth of the
+size, with NumPy's `default_rng` seeded from the seed, the size and the draw index. Both
+calibrators are fitted on each subsample and compared on the full test split under the tie
+definition above. At 5,000 the subsample is the whole split, so the 20 draws coincide.
+
+*Falsification.* At 100 samples, a seed counts for the prediction if temperature scaling
+beats isotonic, that is, the two differ under the tie definition with temperature the lower
+ECE, in at least 10 of its 20 draws. Wrong if fewer than 2 of the 3 seeds count. At 1,000
+and at 5,000, a seed ties if the two calibrators differ, in either direction, in fewer than
+10 of its 20 draws. Wrong if any seed fails to tie at either size. The 100-sample rule is
+the author's; the rule for 1,000 and 5,000 is its mirror and was written with it.
+
+*Known before registration.* The 5,000-sample result exists: at `T = 2`, seed 1 resolves in
+favour of temperature under equal-width binning and not under equal-mass, which is a tie
+under the definition above. Nothing has been fitted on a subsample.
+
 ## Does the ceiling bind in published work? Resolved: no, and the reason is informative
 
 The verification pass left one consequential question open. Li, Jones & Furber report
