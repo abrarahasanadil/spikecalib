@@ -1858,6 +1858,152 @@ less decisively than predicted.
   still open.
 - "Resolution" is no longer used for the number of confidence values.
 
+## Consequence for multisensory fusion
+
+Recorded 2026-10-14, before any fusion result was computed. **This is a corollary of known
+decision-fusion theory applied to spike-count readouts. It is not a new theorem**, and the
+theory it follows from is recorded in `SOURCES.md` as each source is verified. The
+derivations are in `spikecalib/fusion.py` and `spikecalib/theory.py`, checked by brute force
+and by simulation in `tests/test_fusion.py`.
+
+Two modalities, each read out by a count readout over `T` steps, each reporting a probability
+vector over the same `C` classes. A readout is *saturated* on an input when its winner fired
+at every step and no other class fired: the count vector `[T, 0, ..., 0]` up to position, the
+one vector that attains the ceiling. `S` is the event that both modalities saturate.
+
+`[DERIVED]` **(a) On `S` a symmetric rule cannot weight the modalities.** Every saturated
+report is the same vector up to which class wins. So a fusion rule that uses only the two
+reports, treats the two modalities alike and treats the classes alike gives the two winners
+the same fused score: exchanging the two classes exchanges the two reports, and the rule
+cannot tell which came from which modality. If the rule is also strictly increasing in each
+report, the tie is between exactly those two classes, and with uniform tie-breaking it is an
+unweighted vote, a coin flip whenever the modalities disagree. The product, sum and max
+rules are of this kind.
+
+*Two conditions were added to the proposition as first stated*, which asked only for symmetry
+between modalities. Symmetry between classes is needed for the exchange argument. Strict
+monotonicity is needed for the tie to be two-way: the min rule is symmetric and not strict,
+and on disagreement it ties every class, which is worse than a vote and still cannot tell
+the modalities apart. Both conditions are checked by brute force over every pair of winners.
+
+`[DERIVED]` **(b) What the coin flip costs.** Against a rule that sides with modality 1
+whenever the two disagree, which is what reliability-weighted voting does when modality 1 has
+the larger weight `log((C − 1) a_k / (1 − a_k))`, the symmetric rule loses, in accuracy,
+
+    0.5 · P(S) · (a_{1,S} − a_{2,S})
+
+with `a_{k,S}` the accuracy of modality `k` on `S`. This is an identity and needs no model
+of the errors: where the modalities agree they are right or wrong together, so the
+difference in their accuracies on `S` is carried entirely by the inputs on which they
+disagree, and the coin gives up half of it. The symmetric-error model enters only in calling
+reliability-weighted voting the optimal rule for two modalities known by their accuracies.
+
+**The expression in the first draft of (b) was `0.5 · P(S and disagree) · (a_{1,S} − a_{2,S})`,
+and it is wrong by a factor.** `a_{1,S} − a_{2,S}` already equals `P(disagree | S)` times the
+difference in accuracy conditioned on disagreement, so multiplying it by the probability of
+`S` *and* disagreement counts the probability of disagreement twice. The drafted expression
+is smaller than the correct one by exactly `P(disagree | S)`. This was found by simulation
+before any fusion run, and `tests/test_fusion.py` shows the simulation reproducing the
+corrected expression and not the draft. Both are computed and reported.
+
+`[DERIVED]` **(c) A per-modality scale restores the weighting.** With logits `s_k · c` and
+`s_k · T = log((C − 1) a_k / (1 − a_k))`, the product rule on `S` is exactly
+reliability-weighted voting, vote for vote and posterior for posterior. This is the known
+remedy, calibrating each source before combining, and the scale is `s_min` of
+"The cap is a scale problem": the scale that lifts a modality's cap to its accuracy is the
+scale that weights its vote correctly. A scale common to both modalities restores nothing.
+
+`[DERIVED]` **(d) How much a count readout can say.** Its top-label confidence takes
+`binomial(T + C − 1, C − 1)` values at a generic scale, 55 at `T = 2, C = 10`. Its full
+probability vector takes `(T + 1)^C − T^C` values at every scale, 58,025: the count vectors
+with at least one zero, since softmax ignores a constant shift.
+
+### The validation, as fixed before any fusion result
+
+Inference only, on the existing N-MNIST models. No training.
+
+- **Two conditionally independent modalities.** Modality A is a test sample. Modality B is a
+  different test sample of the same class, drawn uniformly at random, with event dropout.
+  Given the class the two are independent draws.
+- **Event dropout** removes each event independently with probability `r`: a frame's event
+  count `n` at a pixel becomes a draw from `Binomial(n, 1 − r)`. One independent dropout draw
+  is made for each pairing.
+- **The rate `r`** is chosen once, on the calibration split, with the seed-0 count model at
+  `T = 2`: the value on a grid of 0.00 to 0.99 in steps of 0.01 whose calibration accuracy
+  under dropout is closest to the clean calibration accuracy minus 0.10. It is fixed and
+  recorded below before any fusion result is computed, and used unchanged for every `T`,
+  seed and readout.
+- **Readouts.** Count at `T` in {2, 4, 6, 8, 10} and accumulator at `T` in {2, 6, 10}, three
+  seeds, two blocks, 20 random pairings each.
+- **Rules.** R0, the product rule on the raw softmax outputs, ties broken uniformly at
+  random. R1, the product rule after temperature scaling each modality, the temperatures
+  fitted on the calibration split (A on clean calibration samples, B on calibration samples
+  under one seeded dropout draw). R2, reliability-weighted voting, the weights from each
+  modality's accuracy on the same calibration data.
+- **`delta = acc(R1) − acc(R0)`**, pooled over the 20 pairings, and split into the part from
+  samples in `S` and the part from the rest. For an accumulator, which has no counts, `S` is
+  empty and the whole of `delta` is off `S`.
+- **Intervals** are 95% percentile bootstrap intervals over the 10,000 test samples taken as
+  modality A, each carrying the mean of its 20 pairings, 1,000 resamples, seeded.
+- **ECE** of each rule's fused confidence is reported under both estimators.
+
+## Pre-registered prediction 12, recorded 2026-10-14
+
+> For count readouts at `T = 2`, `delta` is positive with its interval excluding zero in
+> every seed.
+
+*Falsification.* Wrong if in any of the three seeds the lower end of the interval on `delta`
+is at or below zero.
+
+## Pre-registered prediction 13, recorded 2026-10-14 (a check of the proposition)
+
+As drafted:
+
+> The on-`S` part of `delta` agrees with `0.5 · P(S and disagree) · (a_{1,S} − a_{2,S})`
+> within its interval in every seed.
+
+**Registered in corrected form, for the reason given under (b):**
+
+> The on-`S` part of `delta` agrees with `0.5 · P(S) · (a_{1,S} − a_{2,S})` within its
+> interval in every seed.
+
+*Definitions.* Evaluated for the count readout at `T = 2`, the cell prediction 12 names;
+other cells are reported. "Agrees within its interval" means the predicted value lies
+inside the 95% bootstrap interval of the on-`S` part of `delta`. `P(S)` and the two
+accuracies are measured on the same pooled pairings.
+
+*Falsification.* Wrong if in any seed the corrected expression lies outside that interval.
+The drafted expression is evaluated the same way and reported beside it, labelled as the
+draft; its outcome does not decide this prediction.
+
+*What it tests.* Part (b) describes a rule that sides with modality A on every disagreement
+in `S`. R1 is that rule only if temperature scaling gives A the larger scale in every seed,
+which is expected, since A is the more accurate, and is not guaranteed. If B were given the
+larger scale the measured value would have the opposite sign.
+
+## Pre-registered prediction 14, recorded 2026-10-14
+
+> `delta` falls as `T` rises, and its interval includes zero at `T = 8` and `T = 10`.
+
+*Definitions.* Count readouts. "Falls as `T` rises": the three-seed mean of `delta` is
+strictly decreasing over `T` = 2, 4, 6, and its values at `T = 8` and `T = 10` are both below
+its value at `T = 6`.
+
+*Falsification.* Wrong if that ordering fails, or if in any seed the interval on `delta`
+excludes zero at `T = 8` or at `T = 10`.
+
+## Pre-registered prediction 15, recorded 2026-10-14
+
+> For accumulator readouts, `delta`'s interval includes zero at every `T`.
+
+*Falsification.* Wrong if in any of the nine runs (`T` in {2, 6, 10}, three seeds) the
+interval on `delta` excludes zero.
+
+*Known before registration, for all four.* On N-MNIST at `T = 2` between 94.9% and 95.4% of
+the count readout's test predictions sit at the ceiling (`LOG.md`, 2026-09-28), so saturation
+is common for the clean modality. No dropout rate had been chosen, no model had been run on a
+dropped-out input, and no fused prediction had been computed when these were recorded.
+
 ## Does the ceiling bind in published work? Resolved: no, and the reason is informative
 
 The verification pass left one consequential question open. Li, Jones & Furber report

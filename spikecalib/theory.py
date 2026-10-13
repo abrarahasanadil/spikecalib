@@ -38,6 +38,7 @@ __all__ = [
     "min_scale",
     "max_distinct_confidences",
     "distinct_confidence_bound_unreduced",
+    "n_distinct_probability_vectors",
     "murphy_exact",
     "murphy_binned",
 ]
@@ -184,6 +185,22 @@ def distinct_confidence_bound_unreduced(timesteps: int, n_classes: int) -> int:
     if timesteps < 0 or n_classes < 2:
         raise ValueError(f"need timesteps >= 0 and n_classes >= 2; got {timesteps}, {n_classes}")
     return sum(math.comb(m + n_classes - 1, n_classes - 1) for m in range(timesteps + 1))
+
+
+def n_distinct_probability_vectors(timesteps: int, n_classes: int) -> int:
+    """How many distinct probability vectors a count readout can emit, at any scale.
+
+    [DERIVED] ``softmax(s c) = softmax(s c')`` exactly when ``c - c'`` is a constant vector.
+    Every count vector is a constant shift of exactly one whose smallest entry is zero, so
+    the distinct probability vectors are the count vectors with at least one zero:
+    ``(T + 1)^C - T^C``. No genericity condition is needed, unlike for the top-label
+    confidence, because two full vectors cannot coincide by accident. 58,025 at
+    ``T = 2, C = 10``, against 55 distinct top-label confidences: almost all of what a count
+    readout can say is in the rest of the vector, not in its confidence.
+    """
+    if timesteps < 0 or n_classes < 2:
+        raise ValueError(f"need timesteps >= 0 and n_classes >= 2; got {timesteps}, {n_classes}")
+    return (timesteps + 1) ** n_classes - timesteps ** n_classes
 
 
 # ---------------------------------------------------------------------------------------

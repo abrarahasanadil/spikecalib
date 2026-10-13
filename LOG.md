@@ -3345,3 +3345,51 @@ presets that are now labelled "calculated", and the "4e-13" figure, which is com
 - The embargoed Porto dissertation on SNN calibration could not be read.
 - `export_dashboard_data.py` still re-runs inference on the sweep models instead of using
   the output cache the new scripts share.
+
+## 2026-10-14 — Fusion: the proposition checked, one expression corrected, predictions 12 to 15 registered
+
+**Why.** A saturated count readout reports the same probability vector whichever network
+produced it. Two modalities that both saturate therefore hand a fusion rule nothing with
+which to weight one above the other. This is a corollary of decision-fusion theory, not a
+theorem, and the sources it rests on are being verified in parallel.
+
+**The author is away overnight and asked for decisions to be taken and recorded here.** These
+are the ones taken before registration.
+
+**Decided: the drafted expression in part (b) is wrong, and prediction 13 is registered in
+corrected form.** The draft was `0.5 · P(S and disagree) · (a1_S − a2_S)`, with accuracies
+conditioned on `S`. Where two modalities agree they are right or wrong together, so
+`a1_S − a2_S` already equals `P(disagree | S)` times the difference conditioned on
+disagreement. Multiplying it by `P(S and disagree)` counts the probability of disagreement
+twice. The correct expression is `0.5 · P(S) · (a1_S − a2_S)`, and it is an identity that
+needs no model of the errors. A simulation of 400,000 draws reproduces the corrected
+expression and misses the draft by more than twenty standard errors in the regime of the
+experiment. *Reason for not registering the draft as written:* it would have been falsified
+by an algebra slip and said nothing about the proposition. The draft is quoted verbatim in
+`NOTES.md` beside the correction, and the experiment computes both. The correction was made
+before any fusion result existed.
+
+**Decided: part (a) needs two more conditions than "treats modalities symmetrically".** The
+rule must treat classes alike, or the exchange argument does not go through, and it must be
+strictly increasing in each report, or the tie is not two-way. The min rule is the
+counterexample to the second: it ties every class on disagreement. Both are stated in
+`NOTES.md` and checked by brute force over every pair of winners for six rules.
+
+**Decided: operational definitions the drafts left open**, all fixed in `NOTES.md` before any
+run.
+- Prediction 13 is evaluated in the cell prediction 12 names, count at `T = 2`. Other cells
+  are reported.
+- Prediction 14's "falls as `T` rises" is a strictly decreasing three-seed mean over
+  `T` = 2, 4, 6, with `T = 8` and `T = 10` both below `T = 6`.
+- Event dropout is binomial thinning of each pixel's event count, one independent draw per
+  pairing. The rate is chosen on the calibration split by a grid in steps of 0.01.
+- Modality B's temperature and vote weight are fitted on calibration samples under dropout.
+- For an accumulator, which has no spike counts, `S` is empty.
+- Intervals resample the 10,000 test samples, each carrying the mean of its 20 pairings.
+
+**Did.** `spikecalib/fusion.py` (the three rules, the saturation test, both expressions),
+`n_distinct_probability_vectors` in `spikecalib/theory.py`, and 54 tests in
+`tests/test_fusion.py`. `pytest -q`: 408 passed.
+
+**Not done yet.** No dropout rate chosen, no model run on a dropped-out input, no fused
+prediction computed.
