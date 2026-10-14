@@ -85,6 +85,20 @@ def test_no_withdrawn_reference_is_cited_in_live_files() -> None:
             assert bad not in text, f"{rel} still cites the withdrawn reference {bad}"
 
 
+
+def test_the_paper_carries_the_disclosure_notes_prescribes() -> None:
+    """The Acknowledgements are exactly the superseding text recorded in NOTES.md, and only that."""
+    notes = _read("NOTES.md")
+    block = notes[notes.index("**Superseded 2026-10-14 by the author.**"):]
+    quoted = " ".join(line[2:] for line in block.splitlines() if line.startswith("> "))
+    assert quoted.startswith("AI assistance was used in preparing this work.")
+    paper = _read("paper", "main.tex")
+    section = paper[paper.index("\\section*{Acknowledgements}"):paper.index("\\bibliographystyle")]
+    body = " ".join(section.split("\n", 1)[1].split())
+    assert body == quoted
+    assert "withdrawn" not in body
+
+
 # --------------------------------------------------------------------------- rule 2
 
 def test_the_tracked_csv_matches_the_one_the_page_renders() -> None:

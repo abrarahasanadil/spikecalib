@@ -2586,6 +2586,22 @@ are recorded in `SOURCES.md`, and the energy constant is E_MAC = 4.6 pJ, reclass
 `[LIT]` to `[DERIVED]` on 2026-09-12 because it appears nowhere in Horowitz and is the
 0.9 + 3.7 multiply-plus-add convention.
 
+**Superseded 2026-10-14 by the author.** The disclosure above is no longer the paper's. The
+whole Acknowledgements section of `paper/main.tex` is now exactly this, and this text
+supersedes the fixed wording above, including the sentence about two withdrawn citations:
+
+> AI assistance was used in preparing this work. The author verified all results and takes
+> full responsibility for the content. Every citation was checked against its primary
+> document or, where that was inaccessible, against a verified secondary source, as recorded
+> in SOURCES.md.
+
+The rules above on where it goes still hold: once, in the paper, not on the dashboard. The
+earlier text is kept here as a record. Its "two were withdrawn" had stopped being accurate:
+both papers were found on 2026-10-13 and are recorded in `SOURCES.md`. The new last sentence
+is supported there too: the citations that could not be opened, Nitzan and Paroush (1982) and
+Chair and Varshney (1986), are each recorded with the verified secondary source they are
+cited through. `tests/test_provenance.py` checks that the paper carries this text verbatim.
+
 ---
 
 ## Status

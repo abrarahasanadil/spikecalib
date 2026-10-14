@@ -3573,3 +3573,32 @@ byte-identical to the committed files. `make_numbers.py`: 543 macros.
 - The main text is 17 pages against a target of roughly 10 to 12.
 - The Acknowledgements sentence about two withdrawn citations is unchanged.
 - Tier 2 was not run.
+
+## 2026-10-14 — Ten-point type, and a new disclosure in place of the fixed one
+
+**Why.** The author decided both.
+
+**Did.**
+- `paper/main.tex` is back at `\documentclass[10pt]`. This reverses the eleven-point reading
+  recorded in the previous entry.
+- The whole Acknowledgements section is now, exactly: "AI assistance was used in preparing
+  this work. The author verified all results and takes full responsibility for the content.
+  Every citation was checked against its primary document or, where that was inaccessible,
+  against a verified secondary source, as recorded in SOURCES.md." The sentence about two
+  withdrawn citations is gone. That sentence had stopped being accurate once both papers were
+  found on 2026-10-13.
+- `NOTES.md`, "AI disclosure, for the paper": a dated note says this text supersedes the
+  earlier fixed wording, which is kept above it as a record.
+- No test checked the old wording, so none needed changing. A new test checks that the
+  paper's Acknowledgements match the superseding text in `NOTES.md` word for word and that
+  the word "withdrawn" no longer appears in them.
+
+**Commit messages.** `git log --format=%B | grep -ci -e co-authored`
+returns 0. History was not rewritten.
+
+**Page count.** `[MEASURED]` 17 pages. The main text runs 13 full pages and about half of
+page 14: the Acknowledgements start 25 lines into page 14 and the references 29 lines in. The
+references run from page 14 to page 16, and the one-page appendix is page 17.
+
+**Verified.** `tectonic`: 0 warnings. `pytest -q`: 415 passed. The figures and
+`docs/data.js` were regenerated and match the committed files byte for byte.
