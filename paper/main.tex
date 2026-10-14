@@ -1,4 +1,4 @@
-\documentclass[10pt]{article}
+\documentclass[11pt]{article}
 \usepackage[margin=0.9in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
@@ -20,7 +20,7 @@
 \input{numbers}
 
 \title{Counting Spikes Caps Confidence:\\
-A Structural Account of Miscalibration in Low-Timestep Spiking Networks}
+The Calibration Cost of a Known Softmax Bound in Low-Timestep Spiking Networks}
 \author{Mohammed Abrar Ahasan Chowdhury\\[2pt]
   \small ORCID \href{https://orcid.org/0009-0006-9273-6593}{0009-0006-9273-6593}\\
   \small Independent researcher, Liverpool, United Kingdom\quad \texttt{abrarahasanadil@gmail.com}}
@@ -40,7 +40,9 @@ and \shareHundredOneTwo\% ($C=101$, $T=2$) of expected calibration error before 
 under either binning estimator, and for none of it where the cap is slack.
 A softmax over firing rates is capped at $e/(e+C-1)$ at every $T$.
 A learnable logit scale lifts the cap: it removes the underconfidence on N-MNIST, turns it into
-overconfidence on N-Caltech101, and recovers \shareRecovered\% of the accuracy the cap costs there. % src: results/scaled_count_experiment.json
+overconfidence on N-Caltech101, and recovers \shareRecovered\% of the accuracy the cap costs there % src: results/scaled_count_experiment.json
+at $T=2$; at $T=6$ on N-Caltech101 the learned scale costs \accCostScNcSix{} accuracy points % src: results/scaled_count_experiment.json
+(\accCountRefScNcSix{} to \accScNcSix). % src: results/scaled_count_experiment.json
 Temperature scaling and isotonic regression tie on N-MNIST, and isotonic regression is better
 on N-Caltech101 wherever the cap binds.
 A count readout emits at most $\binom{T+C-1}{C-1}$ distinct confidences at any scale, yet on
@@ -607,7 +609,8 @@ which all \runsTotal{} runs are ties; it was fixed before being applied to anyth
 \paragraph{On N-Caltech101 it matters.}
 The prediction, recorded before any calibrator was fitted on this dataset, was that the two
 would tie in at least seven of the nine count-readout runs. They tie in \ncTies. In the other % src: results/caltech_calibrators.json prediction_10
-\ncDiffer, isotonic regression is better under both estimators (Table~\ref{tab:caltechcal}): % src: results/caltech_calibrators.json
+\ncDiffer, isotonic regression is better under both estimators (Table~\ref{tab:caltechcal} in % src: results/caltech_calibrators.json
+Appendix~\ref{app:caltechcal}):
 all three seeds at $T=2$, and \ncDifferSix{} of three at $T=6$. At $T=2$ temperature scaling % src: results/caltech_calibrators.json
 takes ECE from \ccUncTwoW{} to \ccTempTwoW{} under equal-width binning and \ccTempTwoM{} under % src: results/caltech_calibrators.json
 equal-mass, and isotonic regression takes it to \ccIsoTwoW{} and \ccIsoTwoM. The fitted % src: results/caltech_calibrators.json
@@ -666,27 +669,6 @@ equal-width & 6 & 0 & \resWSixZero   & [\resWSixZeroLo, \resWSixZeroHi]     \\ %
 equal-mass  & 4 & 1 & \resMFourOne   & [\resMFourOneLo, \resMFourOneHi]     \\ % src: results/sweep_nmnist.csv
 equal-mass  & 4 & 2 & \resMFourTwo   & [\resMFourTwoLo, \resMFourTwoHi]     \\ % src: results/sweep_nmnist.csv
 equal-mass  & 8 & 0 & \resMEightZero & [\resMEightZeroLo, \resMEightZeroHi] \\ % src: results/sweep_nmnist.csv
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{table}[t]
-\centering
-\caption{Calibrators on the N-Caltech101 count readout, four convolutional blocks, mean over
-three seeds. ECE under equal-width (w) and equal-mass (m) binning. ``differ'' counts the seeds
-in which the calibrators differ under the rule of Section~\ref{sec:method}; every such run
-favours isotonic regression.}
-\label{tab:caltechcal}
-\small
-\begin{tabular}{rrccccccc}
-\toprule
- & & \multicolumn{2}{c}{uncalibrated} & \multicolumn{2}{c}{temperature} & \multicolumn{2}{c}{isotonic} & \\
-\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}
-$T$ & accuracy & w & m & w & m & w & m & differ \\
-\midrule
-2  & \ccAccTwo & \ccUncTwoW & \ccUncTwoM & \ccTempTwoW & \ccTempTwoM & \ccIsoTwoW & \ccIsoTwoM & \ncDifferTwo{} of 3 \\ % src: results/caltech_calibrators.json
-6  & \ccAccSix & \ccUncSixW & \ccUncSixM & \ccTempSixW & \ccTempSixM & \ccIsoSixW & \ccIsoSixM & \ncDifferSix{} of 3 \\ % src: results/caltech_calibrators.json
-10 & \ccAccTen & \ccUncTenW & \ccUncTenM & \ccTempTenW & \ccTempTenM & \ccIsoTenW & \ccIsoTenM & \ncDifferTen{} of 3 \\ % src: results/caltech_calibrators.json
 \bottomrule
 \end{tabular}
 \end{table}
@@ -855,5 +837,83 @@ reclassified from cited to derived.
 
 \bibliographystyle{plainnat}
 \bibliography{refs}
+
+% =========================================================================================
+% Appendix. Material moved out of the body to shorten it; nothing here is new, and every
+% value is the same macro from numbers.tex that the body used.
+\clearpage
+\appendix
+\renewcommand{\thetable}{A\arabic{table}}
+\renewcommand{\theHtable}{A\arabic{table}}
+\setcounter{table}{0}
+
+\section{Calibrators on N-Caltech101}
+\label{app:caltechcal}
+
+Table~\ref{tab:caltechcal} gives the figures behind the N-Caltech101 paragraph of
+Section~\ref{sec:calibrators}.
+
+\begin{table}[ht]
+\centering
+\caption{Calibrators on the N-Caltech101 count readout, four convolutional blocks, mean over
+three seeds. ECE under equal-width (w) and equal-mass (m) binning. ``differ'' counts the seeds
+in which the calibrators differ under the rule of Section~\ref{sec:method}; every such run
+favours isotonic regression.}
+\label{tab:caltechcal}
+\small
+\begin{tabular}{rrccccccc}
+\toprule
+ & & \multicolumn{2}{c}{uncalibrated} & \multicolumn{2}{c}{temperature} & \multicolumn{2}{c}{isotonic} & \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}
+$T$ & accuracy & w & m & w & m & w & m & differ \\
+\midrule
+2  & \ccAccTwo & \ccUncTwoW & \ccUncTwoM & \ccTempTwoW & \ccTempTwoM & \ccIsoTwoW & \ccIsoTwoM & \ncDifferTwo{} of 3 \\ % src: results/caltech_calibrators.json
+6  & \ccAccSix & \ccUncSixW & \ccUncSixM & \ccTempSixW & \ccTempSixM & \ccIsoSixW & \ccIsoSixM & \ncDifferSix{} of 3 \\ % src: results/caltech_calibrators.json
+10 & \ccAccTen & \ccUncTenW & \ccUncTenM & \ccTempTenW & \ccTempTenM & \ccIsoTenW & \ccIsoTenM & \ncDifferTen{} of 3 \\ % src: results/caltech_calibrators.json
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Fusion at four or more timesteps}
+\label{app:fusionhigh}
+
+Table~\ref{tab:fusionhigh} continues Table~\ref{tab:fusion} of Section~\ref{sec:fusion} with
+the rows for $T\ge4$, where no run's interval on $\delta$ excludes zero.
+
+\begin{table}[ht]
+\centering
+\caption{Fusion of a clean and an event-dropped modality on N-MNIST at $T\ge4$, mean over
+three seeds and \fuPairings{} pairings. Columns as in Table~\ref{tab:fusion}.} % src: results/fusion_experiment.json pairings
+\label{tab:fusionhigh}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcrrrrrrrrrc}
+\toprule
+readout & $T$ & A & B & R0 & R1 & R2 & $P(S)$ & $\delta$ & on $S$ & Eq.~\eqref{eq:fusioncost} & excl. \\
+\midrule
+count & 4  & \fuCountFourAccA  & \fuCountFourAccB  & \fuCountFourRZero  & \fuCountFourROne  & \fuCountFourRTwo  & \fuCountFourPS  & \fuCountFourDelta  & \fuCountFourDeltaOnS  & \fuCountFourPredicted  & \fuCountFourExcl  \\ % src: results/fusion_experiment.json
+count & 6  & \fuCountSixAccA   & \fuCountSixAccB   & \fuCountSixRZero   & \fuCountSixROne   & \fuCountSixRTwo   & \fuCountSixPS   & \fuCountSixDelta   & \fuCountSixDeltaOnS   & \fuCountSixPredicted   & \fuCountSixExcl   \\ % src: results/fusion_experiment.json
+count & 8  & \fuCountEightAccA & \fuCountEightAccB & \fuCountEightRZero & \fuCountEightROne & \fuCountEightRTwo & \fuCountEightPS & \fuCountEightDelta & \fuCountEightDeltaOnS & \fuCountEightPredicted & \fuCountEightExcl \\ % src: results/fusion_experiment.json
+count & 10 & \fuCountTenAccA   & \fuCountTenAccB   & \fuCountTenRZero   & \fuCountTenROne   & \fuCountTenRTwo   & \fuCountTenPS   & \fuCountTenDelta   & \fuCountTenDeltaOnS   & \fuCountTenPredicted   & \fuCountTenExcl   \\ % src: results/fusion_experiment.json
+\midrule
+accumulator & 6  & \fuAccumSixAccA & \fuAccumSixAccB & \fuAccumSixRZero & \fuAccumSixROne & \fuAccumSixRTwo & -- & \fuAccumSixDelta & -- & -- & \fuAccumSixExcl \\ % src: results/fusion_experiment.json
+accumulator & 10 & \fuAccumTenAccA & \fuAccumTenAccB & \fuAccumTenRZero & \fuAccumTenROne & \fuAccumTenRTwo & -- & \fuAccumTenDelta & -- & -- & \fuAccumTenExcl \\ % src: results/fusion_experiment.json
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Saturation in probabilistic population codes}
+\label{app:ppc}
+
+This is the second of the two readings of the corollary announced in
+Section~\ref{sec:fusion}. Like the first, it is not a measurement.
+Ma et al.\ argue that a
+nonlinearity which saturates at high firing rates costs little, since uncertainty is small
+there and ``there is little to be gained from exact inference''~\citep{ma2006bayesian}; Beck et % [LIT] ma2006bayesian, Discussion, p. 1436
+al.\ propose inhibition to avoid saturation and give no cost for it~\citep{beck2008probabilistic}. % [LIT] beck2008probabilistic
+Their setting is a population code for a continuous variable, not this readout. For a count
+readout Equation~\eqref{eq:fusioncost} names the case in which saturation is not cheap: when
+two saturated sources of unequal reliability disagree. Nothing is claimed here about
+perception or behaviour.
 
 \end{document}

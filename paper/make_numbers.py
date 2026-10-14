@@ -364,6 +364,10 @@ for ds, T, key in (("nmnist", 2, "ScNm"), ("ncaltech101", 2, "ScNcTwo"), ("ncalt
     put(f"gapAccumRef{key}", f(mean(rs, "accumulator_mean_conf_minus_acc"), sign=True), SRC_SC + " accumulator_mean_conf_minus_acc")
     put(f"accDelta{key}", f(100 * (mean(rs, "test_accuracy") - mean(rs, "count_test_accuracy")), 2, sign=True),
         SRC_SC + " test_accuracy minus count_test_accuracy, in points")
+    cost = 100 * (mean(rs, "count_test_accuracy") - mean(rs, "test_accuracy"))
+    if cost > 0:      # a cost only where the learned scale lowered accuracy
+        put(f"accCost{key}", f"{cost:.1f}",
+            SRC_SC + " count_test_accuracy minus test_accuracy, in points, one decimal")
     put(f"levelsMin{key}", thousands(min(r["n_distinct"] for r in rs)), SRC_SC + " n_distinct")
     put(f"levelsMax{key}", thousands(max(r["n_distinct"] for r in rs)), SRC_SC + " n_distinct")
 

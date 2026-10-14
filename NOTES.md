@@ -2654,3 +2654,11 @@ further predictions (12 to 15), of which two held and two were falsified; see "O
 predictions 12 to 15". It trained nothing: 24 runs of inference, 20 pairings each. Sixteen
 predictions have now been registered in all. The fusion section is in the paper, which is
 sixteen pages with it.
+
+**Added 2026-10-14, after the author's review.** The author accepted prediction 13 in its
+corrected form and the overnight decisions on the fusion section. The paper is set in the
+original eleven-point type, not ten-point, under the title "Counting Spikes Caps Confidence:
+The Calibration Cost of a Known Softmax Bound in Low-Timestep Spiking Networks". Three items
+moved to an appendix with nothing deleted: the N-Caltech101 calibrator table, the fusion
+table's rows for `T ≥ 4`, and the paragraph on probabilistic population codes. It is 19 pages:
+17 of main text, references, and a one-page appendix.

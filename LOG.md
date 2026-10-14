@@ -3515,3 +3515,61 @@ exceptions. No tracked file names local tooling.
   sentence is unchanged because the instruction was to leave the disclosure word for word.
 - Three title options are in the morning report; none is applied.
 - Tier 2 was not run.
+
+## 2026-10-14 — The author's decisions applied: appendix, title, eleven-point type, one abstract clause
+
+**Why.** The author reviewed the morning report and decided the open items.
+
+**Decided by the author.**
+- Prediction 13 stands in its corrected form, and decisions 4 to 11 of the morning report
+  stand as taken: the two extra conditions on part (a), the dropout rate, the wording on
+  Zhang et al. and Cao et al., the use of Ma et al., the two citations that could not be
+  opened, the two prior statements added, the two papers read and found not to bear on the
+  proposition, and part (d) left out of the section.
+- Three items move to an appendix and nothing is deleted: the fusion table's rows for
+  `T ≥ 4`, the paragraph on probabilistic population codes, and Table 5.
+- The title is "Counting Spikes Caps Confidence: The Calibration Cost of a Known Softmax
+  Bound in Low-Timestep Spiking Networks".
+- The abstract's learned-scale sentence also gives the cost at `T = 6` on N-Caltech101.
+- No ten-point type.
+
+**One instruction needed reading, and this is the reading taken.** It was "keep the current
+font size; do not switch to ten-point type". The file was already at ten-point: the entry of
+2026-10-14 on the seven predictions switched it and marked the switch "to be confirmed by the
+author". The two halves of the instruction agree only if "current" means the size the paper
+had before that unconfirmed switch, so this is taken as the confirmation being refused, and
+`main.tex` is back at `\documentclass[11pt]`, as it was in every commit up to f5e19b6. The
+bibliography stays at `\footnotesize` and the figure widths stay as they are; neither was
+mentioned. If ten-point was meant after all, it is the one token on line 1 of `main.tex`.
+
+**Did.**
+- `paper/main.tex`: the new title; `11pt`; an appendix after the references with three
+  sections. Table 5 (`tab:caltechcal`) moved there whole and is now Table A1; its paragraph
+  in Section 5.4 points to it. The population-codes paragraph moved there whole, less its
+  opening word "Second,"; Section 6 keeps the first reading and one sentence pointing to the
+  appendix for the second.
+- `paper/fusion_section.tex`: the body table keeps the two `T = 2` rows; the six rows for
+  `T ≥ 4` are Table A2, same columns, same macros. The text that cites those rows cites
+  Table A2.
+- Abstract: "… and recovers 33% of the accuracy the cap costs there at `T = 2`; at `T = 6` on
+  N-Caltech101 the learned scale costs 6.8 accuracy points (0.6427 to 0.5748)." The words
+  "at `T = 2`" were added to the existing clause because the 33% is the `T = 2` figure
+  (prediction 7) and the new clause would otherwise read as contradicting it.
+- `paper/make_numbers.py`: `\accCostScNcSix`, 6.8, the count readout's accuracy minus the
+  learned-scale readout's, in points to one decimal. It is the unsigned form of the existing
+  `\accDeltaScNcSix`, −6.79. The two accuracies were already macros.
+- Eleven-point made both fusion tables overfull by about 10pt; their column gap is 4pt.
+
+**Page count.** `[MEASURED]` from the compiled PDF. At eleven-point: 19 pages. The main text,
+title to Acknowledgements, runs 16 full pages and five lines of a 17th; references follow on
+pages 17 and 18; the appendix is one page, 19. Compiled at ten-point for comparison and not
+kept: 17 pages, main text ending on page 14, appendix one page. The move to the appendix
+saved about one page of body; the type size put back about three.
+
+**Verified.** `tectonic`: 0 warnings. Figures and `docs/data.js` regenerated and came out
+byte-identical to the committed files. `make_numbers.py`: 543 macros.
+
+**Outstanding, for the author.**
+- The main text is 17 pages against a target of roughly 10 to 12.
+- The Acknowledgements sentence about two withdrawn citations is unchanged.
+- Tier 2 was not run.

@@ -86,7 +86,8 @@ per-modality calibration \fuTwoEceROneW{} and \fuTwoEceROneM. % src: results/fus
 
 The effect is confined to $T=2$. From $T=4$ the mean of $\delta$ is \fuCountFourDeltaFine, % src: results/fusion_experiment.json predictions.14 mean_delta_by_t
 \fuCountSixDeltaFine, \fuCountEightDeltaFine{} and \fuCountTenDeltaFine{} at $T=4$, 6, 8 and 10, % src: results/fusion_experiment.json predictions.14 mean_delta_by_t
-and the interval includes zero in all \fuHighRuns{} of those runs (Figure~\ref{fig:fusion}). % src: results/fusion_experiment.json delta_ci
+and the interval includes zero in all \fuHighRuns{} of those runs (Figure~\ref{fig:fusion}; % src: results/fusion_experiment.json delta_ci
+Table~\ref{tab:fusionhigh}).
 Saturation is still common at $T=4$, where $P(S)$ is \fuCountFourPS, but two saturated % src: results/fusion_experiment.json p_s
 modalities almost never disagree there: the joint probability falls from \fuTwoPSDisagree{} at % src: results/fusion_experiment.json p_s_and_disagree
 $T=2$ to \fuFourPSDisagree. Prediction 14 required the mean to fall strictly through $T=2$, 4 % src: results/fusion_experiment.json p_s_and_disagree
@@ -115,22 +116,18 @@ saturated disagreements in 200{,}000 pairs. % 10,000 test samples x 20 pairings:
 \fuPairings{} pairings. A and B are the single-modality accuracies; $P(S)$ is the share of % src: results/fusion_experiment.json pairings
 pairs on which both saturate; ``on $S$'' is the part of $\delta$ from those pairs and
 ``Eq.~\eqref{eq:fusioncost}'' its value from part (b); the last column counts seeds whose
-interval on $\delta$ excludes zero. An accumulator has no counts, so nothing saturates.}
+interval on $\delta$ excludes zero. An accumulator has no counts, so nothing saturates. The
+rows for $T\ge4$ are in Table~\ref{tab:fusionhigh}, Appendix~\ref{app:fusionhigh}.}
 \label{tab:fusion}
 \small
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{lcrrrrrrrrrc}
 \toprule
 readout & $T$ & A & B & R0 & R1 & R2 & $P(S)$ & $\delta$ & on $S$ & Eq.~\eqref{eq:fusioncost} & excl. \\
 \midrule
 count & 2  & \fuCountTwoAccA   & \fuCountTwoAccB   & \fuCountTwoRZero   & \fuCountTwoROne   & \fuCountTwoRTwo   & \fuCountTwoPS   & \fuCountTwoDelta   & \fuCountTwoDeltaOnS   & \fuCountTwoPredicted   & \fuCountTwoExcl   \\ % src: results/fusion_experiment.json
-count & 4  & \fuCountFourAccA  & \fuCountFourAccB  & \fuCountFourRZero  & \fuCountFourROne  & \fuCountFourRTwo  & \fuCountFourPS  & \fuCountFourDelta  & \fuCountFourDeltaOnS  & \fuCountFourPredicted  & \fuCountFourExcl  \\ % src: results/fusion_experiment.json
-count & 6  & \fuCountSixAccA   & \fuCountSixAccB   & \fuCountSixRZero   & \fuCountSixROne   & \fuCountSixRTwo   & \fuCountSixPS   & \fuCountSixDelta   & \fuCountSixDeltaOnS   & \fuCountSixPredicted   & \fuCountSixExcl   \\ % src: results/fusion_experiment.json
-count & 8  & \fuCountEightAccA & \fuCountEightAccB & \fuCountEightRZero & \fuCountEightROne & \fuCountEightRTwo & \fuCountEightPS & \fuCountEightDelta & \fuCountEightDeltaOnS & \fuCountEightPredicted & \fuCountEightExcl \\ % src: results/fusion_experiment.json
-count & 10 & \fuCountTenAccA   & \fuCountTenAccB   & \fuCountTenRZero   & \fuCountTenROne   & \fuCountTenRTwo   & \fuCountTenPS   & \fuCountTenDelta   & \fuCountTenDeltaOnS   & \fuCountTenPredicted   & \fuCountTenExcl   \\ % src: results/fusion_experiment.json
 \midrule
 accumulator & 2  & \fuAccumTwoAccA & \fuAccumTwoAccB & \fuAccumTwoRZero & \fuAccumTwoROne & \fuAccumTwoRTwo & -- & \fuAccumTwoDelta & -- & -- & \fuAccumTwoExcl \\ % src: results/fusion_experiment.json
-accumulator & 6  & \fuAccumSixAccA & \fuAccumSixAccB & \fuAccumSixRZero & \fuAccumSixROne & \fuAccumSixRTwo & -- & \fuAccumSixDelta & -- & -- & \fuAccumSixExcl \\ % src: results/fusion_experiment.json
-accumulator & 10 & \fuAccumTenAccA & \fuAccumTenAccB & \fuAccumTenRZero & \fuAccumTenROne & \fuAccumTenRTwo & -- & \fuAccumTenDelta & -- & -- & \fuAccumTenExcl \\ % src: results/fusion_experiment.json
 \bottomrule
 \end{tabular}
 \end{table}
@@ -145,7 +142,8 @@ the value Equation~\eqref{eq:fusioncost} gives for the saturated pairs.} % src: 
 \end{figure}
 
 \paragraph{What follows for fusion methods.}
-Two readings follow, and neither is a measurement. First, a fusion weight computed from a
+Two readings follow, and neither is a measurement. The first is given here: a fusion weight
+computed from a
 modality's own output is a function of that output, so on $S$ it takes one value. Zhang et
 al.\ and Cao et al.\ bound the generalisation error of dynamic fusion, and the bound improves on
 static fusion's when each modality's weight is negatively correlated with its
@@ -154,14 +152,8 @@ Zhang et al.\ note that a constant weight has zero covariance with every loss. R
 $S$, an output-derived weight is such a constant: the former condition is met only with
 equality, the strict form of the latter is not met, and whatever advantage remains must come
 from pairs outside $S$. Their theorems are not contradicted, and methods that predict weights
-from features instead of outputs are not affected. Second, Ma et al.\ argue that a
-nonlinearity which saturates at high firing rates costs little, since uncertainty is small
-there and ``there is little to be gained from exact inference''~\citep{ma2006bayesian}; Beck et % [LIT] ma2006bayesian, Discussion, p. 1436
-al.\ propose inhibition to avoid saturation and give no cost for it~\citep{beck2008probabilistic}. % [LIT] beck2008probabilistic
-Their setting is a population code for a continuous variable, not this readout. For a count
-readout Equation~\eqref{eq:fusioncost} names the case in which saturation is not cheap: when
-two saturated sources of unequal reliability disagree. Nothing is claimed here about
-perception or behaviour.
+from features instead of outputs are not affected. A second reading, on
+saturation in probabilistic population codes, is in Appendix~\ref{app:ppc}.
 
 Calibrating each modality restores the weighting between them and no more. Every saturated
 input still reports one confidence, whatever its true posterior, which is the grouping loss
