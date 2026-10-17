@@ -25,9 +25,8 @@ saturated are different claims and both are reported.**
   one class firing at every step while **all 100 others stayed silent for all 10**, which is
   a statement about tightness, not validity.
 
-The dashboard's card 1 reports the same **36 of 36**, and states separately that **24** of
-them form the matched 2×2 grid in `arch_matched.json`, the subset where architecture is
-controlled.
+The dashboard renders the same count, **36 of 36**, from its payload. **24** of them form
+the matched 2×2 grid in `arch_matched.json`, the subset where architecture is controlled.
 
 **Where the bound binds it accounts for almost all of the miscalibration, and where it does
 not bind it accounts for none.** The gap between accuracy and the ceiling is 99.2% of
@@ -133,10 +132,13 @@ at `T` ≥ 6, and +0.08 to +0.23 at `C = 101`.
 
 ## Results dashboard
 
-An interactive summary is in [docs/](docs/). Each finding is a card carrying its headline
-number, a one-line claim and the table that makes the point; the full argument — caveats,
-qualifications and complete tables — opens in a modal. Every table is rendered from the
-result JSON rather than typed into the page. **GitHub Pages is not enabled**, so it is not served publicly;
+A chart-first summary of the paper is in [docs/](docs/): four headline numbers, then one
+band per finding (the cap, calibration against ranking, the direction of failure by
+readout, the learned scale, the calibrators, the fusion pilot), a ledger of every
+pre-registered prediction with its verdict, and the limitations. Each chart has a
+collapsible table view. Every number is rendered from `docs/data.js`, which
+`scripts/export_dashboard_data.py` writes from the result artifacts; none is typed into the
+page. It has a light theme by default and a selectable dark theme. **GitHub Pages is not enabled**, so it is not served publicly;
 open `docs/index.html` directly in a browser, which works from `file://` with no server and no
 network access.
 

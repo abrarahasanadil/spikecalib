@@ -1,1360 +1,636 @@
-/* SpikeCalib dashboard.
- *
- * Every displayed number is computed here from the sweep CSV at runtime; none is
- * written into the HTML. The CSV arrives as a string in data.js rather than over
- * fetch() because fetch is blocked under file://, and the page has to work when
- * opened straight from disk.
- *
- * Charts are hand-rolled SVG rather than a CDN library, for the same reason: a
- * CDN <script> cannot load from file:// without a network.
- */
+/* SpikeCalib: chart-first summary of the paper, and the local briefing page.
+
+   Plain JavaScript, hand-drawn SVG, no build step; it opens from file://. Every number on
+   the page is computed here from window.SPIKECALIB (docs/data.js), which
+   scripts/export_dashboard_data.py writes from the result artifacts. The HTML types none.
+
+   Two rules from the old page are kept. The interface is wired before any data is read,
+   so a missing field cannot leave the page dead. Each renderer runs on its own, inside
+   try/catch, and draws only into elements that exist, which is how the briefing page
+   reuses this file. */
 (function () {
   "use strict";
 
-  var NS = "http://www.w3.org/2000/svg";
-  var D = window.SPIKECALIB || {};
-  var ARM_ORDER = ["uncalibrated", "temperature", "isotonic-top-label", "isotonic-one-vs-rest"];
-  var ARM_LABEL = {
-    "uncalibrated": "uncalibrated",
-    "temperature": "temperature",
-    "isotonic-top-label": "isotonic (top-label)",
-    "isotonic-one-vs-rest": "isotonic (one-vs-rest)"
-  };
-  var ARM_COLOUR = {
-    "uncalibrated": "var(--d1)",
-    "temperature": "var(--d2)",
-    "isotonic-top-label": "var(--d3)",
-    "isotonic-one-vs-rest": "var(--d4)"
-  };
+  /* ---------- interface first: the theme toggle and the tooltip ---------- */
+  var root = document.documentElement;
+  function setTheme(t) {
+    root.setAttribute("data-theme", t);
+    var b = document.getElementById("theme-toggle");
+    if (b) { b.textContent = t === "dark" ? "Light" : "Dark"; b.setAttribute("aria-pressed", String(t === "dark")); }
+    try { localStorage.setItem("spikecalib-theme", t); } catch (e) { /* storage may be unavailable */ }
+  }
+  (function initTheme() {
+    var saved = null;
+    try { saved = localStorage.getItem("spikecalib-theme"); } catch (e) { saved = null; }
+    setTheme(saved === "dark" ? "dark" : "light");          // light by default
+    var b = document.getElementById("theme-toggle");
+    if (b) b.addEventListener("click", function () {
+      setTheme(root.getAttribute("data-theme") === "dark" ? "light" : "dark");
+    });
+  })();
 
-  /* ---------- csv ---------- */
+  var tipEl = document.getElementById("tip");
+  function showTip(evt, title, rows) {
+    if (!tipEl) return;
+    tipEl.textContent = "";
+    var tt = document.createElement("div"); tt.className = "tt"; tt.textContent = title; tipEl.appendChild(tt);
+    rows.forEach(function (r) {
+      var row = document.createElement("div"); row.className = "row";
+      var i = document.createElement("i"); i.className = r.k ? "k-" + r.k : "k-ink";
+      var b = document.createElement("b"); b.textContent = r.v;
+      var s = document.createElement("span"); s.textContent = r.label;
+      row.appendChild(i); row.appendChild(b); row.appendChild(s); tipEl.appendChild(row);
+    });
+    tipEl.style.display = "block";
+    var x, y;
+    if (evt && evt.clientX !== undefined && evt.type !== "focus") { x = evt.clientX; y = evt.clientY; }
+    else { var bb = evt.target.getBoundingClientRect(); x = bb.left + bb.width / 2; y = bb.top; }
+    var w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+    var left = Math.min(window.innerWidth - w - 8, Math.max(8, x + 14));
+    var top = y - h - 12 < 8 ? y + 16 : y - h - 12;
+    tipEl.style.left = left + "px"; tipEl.style.top = top + "px";
+  }
+  function hideTip() { if (tipEl) tipEl.style.display = "none"; }
+
+  /* ---------- data and small helpers ---------- */
+  var D = window.SPIKECALIB || {};
+  var CSV = window.SPIKECALIB_CSV || "";
+
+  function mean(a) { return a.reduce(function (s, v) { return s + v; }, 0) / a.length; }
+  function where(rows, f) { return (rows || []).filter(f); }
+  function uniq(a) { return a.filter(function (v, i) { return a.indexOf(v) === i; }); }
+  function fx(x, d) { return Number(x).toFixed(d); }
+  function sg(x, d) { return (x < 0 ? "−" : "+") + Math.abs(x).toFixed(d); }
+  function pc(x, d) { return (100 * x).toFixed(d) + "%"; }
+  function setN(key, text) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-n="' + key + '"]'), function (e) { e.textContent = text; });
+  }
+  var SEEDS = function (rows) { return uniq(rows.map(function (r) { return r.seed; })).length; };
 
   function parseCSV(text) {
-    var lines = text.trim().split(/\r?\n/);
-    var head = splitRow(lines[0]);
-    var out = [];
-    for (var i = 1; i < lines.length; i++) {
-      if (!lines[i]) continue;
-      var cells = splitRow(lines[i]);
-      var row = {};
-      for (var j = 0; j < head.length; j++) row[head[j]] = cells[j];
-      out.push(row);
-    }
-    out.columns = head;
-    return out;
+    var lines = text.trim().split("\n"), head = lines[0].split(",");
+    return lines.slice(1).map(function (l) {
+      var c = l.split(","), o = {};
+      head.forEach(function (h, i) { o[h] = c[i]; });
+      o.timesteps = +o.timesteps; o.seed = +o.seed;
+      return o;
+    });
   }
-  function splitRow(line) {
-    var out = [], cur = "", q = false;
-    for (var i = 0; i < line.length; i++) {
-      var ch = line[i];
-      if (ch === '"') { if (q && line[i + 1] === '"') { cur += '"'; i++; } else q = !q; }
-      else if (ch === "," && !q) { out.push(cur); cur = ""; }
-      else cur += ch;
-    }
-    out.push(cur);
-    return out;
-  }
+  var SWEEP = CSV ? parseCSV(CSV) : [];
 
-  var ROWS = parseCSV(window.SPIKECALIB_CSV || "");
-  var num = function (r, k) { var v = parseFloat(r[k]); return isFinite(v) ? v : NaN; };
-  var mean = function (a) { return a.length ? a.reduce(function (x, y) { return x + y; }, 0) / a.length : NaN; };
-  var uniq = function (a) { return a.filter(function (v, i, s) { return s.indexOf(v) === i; }); };
-
-  var T_VALUES = uniq(ROWS.map(function (r) { return +r.timesteps; })).sort(function (a, b) { return a - b; });
-  var SEEDS = uniq(ROWS.map(function (r) { return +r.seed; })).sort(function (a, b) { return a - b; });
-
-  /* ---------- svg helpers ---------- */
-
+  /* ---------- SVG primitives ---------- */
+  var NS = "http://www.w3.org/2000/svg";
   function el(tag, attrs, parent) {
     var n = document.createElementNS(NS, tag);
-    for (var k in attrs) if (attrs[k] !== null && attrs[k] !== undefined) n.setAttribute(k, attrs[k]);
+    for (var k in attrs) if (attrs[k] !== undefined && attrs[k] !== null) n.setAttribute(k, attrs[k]);
     if (parent) parent.appendChild(n);
     return n;
   }
-  /* Charts are sized from their container so they fill the panel they sit in,
-     rather than being a fixed-size box floating inside a large empty card. */
-  function chart(host, w, h, pad) {
-    host.textContent = "";
-    var avail = host.clientWidth || (host.parentNode && host.parentNode.clientWidth) || 0;
-    if (avail > 40) w = Math.round(avail);
-    /* width/height attributes as well as the viewBox: an SVG sized only by viewBox
-       has no intrinsic aspect ratio in older engines and collapses to zero height
-       under `height: auto`. CSS still scales it to the container. */
-    var svg = el("svg", { viewBox: "0 0 " + w + " " + h, width: w, height: h,
-      preserveAspectRatio: "xMidYMid meet", role: "img" }, host);
-    return { svg: svg, w: w, h: h, pad: pad,
-      ix: function (v, lo, hi) { return pad.l + (v - lo) / (hi - lo) * (w - pad.l - pad.r); },
-      iy: function (v, lo, hi) { return h - pad.b - (v - lo) / (hi - lo) * (h - pad.t - pad.b); } };
-  }
-  /* A graticule, not a grid: the faint ruled screen of a scope. */
-  function graticule(c, cols, rows) {
-    var g = el("g", { stroke: "var(--graticule)", "stroke-width": 1 }, c.svg);
-    var i;
-    for (i = 0; i <= cols; i++) {
-      var x = c.pad.l + i * (c.w - c.pad.l - c.pad.r) / cols;
-      el("line", { x1: x, y1: c.pad.t, x2: x, y2: c.h - c.pad.b }, g);
-    }
-    for (i = 0; i <= rows; i++) {
-      var y = c.pad.t + i * (c.h - c.pad.t - c.pad.b) / rows;
-      el("line", { x1: c.pad.l, y1: y, x2: c.w - c.pad.r, y2: y }, g);
-    }
-  }
-  function axisText(c, x, y, s, anchor, size) {
-    var t = el("text", { x: x, y: y, "text-anchor": anchor || "middle",
-      fill: "var(--ink-3)", "font-size": size || 10, "font-family": "var(--mono)" }, c.svg);
-    t.textContent = s;
+  function txt(s, attrs, parent) { var t = el("text", attrs, parent); t.textContent = s; return t; }
+  function lin(d0, d1, r0, r1) { return function (v) { return r0 + (v - d0) / (d1 - d0) * (r1 - r0); }; }
+  function niceTicks(lo, hi, n) {
+    var span = hi - lo, step = Math.pow(10, Math.floor(Math.log10(span / n))), err = span / n / step;
+    if (err >= 7.5) step *= 10; else if (err >= 3.5) step *= 5; else if (err >= 1.5) step *= 2;
+    var t = [], v = Math.ceil(lo / step - 1e-9) * step;
+    for (; v <= hi + step * 1e-6; v += step) t.push(Math.abs(v) < step * 1e-9 ? 0 : v);
     return t;
   }
-  function path(c, d, stroke, width, dash) {
-    return el("path", { d: d, fill: "none", stroke: stroke, "stroke-width": width || 2,
-      "stroke-linecap": "round", "stroke-linejoin": "round", "stroke-dasharray": dash || null }, c.svg);
+  function decimals(ticks) {
+    var step = ticks.length > 1 ? Math.abs(ticks[1] - ticks[0]) : 1;
+    return Math.max(0, Math.min(5, -Math.floor(Math.log10(step) + 1e-9)));
   }
 
-  /* ================= HERO: the ceiling instrument ================= */
-
-  var ceilingOf = function (T, C) { return Math.exp(T) / (Math.exp(T) + C - 1); };
-
-  /* The bound, inverted. ceiling(T,C) >= a  <=>  T >= ln((C-1)a/(1-a)).
-     Descriptive becomes prescriptive: given a class count and a target accuracy, the
-     smallest T at which calibrated confidence is even reachable. */
-  var minTimesteps = function (C, a) { return Math.log((C - 1) * a / (1 - a)); };
-
-  var hero = {
-    T: 2, C: 10,
-    tEl: document.getElementById("t-slider"),
-    cEl: document.getElementById("c-slider"),
-    tOut: document.getElementById("t-value"),
-    cOut: document.getElementById("c-value"),
-    aEl: document.getElementById("a-slider"),
-    aOut: document.getElementById("a-value"),
-    tminOut: document.getElementById("out-tmin"),
-    designText: document.getElementById("design-text"),
-    ceilOut: document.getElementById("out-ceiling"),
-    floorOut: document.getElementById("out-floor"),
-    bindOut: document.getElementById("out-bind"),
-    verdict: document.getElementById("verdict-text"),
-    measuredNote: document.getElementById("measured-note"),
-    host: document.getElementById("ceiling-chart")
-  };
-
-  function fillTrack(input) {
-    var pct = (input.value - input.min) / (input.max - input.min) * 100;
-    input.style.setProperty("--fill", pct + "%");
-  }
-
-  function drawCeiling() {
-    var C = hero.C, Tsel = hero.T, TMAX = 20;
-    /* 540, not 340. The panel beside this one now carries the T-min table, and at 340 the
-       chart left it 207px short at 1440. A taller plot is also a better one here: the
-       ceiling curve is steep at low T and the extra vertical resolution is where the
-       argument lives. */
-    var c = chart(hero.host, 760, 540, { l: 48, r: 18, t: 14, b: 32 });
-    graticule(c, 10, 5);
-
-    var X = function (t) { return c.ix(t, 1, TMAX); };
-    var Y = function (v) { return c.iy(v, 0, 1); };
-
-    /* Region above the curve: accuracy here cannot be matched by any confidence
-       the readout can emit. This is data, not decoration. */
-    var top = "M" + X(1) + "," + Y(1);
-    var d = "M" + X(1) + "," + Y(ceilingOf(1, C));
-    for (var t = 1; t <= TMAX; t += 0.1) d += "L" + X(t) + "," + Y(ceilingOf(t, C));
-    el("path", { d: d + "L" + X(TMAX) + "," + Y(1) + "L" + X(1) + "," + Y(1) + "Z",
-      fill: "var(--accent)", opacity: 0.13 }, c.svg);
-
-    /* axes */
-    var i;
-    for (i = 0; i <= 5; i++) {
-      var v = i / 5;
-      axisText(c, c.pad.l - 7, Y(v) + 3.5, v.toFixed(1), "end");
-    }
-    for (i = 1; i <= TMAX; i += (TMAX > 10 ? 2 : 1)) axisText(c, X(i), c.h - c.pad.b + 15, i);
-    axisText(c, c.pad.l + (c.w - c.pad.l - c.pad.r) / 2, c.h - 2, "simulation timesteps T");
-    var yl = axisText(c, 11, c.pad.t + (c.h - c.pad.t - c.pad.b) / 2, "confidence", "middle");
-    yl.setAttribute("transform", "rotate(-90 11 " + (c.pad.t + (c.h - c.pad.t - c.pad.b) / 2) + ")");
-
-    path(c, d, "var(--accent)", 2.25);
-
-    /* measured maxima — only meaningful at a C this study ran: 10 (N-MNIST) and 101
-       (N-Caltech101). At 101 the ring is the largest maximum over the three seeds, read
-       from the count-readout rows of caltech_experiment.json, and the note is computed
-       rather than typed because T = 10 is the one place the bound is not reached. */
-    var measured = (D.measured || []);
-    var ring = function (T, v) {
-      el("circle", { cx: X(T), cy: Y(v), r: 5.5, fill: "none",
-        stroke: "var(--d2)", "stroke-width": 2 }, c.svg);
-    };
-    var cal = (D.caltech || []).filter(function (r) { return r.readout === "count"; });
-    if (C === D.n_classes) {
-      /* the distance from the curve is computed, like the C = 101 note below; it used to
-         be typed as 4e-13 and would not have moved if the data had */
-      var off = 0;
-      measured.forEach(function (m) {
-        ring(m.T, m.observed_max);
-        off = Math.max(off, Math.abs(ceilingOf(m.T, C) - m.observed_max));
-      });
-      hero.measuredNote.textContent =
-        "Rings are this study's " + measured.length + " measured N-MNIST maxima. They sit on " +
-        "the curve to within " + off.toExponential(0) + ".";
-    } else if (cal.length && C === cal[0].n_classes) {
-      var onCurve = 0, slack = [];
-      uniq(cal.map(function (r) { return +r.timesteps; })).forEach(function (T) {
-        var top = Math.max.apply(null, cal.filter(function (r) { return +r.timesteps === T; })
-          .map(function (r) { return r.max_confidence_observed; }));
-        var gap = ceilingOf(T, C) - top;
-        ring(T, top);
-        if (gap > 1e-9) slack.push("At T = " + T + " the ring sits " + gap.toExponential(1) +
-          " below the curve, respected but not reached");
-        else onCurve = Math.max(onCurve, Math.abs(gap));
-      });
-      hero.measuredNote.textContent =
-        "Rings are the N-Caltech101 maxima, the largest over three seeds at each T. " +
-        (slack.length ? slack.join(". ") + ". The others sit" : "They sit") +
-        " on the curve to within " + onCurve.toExponential(0) + ".";
-    } else {
-      hero.measuredNote.textContent =
-        "Calculated only. No model was trained at C = " + C + ": this study measured C = " +
-        D.n_classes + (cal.length ? " and C = " + cal[0].n_classes : "") +
-        ", so the curve here is the formula with nothing measured against it.";
-    }
-
-    /* selected T marker */
-    var cy = Y(ceilingOf(Tsel, C));
-    el("line", { x1: X(Tsel), y1: c.pad.t, x2: X(Tsel), y2: c.h - c.pad.b,
-      stroke: "var(--accent)", "stroke-width": 1, "stroke-dasharray": "3 3", opacity: 0.55 }, c.svg);
-    el("circle", { cx: X(Tsel), cy: cy, r: 6.5, fill: "var(--screen)" }, c.svg);
-    el("circle", { cx: X(Tsel), cy: cy, r: 3.5, fill: "var(--accent)" }, c.svg);
-
-    c.svg.setAttribute("aria-label",
-      "Attainable confidence ceiling against timesteps for " + C + " classes. At T=" +
-      Tsel + " the ceiling is " + ceilingOf(Tsel, C).toFixed(4) + ".");
-  }
-
-  /* The derived panel used to end well above the chart beside it. This is the same
-     arithmetic the readout above already shows, swept across the class counts the study
-     actually uses plus the two it does not, so the space is filled with derived content
-     rather than with padding. It follows the target-accuracy slider. */
-  var TMIN_C = [10, 11, 101];   // the three class counts in the dataset registry
-  function renderTmin(a) {
-    var host = document.getElementById("tmin-table");
-    if (!host) return;
-    var html = "<thead><tr><th>classes C</th><th>ceiling at T = " + hero.T +
-      "</th><th>T<sub>min</sub></th></tr></thead><tbody>";
-    TMIN_C.forEach(function (C) {
-      var t = minTimesteps(C, a);
-      var here = C === hero.C ? ' class="k"' : "";
-      html += "<tr" + (C === hero.C ? ' style="background:rgba(102,212,207,.07)"' : "") +
-        "><td" + here + ">" + C + "</td><td>" + ceilingOf(hero.T, C).toFixed(4) +
-        "</td><td>" + (t <= 0 ? "&lt; 1" : Math.max(1, Math.ceil(t))) + "</td></tr>";
+  /* A plot frame: grid, axes and scales, sized to the container's current width. */
+  function frame(host, o) {
+    host.textContent = "";
+    var W = Math.max(240, host.clientWidth || 300);
+    var H = o.height || Math.round(Math.min(300, Math.max(200, W * 0.58)));
+    var m = { t: 10, r: o.right || 14, b: o.xLabel ? 40 : 26, l: o.left || 48 };
+    var svg = el("svg", { width: W, height: H, viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": o.aria || "" }, host);
+    var x = lin(o.x[0], o.x[1], m.l, W - m.r), y = lin(o.y[0], o.y[1], H - m.b, m.t);
+    var g = el("g", { "class": "grid" }, svg), ax = el("g", { "class": "axis" }, svg);
+    var yt = o.yTicks || niceTicks(o.y[0], o.y[1], 4), yd = o.yDec !== undefined ? o.yDec : decimals(yt);
+    yt.forEach(function (v) {
+      el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v) }, g);
+      txt(o.yFmt ? o.yFmt(v) : (o.ySigned && v !== 0 ? sg(v, yd) : fx(v, yd)), { x: m.l - 6, y: y(v) + 3.5, "text-anchor": "end" }, svg);
     });
-    host.innerHTML = html + "</tbody>";
-  }
-
-  /* ---------- card faces, rendered from the artifacts ----------
-
-     These seven tables used to be static HTML. One of them drifted: card 2 claimed 44.1%
-     for the C=10, T=6 explained share while conditional_ceiling.json had moved to 44.5%
-     after the architecture fix re-ran it. A number on a card face that no artifact can
-     reproduce is the worst kind, because it looks like a measurement.
-
-     CONVENTION: every share and every mean here is a MEAN OF PER-SEED VALUES, not a ratio
-     of pooled means. The two differ -- for C=10, T=6 they are 44.52% and 44.40% -- and
-     mean-of-ratios is used because each seed is an independent run and the spread across
-     seeds is the thing the study reports elsewhere. Applied to all three cells of card 2,
-     not just the one that was wrong. */
-  function mini(headers, rows) {
-    return '<table class="mini"><thead><tr>'
-      + headers.map(function (h) { return "<th>" + h + "</th>"; }).join("")
-      + "</tr></thead><tbody>"
-      + rows.map(function (r) {
-          return "<tr>" + r.map(function (c) { return "<td>" + c + "</td>"; }).join("") + "</tr>";
-        }).join("")
-      + "</tbody></table>";
-  }
-  function put(id, html) { var e = document.getElementById(id); if (e) e.innerHTML = html; }
-  function avg(a) { return a.reduce(function (x, y) { return x + y; }, 0) / a.length; }
-  function pick(rows, f) { return (rows || []).filter(f); }
-
-  function renderCardFigures() {
-    var cond = D.conditional || [], arch = D.arch || [], ro = D.readout || [];
-
-    /* card 1 -- the derived ceiling against the observed maximum */
-    var cells = [[10, 2], [101, 2], [101, 6]].map(function (k) {
-      var r = pick(cond, function (x) { return x.n_classes === k[0] && x.timesteps === k[1]; });
-      if (!r.length) return null;
-      return [k[0], k[1], avg(r.map(function (x) { return x.theoretical_ceiling; })).toFixed(6),
-              avg(r.map(function (x) { return x.observed_max_confidence; })).toFixed(6)];
-    }).filter(Boolean);
-    if (cells.length) put("fig-ceiling", mini(["C", "T", "derived", "observed"], cells));
-
-    /* card 2 -- the share of pre-calibration error the ceiling forces */
-    var sh = [[10, 2], [10, 6], [101, 2]].map(function (k) {
-      var r = pick(cond, function (x) { return x.n_classes === k[0] && x.timesteps === k[1]; });
-      if (!r.length) return null;
-      return [k[0], k[1],
-        (avg(r.map(function (x) { return x.share_explained_theoretical; })) * 100).toFixed(1) + "%"];
-    }).filter(Boolean);
-    if (sh.length) put("fig-explained", mini(["C", "T", "explained"], sh));
-
-    /* card 5 -- what removing the cap buys, N-Caltech101 at T = 2 */
-    var gain = [4, 2].map(function (blocks) {
-      var c = pick(arch, function (x) {
-        return x.dataset === "ncaltech101" && x.n_blocks === blocks
-            && x.timesteps === 2 && x.readout === "count"; });
-      var a = pick(arch, function (x) {
-        return x.dataset === "ncaltech101" && x.n_blocks === blocks
-            && x.timesteps === 2 && x.readout === "accumulator"; });
-      if (!c.length || !a.length) return null;
-      var mc = avg(c.map(function (x) { return x.test_accuracy; }));
-      var ma = avg(a.map(function (x) { return x.test_accuracy; }));
-      return [blocks + " blocks", mc.toFixed(4), ma.toFixed(4),
-              (ma - mc >= 0 ? "+" : "") + ((ma - mc) * 100).toFixed(1)];
-    }).filter(Boolean);
-    if (gain.length) put("fig-gain", mini(["depth", "count", "uncapped", "gain"], gain));
-
-    /* card 4 -- the direction each readout family fails in, N-MNIST at T = 2 */
-    var BOUND = { count: "capped", membrane: "unbounded, leaky", accumulator: "unbounded" };
-    var fam = ["count", "membrane", "accumulator"].map(function (name) {
-      var r = pick(ro, function (x) { return x.readout === name && x.timesteps === 2; });
-      if (!r.length) return null;
-      var v = avg(r.map(function (x) { return x.mean_conf_minus_acc; }));
-      return [name, BOUND[name], (v >= 0 ? "+" : "") + v.toFixed(4)];
-    }).filter(Boolean);
-    if (fam.length) put("fig-readout", mini(["readout", "bound", "conf \u2212 acc"], fam));
-
-    /* card 3 -- the cross-entropy floor the same bound implies, against measured plateaus */
-    var meas = D.measured || [];
-    var fl = [2, 6, 10].map(function (T) {
-      var r = meas.filter(function (x) { return +x.T === T; })[0];
-      if (!r) return null;
-      return [T, (-Math.log(r.ceiling)).toFixed(4), (+r.train_loss_final).toFixed(4)];
-    }).filter(Boolean);
-    if (fl.length) put("fig-floor", mini(["T", "floor", "plateau"], fl));
-
-    /* card 6 -- how the fifteen paired intervals fall. Read off the CSV the page already
-       parses, so it follows the data rather than restating a count written by hand. */
-    /* The last row is the finding, not the counts above it: the runs that resolve under
-       each estimator are computed on identical confidences, so a real difference would
-       resolve under both. Counted here from the CSV rather than written down, because the
-       argument rests on that intersection being empty. */
-    var seen = {}, both = 0, c = { equal_width: [0, 0, 0], equal_mass: [0, 0, 0] };
-    ROWS.forEach(function (r) {
-      var k = r.timesteps + "|" + r.seed;
-      if (seen[k]) return;
-      seen[k] = 1;
-      var hit = 0;
-      [["equal_width", "iso_minus_temp_resolvable", "iso_minus_temp_ece_ew"],
-       ["equal_mass", "iso_minus_temp_em_resolvable", "iso_minus_temp_ece_em"]].forEach(function (e) {
-        if (r[e[1]] === undefined) return;
-        if (String(r[e[1]]) !== "True") c[e[0]][0]++;
-        else { hit++; if (+r[e[2]] > 0) c[e[0]][1]++; else c[e[0]][2]++; }
-      });
-      if (hit === 2) both++;
+    el("line", { x1: m.l, x2: W - m.r, y1: H - m.b, y2: H - m.b }, ax);
+    (o.xTicks || niceTicks(o.x[0], o.x[1], 5)).forEach(function (v) {
+      el("line", { x1: x(v), x2: x(v), y1: H - m.b, y2: H - m.b + 4 }, ax);
+      txt(o.xFmt ? o.xFmt(v) : String(v), { x: x(v), y: H - m.b + 16, "text-anchor": "middle" }, svg);
     });
-    /* Only overwrite the static fallback when there were rows to count. Without data.js
-       this renderer used to replace the correct fallback with a table of zeros, including
-       "resolve under both 0" -- a claim about data it never saw. */
-    if (Object.keys(seen).length) put("fig-bootstrap", mini(["outcome", "eq-width", "eq-mass"], [
-      ["straddle zero", c.equal_width[0], c.equal_mass[0]],
-      ["favour temperature", c.equal_width[1], c.equal_mass[1]],
-      ["favour isotonic", c.equal_width[2], c.equal_mass[2]]])
-      .replace("</tbody>", '<tr><td>resolve under both</td><td colspan="2">' + both + "</td></tr></tbody>"));
-
-    /* card 7 -- how many selective-prediction operating points each readout allows */
-    var ops = [["count", "count"], ["weighted-count", "weighted-count"]].map(function (k) {
-      var r = pick(ro, function (x) { return x.readout === k[0] && x.timesteps === 2; });
-      if (!r.length) return null;
-      return [k[1], Math.round(avg(r.map(function (x) {
-        return x.n_achievable_coverage_levels; }))).toLocaleString()];
-    }).filter(Boolean);
-    if (ops.length) {
-      ops.push(["uncapped", (10000).toLocaleString()]);
-      put("fig-ops", mini(["readout", "T = 2 ops"], ops));
+    if (o.xLabel) txt(o.xLabel, { x: (m.l + W - m.r) / 2, y: H - 6, "text-anchor": "middle", "class": "t-ink" }, svg);
+    if (o.zero) {
+      el("line", { x1: m.l, x2: W - m.r, y1: y(0), y2: y(0), "class": "zero" }, svg);
+      if (o.zeroLabel) txt(o.zeroLabel, { x: W - m.r + 12, y: y(0) + 4, "text-anchor": "start", "class": "t-ink" }, svg);
     }
+    return { svg: svg, x: x, y: y, W: W, H: H, m: m, plot: el("g", {}, svg) };
   }
 
-  /* ---------- the cell counts, rendered from the artifacts ----------
-
-     A cell is one (dataset, architecture, T, seed). The page said 48 for a while: 15 + 9 + 24
-     rows across three artifacts. But the matched grid reuses twelve models the readout and
-     C-axis experiments had already measured, so twelve cells were counted twice. The rows
-     of those two experiments do not carry their depth, so a model is recognised here by
-     dataset, T, seed and test accuracy, which a retrained network does not share. Every
-     [data-n] span keeps its typed value as the fallback if the payload is unavailable. */
-  function renderCells() {
-    var seen = {}, per = { readout: 0, caltech: 0, arch: 0 };
-    function add(src, dataset, r) {
-      if (r.readout !== "count") return;
-      per[src]++;
-      seen[[dataset, r.timesteps, r.seed, r.test_accuracy.toFixed(9)].join("|")] =
-        [r.max_confidence_observed, r.ceiling_derived];
-    }
-    (D.readout || []).forEach(function (r) { add("readout", D.dataset, r); });
-    (D.caltech || []).forEach(function (r) { add("caltech", r.dataset, r); });
-    (D.arch || []).forEach(function (r) { add("arch", r.dataset, r); });
-    var cells = Object.keys(seen).map(function (k) { return seen[k]; });
-    if (!cells.length) return;
-    var ok = cells.filter(function (c) { return c[0] <= c[1] + 1e-12; }).length;
-    var gaps = cells.map(function (c) { return c[1] - c[0]; }).filter(function (g) { return Math.abs(g) > 1e-9; });
-    var grid = (D.arch || []).filter(function (r) { return r.readout === "count"; });
-    var values = {
-      "cells-all": cells.length, "cells-ok": ok, "cells-sat": cells.length - gaps.length,
-      "cells-slack": gaps.length, "cells-readout": per.readout, "cells-caltech": per.caltech,
-      "cells-shared": per.readout + per.caltech + per.arch - cells.length,
-      "grid-all": grid.length,
-      "grid-ok": grid.filter(function (r) { return r.max_confidence_observed <= r.ceiling_derived + 1e-12; }).length,
-      "slack-gap": gaps.length ? avg(gaps).toExponential(3) : "0"
-    };
-    Array.prototype.forEach.call(document.querySelectorAll("[data-n]"), function (e) {
-      var k = e.getAttribute("data-n");
-      if (values[k] !== undefined) e.textContent = values[k];
+  function path(f, pts, cls, parent) {
+    var d = pts.map(function (p, i) { return (i ? "L" : "M") + f.x(p[0]).toFixed(1) + "," + f.y(p[1]).toFixed(1); }).join("");
+    return el("path", { d: d, "class": "ln " + cls }, parent || f.plot);
+  }
+  function dot(f, xv, yv, key, open, parent) {
+    return el("circle", { cx: f.x(xv), cy: f.y(yv), r: 4.5, "class": open ? "open c-" + key : "mk f-" + key }, parent || f.plot);
+  }
+  function diamond(f, xv, yv, key, parent) {
+    var cx = f.x(xv), cy = f.y(yv), s = 5.5;
+    return el("path", { d: "M" + cx + "," + (cy - s) + "L" + (cx + s) + "," + cy + "L" + cx + "," + (cy + s) + "L" + (cx - s) + "," + cy + "Z",
+      "class": "open c-" + key }, parent || f.plot);
+  }
+  /* Column hit targets: a crosshair that finds the x, and one tooltip listing every series. */
+  function columns(f, xs, rowsAt, titleAt) {
+    var hair = el("line", { y1: f.m.t, y2: f.H - f.m.b, "class": "zero", opacity: 0 }, f.svg);
+    xs.forEach(function (xv, i) {
+      var left = i === 0 ? f.m.l : (f.x(xs[i - 1]) + f.x(xv)) / 2;
+      var right = i === xs.length - 1 ? f.W - f.m.r : (f.x(xv) + f.x(xs[i + 1])) / 2;
+      var r = el("rect", { x: left, y: f.m.t, width: Math.max(1, right - left), height: f.H - f.m.b - f.m.t,
+        "class": "hit", tabindex: 0, "aria-label": titleAt(xv) }, f.svg);
+      function on(e) { hair.setAttribute("x1", f.x(xv)); hair.setAttribute("x2", f.x(xv)); hair.setAttribute("opacity", 0.35); showTip(e, titleAt(xv), rowsAt(xv)); }
+      function off() { hair.setAttribute("opacity", 0); hideTip(); }
+      r.addEventListener("pointermove", on); r.addEventListener("pointerleave", off);
+      r.addEventListener("focus", on); r.addEventListener("blur", off);
     });
   }
-
-  /* ---------- the registered predictions ----------
-
-     Seven predictions were recorded before these experiments ran. Each result file carries
-     the verdict its own script computed against the registered condition; this renders
-     those blocks and decides nothing. A falsified prediction is shown as falsified. */
-  function setN(values) {
-    Array.prototype.forEach.call(document.querySelectorAll("[data-n]"), function (e) {
-      var k = e.getAttribute("data-n");
-      if (values[k] !== undefined) e.textContent = values[k];
-    });
+  /* Row hit targets for dot plots and interval plots. */
+  function rowHit(f, yc, h, title, rows) {
+    var r = el("rect", { x: 0, y: yc - h / 2, width: f.W, height: h, "class": "hit", tabindex: 0, "aria-label": title }, f.svg);
+    function on(e) { r.classList.add("on"); showTip(e, title, rows); }
+    function off() { r.classList.remove("on"); hideTip(); }
+    r.addEventListener("pointermove", on); r.addEventListener("pointerleave", off);
+    r.addEventListener("focus", on); r.addEventListener("blur", off);
   }
-  /* `text` lists the columns that hold sentences, not numbers: those are left-aligned,
-     set in the text face and allowed to wrap, where a numeric cell is none of the three. */
-  function plainTable(id, head, rows, text) {
+  function table(id, head, rows, textCols) {
     var t = document.getElementById(id);
     if (!t) return;
-    var cls = function (i) { return (i === 0 ? "k" : "") + (text && text.indexOf(i) >= 0 ? " t" : ""); };
-    t.innerHTML = "<thead><tr>" + head.map(function (h, i) {
-      return '<th style="cursor:default" scope="col" class="' + cls(i) + '">' + h + "</th>"; }).join("") +
-      "</tr></thead><tbody>" +
-      rows.map(function (r) {
-        return "<tr>" + r.map(function (c, i) {
-          return '<td class="' + cls(i) + '">' + c + "</td>"; }).join("") + "</tr>";
-      }).join("") + "</tbody>";
-  }
-  function verdictCell(held, note) {
-    return '<span class="verdict-' + (held ? "held" : "falsified") + '">' +
-      (held ? "held" : "falsified") + "</span>" + (note ? " " + note : "");
-  }
-  function span(rows, key, d) {
-    var v = rows.map(function (r) { return r[key]; });
-    var lo = Math.min.apply(null, v), hi = Math.max.apply(null, v);
-    return d === 0 ? lo.toLocaleString() + "–" + hi.toLocaleString()
-                   : lo.toFixed(d) + "–" + hi.toFixed(d);
-  }
-
-  function renderPredictions() {
-    var sc = D.scaled, res = D.resolution, cc = D.caltech_calibrators, cs = D.calibration_size;
-    if (!sc || !res || !cc || !cs) return;
-    var P = sc.predictions, p9 = res.prediction_9, p10 = cc.prediction_10, p11 = cs.prediction_11;
-    var below = p9.comparisons.filter(function (c) { return c.count_below_accumulator; }).length;
-    var at100 = cs.summary.filter(function (x) { return x.n_cal === 100; });
-    var most100 = Math.max.apply(null, at100.map(function (x) { return x.temperature_wins; }));
-    var verdicts = [P["6a"].held, P["6b"].held, P["7"].held, P["8"].held, p9.held, p10.held, p11.held];
-
-    plainTable("pred-table", ["", "prediction", "measured", "outcome"], [
-      ["6a", "N-MNIST, T = 2: learned-scale count has |gap| below 0.05",
-        signed(P["6a"].mean_signed_gap, 4), verdictCell(P["6a"].held)],
-      ["6b", "N-Caltech101, T = 2: learned-scale count gap is above 0",
-        signed(P["6b"].mean_signed_gap, 4), verdictCell(P["6b"].held)],
-      ["7", "N-Caltech101, T = 2: learned-scale count reaches accuracy " +
-        P["7"].threshold_registered.toFixed(4) + ", half the gap to the accumulator",
-        P["7"].mean_accuracy.toFixed(4) + " (" + (P["7"].share_of_gap_recovered * 100).toFixed(0) + "% of the gap)",
-        verdictCell(P["7"].held)],
-      ["8", "N-Caltech101, T = 6: learned-scale count gap is above −0.05",
-        signed(P["8"].mean_signed_gap, 4) + ", " + P["8"].sign,
-        verdictCell(P["8"].held, P["8"].held && !P["8"].magnitude_below_0p05 ? "by overshooting" : "")],
-      ["9", "N-MNIST, T = 2: count resolution below the accumulator's in all " + p9.comparisons.length + " comparisons",
-        "below in " + below, verdictCell(p9.held)],
-      ["10", "N-Caltech101: calibrators tie in at least 7 of " + p10.runs + " count runs",
-        "tie in " + p10.ties, verdictCell(p10.held)],
-      ["11", "N-MNIST, T = 2, 100 calibration samples: temperature better in at least 10 of " + cs.draws +
-        " draws for 2 of 3 seeds; ties at 1,000 and 5,000",
-        "at most " + most100 + " of " + cs.draws + " in any seed; " +
-        (p11.tie_at_1000 && p11.tie_at_5000 ? "ties at both" : "the larger sizes did not both tie"),
-        verdictCell(p11.held)]
-    ], [1, 2, 3]);
-
-    var cells = [["nmnist", 2, "N-MNIST"], ["ncaltech101", 2, "N-Caltech101"], ["ncaltech101", 6, "N-Caltech101"]];
-    plainTable("scaled-table",
-      ["dataset", "T", "learned s", "s<sub>min</sub>", "gap: count", "learned", "accum.", "acc: count", "learned", "accum.", "values"],
-      cells.map(function (k) {
-        var r = sc.rows.filter(function (x) { return x.dataset === k[0] && x.timesteps === k[1]; });
-        var m = function (key) { return avg(r.map(function (x) { return x[key]; })); };
-        return [k[2], k[1], span(r, "logit_scale", 2), span(r, "s_min", 2),
-          signed(m("count_mean_conf_minus_acc"), 4), "<b>" + signed(m("mean_conf_minus_acc"), 4) + "</b>",
-          signed(m("accumulator_mean_conf_minus_acc"), 4),
-          m("count_test_accuracy").toFixed(4), "<b>" + m("test_accuracy").toFixed(4) + "</b>",
-          m("accumulator_test_accuracy").toFixed(4), span(r, "n_distinct", 0)];
-      }));
-
-    var count = cc.rows.filter(function (x) { return x.readout === "count"; });
-    var pair = function (rows) {
-      return avg(rows.map(function (x) { return x.ece_equal_width; })).toFixed(4) + "\u2009/\u2009" +
-             avg(rows.map(function (x) { return x.ece_equal_mass; })).toFixed(4);
-    };
-    plainTable("ncal-table", ["T", "acc.", "uncal.", "temp.", "isotonic", "differ"],
-      uniq(count.map(function (x) { return x.timesteps; })).map(function (T) {
-        var arm = function (a) { return count.filter(function (x) { return x.timesteps === T && x.arm === a; }); };
-        var d = cc.paired.filter(function (x) { return x.readout === "count" && x.timesteps === T; });
-        var differ = d.filter(function (x) { return x.differ; });
-        return [T, avg(arm("uncalibrated").map(function (x) { return x.test_accuracy; })).toFixed(4),
-          pair(arm("uncalibrated")), pair(arm("temperature")), "<b>" + pair(arm("isotonic-top-label")) + "</b>",
-          differ.length + " of " + d.length];
-      }));
-
-    plainTable("size-table", ["samples", "temp. better", "iso. better", "tie"],
-      uniq(cs.summary.map(function (x) { return x.n_cal; })).map(function (n) {
-        var c = cs.summary.filter(function (x) { return x.n_cal === n; });
-        var sum = function (key) { return c.reduce(function (a, x) { return a + x[key]; }, 0); };
-        var total = sum("draws");
-        return [n.toLocaleString(), sum("temperature_wins") + " of " + total, sum("isotonic_wins") + " of " + total,
-          (total - sum("differ")) + " of " + total];
-      }));
-
-    plainTable("res-table", ["count readout", "state", "binning", "count", "accumulator", "count below?"],
-      p9.comparisons.map(function (c) {
-        return [c.readout === "count" ? "s = 1" : "learned scale", c.state.replace("-top-label", ""),
-          c.estimator.replace("_", "-"), c.count_resolution.toFixed(5), c.accumulator_resolution.toFixed(5),
-          c.count_below_accumulator ? "yes" : "<b>no</b>"];
-      }), [1, 2]);
-
-    var ncCount = cc.paired.filter(function (x) { return x.readout === "count"; });
-    setN({
-      "pred-total": verdicts.length,
-      "pred-falsified": verdicts.filter(function (v) { return !v; }).length,
-      "sc-runs": sc.rows.length,
-      "sc-above": sc.rows.filter(function (r) { return r.scale_exceeds_s_min; }).length,
-      "nc-runs": ncCount.length,
-      "nc-differ": ncCount.filter(function (x) { return x.differ; }).length,
-      "nc-iso": ncCount.filter(function (x) { return x.favours === "isotonic"; }).length,
-      "nc-ties": ncCount.filter(function (x) { return x.tie; }).length,
-      "check-cells": res.check.cells,
-      "check-ok": res.check.cells - res.check.violations,
-      "p9-below": below, "p9-total": p9.comparisons.length
-    });
-  }
-
-  /* ---------- fusion: predictions 12 to 15 ----------
-
-     The same rule as above: the verdicts are the ones the experiment script stored, and the
-     page decides nothing. If the result file is absent the band is hidden. */
-  function renderFusion() {
-    var fu = D.fusion;
-    var band = document.getElementById("fusion-band"), panel = document.getElementById("fusion-panel");
-    if (!fu) {
-      if (band) band.style.display = "none";
-      if (panel) panel.style.display = "none";
-      return;
-    }
-    var P = fu.predictions;
-    var cell = function (readout, T) {
-      return fu.rows.filter(function (r) { return r.readout === readout && r.timesteps === T; });
-    };
-    var m = function (rows, key) { return avg(rows.map(function (r) { return r[key]; })); };
-    var excl = function (rows) {
-      return rows.filter(function (r) { return r.delta_ci[0] > 0 || r.delta_ci[1] < 0; }).length;
-    };
-    var t2 = cell("count", 2);
-    var within = t2.filter(function (r) { return r.predicted_within_on_s_interval; }).length;
-    var lows = t2.map(function (r) { return r.delta_ci[0]; });
-    var means = P["14"].mean_delta_by_t;
-
-    plainTable("fusion-pred-table", ["", "prediction", "measured", "outcome"], [
-      ["12", "Count, T = 2: δ positive with its interval excluding zero in every seed",
-        "lower ends " + lows.map(function (v) { return signed(v, 4); }).join(", "), verdictCell(P["12"].held)],
-      ["13", "Count, T = 2: the on-S part of δ agrees with ½·P(S)·(a<sub>A,S</sub> − a<sub>B,S</sub>) within its interval in every seed",
-        "within in " + within + " of " + t2.length + "; as first drafted, in " +
-        P["13"].drafted_within_interval.filter(Boolean).length, verdictCell(P["13"].held)],
-      ["14", "Count: mean δ falls over T = 2, 4, 6, is lower still at 8 and 10, and its interval includes zero at 8 and 10",
-        "means " + ["2", "4", "6", "8", "10"].map(function (T) { return signed(means[T], 5); }).join(", ") +
-        "; " + P["14"].intervals_excluding_zero_at_8_and_10 + " intervals exclude zero at 8 and 10",
-        verdictCell(P["14"].held)],
-      ["15", "Accumulator: the interval on δ includes zero in all " + P["15"].runs + " runs",
-        P["15"].intervals_excluding_zero + " of " + P["15"].runs + " exclude zero", verdictCell(P["15"].held)]
-    ], [1, 2, 3]);
-
-    var order = [["count", 2], ["count", 4], ["count", 6], ["count", 8], ["count", 10],
-                 ["accumulator", 2], ["accumulator", 6], ["accumulator", 10]];
-    plainTable("fusion-table",
-      ["readout", "T", "A", "B", "R0", "R1", "R2", "P(S)", "δ", "on S", "predicted", "excl."],
-      order.map(function (k) {
-        var r = cell(k[0], k[1]), count = k[0] === "count";
-        return [k[0], k[1], m(r, "accuracy_a").toFixed(4), m(r, "accuracy_b").toFixed(4),
-          m(r, "acc_r0").toFixed(4), "<b>" + m(r, "acc_r1").toFixed(4) + "</b>", m(r, "acc_r2").toFixed(4),
-          count ? m(r, "p_s").toFixed(3) : "–", signed(m(r, "delta"), 4),
-          count ? signed(m(r, "delta_on_s"), 4) : "–", count ? signed(m(r, "predicted_on_s"), 4) : "–",
-          excl(r) + " of " + r.length];
-      }), [0]);
-
-    var e0 = 1 - m(t2, "acc_r0"), e1 = 1 - m(t2, "acc_r1");
-    setN({
-      "fu-rate": (100 * fu.dropout.rate).toFixed(0),
-      "fu-ps": (100 * m(t2, "p_s")).toFixed(0),
-      "fu-cut": (100 * (1 - e1 / e0)).toFixed(0),
-      "fu-delta": signed(100 * m(t2, "delta"), 2)
-    });
-  }
-
-  function updateHero() {
-    hero.T = +hero.tEl.value;
-    hero.C = +hero.cEl.value;
-    fillTrack(hero.tEl); fillTrack(hero.cEl);
-    hero.tOut.textContent = hero.T;
-    hero.cOut.textContent = hero.C;
-
-    var ceil = ceilingOf(hero.T, hero.C);
-    hero.ceilOut.textContent = ceil.toFixed(4);
-    hero.floorOut.textContent = (-Math.log(ceil)).toFixed(4);
-    hero.bindOut.textContent = (ceil * 100).toFixed(1) + "%";
-
-    var a = +hero.aEl.value;
-    hero.aOut.textContent = a.toFixed(3);
-    fillTrack(hero.aEl);
-    var tmin = minTimesteps(hero.C, a);
-    var tminCeil = Math.max(1, Math.ceil(tmin));
-    hero.tminOut.textContent = tmin <= 0 ? "< 1" : String(tminCeil);
-    renderTmin(a);
-    hero.designText.textContent =
-      "To reach " + (a * 100).toFixed(1) + "% accuracy with " + hero.C +
-      " classes and still be able to express it, a spike-count readout needs T \u2265 " +
-      tminCeil + " (exactly " + tmin.toFixed(3) + "). " +
-      (hero.T >= tmin
-        ? "The current T = " + hero.T + " is sufficient."
-        : "The current T = " + hero.T + " is not: its ceiling is " +
-          (ceilingOf(hero.T, hero.C) * 100).toFixed(1) + "%.");
-
-    hero.verdict.textContent =
-      "At T = " + hero.T + " with " + hero.C + " classes, a model above " +
-      (ceil * 100).toFixed(1) + "% accuracy cannot be correctly confident: no reachable " +
-      "spike-count vector produces a confidence that high.";
-
-    drawCeiling();
-  }
-
-  [hero.tEl, hero.cEl, hero.aEl].forEach(function (input) {
-    input.addEventListener("input", updateHero);
-  });
-  Array.prototype.forEach.call(document.querySelectorAll("[data-preset]"), function (btn) {
-    btn.addEventListener("click", function () {
-      var p = btn.getAttribute("data-preset").split(",");
-      hero.tEl.value = p[0]; hero.cEl.value = p[1];
-      updateHero();
-      Array.prototype.forEach.call(document.querySelectorAll("[data-preset]"), function (b) {
-        b.setAttribute("aria-checked", b === btn ? "true" : "false");
-      });
-    });
-  });
-
-  /* ================= RESULTS EXPLORER ================= */
-
-  var state = {
-    T: T_VALUES.slice(),
-    seeds: SEEDS.slice(),
-    arms: ARM_ORDER.slice(),
-    estimator: "equal_width",
-    sortKey: "timesteps",
-    sortDir: 1
-  };
-  var ecoCol = function () { return state.estimator === "equal_width" ? "ece_equal_width" : "ece_equal_mass"; };
-
-  function filtered() {
-    return ROWS.filter(function (r) {
-      return state.T.indexOf(+r.timesteps) >= 0 &&
-             state.seeds.indexOf(+r.seed) >= 0 &&
-             state.arms.indexOf(r.arm) >= 0;
-    });
-  }
-
-  /* `single` marks a pick-one group: exactly one option is active and clicking another
-     moves the selection rather than adding to it. Those get radio semantics and the
-     segmented track; the multi-select filters keep aria-pressed and separate chips.
-
-     Every button is re-synced from `get` after any click, not just the one clicked. The
-     old code updated only the clicked button, so choosing equal-mass left equal-width
-     still reading aria-pressed="true" and both appeared selected. */
-  function buildChips(host, values, labels, get, set, single) {
-    host.textContent = "";
-    if (single) {
-      host.classList.add("segmented");
-      host.setAttribute("role", "radiogroup");
-    }
-    var btns = [];
-    function sync() {
-      btns.forEach(function (b) {
-        b.setAttribute(single ? "aria-checked" : "aria-pressed", get(b.__v) ? "true" : "false");
-      });
-    }
-    values.forEach(function (v, i) {
-      var b = document.createElement("button");
-      b.type = "button";
-      b.className = "chip" + (typeof v === "number" ? " mono" : "");
-      b.textContent = labels ? labels[i] : v;
-      b.__v = v;
-      if (single) b.setAttribute("role", "radio");
-      b.addEventListener("click", function () { set(v); sync(); render(); });
-      btns.push(b);
-      host.appendChild(b);
-    });
-    sync();
-  }
-
-  function toggler(listName) {
-    return {
-      get: function (v) { return state[listName].indexOf(v) >= 0; },
-      set: function (v) {
-        var i = state[listName].indexOf(v);
-        if (i >= 0) { if (state[listName].length > 1) state[listName].splice(i, 1); }
-        else state[listName].push(v);
-      }
-    };
-  }
-
-  var tTog = toggler("T"), sTog = toggler("seeds"), aTog = toggler("arms");
-  buildChips(document.getElementById("filter-t"), T_VALUES, null, tTog.get, tTog.set);
-  buildChips(document.getElementById("filter-seed"), SEEDS, null, sTog.get, sTog.set);
-  buildChips(document.getElementById("filter-arm"), ARM_ORDER,
-    ARM_ORDER.map(function (a) { return ARM_LABEL[a]; }), aTog.get, aTog.set);
-  buildChips(document.getElementById("filter-est"), ["equal_width", "equal_mass"],
-    ["equal-width", "equal-mass"],
-    function (v) { return state.estimator === v; },
-    function (v) { state.estimator = v; }, true);
-
-  /* ---------- tiles ---------- */
-
-  function tile(label, value, code, sub, muted) {
-    return '<div class="tile"><div class="tile-label">' + label + '</div>' +
-      '<div class="tile-value' + (muted ? " muted" : "") + '">' + value + '</div>' +
-      (sub ? '<span class="tile-sub">' + sub + "</span>" : "") +
-      '<code class="tile-code">' + code + "</code></div>";
-  }
-
-  function renderTiles(rows) {
-    var col = ecoCol();
-    var unc = rows.filter(function (r) { return r.arm === "uncalibrated"; }).map(function (r) { return num(r, col); });
-    var cal = rows.filter(function (r) { return r.arm !== "uncalibrated"; });
-    var best = cal.length ? Math.min.apply(null, cal.map(function (r) { return num(r, col); })) : NaN;
-    var iso = uniqRuns(rows).map(function (r) { return num(r, "iso_minus_temp_ece_ew"); });
-    var isoEm = uniqRuns(rows).map(function (r) { return num(r, "iso_minus_temp_ece_em"); });
-    var auroc = uniqRuns(rows).map(function (r) { return num(r, "auroc_raw_test"); });
-    var fmt = function (v, d) { return isFinite(v) ? v.toFixed(d === undefined ? 4 : d) : "—"; };
-
-    /* A mean over several T spans two orders of magnitude — 0.54 at T=2 against
-       0.003 at T=10 — so the span is shown beside it. A bare mean here would be a
-       true number that misleads. */
-    var span = unc.length > 1
-      ? "mean of " + unc.length + ", range " + fmt(Math.min.apply(null, unc)) + "–" + fmt(Math.max.apply(null, unc))
-      : unc.length + " run";
-    var bestWhere = "";
-    cal.forEach(function (r) { if (num(r, col) === best) bestWhere = ARM_LABEL[r.arm] + ", T=" + r.timesteps + " seed " + r.seed; });
-
-    /* These four move with the rail filters while the cards beside them do not, so they
-       say so. A live number sitting unlabelled among fixed ones is how a reader ends up
-       reading a study-wide claim as a filtered result. */
-    document.getElementById("tiles").innerHTML =
-      '<p class="tiles-label">Live &mdash; follows the sweep filters below</p>' +
-      tile("Uncalibrated ECE", fmt(mean(unc)), col, span, !unc.length) +
-      tile("Best calibrated ECE", fmt(best), col, bestWhere || "no calibrated arm selected", !isFinite(best)) +
-      /* Both estimators, side by side, whatever the estimator control says. This tile
-         used to show equal-width alone because the paired bootstrap had only been run on
-         that estimator; rerun_paired_bootstrap.py added iso_minus_temp_ece_em, and the two
-         means have opposite signs, which a single number hid. */
-      tile("Isotonic − temperature",
-        (isFinite(mean(iso)) && isFinite(mean(isoEm))
-          ? signed(mean(iso), 4) + "<small> eq-width</small> / " + signed(mean(isoEm), 4) + "<small> eq-mass</small>"
-          : "—"),
-        "iso_minus_temp_ece_ew / _em", "positive favours temperature",
-        !iso.length) +
-      tile("AUROC, raw readout", fmt(mean(auroc)), "auroc_raw_test", "confidence vs correctness", !auroc.length);
-  }
-
-  function uniqRuns(rows) {
-    var seen = {}, out = [];
+    t.textContent = "";
+    var thead = document.createElement("thead"), tr = document.createElement("tr");
+    head.forEach(function (h, i) { var th = document.createElement("th"); th.textContent = h; if (textCols && textCols.indexOf(i) >= 0) th.className = "t"; tr.appendChild(th); });
+    thead.appendChild(tr); t.appendChild(thead);
+    var tb = document.createElement("tbody");
     rows.forEach(function (r) {
-      var k = r.timesteps + "|" + r.seed;
-      if (!seen[k]) { seen[k] = 1; out.push(r); }
+      var tr2 = document.createElement("tr");
+      r.forEach(function (c, i) { var td = document.createElement("td"); td.textContent = c; if (textCols && textCols.indexOf(i) >= 0) td.className = "t"; tr2.appendChild(td); });
+      tb.appendChild(tr2);
     });
+    t.appendChild(tb);
+  }
+  function pad(lo, hi, f) { var s = (hi - lo) || Math.abs(hi) || 1; return [lo - s * f, hi + s * f]; }
+
+  /* ---------- derived series ---------- */
+  var READOUT_KEY = { "count": "count", "accumulator": "accum", "membrane": "membrane", "weighted-count": "wcount" };
+  var READOUT_NAME = { "count": "count", "accumulator": "accumulator", "membrane": "membrane", "weighted-count": "weighted count" };
+  function byT(rows, readout, key) {
+    var r = where(rows, function (x) { return x.readout === readout; });
+    return uniq(r.map(function (x) { return x.timesteps; })).sort(function (a, b) { return a - b; }).map(function (T) {
+      return [T, mean(where(r, function (x) { return x.timesteps === T; }).map(function (x) { return x[key]; }))];
+    });
+  }
+  function ceiling(T, C) { return Math.exp(T) / (Math.exp(T) + C - 1); }
+  function sweepMean(T, arm, col) {
+    return mean(where(SWEEP, function (r) { return r.timesteps === T && r.arm === arm; }).map(function (r) { return +r[col]; }));
+  }
+  function pooledReliability(T, arm) {
+    var bins = {};
+    Object.keys(D.reliability || {}).forEach(function (k) {
+      var p = k.split("|");
+      if (+p[0] !== T || p[2] !== arm) return;
+      (D.reliability[k].equal_width || []).forEach(function (b) {
+        var key = b.lo.toFixed(6), o = bins[key] || (bins[key] = { n: 0, c: 0, a: 0, lo: b.lo, hi: b.hi });
+        o.n += b.n; o.c += b.conf * b.n; o.a += b.acc * b.n;
+      });
+    });
+    return Object.keys(bins).map(function (k) { var o = bins[k]; return { lo: o.lo, hi: o.hi, n: o.n, conf: o.c / o.n, acc: o.a / o.n }; })
+      .filter(function (b) { return b.n > 0; }).sort(function (a, b) { return a.lo - b.lo; });
+  }
+
+  /* ---------- 1. hero tiles and every counted number ---------- */
+  function renderNumbers() {
+    var S = D.summary, L = D.ledger;
+    if (S) {
+      setN("share-c10", pc(S.share_explained_t2.c10, 1));
+      setN("share-c101", pc(S.share_explained_t2.c101, 1));
+      setN("ece-raw-ew", fx(S.ece_t2.uncalibrated.ew, 4)); setN("ece-temp-ew", fx(S.ece_t2.temperature.ew, 4));
+      setN("ece-raw-em", fx(S.ece_t2.uncalibrated.em, 4)); setN("ece-temp-em", fx(S.ece_t2.temperature.em, 4));
+      setN("auroc-count", fx(S.auroc_t2.count, 4)); setN("auroc-accum", fx(S.auroc_t2.accumulator, 4));
+      setN("cells-all", String(S.cells_union));
+    }
+    if (L) {
+      setN("pred-held", String(L.paper.held)); setN("pred-false", String(L.paper.falsified));
+      setN("pred-total", String(L.paper.total));
+      setN("early-held", String(L.early.held)); setN("early-false", String(L.early.falsified));
+    }
+    setN("c-small", String(D.n_classes));
+    var cc = D.caltech && D.caltech[0]; if (cc) setN("c-large", String(cc.n_classes));
+    setN("n-bins", String(D.n_bins));
+    if (D.readout) setN("n-seeds", String(SEEDS(D.readout)));
+    if (CSV) {
+      var lines = CSV.trim().split("\n");
+      setN("csv-columns", String(lines[0].split(",").length));
+      setN("csv-rows", String(lines.length - 1));
+    }
+    var cal = D.caltech_calibrators;
+    if (cal) {
+      var cnt = where(cal.paired, function (p) { return p.readout === "count"; });
+      setN("nc-runs", String(cnt.length));
+      setN("nc-differ", String(where(cnt, function (p) { return p.differ && p.favours === "isotonic"; }).length));
+    }
+    var sc = D.scaled;
+    if (sc) {
+      var six = where(sc.rows, function (r) { return r.dataset === "ncaltech101" && r.timesteps === 6; });
+      setN("scale-cost", fx(100 * (mean(six.map(function (r) { return r.count_test_accuracy; })) -
+                                   mean(six.map(function (r) { return r.test_accuracy; }))), 1));
+    }
+    var fu = D.fusion;
+    if (fu) {
+      var t2 = where(fu.rows, function (r) { return r.readout === "count" && r.timesteps === 2; });
+      var e0 = 1 - mean(t2.map(function (r) { return r.acc_r0; })), e1 = 1 - mean(t2.map(function (r) { return r.acc_r1; }));
+      setN("fu-cut", pc(1 - e1 / e0, 0));
+      setN("fu-points", fx(100 * mean(t2.map(function (r) { return r.delta; })), 2));
+    }
+  }
+
+  /* ---------- 2. the cap ---------- */
+  function capPanel(hostId, titleId, rows, C, name) {
+    var host = document.getElementById(hostId);
+    if (!host || !rows || !rows.length) return;
+    var T = uniq(rows.map(function (r) { return r.timesteps; })).sort(function (a, b) { return a - b; });
+    var mx = byT(rows, "count", "max_confidence_observed"), ac = byT(rows, "count", "test_accuracy");
+    var tTitle = document.getElementById(titleId);
+    if (tTitle) tTitle.textContent = name + ", C = " + C;
+    var Tmax = T[T.length - 1];
+    var f = frame(host, { x: [1, Tmax], y: [0, 1], xTicks: niceTicks(2, Tmax, 5).filter(function (v) { return v % 2 === 0; }),
+      yTicks: [0, 0.25, 0.5, 0.75, 1], yDec: 2, xLabel: "timesteps T", aria: "ceiling against T for C = " + C });
+    var curve = []; for (var t = 1; t <= Tmax + 1e-9; t += 0.05) curve.push([t, ceiling(t, C)]);
+    path(f, curve, "c-ink");
+    ac.forEach(function (p) { diamond(f, p[0], p[1], "muted"); });
+    mx.forEach(function (p) { dot(f, p[0], p[1], "count"); });
+    var lt = Math.log(0.6 * (C - 1) / 0.4);
+    if (lt > 1 && lt < Tmax) txt("ceiling", { x: f.x(lt) - 10, y: f.y(0.6) - 2, "text-anchor": "end", "class": "t-ink" }, f.svg);
+    var la = ac[0]; txt("accuracy", { x: f.x(la[0]) + 8, y: f.y(la[1]) - 9, "class": "t-ink" }, f.svg);
+    columns(f, T, function (Tv) {
+      var m = mx.filter(function (p) { return p[0] === Tv; })[0], a = ac.filter(function (p) { return p[0] === Tv; })[0];
+      return [{ k: "ink", v: fx(ceiling(Tv, C), 4), label: "ceiling" },
+              { k: "count", v: fx(m[1], 4), label: "max confidence" },
+              { k: "muted", v: fx(a[1], 4), label: "accuracy" }];
+    }, function (Tv) { return name + ", T = " + Tv; });
+    return T.map(function (Tv) {
+      var m = mx.filter(function (p) { return p[0] === Tv; })[0], a = ac.filter(function (p) { return p[0] === Tv; })[0];
+      return [name, String(Tv), fx(ceiling(Tv, C), 4), fx(m[1], 4), fx(a[1], 4)];
+    });
+  }
+  function renderCap() {
+    var cc = D.caltech && D.caltech[0];
+    var a = capPanel("chart-cap-a", "cap-a-title", D.readout, D.n_classes, "N-MNIST") || [];
+    var b = cc ? (capPanel("chart-cap-b", "cap-b-title", D.caltech, cc.n_classes, "N-Caltech101") || []) : [];
+    table("table-cap", ["dataset", "T", "ceiling", "max confidence", "accuracy"], a.concat(b));
+  }
+
+  /* ---------- 3. calibration fixes the average, not the ranking ---------- */
+  function reliabilityPanel(hostId, T, compact) {
+    var host = document.getElementById(hostId);
+    if (!host || !D.reliability) return;
+    var raw = pooledReliability(T, "uncalibrated"), tem = pooledReliability(T, "temperature");
+    var W = host.clientWidth || 280;
+    var f = frame(host, { x: [0, 1], y: [0, 1], xTicks: [0, 0.5, 1], yTicks: [0, 0.5, 1], yDec: 1, xFmt: function (v) { return fx(v, 1); },
+      height: compact ? Math.min(200, W * 0.75) : Math.min(260, Math.max(200, W * 0.85)), xLabel: "confidence", left: 36,
+      aria: "reliability diagram at T = " + T });
+    el("line", { x1: f.x(0), y1: f.y(0), x2: f.x(1), y2: f.y(1), "class": "diag" }, f.plot);
+    var ang = -Math.atan2(f.y(0) - f.y(1), f.x(1) - f.x(0)) * 180 / Math.PI;
+    txt("calibrated", { x: f.x(0.55), y: f.y(0.55) + 13, "class": "t-ink", transform: "rotate(" + ang + " " + f.x(0.55) + " " + (f.y(0.55) + 13) + ")" }, f.svg);
+    var nMax = Math.max.apply(null, raw.concat(tem).map(function (b) { return b.n; }));
+    function marks(bins, key, label) {
+      bins.forEach(function (b) {
+        el("circle", { cx: f.x(b.conf), cy: f.y(b.acc), r: (2.5 + 9 * Math.sqrt(b.n / nMax)).toFixed(1), "class": "mk f-" + key, "fill-opacity": 0.85 }, f.plot);
+        var hit = el("circle", { cx: f.x(b.conf), cy: f.y(b.acc), r: 12, "class": "hit", tabindex: 0, "aria-label": label }, f.svg);
+        var rows = [{ k: key, v: fx(b.acc, 3), label: "accuracy" }, { k: key, v: fx(b.conf, 3), label: "mean confidence" },
+                    { k: key, v: b.n.toLocaleString(), label: "predictions in bin" }];
+        var title = label + ", confidence " + fx(b.lo, 2) + "–" + fx(b.hi, 2);
+        hit.addEventListener("pointermove", function (e) { showTip(e, title, rows); });
+        hit.addEventListener("pointerleave", hideTip);
+        hit.addEventListener("focus", function (e) { showTip(e, title, rows); });
+        hit.addEventListener("blur", hideTip);
+      });
+    }
+    marks(raw, "muted", "raw, T = " + T);
+    marks(tem, "count", "temperature-scaled, T = " + T);
+  }
+  function renderAuroc(hostId) {
+    var host = document.getElementById(hostId || "chart-auroc");
+    if (!host || !D.readout) return;
+    var c = byT(D.readout, "count", "auroc"), a = byT(D.readout, "accumulator", "auroc");
+    var all = c.concat(a).map(function (p) { return p[1]; });
+    var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all), yr = pad(lo, hi, 0.12);
+    var W = host.clientWidth || 280;
+    var f = frame(host, { x: [2, 10], y: yr, xTicks: [2, 4, 6, 8, 10], xLabel: "timesteps T", height: Math.min(260, Math.max(200, W * 0.85)), left: 46,
+      aria: "error-detection AUROC against T" });
+    path(f, c, "c-count"); path(f, a, "c-accum");
+    c.forEach(function (p) { dot(f, p[0], p[1], "count"); });
+    a.forEach(function (p) { dot(f, p[0], p[1], "accum"); });
+    var ce = c[c.length - 1], ae = a[a.length - 1], up = ce[1] >= ae[1];
+    txt("count", { x: f.x(ce[0]) - 2, y: f.y(ce[1]) + (up ? -9 : 16), "text-anchor": "end", "class": "t-ink" }, f.svg);
+    txt("accumulator", { x: f.x(ae[0]) - 2, y: f.y(ae[1]) + (up ? 16 : -9), "text-anchor": "end", "class": "t-ink" }, f.svg);
+    columns(f, c.map(function (p) { return p[0]; }), function (T) {
+      var rows = [{ k: "count", v: fx(c.filter(function (p) { return p[0] === T; })[0][1], 4), label: "count" }];
+      var ap = a.filter(function (p) { return p[0] === T; })[0];
+      if (ap) rows.push({ k: "accum", v: fx(ap[1], 4), label: "accumulator" });
+      return rows;
+    }, function (T) { return "AUROC, T = " + T; });
+    return { c: c, a: a };
+  }
+  function renderCalibration() {
+    reliabilityPanel("chart-rel-2", 2); reliabilityPanel("chart-rel-10", 10);
+    var au = renderAuroc();
+    if (!SWEEP.length || !au) return;
+    var Ts = uniq(SWEEP.map(function (r) { return r.timesteps; })).sort(function (a, b) { return a - b; });
+    table("table-calibration", ["T", "ECE raw (w / m)", "ECE temperature (w / m)", "AUROC count", "AUROC accumulator"],
+      Ts.map(function (T) {
+        var ap = au.a.filter(function (p) { return p[0] === T; })[0];
+        return [String(T),
+          fx(sweepMean(T, "uncalibrated", "ece_equal_width"), 4) + " / " + fx(sweepMean(T, "uncalibrated", "ece_equal_mass"), 4),
+          fx(sweepMean(T, "temperature", "ece_equal_width"), 4) + " / " + fx(sweepMean(T, "temperature", "ece_equal_mass"), 4),
+          fx(au.c.filter(function (p) { return p[0] === T; })[0][1], 4), ap ? fx(ap[1], 4) : "–"];
+      }));
+  }
+
+  /* ---------- 4. the readout sets the direction of failure ---------- */
+  function gapPanel(hostId, rows, readouts, name) {
+    var host = document.getElementById(hostId);
+    if (!host || !rows) return [];
+    var series = readouts.map(function (r) { return { r: r, pts: byT(rows, r, "mean_conf_minus_acc") }; });
+    var all = []; series.forEach(function (s) { s.pts.forEach(function (p) { all.push(p[1]); }); });
+    var lo = Math.min(0, Math.min.apply(null, all)), hi = Math.max(0, Math.max.apply(null, all));
+    var Ts = uniq(rows.map(function (r) { return r.timesteps; })).sort(function (a, b) { return a - b; });
+    var f = frame(host, { x: [Ts[0], Ts[Ts.length - 1]], y: pad(lo, hi, 0.08), xTicks: Ts, xLabel: "timesteps T", ySigned: true, left: 52,
+      right: 72, zero: true, zeroLabel: "calibrated", aria: name + ": confidence minus accuracy against T" });
+    var drawOrder = series.slice().reverse();          // count last, so it sits on top
+    drawOrder.forEach(function (s) { path(f, s.pts, "c-" + READOUT_KEY[s.r]); });
+    drawOrder.forEach(function (s) { s.pts.forEach(function (p) { dot(f, p[0], p[1], READOUT_KEY[s.r]); }); });
+    var sc = series.filter(function (s) { return s.r === "count"; })[0], sw = series.filter(function (s) { return s.r === "weighted-count"; })[0];
+    if (sc && sw) {
+      var gapMax = Math.max.apply(null, sc.pts.map(function (p, i) { return Math.abs(p[1] - sw.pts[i][1]); }));
+      if (gapMax < 0.01) txt("count and weighted count overlap", { x: f.x(sc.pts[0][0]) + 10, y: f.y(sc.pts[0][1]) + 4, "class": "t-ink" }, f.svg);
+    }
+    columns(f, Ts, function (T) {
+      return series.map(function (s) {
+        var p = s.pts.filter(function (q) { return q[0] === T; })[0];
+        return p ? { k: READOUT_KEY[s.r], v: sg(p[1], 4), label: READOUT_NAME[s.r] } : null;
+      }).filter(Boolean);
+    }, function (T) { return name + ", T = " + T; });
+    var out = [];
+    series.forEach(function (s) { s.pts.forEach(function (p) { out.push([name, READOUT_NAME[s.r], String(p[0]), sg(p[1], 4)]); }); });
     return out;
   }
-
-  /* ---------- paired intervals ----------
-
-     Two panels with shared rows and one horizontal scale: equal-width on the left,
-     equal-mass on the right. The chart used to draw the equal-width interval alone. That
-     shows two resolvable runs and cannot show the argument, which is that the runs
-     resolving under one estimator are not the runs resolving under the other. It does not
-     follow the estimator control: both are always on screen, because the comparison
-     between them is the finding. */
-  var PAIRED = [
-    { label: "equal-width", d: "iso_minus_temp_ece_ew", lo: "iso_minus_temp_ci_low",
-      hi: "iso_minus_temp_ci_high", res: "iso_minus_temp_resolvable" },
-    { label: "equal-mass", d: "iso_minus_temp_ece_em", lo: "iso_minus_temp_em_ci_low",
-      hi: "iso_minus_temp_em_ci_high", res: "iso_minus_temp_em_resolvable" }
-  ];
-
-  function renderIntervals(rows) {
-    var runs = uniqRuns(rows).sort(function (a, b) {
-      return (+a.timesteps - +b.timesteps) || (+a.seed - +b.seed);
-    });
-    var host = document.getElementById("interval-chart");
-    if (!runs.length) { host.textContent = ""; return; }
-    var rowH = 21, top = 38, bottom = 40, block = runs.length * rowH + top + bottom;
-    var padL = 66, padR = 10, gap = 22;
-    /* Side by side where each panel gets room for its axis labels; one above the other
-       where it does not. At phone width two half-panels left about 100px each and the
-       tick labels ran into one another. */
-    var avail = host.clientWidth || (host.parentNode && host.parentNode.clientWidth) || 620;
-    var stacked = (avail - padL - padR - gap) / 2 < 170;
-    var c = chart(host, 620, stacked ? block * 2 : block, { l: padL, r: padR, t: top, b: bottom });
-    var pw = stacked ? c.w - padL - padR : (c.w - padL - padR - gap) / 2;
-
-    /* One scale for both panels, always containing zero, so an interval's distance from
-       zero means the same thing in either. */
-    var lo = 0, hi = 0;
-    runs.forEach(function (r) {
-      PAIRED.forEach(function (p) {
-        lo = Math.min(lo, num(r, p.lo)); hi = Math.max(hi, num(r, p.hi));
-      });
-    });
-    var pad = (hi - lo) * 0.08 || 0.001;
-    lo -= pad; hi += pad;
-
-    var counts = PAIRED.map(function (p, k) {
-      var x0 = padL + (stacked ? 0 : k * (pw + gap)), x1 = x0 + pw;
-      var oy = stacked ? k * block : 0, y0 = oy + top, y1 = oy + block - bottom;
-      var X = function (v) { return x0 + (v - lo) / (hi - lo) * pw; };
-      graticule({ svg: c.svg, w: c.w, h: c.h, pad: { l: x0, r: c.w - x1, t: y0, b: c.h - y1 } }, 4, runs.length);
-      el("line", { x1: X(0), y1: y0, x2: X(0), y2: y1,
-        stroke: "var(--ink-3)", "stroke-width": 1.5 }, c.svg);
-
-      var resolved = 0;
-      runs.forEach(function (r, i) {
-        var y = y0 + i * rowH + rowH / 2;
-        var a = num(r, p.lo), b = num(r, p.hi), d = num(r, p.d);
-        var res = r[p.res] === "True";
-        var col = res ? "var(--status)" : "var(--d1)";
-        if (res) resolved++;
-        /* the rows are shared, so they are labelled once unless the panels are stacked */
-        if (stacked || k === 0) axisText(c, padL - 8, y + 3.5, "T=" + r.timesteps + "  s" + r.seed, "end");
-        el("line", { x1: X(a), y1: y, x2: X(b), y2: y, stroke: col, "stroke-width": 2.5,
-          "stroke-linecap": "round", opacity: res ? 1 : 0.75 }, c.svg);
-        el("circle", { cx: X(d), cy: y, r: 3.2, fill: col }, c.svg);
-        /* the whole row is the hover target, not the 2.5px stroke */
-        var hit = el("rect", { x: x0, y: y - rowH / 2, width: pw, height: rowH, fill: "transparent" }, c.svg);
-        el("title", {}, hit).textContent = "T = " + r.timesteps + ", seed " + r.seed + ", " + p.label +
-          ": " + signed(d, 4) + "  [" + signed(a, 4) + ", " + signed(b, 4) + "]" +
-          (res ? "  excludes zero, favours " + (b < 0 ? "isotonic" : "temperature") : "");
-      });
-
-      var head = el("text", { x: x0, y: oy + 14, "text-anchor": "start", fill: "var(--ink-2)",
-        "font-size": 11.5, "font-family": "var(--sans)", "font-weight": 600 }, c.svg);
-      head.textContent = p.label;
-      axisText(c, x0, oy + 28, (runs.length - resolved) + " of " + runs.length + " straddle zero", "start");
-
-      axisText(c, x0, y1 + 15, fmt(lo, 4), "start");
-      axisText(c, x1, y1 + 15, fmt(hi, 4), "end");
-      if (X(0) - x0 > 62 && x1 - X(0) > 62) axisText(c, X(0), y1 + 15, "0");
-      /* Direction is the side of zero, said once on the axis. A tag beside each amber
-         interval collided with the zero line once the panels were half the width. */
-      axisText(c, x0, y1 + 30, "\u2190 isotonic", "start");
-      axisText(c, x1, y1 + 30, "temperature \u2192", "end");
-      return resolved;
-    });
-
-    var both = runs.filter(function (r) {
-      return PAIRED.every(function (p) { return r[p.res] === "True"; });
-    }).length;
-    c.svg.setAttribute("aria-label", "Paired bootstrap intervals for the isotonic minus temperature " +
-      "ECE difference, " + runs.length + " runs, under equal-width and equal-mass binning. " +
-      counts[0] + " exclude zero under equal-width, " + counts[1] + " under equal-mass, " + both + " under both.");
-    document.getElementById("interval-count").textContent =
-      runs.length + " run" + (runs.length === 1 ? "" : "s") + " shown. Intervals excluding zero: " +
-      counts[0] + " under equal-width, " + counts[1] + " under equal-mass, " + both + " under both.";
+  function renderGap() {
+    var a = gapPanel("chart-gap-a", D.readout, ["count", "weighted-count", "membrane", "accumulator"], "N-MNIST");
+    var b = gapPanel("chart-gap-b", D.caltech, ["count", "accumulator"], "N-Caltech101");
+    table("table-gap", ["dataset", "readout", "T", "confidence − accuracy"], a.concat(b));
   }
 
-  /* ---------- reliability ---------- */
-
-  function renderReliability(rows) {
-    var host = document.getElementById("reliability-grid");
+  /* ---------- 5. a learned scale ---------- */
+  function scaleCells() {
+    var sc = D.scaled; if (!sc) return [];
+    var cells = [["nmnist", 2, "N-MNIST, T = 2"], ["ncaltech101", 2, "N-Caltech101, T = 2"], ["ncaltech101", 6, "N-Caltech101, T = 6"]];
+    return cells.map(function (c) {
+      var r = where(sc.rows, function (x) { return x.dataset === c[0] && x.timesteps === c[1]; });
+      function m(k) { return mean(r.map(function (x) { return x[k]; })); }
+      return { label: c[2], gap: { count: m("count_mean_conf_minus_acc"), learned: m("mean_conf_minus_acc"), accum: m("accumulator_mean_conf_minus_acc") },
+               acc: { count: m("count_test_accuracy"), learned: m("test_accuracy"), accum: m("accumulator_test_accuracy") } };
+    });
+  }
+  function dotRows(hostId, cells, key, signed, note) {
+    var host = document.getElementById(hostId);
+    if (!host || !cells.length) return;
+    var vals = []; cells.forEach(function (c) { ["count", "learned", "accum"].forEach(function (k) { vals.push(c[key][k]); }); });
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    if (signed) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+    var dom = pad(lo, hi, 0.1);
     host.textContent = "";
-    var keys = [];
-    rows.forEach(function (r) {
-      var k = r.timesteps + "|" + r.seed + "|" + r.arm;
-      if (keys.indexOf(k) < 0) keys.push(k);
+    var W = Math.max(240, host.clientWidth || 300), rowH = 46, top = 8, bottom = 30, left = Math.min(150, Math.max(104, W * 0.3));
+    var H = top + rowH * cells.length + bottom;
+    var svg = el("svg", { width: W, height: H, viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": hostId }, host);
+    var x = lin(dom[0], dom[1], left, W - 16);
+    var ticks = niceTicks(dom[0], dom[1], 4), dd = decimals(ticks);
+    var g = el("g", { "class": "grid" }, svg);
+    ticks.forEach(function (v) {
+      el("line", { x1: x(v), x2: x(v), y1: top, y2: H - bottom }, g);
+      txt(signed && v !== 0 ? sg(v, dd) : fx(v, dd), { x: x(v), y: H - bottom + 16, "text-anchor": "middle" }, svg);
     });
-    keys.sort(function (a, b) {
-      var A = a.split("|"), B = b.split("|");
-      return (+A[0] - +B[0]) || (+A[1] - +B[1]) || (ARM_ORDER.indexOf(A[2]) - ARM_ORDER.indexOf(B[2]));
-    });
-    /* Two at a size where the bins can actually be read, rather than six that
-       cannot. The filters choose which two. */
-    var CAP = 2, shown = keys.slice(0, CAP);
-    document.getElementById("reliability-count").textContent =
-      keys.length <= CAP
-        ? keys.length + " diagram" + (keys.length === 1 ? "" : "s") + " shown."
-        : "Showing " + CAP + " of " + keys.length + " selected combinations, at a size where the "
-          + "bins are readable. Narrow the filters to choose which.";
-
-    shown.forEach(function (key) {
-      var parts = key.split("|");
-      var bins = ((D.reliability || {})[key] || {})[state.estimator] || [];
-      var wrap = document.createElement("div");
-      wrap.className = "well";
-      var cap = document.createElement("div");
-      cap.className = "chart-note";
-      cap.innerHTML = "<b>T = " + parts[0] + ", seed " + parts[1] + "</b> — " + ARM_LABEL[parts[2]];
-      var box = document.createElement("div");
-      wrap.appendChild(box); wrap.appendChild(cap);
-      host.appendChild(wrap);
-
-      var c = chart(box, 460, 330, { l: 44, r: 14, t: 12, b: 34 });
-      graticule(c, 5, 5);
-      var X = function (v) { return c.ix(v, 0, 1); };
-      var Y = function (v) { return c.iy(v, 0, 1); };
-      el("line", { x1: X(0), y1: Y(0), x2: X(1), y2: Y(1),
-        stroke: "var(--ink-3)", "stroke-width": 1, "stroke-dasharray": "4 4" }, c.svg);
-
-      var maxN = bins.length ? Math.max.apply(null, bins.map(function (b) { return b.n; })) : 1;
-      var d = "";
-      bins.forEach(function (b, i) { d += (i ? "L" : "M") + X(b.conf) + "," + Y(b.acc); });
-      if (d) path(c, d, ARM_COLOUR[parts[2]], 1.8);
-      bins.forEach(function (b) {
-        /* Marker area tracks the bin count, so a point resting on three samples
-           cannot look as solid as one resting on four thousand. */
-        var r = 2 + 5 * Math.sqrt(b.n / maxN);
-        var node = el("circle", { cx: X(b.conf), cy: Y(b.acc), r: r,
-          fill: ARM_COLOUR[parts[2]], "fill-opacity": 0.55,
-          stroke: ARM_COLOUR[parts[2]], "stroke-width": 1.2 }, c.svg);
-        var title = el("title", {}, node);
-        title.textContent = "confidence " + b.conf.toFixed(4) + ", accuracy " +
-          b.acc.toFixed(4) + ", n = " + b.n;
-      });
-      for (var i = 0; i <= 5; i += 1) {
-        axisText(c, c.pad.l - 6, Y(i / 5) + 3, (i / 5).toFixed(1), "end", 9);
-        axisText(c, X(i / 5), c.h - c.pad.b + 13, (i / 5).toFixed(1), "middle", 9);
-      }
-      axisText(c, c.pad.l + (c.w - c.pad.l - c.pad.r) / 2, c.h - 1, "confidence", "middle", 9.5);
-      c.svg.setAttribute("aria-label", "Reliability diagram, T " + parts[0] + " seed " +
-        parts[1] + ", " + ARM_LABEL[parts[2]] + ". " + bins.length + " occupied bins.");
+    if (signed) el("line", { x1: x(0), x2: x(0), y1: top, y2: H - bottom, "class": "zero" }, svg);
+    var f = { svg: svg, W: W };
+    cells.forEach(function (c, i) {
+      var yc = top + rowH * (i + 0.5);
+      txt(c.label, { x: 0, y: yc + 4, "class": "t-ink" }, svg);
+      var v = c[key], xs = [v.count, v.learned, v.accum].map(x);
+      el("line", { x1: Math.min.apply(null, xs), x2: Math.max.apply(null, xs), y1: yc, y2: yc, "class": "zero", opacity: 0.25 }, svg);
+      el("circle", { cx: x(v.learned), cy: yc, r: 7, "class": "open c-count" }, svg);
+      el("circle", { cx: x(v.accum), cy: yc, r: 4.5, "class": "mk f-accum" }, svg);
+      el("circle", { cx: x(v.count), cy: yc, r: 4.5, "class": "mk f-count" }, svg);
+      if (note) note(svg, c, x, yc);
+      var fm = function (z) { return signed ? sg(z, 4) : fx(z, 4); };
+      rowHit(f, yc, rowH, c.label, [{ k: "count", v: fm(v.count), label: "count" }, { k: "count", v: fm(v.learned), label: "count, learned scale" },
+                                    { k: "accum", v: fm(v.accum), label: "accumulator" }]);
     });
   }
-
-  /* ---------- table ---------- */
-
-  var COLS = [
-    { k: "timesteps", t: "T" }, { k: "seed", t: "seed" },
-    { k: "arm", t: "arm", text: true },
-    { k: "test_accuracy", t: "test acc", d: 4 },
-    { k: "ece_equal_width", t: "ECE ew", d: 4 },
-    { k: "ece_equal_mass", t: "ECE em", d: 4 },
-    { k: "auroc", t: "AUROC", d: 4 },
-    { k: "n_distinct_cal", t: "levels", d: 0 },
-    { k: "samples_per_level", t: "samp/lvl", d: 1 },
-    { k: "epochs_run", t: "epochs", d: 0 },
-    { k: "early_stopped", t: "early stop", text: true }
-  ];
-
-  function renderTable(rows) {
-    var sorted = rows.slice().sort(function (a, b) {
-      var k = state.sortKey, x = a[k], y = b[k];
-      var nx = parseFloat(x), ny = parseFloat(y);
-      if (isFinite(nx) && isFinite(ny)) return (nx - ny) * state.sortDir;
-      return String(x).localeCompare(String(y)) * state.sortDir;
+  function renderScale() {
+    var cells = scaleCells();
+    if (!cells.length) return;
+    dotRows("chart-scale-gap", cells, "gap", true);
+    dotRows("chart-scale-acc", cells, "acc", false, function (svg, c, x, yc) {
+      var cost = c.acc.count - c.acc.learned;
+      if (c.label.indexOf("T = 6") < 0 || cost <= 0) return;
+      txt("−" + fx(100 * cost, 1) + " points", { x: (x(c.acc.count) + x(c.acc.learned)) / 2, y: yc - 10, "text-anchor": "middle", "class": "t-strong" }, svg);
     });
-    var html = "<thead><tr>";
-    COLS.forEach(function (c) {
-      var active = state.sortKey === c.k;
-      html += '<th data-k="' + c.k + '" scope="col" tabindex="0" role="button">' + c.t +
-        (active ? ' <span class="dir">' + (state.sortDir > 0 ? "↑" : "↓") + "</span>" : "") + "</th>";
+    table("table-scale", ["cell", "gap: count", "learned scale", "accumulator", "accuracy: count", "learned scale", "accumulator"],
+      cells.map(function (c) {
+        return [c.label, sg(c.gap.count, 4), sg(c.gap.learned, 4), sg(c.gap.accum, 4), fx(c.acc.count, 4), fx(c.acc.learned, 4), fx(c.acc.accum, 4)];
+      }));
+  }
+
+  /* ---------- 6. calibrators ---------- */
+  function forest(hostId, runs, est, dom) {
+    var host = document.getElementById(hostId);
+    if (!host || !runs.length) return;
+    host.textContent = "";
+    var W = Math.max(240, host.clientWidth || 300), rowH = 16, top = 6, bottom = 30, left = 62;
+    var H = top + rowH * runs.length + bottom;
+    var svg = el("svg", { width: W, height: H, viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": hostId }, host);
+    var x = lin(dom[0], dom[1], left, W - 14), ticks = niceTicks(dom[0], dom[1], 4), dd = decimals(ticks);
+    var g = el("g", { "class": "grid" }, svg);
+    ticks.forEach(function (v) {
+      el("line", { x1: x(v), x2: x(v), y1: top, y2: H - bottom }, g);
+      txt(v === 0 ? "0" : sg(v, dd), { x: x(v), y: H - bottom + 16, "text-anchor": "middle" }, svg);
     });
-    html += "</tr></thead><tbody>";
-    sorted.forEach(function (r) {
-      html += "<tr>";
-      COLS.forEach(function (c) {
-        var v = r[c.k];
-        if (!c.text && c.d !== undefined) { var f = parseFloat(v); v = isFinite(f) ? f.toFixed(c.d) : "—"; }
-        if (c.k === "arm") v = ARM_LABEL[v] || v;
-        if (c.k === "early_stopped") v = v === "True" ? "yes" : "no";
-        html += '<td class="' + (c.text ? "k" : "") + '">' + v + "</td>";
-      });
-      html += "</tr>";
+    el("line", { x1: x(0), x2: x(0), y1: top, y2: H - bottom, "class": "zero" }, svg);
+    var f = { svg: svg, W: W }, lastT = null;
+    runs.forEach(function (r, i) {
+      var e = r[est], yc = top + rowH * (i + 0.5);
+      if (r.T !== lastT) { txt("T = " + r.T, { x: 0, y: yc + 4, "class": "t-ink" }, svg); lastT = r.T; }
+      txt("s" + r.seed, { x: left - 8, y: yc + 4, "text-anchor": "end" }, svg);
+      el("line", { x1: x(e.lo), x2: x(e.hi), y1: yc, y2: yc, "class": "whisk c-count" }, svg);
+      el("circle", { cx: x(e.d), cy: yc, r: 4, "class": e.excl ? "mk f-count" : "open c-count" }, svg);
+      rowHit(f, yc, rowH, "T = " + r.T + ", seed " + r.seed + (est === "ew" ? ", equal-width" : ", equal-mass"),
+        [{ k: "count", v: sg(e.d, 4), label: "isotonic − temperature" },
+         { k: "ink", v: "[" + sg(e.lo, 4) + ", " + sg(e.hi, 4) + "]", label: "95% interval" },
+         { k: "ink", v: e.excl ? "excludes zero" : "includes zero", label: r.both ? "differs under both" : "not under both" }]);
     });
-    html += "</tbody>";
-    var table = document.getElementById("results-table");
-    table.innerHTML = html;
-    Array.prototype.forEach.call(table.querySelectorAll("th"), function (th) {
-      function sort() {
-        var k = th.getAttribute("data-k");
-        if (state.sortKey === k) state.sortDir *= -1; else { state.sortKey = k; state.sortDir = 1; }
-        render();
-      }
-      th.addEventListener("click", sort);
-      th.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); sort(); }
+  }
+  function calRuns() {
+    var nm = [], seen = {};
+    SWEEP.forEach(function (r) {
+      var k = r.timesteps + "|" + r.seed; if (seen[k] || r.iso_minus_temp_ece_ew === "" || r.iso_minus_temp_ece_ew === undefined) return; seen[k] = 1;
+      var ew = { d: +r.iso_minus_temp_ece_ew, lo: +r.iso_minus_temp_ci_low, hi: +r.iso_minus_temp_ci_high };
+      var em = { d: +r.iso_minus_temp_ece_em, lo: +r.iso_minus_temp_em_ci_low, hi: +r.iso_minus_temp_em_ci_high };
+      ew.excl = ew.lo > 0 || ew.hi < 0; em.excl = em.lo > 0 || em.hi < 0;
+      nm.push({ T: r.timesteps, seed: r.seed, ew: ew, em: em, both: ew.excl && em.excl && (ew.d < 0) === (em.d < 0) });
+    });
+    var nc = where((D.caltech_calibrators || {}).paired, function (p) { return p.readout === "count"; }).map(function (p) {
+      return { T: p.timesteps, seed: p.seed, both: p.differ,
+        ew: { d: p.iso_minus_temp_ece_ew, lo: p.ew_ci[0], hi: p.ew_ci[1], excl: p.ew_excludes_zero },
+        em: { d: p.iso_minus_temp_ece_em, lo: p.em_ci[0], hi: p.em_ci[1], excl: p.em_excludes_zero } };
+    });
+    var srt = function (a, b) { return a.T - b.T || a.seed - b.seed; };
+    return { nm: nm.sort(srt), nc: nc.sort(srt) };
+  }
+  function domainOf(runs) {
+    var v = [0]; runs.forEach(function (r) { ["ew", "em"].forEach(function (k) { v.push(r[k].lo, r[k].hi); }); });
+    return pad(Math.min.apply(null, v), Math.max.apply(null, v), 0.06);
+  }
+  function renderCalibrators() {
+    var R = calRuns();
+    var dA = domainOf(R.nm), dB = domainOf(R.nc);
+    forest("chart-cal-a-ew", R.nm, "ew", dA); forest("chart-cal-a-em", R.nm, "em", dA);
+    forest("chart-cal-b-ew", R.nc, "ew", dB); forest("chart-cal-b-em", R.nc, "em", dB);
+    var rows = [];
+    [["N-MNIST", R.nm], ["N-Caltech101", R.nc]].forEach(function (g) {
+      g[1].forEach(function (r) {
+        rows.push([g[0], String(r.T), String(r.seed), sg(r.ew.d, 4), "[" + sg(r.ew.lo, 4) + ", " + sg(r.ew.hi, 4) + "]",
+          sg(r.em.d, 4), "[" + sg(r.em.lo, 4) + ", " + sg(r.em.hi, 4) + "]", r.both ? "differ" : "tie"]);
       });
     });
-    document.getElementById("table-meta").textContent =
-      sorted.length + " of " + ROWS.length + " rows. Sorted by " + state.sortKey +
-      (state.sortDir > 0 ? ", ascending." : ", descending.");
+    table("table-cal", ["dataset", "T", "seed", "equal-width", "interval", "equal-mass", "interval", "verdict"], rows);
   }
 
-  /* ---------- artifact-driven tables ----------
-
-     These render from window.SPIKECALIB.readout and .quantisation, which are copied
-     verbatim out of results/readout_experiment.json and results/quantisation_test.json by
-     scripts/export_dashboard_data.py. Nothing here carries a number of its own: that is
-     how the page previously came to state a membrane advantage measured on one seed as
-     though it held across three. A section whose artifact is missing hides itself.
-  */
-
-  function mean(xs) { var t = 0, i; for (i = 0; i < xs.length; i++) t += xs[i]; return t / xs.length; }
-  function sd(xs) {
-    if (xs.length < 2) return 0;
-    var m = mean(xs), t = 0, i;
-    for (i = 0; i < xs.length; i++) t += (xs[i] - m) * (xs[i] - m);
-    return Math.sqrt(t / xs.length);
-  }
-  function hide(id) {
-    var n = document.getElementById(id);
-    if (n) { var sec = n.closest("section"); if (sec) sec.hidden = true; }
-  }
-  function fmt(v, d) { return (v < 0 ? "\u2212" : "") + Math.abs(v).toFixed(d); }
-  // Signed: where the SIGN is the result -- conf - acc is under- vs overconfidence -- an
-  // unmarked positive reads as "no sign shown" rather than "positive".
-  function signed(v, d) { return (v < 0 ? "\u2212" : "+") + Math.abs(v).toFixed(d); }
-
-  var READOUT_ORDER = ["count", "weighted-count", "membrane", "accumulator"];
-  var READOUT_LABEL = {
-    "count": "count", "weighted-count": "weighted-count",
-    "membrane": "membrane (leaky)", "accumulator": "accumulator (non-leaky)"
-  };
-
-  function renderReadoutTable() {
-    var host = document.getElementById("readout-table");
-    if (!host) return;
-    var rows = window.SPIKECALIB.readout;
-    if (!rows || !rows.length) { hide("readout-table"); return; }
-
-    var Ts = [], seen = {};
-    rows.forEach(function (r) { if (!seen[r.timesteps]) { seen[r.timesteps] = 1; Ts.push(r.timesteps); } });
-    Ts.sort(function (a, b) { return a - b; });
-
-    var html = "<thead><tr>" +
-      ["T", "readout", "seeds", "test acc", "conf \u2212 acc", "ECE (equal-width)",
-       "AUROC", "AURC", "operating points"]
-        .map(function (t) { return '<th scope="col" style="cursor:default">' + t + "</th>"; })
-        .join("") + "</tr></thead><tbody>";
-
+  /* ---------- 7. fusion pilot ---------- */
+  function renderFusion(hostId, compact) {
+    var host = document.getElementById(hostId || "chart-fusion");
+    var fu = D.fusion;
+    if (!host || !fu) return;
+    var Ts = uniq(fu.rows.map(function (r) { return r.timesteps; })).sort(function (a, b) { return a - b; });
+    var v = [0]; fu.rows.forEach(function (r) { v.push(r.delta_ci[0], r.delta_ci[1]); });
+    var W = host.clientWidth || 300;
+    var f = frame(host, { x: [Ts[0] - 0.6, Ts[Ts.length - 1] + 0.6], y: pad(Math.min.apply(null, v), Math.max.apply(null, v), 0.08), xTicks: Ts,
+      xLabel: "timesteps T", ySigned: true, left: 58, right: compact ? 14 : 60, zero: true, zeroLabel: compact ? "" : "no gain",
+      height: compact ? Math.min(200, W * 0.7) : Math.min(300, Math.max(220, W * 0.36)), aria: "fusion pilot: accuracy gained against T" });
+    var meanLine = {};
+    ["count", "accumulator"].forEach(function (ro, j) {
+      var key = READOUT_KEY[ro], off = j ? 0.15 : -0.15;
+      var rows = where(fu.rows, function (r) { return r.readout === ro; });
+      var pts = uniq(rows.map(function (r) { return r.timesteps; })).sort(function (a, b) { return a - b; }).map(function (T) {
+        return [T + off, mean(where(rows, function (r) { return r.timesteps === T; }).map(function (r) { return r.delta; }))];
+      });
+      meanLine[ro] = pts;
+      path(f, pts, "c-" + key);
+      rows.forEach(function (r) {
+        var xv = r.timesteps + off + (r.seed - 1) * 0.06;
+        el("line", { x1: f.x(xv), x2: f.x(xv), y1: f.y(r.delta_ci[0]), y2: f.y(r.delta_ci[1]), "class": "whisk c-" + key }, f.plot);
+        dot(f, xv, r.delta, key);
+      });
+    });
+    var cnt = where(fu.rows, function (r) { return r.readout === "count"; });
     Ts.forEach(function (T) {
-      READOUT_ORDER.forEach(function (ro) {
-        var g = rows.filter(function (r) { return r.timesteps === T && r.readout === ro; });
-        if (!g.length) return;
-        function col(k) { return g.map(function (r) { return r[k]; }); }
-        function cell(k, d, showSign) {
-          var v = col(k), m = mean(v), s = sd(v);
-          return "<td>" + (showSign ? signed(m, d) : fmt(m, d)) +
-            (v.length > 1 ? ' <span class="sd">\u00b1' + Math.abs(s).toFixed(d) + "</span>"
-                          : "") + "</td>";
-        }
-        html += '<tr><td class="k">' + T + '</td><td class="k">' + (READOUT_LABEL[ro] || ro) +
-          '</td><td class="k">' + g.length + "</td>" +
-          cell("test_accuracy", 4) + cell("mean_conf_minus_acc", 4, true) +
-          cell("ece_equal_width", 4) + cell("auroc", 4) + cell("aurc", 5) +
-          "<td>" + Math.round(mean(col("n_achievable_coverage_levels"))).toLocaleString() +
-          "</td></tr>";
-      });
+      var r = where(cnt, function (q) { return q.timesteps === T; });
+      if (r.length) diamond(f, T - 0.34, mean(r.map(function (q) { return q.predicted_on_s; })), "ink");
     });
-    host.innerHTML = html + "</tbody>";
-
-    // The crossover, stated from the data rather than asserted in prose.
-    var lines = [];
-    Ts.forEach(function (T) {
-      function m(ro, k) {
-        var g = rows.filter(function (r) { return r.timesteps === T && r.readout === ro; });
-        return g.length ? mean(g.map(function (r) { return r[k]; })) : null;
-      }
-      var ce = m("count", "ece_equal_width"), me = m("membrane", "ece_equal_width");
-      var ca = m("count", "auroc"), ma = m("membrane", "auroc");
-      var cr = m("count", "aurc"), mr = m("membrane", "aurc");
-      if (ce === null || me === null) return;
-      lines.push("<tr><td class=\"k\">" + T + "</td><td>" + (me < ce ? "membrane" : "count") +
-        "</td><td>" + (ma > ca ? "membrane" : "count") + "</td><td>" +
-        (mr < cr ? "membrane" : "count") + "</td></tr>");
-    });
-    var cross = document.getElementById("readout-crossover");
-    if (cross) {
-      cross.innerHTML = "<thead><tr><th style=\"cursor:default\">T</th>" +
-        "<th style=\"cursor:default\">better ECE</th>" +
-        "<th style=\"cursor:default\">better AUROC</th>" +
-        "<th style=\"cursor:default\">better AURC</th></tr></thead><tbody>" +
-        lines.join("") + "</tbody>";
+    if (!compact) {
+      var c0 = meanLine.count[0];
+      txt("count", { x: f.x(c0[0]) + 10, y: f.y(c0[1]) - 6, "class": "t-ink" }, f.svg);
     }
-  }
-
-  function renderSelectiveTable() {
-    var host = document.getElementById("selective-table");
-    if (!host) return;
-    var rows = window.SPIKECALIB.readout;
-    if (!rows || !rows.length) { hide("selective-table"); return; }
-    var Ts = [], seen = {};
-    rows.forEach(function (r) { if (!seen[r.timesteps]) { seen[r.timesteps] = 1; Ts.push(r.timesteps); } });
-    Ts.sort(function (a, b) { return a - b; });
-    var html = "<thead><tr>" +
-      ["T", "readout", "operating points", "AURC", "oracle AURC", "coverage at risk \u2264 1%",
-       "coverage at risk \u2264 0.1%"]
-        .map(function (t) { return '<th scope="col" style="cursor:default">' + t + "</th>"; })
-        .join("") + "</tr></thead><tbody>";
-    Ts.forEach(function (T) {
-      READOUT_ORDER.forEach(function (ro) {
-        var g = rows.filter(function (r) { return r.timesteps === T && r.readout === ro; });
-        if (!g.length) return;
-        function avg(k) {
-          var v = g.map(function (r) { return r[k]; }).filter(function (x) { return x !== null && x !== undefined; });
-          return v.length ? mean(v) : null;
-        }
-        function pct(k) {
-          var v = avg(k), n = g.filter(function (r) { return r[k] !== null && r[k] !== undefined; }).length;
-          if (v === null) return "<td>none</td>";
-          return "<td>" + (v * 100).toFixed(1) + "%" +
-            (n < g.length ? ' <span class="sd">' + n + "/" + g.length + " seeds</span>" : "") + "</td>";
-        }
-        html += '<tr><td class="k">' + T + '</td><td class="k">' + (READOUT_LABEL[ro] || ro) +
-          "</td><td>" + Math.round(avg("n_achievable_coverage_levels")).toLocaleString() +
-          "</td><td>" + avg("aurc").toFixed(5) +
-          "</td><td>" + avg("aurc_optimal").toFixed(5) + "</td>" +
-          pct("coverage_at_risk_0p01") + pct("coverage_at_risk_0p001") + "</tr>";
-      });
-    });
-    host.innerHTML = html + "</tbody>";
-  }
-
-  function renderCaxis() {
-    var host = document.getElementById("caxis-table");
-    if (!host) return;
-    var rows = window.SPIKECALIB.caltech;
-    if (!rows || !rows.length) { hide("caxis-table"); return; }
-    var Ts = [], seen = {};
-    rows.forEach(function (r) { if (!seen[r.timesteps]) { seen[r.timesteps] = 1; Ts.push(r.timesteps); } });
-    Ts.sort(function (a, b) { return a - b; });
-    var html = "<thead><tr>" +
-      ["T", "readout", "ceiling", "observed max", "test acc", "binds?", "conf \u2212 acc",
-       "ECE (equal-width)", "AUROC"]
-        .map(function (t) { return '<th scope="col" style="cursor:default">' + t + "</th>"; })
-        .join("") + "</tr></thead><tbody>";
-    Ts.forEach(function (T) {
+    columns(f, Ts, function (T) {
+      var rows = [];
       ["count", "accumulator"].forEach(function (ro) {
-        var g = rows.filter(function (r) { return r.timesteps === T && r.readout === ro; });
-        if (!g.length) return;
-        function avg(k) { return mean(g.map(function (r) { return r[k]; })); }
-        var d = g[0].ceiling_derived;
-        var binds = g.filter(function (r) { return r.ceiling_binds; }).length;
-        html += '<tr><td class="k">' + T + '</td><td class="k">' +
-          (ro === "accumulator" ? "accumulator (uncapped)" : "count (capped)") + "</td>" +
-          "<td>" + (d === null ? "none" : d.toFixed(6)) + "</td>" +
-          "<td>" + avg("max_confidence_observed").toFixed(6) + "</td>" +
-          "<td>" + avg("test_accuracy").toFixed(4) + "</td>" +
-          "<td>" + (d === null ? "\u2014" : binds + "/" + g.length) + "</td>" +
-          "<td>" + signed(avg("mean_conf_minus_acc"), 4) + "</td>" +
-          "<td>" + avg("ece_equal_width").toFixed(4) + "</td>" +
-          "<td>" + avg("auroc").toFixed(4) + "</td></tr>";
+        var r = where(fu.rows, function (q) { return q.readout === ro && q.timesteps === T; });
+        if (!r.length) return;
+        var ex = where(r, function (q) { return q.delta_ci[0] > 0 || q.delta_ci[1] < 0; }).length;
+        rows.push({ k: READOUT_KEY[ro], v: sg(mean(r.map(function (q) { return q.delta; })), 4), label: READOUT_NAME[ro] + ", " + ex + " of " + r.length + " seeds exclude zero" });
+      });
+      var c = where(cnt, function (q) { return q.timesteps === T; });
+      if (c.length) rows.push({ k: "ink", v: sg(mean(c.map(function (q) { return q.predicted_on_s; })), 4), label: "predicted, saturated pairs" });
+      return rows;
+    }, function (T) { return "Fusion pilot, T = " + T; });
+    if (compact) return;
+    var trows = [];
+    ["count", "accumulator"].forEach(function (ro) {
+      Ts.forEach(function (T) {
+        var r = where(fu.rows, function (q) { return q.readout === ro && q.timesteps === T; });
+        if (!r.length) return;
+        trows.push([READOUT_NAME[ro], String(T), sg(mean(r.map(function (q) { return q.delta; })), 4),
+          String(where(r, function (q) { return q.delta_ci[0] > 0 || q.delta_ci[1] < 0; }).length) + " of " + r.length,
+          ro === "count" ? fx(mean(r.map(function (q) { return q.p_s; })), 3) : "–",
+          ro === "count" ? sg(mean(r.map(function (q) { return q.predicted_on_s; })), 4) : "–"]);
       });
     });
-    host.innerHTML = html + "</tbody>";
+    table("table-fusion", ["readout", "T", "gain δ", "seeds excluding zero", "P(both saturate)", "predicted"], trows);
   }
 
-  function renderArch() {
-    var host = document.getElementById("arch-table");
-    if (!host) return;
-    var rows = window.SPIKECALIB.arch;
-    if (!rows || !rows.length) { hide("arch-table"); return; }
-    function cells(ds, nb, T, ro) {
-      return rows.filter(function (r) {
-        return r.dataset === ds && r.n_blocks === nb && r.timesteps === T && r.readout === ro;
-      });
-    }
-    var html = "<thead><tr>" +
-      ["dataset", "C", "blocks", "params", "T", "count acc", "accum acc", "gain",
-       "residual", "ceiling held", "cond ceiling", "share"]
-        .map(function (t) { return '<th scope="col" style="cursor:default">' + t + "</th>"; })
-        .join("") + "</tr></thead><tbody>";
-    [["ncaltech101", "N-Caltech101"], ["nmnist", "N-MNIST"]].forEach(function (d) {
-      [2, 6].forEach(function (T) {
-        [2, 4].forEach(function (nb) {
-          var c = cells(d[0], nb, T, "count"), a = cells(d[0], nb, T, "accumulator");
-          if (!c.length) return;
-          var acc = mean(c.map(function (r) { return r.test_accuracy; }));
-          var aacc = a.length ? mean(a.map(function (r) { return r.test_accuracy; })) : null;
-          var held = c.every(function (r) { return r.ceiling_signed_excess <= 1e-12; });
-          html += '<tr><td class="k">' + d[1] + '</td><td class="k">' + c[0].n_classes +
-            '</td><td class="k">' + nb + "</td><td>" +
-            (c[0].n_parameters / 1000).toFixed(0) + "k</td>" +
-            '<td class="k">' + T + "</td>" +
-            "<td>" + acc.toFixed(4) + "</td>" +
-            "<td>" + (aacc === null ? "\u2014" : aacc.toFixed(4)) + "</td>" +
-            "<td>" + (aacc === null ? "\u2014" : signed(aacc - acc, 4)) + "</td>" +
-            "<td>" + signed(mean(c.map(function (r) { return r.residual; })), 4) + "</td>" +
-            "<td>" + (held ? "yes" : "NO") + "</td>" +
-            "<td>" + mean(c.map(function (r) { return r.conditional_ceiling_mean; })).toFixed(4) + "</td>" +
-            "<td>" + (mean(c.map(function (r) { return r.share_explained_conditional; })) * 100).toFixed(0) + "%</td>" +
-            "</tr>";
+  /* ---------- 8. ledger ---------- */
+  function renderLedger() {
+    var t = document.getElementById("table-ledger"), L = D.ledger;
+    if (!t || !L) return;
+    t.textContent = "";
+    var thead = document.createElement("thead"), hr = document.createElement("tr");
+    [["", ""], ["recorded", ""], ["prediction", "t"], ["measured", "t"], ["outcome", ""]].forEach(function (h) {
+      var th = document.createElement("th"); th.textContent = h[0]; if (h[1]) th.className = h[1]; hr.appendChild(th);
+    });
+    thead.appendChild(hr); t.appendChild(thead);
+    var tb = document.createElement("tbody");
+    [["paper", "The paper's predictions: " + L.paper.held + " held, " + L.paper.falsified + " falsified"],
+     ["early", "Earlier predictions: " + L.early.held + " held, " + L.early.falsified + " falsified"]].forEach(function (g) {
+      var gr = document.createElement("tr"); gr.className = "group";
+      var gc = document.createElement("td"); gc.colSpan = 5; gc.textContent = g[1]; gr.appendChild(gc); tb.appendChild(gr);
+      L.rows.filter(function (r) { return r.group === g[0]; }).forEach(function (r) {
+        var tr = document.createElement("tr");
+        [[r.id, "id"], [r.recorded, "when"], [r.statement, "t"], [r.measured, "t"]].forEach(function (c) {
+          var td = document.createElement("td"); td.textContent = c[0]; td.className = c[1]; tr.appendChild(td);
         });
+        var td = document.createElement("td"), p = document.createElement("span");
+        p.className = "pill " + (r.held ? "held" : "falsified"); p.textContent = r.held ? "held" : "falsified";
+        td.appendChild(p); tr.appendChild(td); tb.appendChild(tr);
       });
     });
-    host.innerHTML = html + "</tbody>";
+    t.appendChild(tb);
   }
 
-  function renderConditional() {
-    var host = document.getElementById("conditional-table");
-    if (!host) return;
-    var rows = window.SPIKECALIB.conditional;
-    if (!rows || !rows.length) { hide("conditional-table"); return; }
-    var keys = [];
-    rows.forEach(function (r) {
-      var k = r.dataset + "|" + r.timesteps;
-      if (keys.indexOf(k) < 0) keys.push(k);
-    });
-    keys.sort(function (a, b) {
-      var A = a.split("|"), B = b.split("|");
-      return A[0] === B[0] ? (+A[1]) - (+B[1]) : (A[0] < B[0] ? -1 : 1);
-    });
-    var html = "<thead><tr>" +
-      ["dataset", "C", "T", "accuracy", "mean conf", "theoretical", "share", "conditional",
-       "share", "gap"]
-        .map(function (t) { return '<th scope="col" style="cursor:default">' + t + "</th>"; })
-        .join("") + "</tr></thead><tbody>";
-    keys.forEach(function (k) {
-      var g = rows.filter(function (r) { return r.dataset + "|" + r.timesteps === k; });
-      function avg(f) { return mean(g.map(f)); }
-      var res = avg(function (r) { return r.residual; });
-      var cond = avg(function (r) { return r.conditional_ceiling_mean; });
-      var acc = avg(function (r) { return r.test_accuracy; });
-      var hot = (g[0].dataset === "ncaltech101" && g[0].timesteps === 6);
-      html += "<tr" + (hot ? ' style="font-weight:600"' : "") + '><td class="k">' +
-        (g[0].dataset === "ncaltech101" ? "N-Caltech101" : "N-MNIST") + '</td><td class="k">' +
-        g[0].n_classes + '</td><td class="k">' + g[0].timesteps + "</td>" +
-        "<td>" + acc.toFixed(4) + "</td>" +
-        "<td>" + avg(function (r) { return r.mean_confidence; }).toFixed(4) + "</td>" +
-        "<td>" + avg(function (r) { return r.theoretical_ceiling; }).toFixed(4) + "</td>" +
-        "<td>" + (avg(function (r) { return r.share_explained_theoretical; }) * 100).toFixed(0) + "%</td>" +
-        "<td>" + cond.toFixed(4) + "</td>" +
-        "<td>" + (avg(function (r) { return r.share_explained_conditional; }) * 100).toFixed(0) + "%</td>" +
-        "<td>" + avg(function (r) { return r.ceiling_gap_theo_minus_cond; }).toFixed(4) + "</td></tr>";
-    });
-    host.innerHTML = html + "</tbody>";
+  /* ---------- briefing: the three small charts ---------- */
+  function renderBriefing() {
+    var cc = D.caltech && D.caltech[0];
+    if (document.getElementById("mini-cap")) capPanel("mini-cap", "mini-cap-title", D.readout, D.n_classes, "N-MNIST");
+    if (document.getElementById("mini-auroc")) renderAuroc("mini-auroc");
+    if (document.getElementById("mini-fusion")) renderFusion("mini-fusion", true);
+    void cc;
   }
 
-  function renderQuantisation() {
-    var host = document.getElementById("quant-within-table");
-    if (!host) return;
-    var rows = (window.SPIKECALIB.quantisation || []).filter(function (r) {
-      return r.scheme === "equal-mass" && r.n_levels_requested !== null;
-    });
-    if (!rows.length) { hide("quant-within-table"); return; }
-    var GRID = [5, 10, 20, 50, 100, 200, 500, 1000];
-    var html = "<thead><tr>" +
-      ["levels N", "pairs merged", "AUROC within a level", "verdict"]
-        .map(function (t) { return '<th scope="col" style="cursor:default">' + t + "</th>"; })
-        .join("") + "</tr></thead><tbody>";
-    GRID.forEach(function (n) {
-      var g = rows.filter(function (r) { return r.n_levels_requested === n; });
-      if (!g.length) return;
-      var merged = mean(g.map(function (r) { return r.pair_fraction_merged; }));
-      var within = mean(g.map(function (r) { return r.auroc_within; }));
-      html += '<tr><td class="k">' + n + "</td><td>" + (merged * 100).toFixed(2) + "%</td><td>" +
-        within.toFixed(4) + "</td><td>" +
-        (within > 0.52 ? "signal \u2014 merging it costs"
-                       : within < 0.48 ? "noise \u2014 merging it pays" : "uninformative") +
-        "</td></tr>";
-    });
-    host.innerHTML = html + "</tbody>";
-  }
-
-  /* ---------- render ---------- */
-
-  function render() {
-    var rows = filtered();
-    renderTiles(rows);
-    renderIntervals(rows);
-    renderReliability(rows);
-    renderTable(rows);
-  }
-
-  /* ---------- modals ----------
-
-     Native <dialog> rather than a hand-rolled overlay: showModal() gives the focus trap,
-     the inert background, the Escape handler and the focus return for free, and a
-     hand-rolled version of any one of those is where accessibility bugs live. What it
-     does NOT give is a backdrop-click close or a scroll lock on the page behind, so
-     those two are added here.
-  */
-  /* Delegated, and wired BEFORE anything reads data.
-
-     What was actually broken: this ran last, after six render calls, inside one IIFE.
-     A single failure anywhere above it -- an unavailable data.js, one absent column --
-     threw, the IIFE stopped, wireModals() never ran, and all eight buttons went dead
-     with one console error nobody opens. An interface must not depend on the data
-     rendering succeeding. Delegating on document also means no handler can be orphaned
-     by a re-render, now or later. */
-  function wireModals() {
-    document.addEventListener("click", function (e) {
-      var t = e.target;
-      if (!t || !t.closest) return;
-      var btn = t.closest("[data-modal]");
-      if (btn) {
-        var d = document.getElementById(btn.getAttribute("data-modal"));
-        if (!d) return;
-        d.__trigger = btn;
-        /* showModal() throws if the dialog is already open, and wherever the top layer
-           is unavailable; show() still puts the panel on screen. */
-        try { d.showModal(); } catch (err) { if (!d.open) d.show(); }
-        document.body.classList.add("modal-open");
-        var body = d.querySelector(".modal-body");
-        if (body) body.scrollTop = 0;   // a reopened dialog otherwise keeps its scroll
-        return;
-      }
-      var dlg = t.closest("dialog.modal");
-      if (!dlg) return;
-      /* The dialog element fills the viewport, so a click whose target IS the dialog
-         landed outside the visible panel. */
-      if (t === dlg || t.closest("[data-close]")) dlg.close();
-    });
-    /* close does not bubble, so listen in the capture phase: fires for the close
-       button, the backdrop and Escape alike. */
-    document.addEventListener("close", function (e) {
-      var d = e.target;
-      if (!d || !d.classList || !d.classList.contains("modal")) return;
-      document.body.classList.remove("modal-open");
-      if (d.__trigger) d.__trigger.focus();
-    }, true);
-  }
-
-  /* The interface first -- nothing below is allowed to be able to disable it -- and
-     each renderer isolated, so one missing column cannot take the whole page down. */
-  /* The footer used to carry a date somebody had to remember to edit, and it was two days
-     stale. It now states when the newest artifact this page is built from was written,
-     resolved at export time -- a clone rewrites every mtime, so the question is only
-     answerable on the machine that ran the work. The markup keeps the last exported date
-     as its fallback, so the line is never blank if the payload is unavailable. */
   function renderUpdated() {
-    var el = document.getElementById("last-updated");
-    if (!el || !D.last_updated) return;
-    el.textContent = "Last updated " + D.last_updated + ", the newest of "
-      + D.n_source_artifacts + " result artifacts (" + D.last_updated_source + ").";
+    var e = document.getElementById("last-updated");
+    if (!e || !D.last_updated) return;
+    e.textContent = "Last updated " + D.last_updated + ", the newest of " + D.n_source_artifacts +
+      " result artifacts (" + D.last_updated_source + ").";
   }
 
-  wireModals();
-  [updateHero, renderReadoutTable, renderSelectiveTable, renderQuantisation,
-   renderCaxis, renderConditional, renderArch, renderUpdated, renderCardFigures, renderCells,
-   renderPredictions,
-   renderFusion,
-   render].forEach(function (fn) {
-    try { fn(); } catch (err) { console.error("spikecalib: " + fn.name + " failed", err); }
+  /* ---------- run: each renderer isolated ---------- */
+  var CHARTS = [renderCap, renderCalibration, renderGap, renderScale, renderCalibrators, function fusion() { renderFusion(); }, renderBriefing];
+  [renderNumbers, renderLedger, renderUpdated].concat(CHARTS).forEach(function (fn) {
+    try { fn(); } catch (err) { console.error("spikecalib: " + (fn.name || "renderer") + " failed", err); }
   });
+  var lastW = window.innerWidth, timer = null;
   window.addEventListener("resize", function () {
-    try { drawCeiling(); render(); } catch (err) { console.error("spikecalib: resize", err); }
+    if (window.innerWidth === lastW) return;
+    lastW = window.innerWidth;
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      hideTip();
+      CHARTS.forEach(function (fn) { try { fn(); } catch (err) { console.error("spikecalib: resize", err); } });
+    }, 150);
   });
 })();

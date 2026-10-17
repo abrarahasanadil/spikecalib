@@ -1,1614 +1,215 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SpikeCalib — confidence calibration for event-driven spiking neural networks</title>
-<meta name="description" content="A measurement instrument for spiking neural networks: the attainable-confidence ceiling, the cross-entropy floor it implies, and a 15-run calibration sweep on N-MNIST.">
-<meta name="color-scheme" content="dark">
-<link rel="stylesheet" href="style.css?v=20261014b">
+<title>SpikeCalib</title>
+<meta name="description" content="A chart-first summary of the SpikeCalib paper: a spike-count readout caps confidence, and the cap accounts for the calibration error at few timesteps.">
+<link rel="stylesheet" href="style.css?v=20261017">
 </head>
 <body>
 
-<aside class="rail" aria-label="What this study argues">
- <div class="rail-inner">
-  <div class="rail-sep"></div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#hero">SpikeCalib</a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#cap">The cap</a>
+      <a href="#calibration">Calibration</a>
+      <a href="#readouts">Readouts</a>
+      <a href="#scale">Learned scale</a>
+      <a href="#calibrators">Calibrators</a>
+      <a href="#fusion">Fusion pilot</a>
+      <a href="#ledger">Predictions</a>
+      <a href="#limits">Limits</a>
+    </nav>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">Dark</button>
+  </div>
+</header>
 
-  <div class="rail-arg">
-    <h3>The question</h3>
-    <p>Confidence in a deployed spiking network is only useful if it is trustworthy. At low
-      timestep counts these models are reported to be badly calibrated, and the received view
-      treats that as a training problem.</p>
-  </div>
-  <div class="rail-arg">
-    <h3>The claim</h3>
-    <p>It is not a training problem. Reading a network by counting spikes caps how confident
-      it can ever be, at e<sup>T</sup>/(e<sup>T</sup>&nbsp;+&nbsp;C&minus;1). Where a model's
-      accuracy exceeds that cap, no reachable output could have been correctly confident.
-      The bound itself is known for bounded logits; what is measured here is what it costs a
-      spike count.</p>
-  </div>
-  <div class="rail-arg">
-    <h3>What was hard</h3>
-    <p>The cap has to be separated from the things it is confounded with &mdash; output
-      resolution, network depth, class count, the choice of calibrator. Each needed its own
-      control: a weighted-count readout with the same cap but twice the resolution; both
-      architectures on both datasets; a prediction registered before any calibrator was
-      fitted.</p>
-  </div>
-  <div class="rail-arg">
-    <h3>What it establishes</h3>
-    <p>Across 105 trained models on two datasets, the cap held in all
-      <span data-n="cells-all">36</span> distinct count-readout cells and saturates to float
-      precision in <span data-n="cells-sat">33</span> of them. Where it
-      bites it accounts for 99.2% and 97.1% of the error before calibration; where it does not
-      bite it accounts for none. The readout family, not the network, sets the direction of
-      the failure. Which calibration method to use depends on the regime: a tie on N-MNIST,
-      isotonic regression on N-Caltech101 where the cap bites.</p>
-  </div>
+<main class="wrap">
 
-  <details class="prov-note">
-    <summary>Provenance key</summary>
-<p class="hint">Every claim on this page is tagged by where it came from. The
-    distinction matters more than usual here, because the study's central result is
-    arithmetic and its supporting results are not.</p>
-    <div class="prov-key">
-      <div class="row"><span class="pill pill-derived">derived</span>
-        <span><b>Arithmetic.</b> True before any model existed.</span></div>
-      <div class="row"><span class="pill pill-measured">measured</span>
-        <span><b>A run in this repository.</b> Reproducible from a seed.</span></div>
-      <div class="row"><span class="pill pill-lit">lit</span>
-        <span><b>A verified primary source.</b> Read, not taken from a brief.</span></div>
-      <div class="row"><span class="pill pill-warn">unverified</span>
-        <span><b>Not confirmed.</b> Stated as a belief, never as evidence.</span></div>
-      <div class="row"><span class="pill pill-bad">withdrawn</span>
-        <span><b>Removed on verification.</b> Kept visible rather than deleted.</span></div>
+<!-- 1. Hero -->
+<section class="band hero" id="hero">
+  <p class="chip">Preprint in preparation</p>
+  <h1>Counting Spikes Caps Confidence: The Calibration Cost of a Known Softmax Bound in Low-Timestep Spiking Networks</h1>
+  <p class="lede">Read a spiking network by counting its output spikes and its confidence has a ceiling; at few timesteps that ceiling, not training, makes almost all of its calibration error.</p>
+  <div class="tiles">
+    <div class="tile">
+      <p class="label">Calibration error the cap explains, <i>T</i>&nbsp;=&nbsp;2</p>
+      <p class="value"><span data-n="share-c10"></span><span class="sep">·</span><span data-n="share-c101"></span></p>
+      <p class="sub"><span data-n="c-small"></span> classes · <span data-n="c-large"></span> classes</p>
     </div>
-  </details>
- </div>
-</aside>
+    <div class="tile">
+      <p class="label">ECE at <i>T</i>&nbsp;=&nbsp;2, before <span aria-hidden="true">→</span> after temperature scaling</p>
+      <p class="value"><span data-n="ece-raw-ew"></span><span class="arrow">→</span><span data-n="ece-temp-ew"></span></p>
+      <p class="sub">equal-width bins; equal-mass <span data-n="ece-raw-em"></span> → <span data-n="ece-temp-em"></span></p>
+    </div>
+    <div class="tile">
+      <p class="label">Error-detection AUROC at <i>T</i>&nbsp;=&nbsp;2</p>
+      <p class="value"><span data-n="auroc-count"></span><span class="sep">·</span><span data-n="auroc-accum"></span></p>
+      <div class="keys"><span class="key k-count"><i class="dot"></i><span>count</span></span><span class="key k-accum"><i class="dot"></i><span>accumulator</span></span></div>
+    </div>
+    <div class="tile">
+      <p class="label">Predictions recorded before the paper's runs</p>
+      <p class="value"><span data-n="pred-held"></span> held<span class="sep">·</span><span data-n="pred-false"></span> falsified</p>
+      <p class="sub">earlier verdicts: <span data-n="early-held"></span> held, <span data-n="early-false"></span> falsified</p>
+    </div>
+  </div>
+  <p class="byline">Mohammed Abrar Ahasan Chowdhury · ORCID <a href="https://orcid.org/0009-0006-9273-6593">0009-0006-9273-6593</a> · <a href="https://github.com/abrarahasanadil/spikecalib">code and artifacts</a></p>
+</section>
 
-<main class="main">
+<!-- 2. The cap -->
+<section class="band" id="cap">
+  <h2>The cap</h2>
+  <p class="take">A softmax over spike counts cannot exceed <i>e<sup>T</sup></i>/(<i>e<sup>T</sup></i>+<i>C</i>−1). Every measured count readout sits on it, below its own accuracy, until <i>T</i> is large enough.</p>
+  <div class="panel">
+    <div class="legend"><span class="key k-ink"><i></i><span>ceiling</span></span><span class="key k-count"><i class="dot"></i><span>max confidence, count readout</span></span><span class="key k-muted"><i class="dia"></i><span>accuracy</span></span></div>
+    <div class="grid two">
+      <div><h3 id="cap-a-title"></h3><div class="chart" id="chart-cap-a"></div></div>
+      <div><h3 id="cap-b-title"></h3><div class="chart" id="chart-cap-b"></div></div>
+    </div>
+    <details><summary>How it was measured, and the table</summary><div class="body">
+      <p>The ceiling is the softmax of the count vector with the winner at <i>T</i> and every other class at zero. It is a known bound for logits confined to an interval (normalised and clipped logits); the paper restates it for spike counts. Points are means over <span data-n="n-seeds"></span> seeds; the bound held in <span data-n="cells-all"></span> of <span data-n="cells-all"></span> distinct count-readout configurations.</p>
+      <div class="scroll"><table id="table-cap"></table></div>
+    </div></details>
+  </div>
+</section>
 
-  <header class="masthead-bar c12">
-    <h1>SpikeCalib</h1>
-    <p class="tagline">Post-hoc confidence calibration for event-driven spiking neural networks</p>
-    <p class="who">
-      <strong>Mohammed Abrar Ahasan Chowdhury</strong> &nbsp; ORCID
-      <a href="https://orcid.org/0009-0006-9273-6593">0009-0006-9273-6593</a>
-    </p>
-  </header>
+<!-- 3. Calibration fixes the average, not the ranking -->
+<section class="band" id="calibration">
+  <h2>Calibration fixes the average, not the ranking</h2>
+  <p class="take">Temperature scaling moves the count readout onto the diagonal. It cannot add confidence values, so the few the readout emits still rank errors worse than an unbounded readout's.</p>
+  <div class="grid three">
+    <div class="panel"><h3>Reliability, <i>T</i> = 2</h3><p class="note">N-MNIST, count readout, seeds pooled</p><div class="chart" id="chart-rel-2"></div></div>
+    <div class="panel"><h3>Reliability, <i>T</i> = 10</h3><p class="note">N-MNIST, count readout, seeds pooled</p><div class="chart" id="chart-rel-10"></div></div>
+    <div class="panel"><h3>Error-detection AUROC</h3><p class="note">N-MNIST, before calibration</p><div class="chart" id="chart-auroc"></div></div>
+  </div>
+  <div class="legend" style="margin-top:8px"><span class="key k-muted"><i class="dot"></i><span>raw</span></span><span class="key k-count"><i class="dot"></i><span>temperature-scaled (reliability) · count (AUROC)</span></span><span class="key k-accum"><i class="dot"></i><span>accumulator</span></span></div>
+  <details><summary>How it was measured, and the tables</summary><div class="body">
+    <p>Reliability uses <span data-n="n-bins"></span> equal-width bins; each point is a bin's mean confidence against its accuracy, pooled over seeds. AUROC is the area under the ROC curve of confidence for separating correct from incorrect predictions.</p>
+    <div class="scroll"><table id="table-calibration"></table></div>
+  </div></details>
+</section>
 
-  <header class="masthead c12">
-    <div class="hero">
-      <div class="hero-panel">
-    <p class="lede">
-      A directly-trained spiking neural network read out by spike counts is severely
-      miscalibrated at low timestep counts, and the reason is structural rather than a
-      training failure: with <em>C</em> classes and counts bounded by <em>T</em>, the largest
-      confidence the readout can express is capped, and at <em>T</em>&nbsp;=&nbsp;2 that cap
-      sits far below the model's own accuracy. Post-hoc calibration removes almost all of the
-      resulting error — expected calibration error falls from 0.5386 at <em>T</em>&nbsp;=&nbsp;2
-      to 0.0018 after calibration at the same <em>T</em>, and the uncalibrated error is only
-      0.0029 by <em>T</em>&nbsp;=&nbsp;10 once the cap stops binding. Those are equal-width
-      figures; under equal-mass binning the same three are 0.5386, 0.0008 and 0.0019, and
-      both estimators are reported throughout. On N-MNIST, which calibrator does the
-      removing does not matter: temperature scaling and isotonic regression are statistically indistinguishable
-      in 13 of 15 runs under equal-width binning and 12 of 15 under equal-mass, across five
-      timestep settings and three seeds. On N-Caltech101 it does matter: isotonic regression
-      is better in <span data-n="nc-differ">5</span> of <span data-n="nc-runs">9</span> runs,
-      all of them where the cap binds or nearly binds.
-    </p>
-      </div>
-      <ul class="masthead-links">
-        <li><a href="https://github.com/abrarahasanadil/spikecalib">Code repository</a></li>
-        <li><span class="pending">arXiv preprint in preparation</span></li>
-        <li><a href="sweep.csv">Download sweep.csv</a></li>
+<!-- 4. The readout sets the direction of failure -->
+<section class="band" id="readouts">
+  <h2>The readout sets the direction of failure</h2>
+  <p class="take">Capped readouts are underconfident at low <i>T</i>; unbounded ones are not. Below zero, confidence is lower than accuracy.</p>
+  <div class="panel">
+    <div class="legend"><span class="key k-count"><i></i><span>count</span></span><span class="key k-wcount"><i></i><span>weighted count</span></span><span class="key k-membrane"><i></i><span>membrane</span></span><span class="key k-accum"><i></i><span>accumulator</span></span></div>
+    <div class="grid two">
+      <div><h3>N-MNIST</h3><p class="note">confidence minus accuracy, before calibration</p><div class="chart" id="chart-gap-a"></div></div>
+      <div><h3>N-Caltech101</h3><p class="note">confidence minus accuracy, before calibration</p><div class="chart" id="chart-gap-b"></div></div>
+    </div>
+    <details><summary>Readouts, and the table</summary><div class="body">
+      <p>Count and weighted count are capped at the same ceiling; membrane (a leaky integrator) and accumulator (the same without the leak) are not. Every readout shares the network up to the last layer. Means over <span data-n="n-seeds"></span> seeds.</p>
+      <div class="scroll"><table id="table-gap"></table></div>
+    </div></details>
+  </div>
+</section>
+
+<!-- 5. A learned scale -->
+<section class="band" id="scale">
+  <h2>A learned scale lifts the cap; it does not calibrate</h2>
+  <p class="take">One trainable logit scale removes the underconfidence on N-MNIST, overshoots into overconfidence on N-Caltech101, and at <i>T</i> = 6 there costs <span data-n="scale-cost"></span> accuracy points.</p>
+  <div class="panel">
+    <div class="legend"><span class="key k-count"><i class="dot"></i><span>count</span></span><span class="key k-count"><i class="ring"></i><span>count with a learned scale</span></span><span class="key k-accum"><i class="dot"></i><span>accumulator</span></span></div>
+    <div class="grid two">
+      <div><h3>Confidence minus accuracy</h3><div class="chart" id="chart-scale-gap"></div></div>
+      <div><h3>Accuracy</h3><div class="chart" id="chart-scale-acc"></div></div>
+    </div>
+    <details><summary>The arm, and the table</summary><div class="body">
+      <p>The scale is <i>s</i> = exp(θ), started at one and trained with the network's optimiser. It rose above the minimum the bound requires in every run and was still rising when early stopping ended training. Means over <span data-n="n-seeds"></span> seeds.</p>
+      <div class="scroll"><table id="table-scale"></table></div>
+    </div></details>
+  </div>
+</section>
+
+<!-- 6. Calibrators -->
+<section class="band" id="calibrators">
+  <h2>Which calibrator depends on the regime</h2>
+  <p class="take">Isotonic minus temperature ECE, per run, with paired 95% intervals. On N-MNIST no run differs under both estimators; on N-Caltech101 isotonic regression is better in <span data-n="nc-differ"></span> of <span data-n="nc-runs"></span> count runs.</p>
+  <div class="panel">
+    <div class="legend"><span class="key k-count"><i class="dot"></i><span>interval excludes zero</span></span><span class="key k-count"><i class="ring"></i><span>interval includes zero</span></span><span class="key k-ink"><i></i><span>zero: no difference</span></span></div>
+    <div class="grid two">
+      <div><h3>N-MNIST, equal-width</h3><div class="chart" id="chart-cal-a-ew"></div></div>
+      <div><h3>N-MNIST, equal-mass</h3><div class="chart" id="chart-cal-a-em"></div></div>
+      <div><h3>N-Caltech101, equal-width</h3><div class="chart" id="chart-cal-b-ew"></div></div>
+      <div><h3>N-Caltech101, equal-mass</h3><div class="chart" id="chart-cal-b-em"></div></div>
+    </div>
+    <details><summary>The rule, and the table</summary><div class="body">
+      <p>Two calibrators differ on a run only if the paired bootstrap interval excludes zero under both binning estimators, in the same direction; otherwise they tie. Negative values favour isotonic regression. The two datasets have their own horizontal scales.</p>
+      <div class="scroll"><table id="table-cal"></table></div>
+    </div></details>
+  </div>
+</section>
+
+<!-- 7. Fusion pilot -->
+<section class="band" id="fusion">
+  <h2>Fusion: a pilot <span class="chip" style="vertical-align:middle;margin:0 0 0 6px">pilot</span></h2>
+  <p class="take">Where two capped readouts both saturate, the product rule cannot weight them. Calibrating each input first removes <span data-n="fu-cut"></span> of fused errors at <i>T</i> = 2, and nothing measurable from <i>T</i> = 4.</p>
+  <div class="panel">
+    <div class="legend"><span class="key k-count"><i class="dot"></i><span>count</span></span><span class="key k-accum"><i class="dot"></i><span>accumulator</span></span><span class="key k-ink"><i class="dia"></i><span>predicted, saturated pairs</span></span></div>
+    <h3>Accuracy gained by calibrating each input before fusing</h3>
+    <p class="note">N-MNIST; points are seeds with 95% intervals</p>
+    <div class="chart" id="chart-fusion"></div>
+    <p class="note" style="margin-top:8px">Limits: one dataset; the second input is a degraded copy from the same sensor, not a second modality; no fusion network trained; no reference-frame transformation; no closed loop.</p>
+    <details><summary>Setup, and the table</summary><div class="body">
+      <p>Input A is a test sample; input B a different sample of the same class with events removed at a rate fixed beforehand on the calibration split. The gain is the product rule's accuracy after temperature scaling each input minus its accuracy on the raw outputs.</p>
+      <div class="scroll"><table id="table-fusion"></table></div>
+    </div></details>
+  </div>
+</section>
+
+<!-- 8. Ledger -->
+<section class="band" id="ledger">
+  <h2>Pre-registration ledger</h2>
+  <p class="take">Every prediction, recorded before the run that tested it. Falsified ones stay falsified.</p>
+  <div class="panel">
+    <div class="scroll"><table class="ledger" id="table-ledger"></table></div>
+    <details><summary>How verdicts are derived</summary><div class="body">
+      <p>Predictions 6a to 15 carry verdicts written by the scripts that tested them. Predictions 1 to 5 predate those blocks; the export re-applies each registered condition to the result files and stops if the verdict disagrees with the one recorded in NOTES.md. Prediction 5 had four parts, each with its own condition.</p>
+    </div></details>
+  </div>
+</section>
+
+<!-- 9. Limitations, reproduce, footer -->
+<section class="band" id="limits">
+  <h2>Limitations</h2>
+  <div class="grid two">
+    <div class="panel">
+      <h3>Known gaps</h3>
+      <ul class="tight">
+        <li>Two event datasets; the deeper network is also the smaller one, so depth and capacity are confounded.</li>
+        <li>No hyperparameter search; one membrane time constant.</li>
+        <li>The learned scale was not tuned and had not settled.</li>
+        <li>The N-Caltech101 calibrator result rests on <span data-n="nc-runs"></span> runs of one architecture.</li>
+        <li>The fusion result is a pilot.</li>
+        <li>The bound itself is prior work; the contribution is its measurement for spike counts.</li>
       </ul>
     </div>
-  </header>
-
-  <div class="band"><h2>Findings</h2>
-    <p class="sub">study-wide &mdash; every number below is fixed and does not follow the
-    run filters</p></div>
-
-  <div class="cards c12">
-  <article class="card c4">
-    <div class="card-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></div>
-    <p class="stat"><span class="stat-num stat-teal"><span data-n="cells-ok">36</span> of <span data-n="cells-all">36</span></span>
-      <span class="stat-unit">distinct count-readout cells stayed at or below the limit &mdash; <span data-n="grid-all">24</span> of them form the matched grid, <span data-n="grid-ok">24</span> of <span data-n="grid-all">24</span></span></p>
-    <h3 class="card-title">The ceiling held every time</h3>
-    <p class="card-claim">A spiking network answers by counting spikes over <em>T</em> time steps. Counting caps how confident the answer can look. The cap is e<sup>T</sup>/(e<sup>T</sup>+C−1). No measured case beat it: all <span data-n="cells-all">36</span> distinct cells stayed at or below the cap, <span data-n="grid-all">24</span> of them in the matched grid.</p>
-    <div class="card-fig" id="fig-ceiling"><table class="mini"><thead><tr><th>C</th><th>T</th><th>derived</th><th>observed</th></tr></thead><tbody><tr><td>10</td><td>2</td><td>0.450853</td><td>0.450853</td></tr><tr><td>101</td><td>2</td><td>0.068806</td><td>0.068806</td></tr><tr><td>101</td><td>6</td><td>0.801362</td><td>0.801362</td></tr></tbody></table></div>
-    <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m1">
-      Full reasoning, caveats and complete tables
-      <span class="chev" aria-hidden="true">&rarr;</span></button>
-  </article>
-  <article class="card c4">
-    <div class="card-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></div>
-    <p class="stat"><span class="stat-num stat-teal">99.2%</span>
-      <span class="stat-unit">of the error before calibration, at T = 2</span></p>
-    <h3 class="card-title">Where the cap bites, it explains the error</h3>
-    <p class="card-claim">Miscalibration means confidence does not match how often the model is right. Where the cap bites, the gap between accuracy and the cap explains almost all of it. Where the cap does not bite, it explains none of it.</p>
-    <div class="card-fig" id="fig-explained"><table class="mini"><thead><tr><th>C</th><th>T</th><th>explained</th></tr></thead><tbody><tr><td>10</td><td>2</td><td>99.2%</td></tr><tr><td>10</td><td>6</td><td>44.5%</td></tr><tr><td>101</td><td>2</td><td>97.1%</td></tr></tbody></table></div>
-    <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m2">
-      Full reasoning, caveats and complete tables
-      <span class="chev" aria-hidden="true">&rarr;</span></button>
-  </article>
-  <article class="card c4">
-    <div class="card-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></div>
-    <p class="stat"><span class="stat-num stat-teal">0.7966</span>
-      <span class="stat-unit">nats — the lowest loss reachable at T = 2</span></p>
-    <h3 class="card-title">The same cap puts a floor under training loss</h3>
-    <p class="card-claim">Training loss measures how wrong the confidences are. The cap puts a floor under it, at −ln(cap). Measured plateaus sit 0.0072–0.0182 above that floor. The floor moves with <em>T</em>. So losses at different <em>T</em> cannot be compared.</p>
-    <div class="card-fig" id="fig-floor"><table class="mini"><thead><tr><th>T</th><th>floor</th><th>plateau</th></tr></thead><tbody><tr><td>2</td><td>0.7966</td><td>0.8041</td></tr><tr><td>6</td><td>0.0221</td><td>0.0391</td></tr><tr><td>10</td><td>0.0004</td><td>0.0108</td></tr></tbody></table></div>
-    <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m3">
-      Full reasoning, caveats and complete tables
-      <span class="chev" aria-hidden="true">&rarr;</span></button>
-  </article>
-  <article class="card c12">
-    <div class="card-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span><span class="pill pill-lit">lit</span></div>
-    <p class="stat"><span class="stat-num stat-purple">−0.5386 / +0.0000</span>
-      <span class="stat-unit">N-MNIST, T = 2 &mdash; capped vs unbounded readout, confidence minus accuracy</span></p>
-    <h3 class="card-title">The readout decides which way it fails</h3>
-    <p class="card-claim">A readout turns spikes into an answer. A capped one is underconfident where the cap bites. It is right more often than it claims. An unbounded one goes the other way as <em>T</em> grows. The readout sets the direction, not the network.</p>
-    <div class="card-fig" id="fig-readout"><table class="mini"><thead><tr><th>readout</th><th>bound</th><th>conf − acc</th></tr></thead><tbody><tr><td>count</td><td>capped</td><td>-0.5386</td></tr><tr><td>membrane</td><td>unbounded, leaky</td><td>-0.0289</td></tr><tr><td>accumulator</td><td>unbounded</td><td>+0.0000</td></tr></tbody></table></div>
-    <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m4">
-      Full reasoning, caveats and complete tables
-      <span class="chev" aria-hidden="true">&rarr;</span></button>
-  </article>
-  <article class="card c4">
-    <div class="card-pills"><span class="pill pill-measured">measured</span></div>
-    <p class="stat"><span class="stat-num stat-green">+3 to +13</span>
-      <span class="stat-unit">accuracy points on N-Caltech101 at <em>T</em> = 2 &mdash; 12.82 in the four-block network, 3.08 in the two-block</span></p>
-    <h3 class="card-title">Removing the cap buys accuracy where it bites hardest</h3>
-    <p class="card-claim">This is N-Caltech101 at <em>T</em> = 2, where the cap is severe. The direction holds in both network shapes. The size does not. On N-MNIST the same comparison moves nothing, and at <em>T</em> = 6 it reverses.</p>
-    <div class="card-fig" id="fig-gain"><table class="mini"><thead><tr><th>depth</th><th>count</th><th>uncapped</th><th>gain</th></tr></thead><tbody><tr><td>4 blocks</td><td>0.4543</td><td>0.5825</td><td>+12.82</td></tr><tr><td>2 blocks</td><td>0.4891</td><td>0.5199</td><td>+3.08</td></tr></tbody></table></div>
-    <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m5">
-      Full reasoning, caveats and complete tables
-      <span class="chev" aria-hidden="true">&rarr;</span></button>
-  </article>
-  <article class="card c4">
-    <div class="card-pills"><span class="pill pill-measured">measured</span></div>
-    <p class="stat"><span class="stat-num stat-purple">0</span>
-      <span class="stat-unit">runs show a difference under both ways of measuring error</span></p>
-    <h3 class="card-title">On N-MNIST, which calibration method you pick does not matter</h3>
-    <p class="card-claim">Temperature and isotonic are two calibration methods. Measured two ways, 13 of 15 and 12 of 15 runs show no difference. The runs that do differ are different runs each time. A real difference would appear in the same run both times. On N-Caltech101 one does: see the registered predictions below.</p>
-    <div class="card-fig" id="fig-bootstrap"><table class="mini"><thead><tr><th>outcome</th><th>eq-width</th><th>eq-mass</th></tr></thead><tbody><tr><td>straddle zero</td><td>13</td><td>12</td></tr><tr><td>favour temperature</td><td>1</td><td>0</td></tr><tr><td>favour isotonic</td><td>1</td><td>3</td></tr><tr><td>resolve under both</td><td colspan="2">0</td></tr></tbody></table></div>
-    <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m6">
-      Full reasoning, caveats and complete tables
-      <span class="chev" aria-hidden="true">&rarr;</span></button>
-  </article>
-  <article class="card c4">
-    <div class="card-pills"><span class="pill pill-measured">measured</span></div>
-    <p class="stat"><span class="stat-num stat-purple">9</span>
-      <span class="stat-unit">usable cut-offs, against ~10,000 samples</span></p>
-    <h3 class="card-title">The readout limits how you can deploy it</h3>
-    <p class="card-claim">You can make a model answer only when it is confident. Each distinct confidence value is one usable cut-off. At <em>T</em> = 2 a count readout gives about nine, across 10,000 test samples. An uncapped readout gives a continuous range.</p>
-    <div class="card-fig" id="fig-ops"><table class="mini"><thead><tr><th>readout</th><th>T = 2 ops</th></tr></thead><tbody><tr><td>count</td><td>9</td></tr><tr><td>weighted-count</td><td>17</td></tr><tr><td>uncapped</td><td>10,000</td></tr></tbody></table></div>
-    <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m7">
-      Full reasoning, caveats and complete tables
-      <span class="chev" aria-hidden="true">&rarr;</span></button>
-  </article>
-  <article class="card c6">
-    <div class="card-pills"><span class="pill pill-lit">lit</span><span class="pill pill-measured">measured</span></div>
-    <p class="stat"><span class="stat-num stat-mint">T = 80</span>
-      <span class="stat-unit">vs T = 2 — two different regimes</span></p>
-    <h3 class="card-title">The clash with earlier work is not a clash</h3>
-    <p class="card-claim">Earlier work reports overconfidence at <em>T</em> = 80. At that many steps the cap sits so high it does nothing. This study measures underconfidence at <em>T</em> = 2. The two regimes never overlap.</p>
-    <div class="card-fig"><table class="mini"><thead><tr><th>study</th><th>T</th><th>ceiling</th><th>reports</th></tr></thead><tbody><tr><td>Chen, Park &amp; Simeone</td><td>80</td><td>1.0000</td><td>overconfident</td></tr><tr><td>this study</td><td>2</td><td>0.4509</td><td>underconfident</td></tr><tr><td>this study</td><td>10</td><td>0.9996</td><td>unsigned</td></tr></tbody></table></div>
-    <button class="card-more" type="button" aria-haspopup="dialog" data-modal="m8">
-      Full reasoning, caveats and complete tables
-      <span class="chev" aria-hidden="true">&rarr;</span></button>
-  </article>
-  <div class="tiles" id="tiles"></div>
-  </div>
-
-
-  <div class="band"><h2>The ceiling instrument</h2>
-    <p class="sub">derived arithmetic, not measurement</p></div>
-
-  <section class="panel c7">
-    <div class="instrument-controls">
-    <label class="field" for="t-slider">
-      <span class="field-top">
-        <span class="field-label">Simulation timesteps</span>
-        <span class="field-value">T = <span id="t-value">2</span></span>
-      </span>
-      <input type="range" id="t-slider" min="1" max="20" step="1" value="2">
-    </label>
-    <label class="field" for="c-slider">
-      <span class="field-top">
-        <span class="field-label">Classes</span>
-        <span class="field-value">C = <span id="c-value">10</span></span>
-      </span>
-      <input type="range" id="c-slider" min="2" max="101" step="1" value="10">
-    </label>
-    <label class="field" for="a-slider">
-      <span class="field-top">
-        <span class="field-label">Target accuracy</span>
-        <span class="field-value">a = <span id="a-value">0.95</span></span>
-      </span>
-      <input type="range" id="a-slider" min="0.50" max="0.999" step="0.001" value="0.95">
-    </label>
-    <div class="preset-row segmented" role="radiogroup" aria-label="Instrument preset">
-      <button type="button" class="chip" role="radio" data-preset="2,10" aria-checked="true">N-MNIST, C=10</button>
-      <button type="button" class="chip" role="radio" data-preset="2,101" aria-checked="false">N-Caltech101, C=101</button>
-      <button type="button" class="chip" role="radio" data-preset="2,11" aria-checked="false">DVS-Gesture, C=11, calculated</button>
-      <button type="button" class="chip" role="radio" data-preset="4,100" aria-checked="false">CIFAR-100, calculated</button>
+    <div class="panel">
+      <h3>Reproduce</h3>
+      <pre>python -m pytest tests/ -q
+python scripts/make_figures.py
+python scripts/export_dashboard_data.py --num-workers 0
+python paper/make_numbers.py</pre>
+      <p class="note" style="margin-top:8px">Every experiment script, in order, is in the README. The sweep table is <a href="sweep.csv" download>sweep.csv</a>: <span data-n="csv-columns"></span> columns, <span data-n="csv-rows"></span> rows.</p>
     </div>
-      </div>
-    <div class="well"><div id="ceiling-chart"></div></div>
-    <div class="legend">
-      <span><i style="background:var(--accent)"></i>ceiling, derived</span>
-      <span><i class="block" style="background:var(--accent);opacity:.28"></i>accuracy here forces underconfidence</span>
-      <span><i class="ring"></i>measured maxima</span>
-    </div>
-    <p class="chart-note" id="measured-note"></p>
-    <p class="chart-note"><b>What this does not show:</b> any calibrated confidence.
-      Calibrators are not bounded by this ceiling — temperature scaling with <em>t</em> &lt; 1
-      sharpens past it, and isotonic can map any level anywhere in [0, 1]. The bound
-      constrains the raw readout only.</p>
-  </section>
-
-  <section class="panel c5">
-    <h3>Derived quantities</h3>
-    <div class="readout">
-      <div class="readout-row"><span class="readout-label">Ceiling</span>
-        <span class="readout-value big" id="out-ceiling">0.4509</span></div>
-      <div class="readout-row"><span class="readout-label">Cross-entropy floor</span>
-        <span class="readout-value" id="out-floor">0.7966</span></div>
-      <div class="readout-row"><span class="readout-label">Binds above accuracy</span>
-        <span class="readout-value" id="out-bind">45.1%</span></div>
-      <div class="readout-row"><span class="readout-label">Minimum T for target accuracy</span>
-        <span class="readout-value" id="out-tmin">6</span></div>
-    </div>
-    <div class="verdict" id="design-rule">
-      <span class="lamp" aria-hidden="true"></span>
-      <p><span class="tag">design rule</span><span id="design-text"></span></p>
-    </div>
-    <p class="hint">ceiling = e<sup>T</sup> / (e<sup>T</sup> + C − 1), the softmax of the
-      extreme count vector [T, 0, …, 0]. The floor is −ln(ceiling): cross-entropy cannot go
-      below it, because the best reachable logit vector gives the true class exactly the
-      ceiling probability.</p>
-    <div class="verdict">
-      <span class="lamp" aria-hidden="true"></span>
-      <p><span class="tag">verdict</span><span id="verdict-text"></span></p>
-    </div>
-    <h4 class="sub-h">Minimum <em>T</em> at this target accuracy</h4>
-    <div class="scroll panel-table"><table id="tmin-table"></table></div>
-    <p class="hint">T<sub>min</sub> = ln((C&minus;1)a / (1&minus;a)), below which the ceiling
-      sits under the target accuracy. It follows the sliders.</p>
-  </section>
-
-  <div class="band"><h2>Sweep results</h2>
-    <p class="sub">filtered &mdash; 15 runs over five timestep settings and three seeds,
-    narrowed by these controls</p></div>
-
-  <section class="panel c12 sweep-controls">
-    <div class="filter-group">
-      <h4>Timesteps</h4>
-      <div class="chips" id="filter-t"></div>
-    </div>
-    <div class="filter-group">
-      <h4>Seed</h4>
-      <div class="chips" id="filter-seed"></div>
-    </div>
-    <div class="filter-group">
-      <h4>Calibrator</h4>
-      <div class="chips" id="filter-arm"></div>
-    </div>
-    <div class="filter-group">
-      <h4>ECE estimator</h4>
-      <div class="chips" id="filter-est"></div>
-    </div>
-    <p class="hint">These narrow the live metrics above and the table below. Both ECE
-      estimators are reported everywhere in this study: with discrete confidences they can
-      disagree by a factor of two, and picking one would change the ranking. The paired
-      bootstrap chart and the isotonic-minus-temperature tile always show both, so the
-      estimator control does not change them.</p>
-  </section>
-
-  <div class="stack c6">
-  <section class="panel">
-    <h3>Paired bootstrap, isotonic minus temperature</h3>
-    <div class="well"><div id="interval-chart"></div></div>
-    <p class="chart-note" id="interval-count"></p>
-    <p class="chart-note">Paired rather than two separate intervals: both arms are scored on
-      the same test samples, so their errors are correlated and overlapping marginal intervals
-      would not settle the question. Each row is one run, drawn once under equal-width binning
-      and once under equal-mass, on one horizontal scale; left of zero favours
-      isotonic and right of it favours temperature. Amber marks an interval that excludes
-      zero.</p>
-    <p class="chart-note"><b>What this does not show:</b> a corrected significance level.
-      These are independent 95% intervals with no multiple-comparison adjustment, which is
-      exactly why two exclusions in fifteen under equal-width binning, and three under
-      equal-mass, are unremarkable rather than a finding.</p>
-  </section>
-
-  <section class="panel"><div class="prose">
-<h3>A note on energy<span class="pill pill-lit">lit</span><span class="pill pill-derived">derived</span></h3>
-    <p>
-      The case for spiking networks is energy, so the sweep records a SynOps proxy. The
-      result complicates that case: the input encoder — the first layer, which receives
-      real-valued event frames rather than spikes and is therefore costed as
-      multiply-accumulates — is between 41% and 70% of the modelled energy across the fifteen sweep
-      runs, and between 47% and 67% when the three seeds at each timestep setting are averaged. The layer that does <em>not</em> receive spikes is roughly half the bill.
-      This is a design-comparison proxy built from operation counts and published
-      per-operation energies; it ignores memory traffic, static power and clock, and no claim
-      about a physical device follows from it. The per-operation figures come from Horowitz,
-      ISSCC 2014, Figure 1.1.9 — 0.9 pJ for a 32-bit float add, verified against the paper —
-      while the 4.6 pJ multiply-accumulate is the 0.9 + 3.7 convention and is stated nowhere
-      in it.
-    </p>
-  </div></section>
-  </div>
-
-  <section class="panel c6 sweep-rows">
-    <h3>Filtered rows</h3>
-    <div class="scroll"><table id="results-table"></table></div>
-    <p class="table-meta" id="table-meta"></p>
-    <p class="chart-note"><b>What this does not show:</b> the columns not displayed. The CSV
-      carries 72 columns including both paired-bootstrap differences with their intervals, the
-      energy proxy, isotonic block counts and the split fingerprint; this view shows eleven.
-      <a href="sweep.csv">The downloadable copy</a> is the same file this page renders.</p>
-  </section>
-
-  <section class="panel c12">
-    <h3>Reliability diagrams</h3>
-    <p class="chart-note" style="margin-top:0" id="reliability-count"></p>
-    <div class="rel-grid" id="reliability-grid"></div>
-    <p class="chart-note">Marker area tracks the number of samples in the bin, and the exact
-      count is in the tooltip, so a point resting on three samples cannot look as solid as one
-      resting on four thousand. The dashed diagonal is perfect calibration.</p>
-    <p class="chart-note"><b>What this does not show:</b> uncertainty on each bin. A bin
-      holding a handful of samples has an accuracy estimate with a very wide interval, and
-      none is drawn here; read the small markers as suggestive only.</p>
-  </section>
-
-  <div class="band"><h2>Scale and resolution</h2>
-    <p class="sub">seven predictions recorded before these runs &mdash; every verdict is read
-    from the result file that produced it</p></div>
-
-  <section class="panel c12"><div class="prose wide">
-    <h3>Seven predictions, as they fell<span class="pill pill-measured">measured</span></h3>
-    <p>The cap depends on the width of the interval the logits live in. For a spike count
-      that width is <em>T</em>; multiply the count by a scale <em>s</em> and it is
-      <em>sT</em>. So the cap is a matter of scale, and one learnable number moves it. These
-      experiments ask what follows. The predictions were committed to the repository before
-      the first model was trained, and <span data-n="pred-falsified">4</span> of the
-      <span data-n="pred-total">7</span> were falsified.</p>
-    <div class="scroll panel-table"><table id="pred-table"></table></div>
-    <p class="chart-note">Gaps are mean confidence minus accuracy on the test split, before
-      any calibrator, averaged over three seeds. Two calibrators "differ" on a run only if the
-      paired 95% bootstrap interval excludes zero under both ECE estimators, in the same
-      direction; otherwise they tie. That rule was fixed before any calibrator was fitted on
-      N-Caltech101.</p>
-  </div></section>
-
-  <section class="panel c12"><div class="prose wide">
-    <h3>A learned scale lifts the cap. It does not calibrate.<span class="pill pill-measured">measured</span></h3>
-    <p>A count readout with one trainable logit scale, started at 1. The network raised it
-      above the minimum the bound requires in <span data-n="sc-above">9</span> of
-      <span data-n="sc-runs">9</span> runs. On N-MNIST the underconfidence goes. On
-      N-Caltech101 it turns into overconfidence, as it does for the unbounded accumulator.
-      The number of confidence values does not change.</p>
-    <div class="scroll panel-table"><table id="scaled-table"></table></div>
-    <p class="chart-note">Rendered from <code>results/scaled_count_experiment.json</code>.
-      The scale was still rising when early stopping ended every run, so these are the values
-      at which training stopped.</p>
-  </div></section>
-
-  <section class="panel c7"><div class="prose">
-    <h3>Which calibrator depends on the regime<span class="pill pill-measured">measured</span></h3>
-    <p>On N-Caltech101, count readout. Where the cap binds, temperature scaling lifts it and
-      leaves an error that isotonic regression removes. At <em>T</em> = 10 the cap is slack
-      and the two tie.</p>
-    <div class="scroll panel-table"><table id="ncal-table"></table></div>
-    <p class="chart-note">Rendered from <code>results/caltech_calibrators.json</code>. ECE
-      as equal-width / equal-mass, mean of three seeds. "differ" counts seeds; of the
-      <span data-n="nc-differ">5</span> runs that differ, <span data-n="nc-iso">5</span>
-      favour isotonic regression. Calibration set 1,010, test set 1,742.</p>
-  </div></section>
-
-  <section class="panel c5"><div class="prose">
-    <h3>With little calibration data it leans the other way<span class="pill pill-measured">measured</span></h3>
-    <p>On N-MNIST at <em>T</em> = 2, shrinking the calibration set leans towards the
-      one-parameter method, though less often than predicted.</p>
-    <div class="scroll panel-table"><table id="size-table"></table></div>
-    <p class="chart-note">Rendered from <code>results/calibration_size_experiment.json</code>.
-      Twenty stratified subsamples per seed and size. Each column counts the draws, out of
-      60, in which that calibrator was better under both estimators, or neither was.</p>
-  </div></section>
-
-  <section class="panel c12"><div class="prose wide">
-    <h3>Few confidence values: the same resolution, worse ranking<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
-    <p>A count readout can emit at most (T+C&minus;1 choose C&minus;1) distinct confidences at
-      any logit scale: 55 at <em>T</em> = 2 with ten classes. Observed counts are within that
-      bound in <span data-n="check-ok">45</span> of <span data-n="check-cells">45</span>
-      cells; this is a check, not a prediction, because the counts were on file before the
-      bound was derived. The prediction was that so few values would resolve correct from
-      incorrect predictions worse than an unbounded readout's ten thousand. It was wrong: on
-      N-MNIST at <em>T</em> = 2 the count readout's Brier resolution is below the
-      accumulator's in only <span data-n="p9-below">4</span> of
-      <span data-n="p9-total">12</span> comparisons, and three of those are an artefact of
-      equal-mass binning, which puts every count-readout confidence in one bin. What the
-      count readout gives up is ranking and deterministic operating points, not
-      resolution.</p>
-    <div class="scroll panel-table"><table id="res-table"></table></div>
-    <p class="chart-note">Rendered from <code>results/resolution_experiment.json</code>.
-      Resolution is the between-bin variance of accuracy at 15 bins, mean of three seeds.
-      Readouts are compared only under the same binning.</p>
-  </div></section>
-
-  <div class="band" id="fusion-band"><h2>A pilot: two capped readouts fused</h2>
-    <p class="sub">a corollary of known decision-fusion theory, not a new theorem &mdash; four
-    predictions recorded before the run</p></div>
-
-  <section class="panel c12" id="fusion-panel"><div class="prose wide">
-    <h3>Two saturated readouts vote; they cannot weigh<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
-    <p>A count readout that fires its winner at every step and nothing else reports one fixed
-      vector, the same for every such input. When two modalities both do this, a rule that
-      multiplies their probabilities has nothing to tell them apart by, and on a disagreement
-      it flips a coin, however unequal their reliabilities. Calibrating each modality first
-      gives the more reliable one the larger scale and the coin goes. Tested on N-MNIST
-      without training anything: modality A is a test sample, modality B a different sample of
-      the same class with <span data-n="fu-rate">50</span>% of its events removed. At
-      <em>T</em> = 2, both saturate on <span data-n="fu-ps">70</span>% of pairs, and
-      calibrating first removes <span data-n="fu-cut">50</span>% of the fused errors,
-      <span data-n="fu-delta">+0.43</span> points of accuracy. From <em>T</em> = 4 the effect
-      is at or near zero, and an accumulator, which has no cap, shows none.</p>
-    <div class="scroll panel-table"><table id="fusion-pred-table"></table></div>
-    <div class="scroll panel-table"><table id="fusion-table"></table></div>
-    <p class="chart-note">Rendered from <code>results/fusion_experiment.json</code>. Mean of
-      three seeds and 20 random pairings. R0 is the product rule on raw outputs, R1 the
-      product rule after temperature scaling each modality, R2 a reliability-weighted vote,
-      which with two voters is modality A alone. &delta; is R1 minus R0; "on S" is the part
-      from pairs where both modalities saturate, and "predicted" is
-      &frac12;&middot;P(S)&middot;(a<sub>A,S</sub> &minus; a<sub>B,S</sub>). "excl." counts
-      seeds whose 95% bootstrap interval on &delta; excludes zero. The dropout rate was fixed
-      on the calibration split before any fused prediction was computed.</p>
-  </div></section>
-
-  <div class="band"><h2>Related work</h2>
-    <p class="sub">this study claims novelty over none of the following</p></div>
-
-  <section class="panel c12"><div class="prose wide"><div class="rel-work">
-<div class="cite">
-      <h4>Probability Bounding: Post-Hoc Calibration via Box-Constrained Softmax</h4>
-      <p class="venue">Atarashi, Oyama, Arai &amp; Kashima, arXiv:2506.10572, June 2025 &nbsp;<span class="ver">verified against the full text</span></p>
-      <p><b>What it does.</b> Post-hoc calibration that <em>learns</em> lower and upper
-        bounds on output probabilities, fitting them as parameters of a box-constrained
-        softmax over a general network's outputs.</p>
-      <p><b>What this study does.</b> Takes the bound as given rather than fitted. With a
-        spike-count readout the largest expressible confidence is
-        e<sup>T</sup>/(e<sup>T</sup>+C&minus;1), set by <em>T</em> and <em>C</em> before any
-        training happens.</p>
-      <p class="diff"><b>How they differ.</b> Theirs is a bound put onto a model to improve
-        its calibration. This one is a bound the readout already has: not fitted, and reached
-        to float precision in <span data-n="cells-sat">33</span> of the
-        <span data-n="cells-all">36</span> count cells measured here.</p>
-    </div>
-
-    <div class="cite">
-      <h4>Direct Training Needs Regularisation: Anytime Optimal Inference SNN</h4>
-      <p class="venue">Wu, Qi, Cai, Jin, Yi &amp; Huang, arXiv:2405.00699, April 2024 &nbsp;<span class="ver">verified</span></p>
-      <p><b>What it does.</b> Applies a cutoff to the softmax output of a directly-trained
-        SNN on event-based datasets, so inference can stop as soon as the answer is settled
-        &mdash; anytime inference.</p>
-      <p><b>What this study does.</b> Fixes the network and the timestep count and asks only
-        whether the confidence is correctly scaled.</p>
-      <p class="diff"><b>How they differ.</b> Theirs is a stopping rule built on a confidence
-        signal; this measures the signal itself. The settings otherwise overlap closely
-        &mdash; directly-trained SNNs, event data, softmax over the output &mdash; which
-        makes it the nearest neighbour here in experimental setup.</p>
-    </div>
-
-    <div class="cite">
-      <h4>Agreeing to Stop: Latency-Adaptive Decisions via Ensembles of SNNs</h4>
-      <p class="venue">Chen, Park &amp; Simeone, <em>Entropy</em> 26(2):126, 2024 &nbsp;<span class="ver">verified against the full text</span></p>
-      <p><b>What it does.</b> Uses softmax over spike counts as a confidence signal for
-        latency-adaptive stopping, at <em>T</em> = 80, and reports that SNNs are poorly
-        calibrated and <strong>overconfident</strong>.</p>
-      <p><b>What this study does.</b> Measures the same readout at <em>T</em> = 2. Mean
-        confidence minus accuracy is <strong>&minus;0.539</strong>: underconfidence, forced
-        by the ceiling.</p>
-      <p class="diff"><b>How they differ.</b> The readout is the same; the timestep regime is
-        not. At <em>T</em> = 80 the ceiling is 1.0000 and inert. At <em>T</em> = 2 it is
-        0.4509 and sits below the model's accuracy. The two measurements are taken in
-        regimes that do not overlap.</p>
-    </div>
-
-    <div class="cite">
-      <h4>Unleashing the Potential of SNNs with Dynamic Confidence</h4>
-      <p class="venue">Li, Jones &amp; Furber, ICCV 2023, pp. 13350&ndash;13360 &nbsp;<span class="ver">verified against the full text</span></p>
-      <p><b>What it does.</b> Builds a runtime confidence signal for early exit, on
-        ANN-to-SNN conversion over static images with an ANN as the calibration reference.
-        Its readout is a non-spiking accumulator &mdash; "keeping the output layer at full
-        precision&hellip; the neurons in the output layer only accumulate input currents".
-        It observes that confidence <b>"saturates to 100% quickly with time"</b>, and damps
-        it with a scalar &alpha;.</p>
-      <p><b>What this study does.</b> Measures four readouts on directly-trained SNNs over
-        event data. The unbounded accumulator is <b>overconfident and rises with
-        <em>T</em></b>, mean confidence minus accuracy +0.0000 at <em>T</em> = 2, +0.0032 at
-        <em>T</em> = 6 and +0.0047 at <em>T</em> = 10.</p>
-      <p class="diff"><b>How they differ.</b> Converted rather than directly trained, static
-        frames rather than event data, and a stopping rule built on a confidence signal
-        rather than the calibration of the signal itself. Their accumulator is real-valued,
-        so the attainable-confidence ceiling does not apply to their 94.11%-at-4-timesteps
-        result, even though <em>T</em> = 4 at <em>C</em> = 10 is squarely in the regime where
-        it would bind for a spike-count readout.</p>
-    </div>
-
-    <div class="cite">
-      <h4>Knowing When to Stop: Delay-Adaptive SNN Classifiers with Reliability Guarantees</h4>
-      <p class="venue">Chen, Park &amp; Simeone, <em>IEEE J. Sel. Topics Signal Process.</em> 19(1):88&ndash;102, 2025 &nbsp;<span class="ver">verified against the full text</span></p>
-      <p><b>What it does.</b> Applies conformal prediction to the SNN stopping problem. It
-        reads the network by a softmax over spike counts and observes that its decisions
-        <b>"tend to be first under-confident and then over-confident"</b> as time passes.</p>
-      <p><b>What this study does.</b> Gives the reason for the first half. Read after
-        <em>t</em> steps a count lies in [0,&nbsp;<em>t</em>], so confidence cannot exceed
-        e<sup>t</sup>/(e<sup>t</sup>+C&minus;1): 0.2320, 0.4509 and 0.6906 after one, two and
-        three steps with ten classes.</p>
-      <p class="diff"><b>How they differ.</b> Early underconfidence of this readout is their
-        observation, not this study's. Theirs is an observation at <em>T</em> = 80 with a
-        conformal remedy; this is the bound that forces the start of the pattern, measured at
-        <em>T</em> = 2 to 10. The bound does not say where confidence overtakes accuracy.</p>
-    </div>
-
-    <div class="cite">
-      <h4>The bound itself: AdaCos, NormFace, LogitNorm, LogitClip, CosFace</h4>
-      <p class="venue">Zhang et al., CVPR 2019 &middot; Wang et al., ACM MM 2017 &middot; Wei et al., ICML 2022 and 2023 &middot; Wang et al., CVPR 2018 &nbsp;<span class="ver">verified against the full text</span></p>
-      <p><b>What they do.</b> State, for normalised or clipped logits in non-spiking networks,
-        that a softmax over logits in a bounded range cannot reach a probability of one.
-        AdaCos gives P&nbsp;&le;&nbsp;e<sup>s</sup>/(e<sup>s</sup>+C&minus;1) for logits in
-        [0,&nbsp;s]. NormFace gives the cap at width two as "0.45 when n = 10" and adds a
-        learnable scale as the remedy. LogitNorm proves the loss floor and quotes 0.7966 at
-        ten classes. CosFace inverts the bound into a minimum scale.</p>
-      <p><b>What this study does.</b> Reads a spike count as such a logit, with the number of
-        timesteps as the width. Its ceiling of 0.4509 and loss floor of 0.7966 at
-        <em>T</em> = 2 are those same two numbers.</p>
-      <p class="diff"><b>How they differ.</b> The inequality, the loss floor, the minimum
-        scale and the learnable scale are theirs. What is measured here is what the bound
-        costs a spike-count readout in calibration, and what a learned scale does about it.</p>
-    </div>
-
-    <div class="cite">
-      <h4>Training High-Performance Low-Latency SNNs by Differentiation on Spike Representation</h4>
-      <p class="venue">Meng, Xiao, Yan, Wang, Lin &amp; Luo, CVPR 2022 &nbsp;<span class="ver">verified against the full text</span></p>
-      <p><b>What it does.</b> Trains directly, takes the threshold-weighted firing rate of a
-        spiking output layer as the output under cross-entropy, and makes the thresholds
-        trainable so that the rate is not confined to "a small range".</p>
-      <p><b>What this study does.</b> Trains a count readout with one learnable logit scale
-        and measures what it does to confidence, accuracy and the number of confidence
-        values.</p>
-      <p class="diff"><b>How they differ.</b> A learned scale on a spiking output is theirs.
-        They give no bound; here the scale is a probe of what the bound was costing.</p>
-    </div>
-  </div></div></section>
-
-  <div class="band"><h2>Reproduce it</h2></div>
-
-  <section class="panel c12">
-    <div class="prose wide">
-      <div class="repro-grid">
-        <div>
-      <p>Every number on this page comes from artifacts that regenerate from a clean
-      checkout. Training on Apple silicon is not bitwise deterministic, so trained weights
-      vary slightly at a fixed seed; splits and calibrator fitting are kept on CPU RNG and
-      scikit-learn and are exactly reproducible.</p>
-<pre><span class="c"># clone and set up</span>
-git clone https://github.com/abrarahasanadil/spikecalib
-cd spikecalib
-python3 -m venv .venv &amp;&amp; source .venv/bin/activate
-pip install -r requirements.txt
-
-<span class="c"># verify MPS and a real LIF forward pass before anything else</span>
-python scripts/check_env.py
-
-<span class="c"># build the frame caches (repeat for 4, 6, 8, 10)</span>
-python scripts/fetch_data.py --dataset nmnist --timesteps 2
-
-<span class="c"># 15 runs: 5 timestep settings x 3 seeds, ~2.7 h on an M-series Mac</span>
-python scripts/run_sweep.py --epochs 50 --patience 5
-
-<span class="c"># the five experiments the findings rest on</span>
-python scripts/readout_experiment.py  --seeds 0 1 2
-python scripts/quantisation_test.py   --seeds 0 1 2
-python scripts/caltech_experiment.py  --seeds 0 1 2
-python scripts/arch_matched.py        --seeds 0 1 2
-python scripts/conditional_ceiling.py
-<span class="c"># the scale and resolution experiments; only the first trains</span>
-python scripts/scaled_count_experiment.py
-python scripts/resolution_experiment.py
-python scripts/caltech_calibrators.py
-python scripts/calibration_size_experiment.py
-
-<span class="c"># the equal-mass paired bootstrap (no training; reuses the weights)</span>
-<span class="c"># runs single-process: 6 DataLoader workers deadlock this on Apple silicon</span>
-python scripts/rerun_paired_bootstrap.py --num-workers 0
-
-<span class="c"># regenerate everything this page reads</span>
-python scripts/extract_readout_stats.py
-python scripts/export_dashboard_data.py</pre>
-        </div>
-        <div>
-    <div class="scroll panel-table">
-      <table>
-        <thead><tr><th scope="col" style="cursor:default">Item</th><th scope="col" style="cursor:default">Value</th></tr></thead>
-        <tbody>
-          <tr><td class="k">Split fingerprint</td><td>e524beccace851af</td></tr>
-          <tr><td class="k">Split sizes</td><td>50,000 / 5,000 / 5,000 / 10,000</td></tr>
-          <tr><td class="k">Seeds</td><td>0, 1, 2</td></tr>
-          <tr><td class="k">Epoch cap, patience</td><td>50, 5 — all 15 stopped early (10–21 epochs)</td></tr>
-          <tr><td class="k">Python</td><td>3.13.1</td></tr>
-          <tr><td class="k">PyTorch</td><td>2.14.0, MPS backend</td></tr>
-          <tr><td class="k">SpikingJelly</td><td>0.0.0.0.14</td></tr>
-          <tr><td class="k">scikit-learn</td><td>1.9.0</td></tr>
-          <tr><td class="k">Bootstrap</td><td>1,000 resamples, seeded per run</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <p style="margin-top:14px">
-      The split fingerprint is a hash of the exact index sets. Any run reporting
-      <code>e524beccace851af</code> used byte-identical splits, so a result can prove which
-      split produced it rather than assert it.
-    </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="panel c12">
-    <div class="prose wide">
-<h3>Limitations</h3>
-    <ul class="lim-list">
-      <li>
-        <strong>Two datasets, not four.</strong> N-MNIST and N-Caltech101. DVS-Gesture matters most
-        of the two not yet run: its calibration split is roughly 330 samples against
-        N-MNIST's 5,000, so isotonic's per-level estimates would be an order of magnitude
-        noisier. The conclusion that the calibrators tie is established only where the
-        calibration set is large.
-      </li>
-      <li>
-        <strong>The calibrator comparison saw no genuinely uncertain regime.</strong> All
-        fifteen models in that sweep reached roughly 0.99 test accuracy, and differences
-        between calibration methods may only emerge where a model is actually unsure.
-        N-Caltech101 supplies that regime at 0.43–0.66 accuracy, and there the calibrators
-        do differ: the N-MNIST tie did not carry over.
-      </li>
-      <li>
-        <strong>One energy constant is a convention, not a citation.</strong> Verified
-        2026-09-12 against the primary document: E<sub>AC</sub> = 0.9 pJ is confirmed as the
-        32-bit float add in Horowitz, ISSCC 2014, Figure 1.1.9. <strong>E<sub>MAC</sub> =
-        4.6 pJ appears nowhere in that paper</strong> — it is 0.9 + 3.7, the community
-        multiply-plus-add convention, and is labelled <code>[DERIVED]</code> rather than
-        cited. The source also calls its own figures "Rough", so nothing here may turn on
-        their precision.
-      </li>
-      <li>
-        <strong>Five points is too few to infer a scaling law.</strong> The ceiling relation
-        is derived arithmetic and holds exactly, but every empirical trend here rests on five
-        timestep settings on one dataset. None should be extrapolated.
-      </li>
-      <li>
-        <strong>Two class counts.</strong> The
-        ceiling e<sup>T</sup>/(e<sup>T</sup>+C−1) and T<sub>min</sub> are general in C, and
-        the study measures C = 10 and C = 101. Two values of C are two points: nothing here
-        establishes how the crossover moves with C in general.
-      </li>
-      <li>
-        <strong>The residual miscalibration at C = 101 is unexplained.</strong> At T = 6 the
-        ceiling does not bind — accuracy 0.6427 against 0.8014 — and the readout is still
-        underconfident by 0.1534. The ceiling accounts for none of that. A learned logit scale
-        removes it and leaves overconfidence of about the same size, so it is tied to the
-        bounded logit range, but why a network that could have been more confident was not is
-        still open.
-      </li>
-      <li>
-        <strong>Three readouts were run at C = 101.</strong> Count, accumulator and, at
-        T = 2 and 6, the learned-scale count. Whether the leak result and the granularity
-        result transfer to 101 classes is untested.
-      </li>
-      <li>
-        <strong>The N-Caltech101 calibrator result is nine runs.</strong> That isotonic
-        regression beats temperature scaling there rests on one architecture, three timestep
-        settings and three seeds, with a 1,010-sample calibration set, about 10 per class.
-        One-vs-rest isotonic was fitted and should not be trusted at that size. Nine runs do
-        not establish where between 10 and 101 classes the answer changes.
-      </li>
-      <li>
-        <strong>The learned scale was not tuned, and had not settled.</strong> It shared the
-        network's optimiser and learning rate and was still rising when early stopping ended
-        every run. A different learning rate or stopping rule could change both the
-        calibration and the accuracy it reaches.
-      </li>
-      <li>
-        <strong>The fusion result is one dataset and a constructed second modality.</strong>
-        Both modalities are the same network reading two samples of one class from one
-        sensor, the second with half its events removed. They are independent given the class
-        by construction, which real sensor pairs are not, and no fusion network was trained.
-        The cost appears at <em>T</em> = 2 only and is under half a point of accuracy.
-      </li>
-      <li>
-        <strong>The rate cap is derived, not trained.</strong> No network with a rate readout
-        was trained. e/(e+C&minus;1) says what such a readout cannot express, not how a
-        network trained under it behaves.
-      </li>
-      <li>
-        <strong>Two architectures, and they differ in depth and size at once.</strong>
-        The matched grid trains both networks on both datasets, which removed the depth
-        confound from the C = 10 against C = 101 comparison. But the four-block network is
-        the smaller one, 464k parameters against 2,749k on N-Caltech101, so a difference
-        between the two cannot be attributed to depth or to capacity alone. The grid covers
-        the count and accumulator readouts at T = 2 and T = 6; the weighted-count and
-        membrane readouts were run on the two-block N-MNIST network only.
-      </li>
-      <li>
-        <strong>N-Caltech101 frames are pooled 4&times; to 45&times;60</strong> to make the
-        grid tractable. No comparison against 2&times; or native resolution was run, so
-        nothing establishes the result is insensitive to it. It cannot affect the ceiling,
-        which contains no spatial term.
-      </li>
-      <li>
-        <strong>The high-T ranking deficit is only half explained.</strong> From T = 6 up the
-        membrane readout ranks worse than count (AUROC 0.9710 against 0.9842 at T = 6).
-        Quantisation was tested and ruled out; the leak accounts for about half. The
-        remainder is attributed to the output threshold and has no mechanism.
-      </li>
-      <li>
-        <strong>Membrane's calibration at T = 2 is highly seed-dependent.</strong> ECE is
-        0.0290 ± 0.0153 across three seeds — 0.0085, 0.0333 and 0.0451, a fivefold range —
-        while count's is 0.5386 ± 0.0004. Removing the leak collapses that spread 77-fold,
-        which identifies the cause but does not characterise it at three seeds.
-      </li>
-      <li>
-        <strong>Binned ECE is a biased estimator.</strong> It averages absolute gaps, so
-        sampling noise becomes positive error, and the bias depends on bin occupancy. That
-        makes raw ECE only loosely comparable across <em>T</em>, which is a further reason the
-        headline comparison is a paired difference at fixed <em>T</em>.
-      </li>
-    </ul>
-    </div>
-  </section>
-
-
-  <footer class="c12">
-    <p>The repository's <code>NOTES.md</code> is the design document, including the
-      pre-registered prediction and its outcome. <code>LOG.md</code> is an append-only record
-      of how the work was done, including the mistakes. <code>SOURCES.md</code> lists every
-      numeric constant with its provenance and everything still to verify.</p>
-    <p id="last-updated">Last updated 2026-09-12.</p>
-  </footer>
-
-
-<!-- ===== modals: the full reasoning, nested rather than deleted ===== -->
-<dialog class="modal" id="m1" aria-labelledby="m1-h">
-  <div class="modal-head">
-    <div><h2 id="m1-h">The ceiling holds at both class counts and both architectures</h2><div class="modal-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></div></div>
-    <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
-  </div>
-  <div class="modal-body">
-<section class="modal-part"><h3>The same claims at two depths: what replicates and what does not<span class="pill pill-measured">measured</span></h3>
-<p>
-      N-Caltech101 was run with four conv blocks and N-MNIST with two, so every cross-dataset
-      comparison above was confounded with architecture. This is the 2&times;2 that removes
-      it — both architectures on both datasets, T in {2, 6}, three seeds, both readouts, 48
-      cells. It doubles as the alternative-architecture check the study never had.
-    </p>
-    <p>
-      <strong>A caveat on what "architecture" varies here.</strong> More pooling shrinks the
-      flatten, so the four-block model is the <em>smaller</em> one: 464k parameters against
-      the two-block model's 2,749k on N-Caltech101. Depth and capacity move in opposite
-      directions, so this separates one network from another — which is the point — but it
-      cannot attribute a difference to depth specifically.
-    </p>
-    <div class="scroll panel-table">
-      <table id="arch-table"></table>
-    </div>
-    <p class="chart-note">Mean over three seeds, rendered from
-      <code>results/arch_matched.json</code>. "gain" is accumulator accuracy minus count
-      accuracy — the value of removing the cap.</p>
-    <p>
-      <strong>The ceiling is architecture-independent, as the formula requires.</strong> Zero
-      violations across all 24 count cells of the matched 2×2 grid, and the bound is saturated to float precision in
-      every one of them — at both depths, on both datasets, at both timestep settings.
-    </p>
-    <p>
-      <strong>Across every experiment, the bound is respected in
-      <span data-n="cells-ok">36</span> of <span data-n="cells-all">36</span> distinct
-      count-readout cells.</strong> A cell is one dataset, architecture, T and seed. The
-      N-MNIST readout comparison holds <span data-n="cells-readout">15</span>, the
-      N-Caltech101 experiment <span data-n="cells-caltech">9</span> and the matched grid
-      <span data-n="grid-all">24</span>; <span data-n="cells-shared">12</span> of the grid's
-      cells are models it reuses from the other two, and each is counted once. The bound is
-      saturated to within 1e-9 in <span data-n="cells-sat">33</span>. The
-      <span data-n="cells-slack">3</span> that are respected but slack are all C = 101,
-      T = 10, one per seed, a mean of <span data-n="slack-gap">1.489e-3</span> below the
-      bound: reaching it there needs one class firing at every step while all 100 others
-      stay silent for all ten.
-    </p>
-    <p>
-      <strong>The headline accuracy gain does not replicate in magnitude.</strong> At
-      C = 101, T = 2 removing the cap is worth <strong>+12.82 points at four blocks and
-      +3.08 at two</strong> — a fourfold difference, though it stays positive in every seed at
-      both. So "removing the cap helps accuracy where it binds hard" replicates; "by 12.82
-      points" does not. That also undercuts the mechanism offered for it: a cross-entropy
-      floor dominating the gradient has no architectural term, and if it were the whole story
-      the gain would not depend on the network.
-    </p>
-    <p>
-      <strong>The C = 101, T = 6 residual survives.</strong> 0.1534 at four blocks and
-      <strong>0.1159</strong> at two — about a quarter attributable to the network and three
-      quarters not. N-MNIST's own residuals barely move between architectures (0.5386 against
-      0.5398 at T = 2; 0.0272 against 0.0253 at T = 6), so the sensitivity is specific to
-      C = 101. At matched depth the cross-dataset ratio at T = 6 is <strong>4.3&times; at two
-      blocks and 6.1&times; at four</strong>, so the finding holds with the confound removed.
-    </p>
-    <p>
-      <strong>And the conditional ceiling still explains none of it</strong> — it sits at
-      0.7146 against an accuracy of 0.5618 at two blocks, and 0.6804 against 0.6427 at four.
-      Above accuracy either way, so it forces nothing. The residual is genuine miscalibration
-      at both architectures.
-    </p>
-</section>
-  </div>
-</dialog>
-
-<dialog class="modal" id="m2" aria-labelledby="m2-h">
-  <div class="modal-head">
-    <div><h2 id="m2-h">Where the ceiling binds it explains the error, and where it does not it explains none</h2><div class="modal-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></div></div>
-    <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
-  </div>
-  <div class="modal-body">
-<section class="modal-part"><h3>The ceiling accounts for almost all uncalibrated error at low T<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
-<p>
-      At <em>T</em> = 2 with 10 classes the ceiling is 0.4509, and the trained models
-      saturate it exactly — observed maxima match the derived value to roughly one part in
-      10<sup>13</sup>, which is float64 rounding rather than approximation. A model at 98.5%
-      accuracy cannot emit a confidence near its own correctness rate, so it is forced into
-      underconfidence before any calibrator is involved. The gap between accuracy and the
-      ceiling accounts for <strong>99.2%</strong> of uncalibrated expected calibration error
-      at <em>T</em> = 2, 90.1% at <em>T</em> = 4 and 44.5% at <em>T</em> = 6.
-    </p>
-    <p style="color:var(--ink-3);font-size:13.5px">
-      That comparison is not exact and should not be read as one. The 99.2% sets a single
-      overall accuracy against a single ceiling value, whereas ECE is a mass-weighted mean
-      of per-bin gaps. The two agree closely here only because roughly 95% of the
-      calibration mass sits at the top confidence level, so the per-bin average is dominated
-      by that one bin. Where confidence is more spread out the two quantities would part
-      company.
-    </p>
-    <p>
-      By <em>T</em> = 8 accuracy has fallen below the ceiling and correct confidence becomes
-      reachable, so the ceiling explanation stops applying — it only ever applies where the
-      ceiling binds. What is left is small and <em>still not overconfidence</em>: mean
-      confidence minus accuracy is −0.0065 at <em>T</em> = 8, negative at all three seeds,
-      and −0.0008 at <em>T</em> = 10. The forced underconfidence disappears without being
-      replaced by anything this study can resolve.
-    </p>
-</section>
-<section class="modal-part"><h3>A conditional ceiling does not rescue the C = 101 residual<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
-<p>
-      The theoretical ceiling assumes the extreme count vector [T, 0, …, 0] — every one of
-      the C−1 competitors silent for all T steps. At ten classes that is nearly free. At a
-      hundred and one it is a strong assumption, and the obvious rescue for the unexplained
-      T = 6 residual is that a bound conditioned on <em>real</em> competitor activity would
-      bind after all:
-    </p>
-    <p style="text-align:center;font-family:var(--mono);font-size:13px">
-      ceiling<sub>cond</sub> = e<sup>T</sup> / (e<sup>T</sup> + Σ<sub>j≠winner</sub>
-      e<sup>c<sub>j</sub></sup>)
-    </p>
-    <p>
-      Setting every c<sub>j</sub> = 0 recovers the theoretical ceiling exactly, so this is a
-      refinement of the same quantity rather than a rival to it.
-      <span class="tag">pre-registered</span> The prediction — that it would account for most
-      of the residual, and that it would coincide with the theoretical bound at C = 10 — was
-      recorded and committed before any competitor count was measured.
-    </p>
-    <div class="scroll panel-table">
-      <table id="conditional-table"></table>
-    </div>
-    <p class="chart-note">Mean over seeds, rendered from
-      <code>results/conditional_ceiling.json</code>. "share" is the fraction of the
-      accuracy-minus-confidence gap that each ceiling forces.</p>
-    <p>
-      <strong>The half about C = 10 held.</strong> There the two ceilings differ by at most
-      0.0067 at any T — with nine competitors silent 95–99% of the time the extreme vector is
-      nearly reachable, so the simple bound was nearly tight. At C = 101 and T = 6 the gap is
-      0.121, <strong>26 times</strong> the N-MNIST gap at the same T. That is exactly why the study never needed the
-      refinement before and does now.
-    </p>
-    <p>
-      <strong>The half that mattered was falsified.</strong> At C = 101, T = 6 the
-      conditional ceiling is <strong>0.6804 — above the accuracy of 0.6427</strong>, in all
-      three seeds, against a pre-registered falsification threshold of 0.5660. It accounts for
-      <strong>0%</strong> of the residual. Nothing forced these models to be underconfident:
-      given exactly the competitor patterns they produced they could have averaged 0.68
-      confidence, and averaged 0.49. <strong>They left 0.19 of headroom unused.</strong> The
-      residual is genuine miscalibration and the tidiest explanation for it is gone.
-    </p>
-    <p>
-      The measured competitor distribution is why the refinement is real but insufficient. At
-      C = 101, T = 6, 81.6% of competitor slots hold zero, 12.1% hold one, and the tail
-      reaches six; the single loudest competitor carries 14.7% of the whole denominator. That
-      is enough to move the bound from 0.8014 to 0.6804 and not enough to reach 0.6427.
-    </p>
-    <p>
-      One caveat on what this kind of bound can claim. The theoretical ceiling is fixed by T
-      and C before a model exists, so it <em>predicts</em>. The conditional ceiling is
-      computed from a model's own spikes, so it only <em>explains</em> — a model that
-      distributed its spikes differently would face a different bound. It earns a place as an
-      analysis tool, not as a second derived result. It also means this conclusion survives
-      the architecture confound noted above: whatever produced the residual, the models
-      demonstrably had room to be more confident and were not.
-    </p>
-</section>
-  </div>
-</dialog>
-
-<dialog class="modal" id="m3" aria-labelledby="m3-h">
-  <div class="modal-head">
-    <div><h2 id="m3-h">The same bound is a floor on the training loss</h2><div class="modal-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></div></div>
-    <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
-  </div>
-  <div class="modal-body">
-<section class="modal-part">
-<p>
-      Cross-entropy on spike-count logits cannot fall below −ln(ceiling): 0.7966 at
-      <em>T</em> = 2 against 0.0004 at <em>T</em> = 10. The observed plateaus sit between
-      0.0072 and 0.0182 above their own floor across all fifteen runs. A <em>T</em> = 2
-      model plateauing at 0.81 and a <em>T</em> = 10 model plateauing at 0.009 are equally
-      converged. <strong>Training loss is therefore not comparable across <em>T</em></strong>,
-      and read naively the low-<em>T</em> curve looks like a failure to train and invites
-      fixes for a problem that does not exist. Convergence here is judged on validation
-      accuracy, never on loss.
-    </p>
-</section>
-  </div>
-</dialog>
-
-<dialog class="modal" id="m4" aria-labelledby="m4-h">
-  <div class="modal-head">
-    <div><h2 id="m4-h">The readout family decides the direction of the failure</h2><div class="modal-pills"><span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span><span class="pill pill-lit">lit</span></div></div>
-    <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
-  </div>
-  <div class="modal-body">
-<section class="modal-part"><h3>The ceiling is a property of the readout, not of spiking networks<span class="pill pill-measured">measured</span></h3>
-<p>
-      Softmax-over-spike-counts is a <em>choice</em>. The same architecture was trained with
-      four final aggregations — only the aggregation differs, every layer up to the last
-      BatchNorm is identical — across up to five timestep settings and three seeds,
-      54 runs.
-    </p>
-    <div class="scroll panel-table">
-      <table id="readout-table"></table>
-    </div>
-    <p class="chart-note">Mean ± sd over seeds, rendered from
-      <code>results/readout_experiment.json</code>. Every readout, every timestep setting.</p>
-    <p>
-      At T = 2 a membrane readout removes the cap and cuts uncalibrated ECE by
-      <strong>11.9&times; to 63.5&times;</strong> depending on seed (mean 30.5&times;), at
-      indistinguishable accuracy. The weighted-count control is what makes this
-      interpretable: it shares the cap exactly but has roughly twice the attainable levels,
-      and its ECE is 0.5385 against count's 0.5386. <strong>Granularity buys nothing; the
-      bound does all the work.</strong>
-    </p>
-    <p>
-      The spread matters and is reported rather than averaged away. Membrane ECE at T = 2 is
-      0.0290 ± 0.0153 across seeds — 0.0085, 0.0333, 0.0451 — while count's is
-      0.5386 ± 0.0004. Removing the cap removes a <em>deterministic</em> error and exposes an
-      ordinary, <em>variable</em> one. Three of fifteen (T, seed) cells have membrane worse
-      than count, all at T ≥ 8 where the cap no longer binds.
-    </p>
-    <p>
-      <strong>Membrane is not strictly dominant.</strong> It calibrates better wherever the
-      ceiling binds, but it ranks better only at T = 2 and T = 4. From T = 6 upward the count
-      readout separates correct from incorrect predictions <em>better</em> — AUROC 0.9842
-      against 0.9710 at T = 6, with roughly half the AURC. Calibration and ranking are
-      different properties and the readout that wins one does not automatically win the
-      other. <strong>The crossover is at T = 6</strong>, and the table below is computed
-      from the same artifact rather than asserted:
-    </p>
-    <div class="scroll panel-table">
-      <table id="readout-crossover"></table>
-    </div>
-    <p>
-      The recommendation is therefore narrow. Where the ceiling binds — accuracy above
-      e<sup>T</sup>/(e<sup>T</sup>+C−1), which for 10 classes means T ≤ 6 — a membrane
-      readout removes a large structural error, and at T ≤ 4 it also ranks at least as well. From T = 6 count ranks
-      better, and above T = 6 the cap is inert and there is no reason to change it.
-      <strong>T<sub>min</sub> is exactly the test for which regime you are in.</strong>
-      A second consequence points the same way at low T: count gives 9 achievable selective
-      operating points at T = 2 across 10,000 samples, membrane gives 9,998 — effectively a
-      continuum.
-    </p>
-</section>
-<section class="modal-part"><h3>The leak explains about half of it — the threshold explains the rest<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
-<p>
-      With quantisation ruled out, the next candidate needed no new mechanism either. The
-      membrane readout uses the network's own charge equation, v += (z − v)/τ with τ = 2, so
-      it <strong>leaks with a half-life of exactly one step</strong>: the input k steps before
-      the end enters the final potential with weight 0.5&nbsp;×&nbsp;0.5<sup>k</sup>. Its
-      effective evidence window is far shorter than T, and it does not grow with T.
-    </p>
-    <div class="scroll panel-table">
-      <table>
-        <thead><tr><th style="cursor:default">T</th>
-          <th style="cursor:default">leaky membrane — share of weight on the last 2 steps</th>
-          <th style="cursor:default">count — same share</th></tr></thead>
-        <tbody>
-          <tr><td class="k">2</td><td><strong>100.0%</strong></td><td><strong>100.0%</strong></td></tr>
-          <tr><td class="k">6</td><td>76.2%</td><td>33.3%</td></tr>
-          <tr><td class="k">10</td><td>75.1%</td><td>20.0%</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>
-      <strong>At T = 2 the two readouts integrate over exactly the same window</strong>, and
-      that is the regime where membrane wins. By T = 6 they have come apart, and that is where
-      it starts losing. So the test was a fourth readout: an <strong>accumulator</strong>,
-      v += z, the same non-spiking integrator with the leak removed and every step weighted
-      equally. It differs from count <em>only</em> by the output threshold, and from membrane
-      <em>only</em> by the leak — which separates two explanations that were confounded.
-    </p>
-    <p>
-      <span class="tag">pre-registered</span> The prediction and its falsification condition
-      were recorded in NOTES.md and committed before the first accumulator model was trained.
-      It said the prediction fails if the accumulator's AUROC deficit against count stays more
-      than half the leaky membrane's — 0.0066 at T = 6, 0.0045 at T = 10.
-    </p>
-    <p>
-      <strong>Both halves of the answer are reported because the prediction contains both.</strong>
-      The stated falsification condition is not met, so the prediction stands: the deficit is
-      <strong>0.0061 at T = 6</strong> and <strong>0.0035 at T = 10</strong>, closing
-      <strong>53%</strong> and <strong>62%</strong> of the membrane gap. But its headline
-      wording said the accumulator should "match or beat count", and it does not — count ranks
-      better in <strong>every seed at both timestep settings</strong>, 0 of 6. The leak is the
-      largest single mechanism found and it is not the only one. About 40% of the deficit
-      survives its removal, and since an accumulator and a count differ only by the threshold,
-      that residue belongs to the thresholding itself.
-    </p>
-    <p>
-      <strong>The part of the prediction that was wrong turned out to be the most useful.</strong>
-      It said accumulator and membrane should be close at T = 2. On ranking they are, 0.9698
-      against 0.9659. On calibration they are not: ECE is <strong>0.0031 ± 0.0002</strong>
-      against membrane's <strong>0.0290 ± 0.0153</strong>. Removing the leak drops the mean
-      ninefold and the seed-to-seed spread <strong>77-fold</strong>, to tighter than count's.
-      That answers a question this study had left open — why membrane's calibration at T = 2
-      swings so widely between seeds. A leaky integrator at T = 2 is reading essentially the
-      final step, so its calibration rides on whatever that one step produced.
-    </p>
-    <p>
-      One unpredicted result matches an observation already in the literature.
-      <b>Li, Jones &amp; Furber (ICCV 2023)</b> report that with a non-spiking accumulator
-      readout &mdash; "the neurons in the output layer only accumulate input currents"
-      &mdash; confidence "saturates to 100% quickly with time", and they damp it with a
-      scalar &alpha; that is temperature scaling. This study measures the same direction on
-      its own accumulator, independently and on different data. The accumulator is
-      the <strong>first readout measured here that is consistently overconfident</strong>:
-      conf − acc is +0.0032 at T = 6 and +0.0047 at T = 10, positive in 3 of 3 seeds at both.
-      On N-MNIST every other readout is underconfident or unsigned. So an uncapped, non-leaky readout at T ≥ 6 is mildly
-      overconfident here, which is the direction Li, Jones &amp; Furber report for their
-      accumulator, and the direction <b>Chen, Park &amp; Simeone</b> report at T = 80. Two
-      papers and this study observe the same sign wherever the readout is unbounded or the
-      cap is inert. On N-MNIST the magnitude is under half a percentage point. On
-      N-Caltech101 it is not small: +0.0816, +0.1843 and +0.2254 at T = 2, 6 and 10 with
-      four blocks, positive in 9 of 9 runs, and +0.0774 and +0.2076 at T = 2 and 6 with two
-      blocks, positive in 6 of 6. The direction holds on both datasets and at both depths.
-    </p>
-    <p>
-      None of this recommends changing the readout at high T. The accumulator costs about 0.2
-      points of accuracy at T = 10 (0.9879 against count's 0.9908), count still ranks best
-      there, and count is what the hardware exposes.
-    </p>
-</section>
-<section class="modal-part"><h3>Why membrane ranks worse at high T is not quantisation<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
-<p>
-      Membrane calibrates better wherever the ceiling binds and <em>ranks</em> worse from
-      T = 6 up. The obvious explanation needs no new mechanism: a spike count is a
-      thresholded membrane signal, thresholding discards information, and if what it
-      discards is noise then the count readout gets a free denoiser. That was tested
-      directly — the saved membrane confidences coarsened to N ordered levels, no
-      retraining — and it is <strong>false</strong>.
-    </p>
-    <p>
-      The arithmetic makes the prediction exact. Coarsening cannot reorder a pair, only
-      merge pairs into ties, and AUROC scores a tie as 0.5. So with W the fraction of
-      correct/incorrect pairs merged and A the AUROC <em>within</em> levels,
-      AUROC(coarse) − AUROC(full) = W × (0.5 − A) — an identity. Coarsening can only help
-      where the structure it destroys is <em>worse than chance</em>.
-    </p>
-    <div class="scroll panel-table">
-      <table>
-        <thead><tr><th style="cursor:default">T</th><th style="cursor:default">N=5</th>
-          <th style="cursor:default">N=20</th><th style="cursor:default">N=100</th>
-          <th style="cursor:default">N=1000</th><th style="cursor:default">full</th>
-          <th style="cursor:default">count</th></tr></thead>
-        <tbody>
-          <tr><td class="k">2</td><td>0.8970</td><td>0.9587</td><td>0.9654</td><td>0.9659</td><td><strong>0.9659</strong></td><td>0.9205</td></tr>
-          <tr><td class="k">4</td><td>0.8999</td><td>0.9675</td><td>0.9768</td><td>0.9772</td><td><strong>0.9772</strong></td><td>0.9735</td></tr>
-          <tr><td class="k">6</td><td>0.8939</td><td>0.9604</td><td>0.9705</td><td>0.9710</td><td><strong>0.9710</strong></td><td>0.9842</td></tr>
-          <tr><td class="k">8</td><td>0.9008</td><td>0.9687</td><td>0.9768</td><td>0.9772</td><td><strong>0.9772</strong></td><td>0.9837</td></tr>
-          <tr><td class="k">10</td><td>0.9020</td><td>0.9683</td><td>0.9768</td><td>0.9773</td><td><strong>0.9773</strong></td><td>0.9863</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>
-      <strong>AUROC rises monotonically with N and saturates at full precision</strong>, at
-      every T and every seed. No interior peak anywhere. The curve is not even flat in N,
-      which refutes the hypothesis more strongly than the flat case would have: coarsening
-      does not merely fail to help, it <em>costs</em>, and the cost grows as the binning
-      gets coarser. Coarsening nudged AUROC up in 10 of 15 cells, and the magnitude is the
-      point — the largest gain anywhere is <strong>+0.000073</strong>, against a T = 6
-      deficit of 0.0132 it would have to close. It is 180&times; too small, and the sign
-      flutter is what floating-point noise around zero looks like.
-    </p>
-    <p>
-      The identity says why. At N = 5, where a fifth of all pairs are merged, the detail
-      being destroyed orders correct from incorrect at AUROC <strong>0.89</strong>; at
-      N = 20, 0.72; at N = 100, 0.56. <strong>Membrane's fine structure is signal, not
-      noise</strong>, at every resolution that merges a meaningful number of pairs. Of 266
-      measured points only 24 fall below chance, all at N ≥ 200 where under 1% of pairs
-      merge, bounding their effect at 0.0013.
-    </p>
-    <div class="scroll panel-table">
-      <table id="quant-within-table"></table>
-    </div>
-    <p class="chart-note">Mean over five timestep settings and three seeds, rendered from
-      <code>results/quantisation_test.json</code>. The verdict column applies the identity:
-      merging structure that ranks above chance can only cost AUROC.</p>
-    <figure class="fig">
-      <img src="figures/fig8-quantisation.svg" alt="Two rows of five panels, one column per
-        timestep setting. The top row plots AUROC against the number of confidence levels the
-        membrane signal is coarsened to; every curve rises monotonically and flattens at full
-        precision, with no interior peak. The bottom row plots the AUROC measured within a
-        level, which starts near 0.9 at five levels and decays towards the 0.5 chance line,
-        never falling meaningfully below it.">
-      <figcaption>Top row: AUROC against the number of confidence levels, against two
-        references — membrane at full precision and the count readout. Bottom row: the AUROC
-        of the structure being merged away. It sits above chance wherever a meaningful number
-        of pairs is merged, which is why coarsening can only cost. The dashed rule marks
-        count's own level count, shaded across its per-seed range.</figcaption>
-    </figure>
-    <p>
-      What the test rules <em>in</em> is sharper than what it rules out. Coarsened to
-      count's own level count, membrane at T = 2 <strong>still beats count</strong>
-      (0.9367 vs 0.9204) and at T = 6 is <strong>still 0.0138 behind</strong> it
-      (0.9705 vs 0.9842). Held at identical resolution the two readouts rank differently in
-      both directions, so the difference cannot be resolution. The remaining explanation is
-      that they rank <em>different quantities</em>: a count is a sum of thresholded events
-      and is invariant to how far above threshold each crossing was, where a potential is
-      not. That is untested, and this result does not establish it.
-    </p>
-</section>
-<section class="modal-part"><h3>Why the count readout exists<span class="pill pill-lit">lit</span><span class="pill pill-warn">unverified</span></h3>
-<div class="two-col">
-<p>
-      The cap being avoidable makes it easy to read this study as saying the field has been
-      doing something obviously wrong. It has not. There are real reasons to sum spikes, and
-      the result does not dissolve all of them.
-    </p>
-    <p>
-      <strong>Spikes are the communication primitive; potentials are not.</strong> In
-      event-driven hardware the thing that crosses a core boundary is a spike event. A
-      per-class count is then an accumulator at the destination — one integer per class,
-      incremented on arrival, costing no traffic beyond the events already being sent.
-      Membrane potential is internal compartment state, and exporting it means a real value
-      per neuron per timestep: dense, continuous, and exactly the traffic these
-      architectures exist to avoid.
-    </p>
-    <p>
-      <strong>Counts are monotone; potentials are not.</strong> This is the sharpest
-      argument and it survives the experiment. A spike count never decreases in T, so a
-      threshold crossing is final and a stopping rule on it is stable. A leaky membrane
-      potential decays between inputs and can fall back below a threshold it already
-      crossed, so a stopping rule on it can un-fire. Anytime inference and early exit — the
-      Dynamic Confidence and SpikeCP line — depend on that stability. Even where a membrane
-      readout is available, a system that must stop early may still want counts.
-    </p>
-    <p class="unverified-note">
-      <strong>What the hardware exposes could not be confirmed, and the strong form of this
-      argument is withdrawn.</strong> A verification pass on 2026-09-12 found Intel's NxSDK
-      API reference unreachable and the sPyNNaker limitations page silent on recording
-      bandwidth. What is established: Loihi's neuron model carries membrane potential as
-      internal state, and the NxTF paper says embedded CPUs may read out SNN state during
-      the management phase — consistent with it being readable, silent on the per-timestep
-      cost, which is the only part the argument needed. SpiNNaker exposes potential through
-      PyNN's <code>record('v')</code> with host transfers bounded by Ethernet bandwidth, but
-      whether that binds for a ten-neuron output layer is unknown. Both stay
-      <span class="unver">unverified</span>, and the case for the count readout rests on the
-      two points above — spikes as the communication primitive, and count monotonicity — not
-      on an unverified cost model.
-    </p>
-    <p>
-      <strong>The recommendation, with its scope.</strong> Where the cap binds, meaning
-      accuracy sits above the ceiling (on N-MNIST, T &le; 6), and a membrane readout is
-      available — simulation, GPU or CPU inference, hardware exposing output-layer state —
-      the cap is avoidable and should be avoided for calibration; it costs
-      <strong>11.9&times; to 63.5&times;</strong> in uncalibrated ECE at T = 2, depending on
-      seed (mean 30.5&times;), for nothing. The ranking advantage is narrower and holds at
-      T &le; 4 only. Where the cap is slack it forces no error, the count readout ranks
-      better, and there is no reason to change it. Where only spike events leave the chip, the cap is a hard
-      constraint rather than a design error, and T<sub>min</sub> gives the timestep budget.
-      Where early exit is required, counts may be preferable regardless, and the cap is the
-      price of monotonicity — which should be paid knowingly.
-    </p>
   </div>
 </section>
-  </div>
-</dialog>
-
-<dialog class="modal" id="m5" aria-labelledby="m5-h">
-  <div class="modal-head">
-    <div><h2 id="m5-h">Removing the cap buys accuracy where the cap is severe</h2><div class="modal-pills"><span class="pill pill-measured">measured</span></div></div>
-    <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
-  </div>
-  <div class="modal-body">
-<section class="modal-part"><h3>Where this gain holds, and where it does not<span class="pill pill-measured">measured</span></h3>
-<p>
-  The headline is <strong>N-Caltech101 at T = 2 only</strong>, and the qualifier is not a
-  technicality &mdash; the sign reverses outside it. Means over three seeds from
-  <code>results/arch_matched.json</code>:
-</p>
-<div class="scroll panel-table"><table>
-<thead><tr><th>dataset</th><th>blocks</th><th>T</th><th>count acc</th><th>uncapped acc</th><th>gain, points</th></tr></thead>
-<tbody>
-<tr><td>N-Caltech101</td><td>4</td><td>2</td><td>0.4543</td><td>0.5825</td><td><strong>+12.82</strong></td></tr>
-<tr><td>N-Caltech101</td><td>2</td><td>2</td><td>0.4891</td><td>0.5199</td><td><strong>+3.08</strong></td></tr>
-<tr><td>N-Caltech101</td><td>4</td><td>6</td><td>0.6427</td><td>0.5976</td><td>&minus;4.52</td></tr>
-<tr><td>N-Caltech101</td><td>2</td><td>6</td><td>0.5618</td><td>0.5394</td><td>&minus;2.24</td></tr>
-<tr><td>N-MNIST</td><td>4</td><td>2</td><td>0.9869</td><td>0.9859</td><td>&minus;0.10</td></tr>
-<tr><td>N-MNIST</td><td>2</td><td>2</td><td>0.9850</td><td>0.9861</td><td>+0.12</td></tr>
-<tr><td>N-MNIST</td><td>4</td><td>6</td><td>0.9887</td><td>0.9872</td><td>&minus;0.15</td></tr>
-<tr><td>N-MNIST</td><td>2</td><td>6</td><td>0.9902</td><td>0.9888</td><td>&minus;0.14</td></tr>
-</tbody></table></div>
-<p>
-  <strong>The gain does not survive a higher timestep count even on the same dataset.</strong>
-  At T = 6 on N-Caltech101 removing the cap <em>costs</em> 2.2 to 4.5 accuracy points, and on
-  N-MNIST &mdash; where accuracy is 0.99 and the cap never binds hard &mdash; the comparison
-  moves by at most 0.15 points in either direction. Any statement of this result that omits
-  the dataset and the timestep is broader than the evidence.
-</p>
-</section>
-<section class="modal-part"><h3>The C axis: 101 classes, where the ceiling stops explaining things<span class="pill pill-derived">derived</span><span class="pill pill-measured">measured</span></h3>
-<p>
-      The ceiling e<sup>T</sup>/(e<sup>T</sup>+C−1) has two variables and every measurement
-      above varies only T. N-Caltech101 has <strong>101 classes</strong>, where the T = 2
-      ceiling is <strong>0.068806</strong> rather than 0.450853 — an order of magnitude more
-      binding. 18 runs: two readouts, three timestep settings, three seeds, all stopping on
-      the patience rule.
-    </p>
-    <div class="scroll panel-table">
-      <table id="caxis-table"></table>
-    </div>
-    <p class="chart-note">Mean over three seeds, rendered from
-      <code>results/caltech_experiment.json</code>. "binds" counts the seeds whose accuracy
-      exceeds the ceiling — a ceiling forces underconfidence only while it does.</p>
-    <p>
-      <strong>The formula holds.</strong> The bound was respected in 9 of 9 runs, and at
-      T = 2 and T = 6 the models saturate it to 2.4&times;10<sup>−14</sup> and
-      3.8&times;10<sup>−13</sup> — the same one-part-in-10<sup>13</sup> as at C = 10. At
-      T = 10 the observed maximum sits 1.5&times;10<sup>−3</sup> <em>below</em> the ceiling
-      instead of on it, and that is not a failure: reaching the bound needs a sample whose
-      count vector is [T, 0, …, 0], meaning all 100 other classes silent at every step. Easy
-      at C = 10, not at C = 101. <strong>Validity and tightness are different properties</strong>
-      and only the first is claimed here.
-    </p>
-    <p>
-      <strong>The important result is where it stops binding.</strong> At T = 2 the ceiling
-      binds in 3 of 3 seeds and accounts for <strong>97.1%</strong> of uncalibrated ECE, just
-      as it accounted for 99.2% on N-MNIST. At T = 6 accuracy is 0.6427 against a ceiling of
-      0.8014 — comfortably below it, so nothing is forced — and the readout is
-      <strong>still underconfident by 0.1534</strong>, 4.4&times; to 6&times; N-MNIST's ECE at the same
-      T. On N-MNIST the regime where the ceiling stopped binding was also one where almost no
-      error remained, so the two explanations could not be told apart. Here they come apart,
-      and a large miscalibration is left that <strong>the ceiling does not explain at
-      all</strong>. That is a limitation of this study's central claim, and only varying C
-      could expose it. The obvious rescue — that the theoretical bound is too generous
-      because it assumes all 100 competitors silent — was pre-registered as a prediction and
-      <strong>falsified</strong>; see the panel below.
-    </p>
-    <p>
-      <strong>Where the cap is severe it costs accuracy, not just calibration.</strong> At
-      T = 2 the uncapped accumulator beats the count readout by <strong>12.82 accuracy
-      points</strong> — in every seed (+15.2, +9.6, +13.7) — with this architecture. At the
-      other architecture tested the gain is <strong>+3.08 points</strong>, still positive in
-      3 of 3 seeds: the direction replicates and the magnitude does not, so this is an
-      architecture-specific number (see the matched-architecture panel below). At C = 10 the
-      same comparison was worth 0.1 points and the readouts were indistinguishable. The cross-entropy floor is
-      2.68 nats here against 0.80 at C = 10, so the objective is dominated by a target the
-      model cannot reach. Above T = 2 it reverses and count wins by about 4 points, so this
-      belongs to the binding regime rather than to the readout.
-    </p>
-    <p>
-      <strong>This is also the first genuinely uncertain regime the study has sampled</strong>
-      — accuracy 0.43 to 0.66 against N-MNIST's 0.99 — and in it the sign of the
-      miscalibration finally turns over. The <em>count</em> readout is overconfident at
-      T = 10 (+0.0344, 3 of 3 seeds), the first time anywhere in this study, and the
-      accumulator is overconfident in 9 of 9 runs. <strong>The disagreement with the
-      literature is a regime difference.</strong> Underconfidence is what a capped readout
-      does where the cap binds; take away either condition and this study measures
-      overconfidence too.
-    </p>
-</section>
-  </div>
-</dialog>
-
-<dialog class="modal" id="m6" aria-labelledby="m6-h">
-  <div class="modal-head">
-    <div><h2 id="m6-h">On N-MNIST, which calibrator you use does not matter</h2><div class="modal-pills"><span class="pill pill-measured">measured</span></div></div>
-    <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
-  </div>
-  <div class="modal-body">
-<section class="modal-part">
-<p>
-      The study was designed around a hypothesis: that isotonic regression should beat
-      temperature scaling by a margin that <em>grows</em> as <em>T</em> falls, because a
-      spike-count readout is discrete and a scalar temperature is the wrong tool for a
-      discrete confidence distribution. It is not supported. At <em>T</em> = 2 — the most
-      discrete regime in the sweep, with 583 calibration samples per distinct confidence
-      level — temperature scaling <em>beat</em> isotonic, by a wider margin than at any other
-      <em>T</em> and in the opposite direction to the prediction.
-    </p>
-
-    <div class="pre-reg">
-      <p class="stamp">pre-registered 2026-09-10, before any calibrator was fitted to a trained model</p>
-      <blockquote>
-        Temperature scaling will match or beat top-label isotonic at every <em>T</em>, and
-        the isotonic advantage will not be statistically resolvable at any <em>T</em> — the
-        95% paired-bootstrap interval on the equal-width ECE difference will straddle zero
-        at <em>T</em> in {2, 4, 6, 8, 10}.
-      </blockquote>
-      <p class="verdict-text">
-        <strong>Outcome: the letter of the prediction is false.</strong> Thirteen of fifteen
-        intervals straddle zero. Two resolve, and they point in <em>opposite</em> directions:
-        <em>T</em> = 6 seed 0 favours isotonic with a CI of [−0.0024, −0.0003], and
-        <em>T</em> = 2 seed 1 favours temperature with [+0.0006, +0.0044]. So the claim that
-        <em>every</em> interval would straddle zero is wrong. Two resolvable results in fifteen
-        at a 95% level is near what multiple comparisons produce unaided — the expected count
-        under no true difference is about 0.75 — and they disagree on direction, so neither
-        method gains support. The prediction as written did not survive and is recorded here
-        unedited.
-      </p>
-    </div>
-
-    <p>
-      The refined form of the hypothesis fares no better. It held that the isotonic
-      advantage should track the number of calibration samples per distinct confidence
-      level, for which <em>T</em> is a proxy. That quantity moves 32-fold across the sweep,
-      from 583 samples per level at <em>T</em> = 2 to 18 at <em>T</em> = 10 — exactly the
-      manipulation the mechanism named. The advantage was flat and near zero across all of it.
-    </p>
-</section>
-<section class="modal-part"><h3>This is an N-MNIST result<span class="pill pill-measured">measured</span></h3>
-<p>
-  Everything in this panel is N-MNIST: ten classes, about 0.99 accuracy and a 5,000-sample
-  calibration set. It did not carry over. On N-Caltech101 a tie in at least 7 of 9 runs was
-  predicted, and the calibrators tie in <span data-n="nc-ties">4</span>; in the other
-  <span data-n="nc-differ">5</span>, all where the cap binds or nearly binds, isotonic
-  regression is better under both estimators. The hypothesis this study began with, an
-  isotonic advantage that grows as <em>T</em> falls, fails here and is the pattern there.
-  The tables are under "Scale and resolution" on the main page.
-</p>
-</section>
-<section class="modal-part"><h3>Two estimators, no shared exception<span class="pill pill-measured">measured</span></h3>
-<p>
-  The paired bootstrap was run under both ECE estimators on the same calibrated confidences,
-  with the same resamples. <strong>13 of 15</strong> intervals straddle zero under equal-width
-  binning and <strong>12 of 15</strong> under equal-mass (<code>iso_minus_temp_resolvable</code>
-  and <code>iso_minus_temp_em_resolvable</code> in <code>sweep.csv</code>).
-</p>
-<div class="scroll panel-table"><table>
-<thead><tr><th>estimator</th><th>runs that resolve</th><th>direction</th></tr></thead>
-<tbody>
-<tr><td>equal-width</td><td>T = 2 seed 1</td><td>favours temperature</td></tr>
-<tr><td>equal-width</td><td>T = 6 seed 0</td><td>favours isotonic</td></tr>
-<tr><td>equal-mass</td><td>T = 4 seed 1</td><td>favours isotonic</td></tr>
-<tr><td>equal-mass</td><td>T = 4 seed 2</td><td>favours isotonic</td></tr>
-<tr><td>equal-mass</td><td>T = 8 seed 0</td><td>favours isotonic</td></tr>
-</tbody></table></div>
-<p>
-  <strong>The two sets are disjoint. No run resolves under both.</strong> Five runs resolve
-  under one estimator or the other, and the intersection is empty.
-</p>
-<p>
-  <strong>That strengthens the null result rather than weakening it.</strong> The estimators
-  see identical confidences and differ only in how they bin them. A run whose interval
-  excluded zero because the calibrators genuinely differed would be found by both, in the same
-  place and the same direction. Two estimators disagreeing entirely about which runs resolve is
-  evidence that none of the five are real &mdash; each is binning noise that one scheme pushes
-  across zero and the other does not. That is a stronger argument than either count alone. The
-  three equal-mass exceptions all favouring isotonic does not change it: no other estimator on
-  the same data confirms any of them.
-</p>
-</section>
-  </div>
-</dialog>
-
-<dialog class="modal" id="m7" aria-labelledby="m7-h">
-  <div class="modal-head">
-    <div><h2 id="m7-h">Selective prediction: the readout limits what can be deployed</h2><div class="modal-pills"><span class="pill pill-measured">measured</span></div></div>
-    <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
-  </div>
-  <div class="modal-body">
-<section class="modal-part">
-<p>
-      Risk-coverage asks what fraction of samples can be acted on at a given error rate.
-      Samples sharing a confidence cannot be ordered against each other, so coverage steps
-      only at boundaries between distinct levels. With a count readout at T = 2 that gives
-      <strong>about 9 achievable operating points across 10,000 test samples</strong>
-      (10, 8 and 10 by seed), and <strong>no operating point at any coverage reaches 99.9%
-      accuracy</strong> — true at all three seeds. At T = 4 the same target is met at 92.0%
-      coverage on average (93.4%, 88.7%, 93.8%). A practitioner at T = 2 cannot choose an
-      arbitrary operating point.
-    </p>
-    <p>
-      <strong>This is the second deployment consequence of the readout choice, and at low T
-      it points the same way calibration does.</strong> The membrane readout is real-valued,
-      so almost every sample gets its own confidence: <strong>about 9,998 operating points at
-      T = 2</strong> against count's 9 — effectively a continuum. Whether that is worth having
-      depends on the regime, because from T = 6 up the count readout ranks better, and a
-      finer grid of operating points on a worse ranking is not a gain.
-    </p>
-    <p style="color:var(--ink-3)">
-      Calibration cannot change this for top-label calibrators, which are monotone in
-      confidence and so cannot reorder samples. One-vs-rest isotonic is the exception: it
-      recalibrates every class probability and renormalises, so it is not a function of the
-      top-label confidence, and it reorders — Kendall τ 0.28 against the raw ranking at
-      T = 2, with AURC six times worse (0.0149 against 0.0024, mean of three seeds; 5.1×,
-      6.2× and 7.7× by seed). It should not be used when
-      the downstream task is selective prediction.
-    </p>
-    <div class="scroll panel-table">
-      <table id="selective-table"></table>
-    </div>
-    <p class="chart-note">Mean over seeds, rendered from
-      <code>results/readout_experiment.json</code>. Oracle AURC is the floor a perfect ranker
-      would reach at that accuracy; a raw AURC is uninterpretable without it.</p>
-    <figure class="fig">
-      <img src="figures/fig7-risk-coverage.svg" alt="Risk against coverage for the count
-        readout at five timestep settings, drawn as step functions. The left panel covers the
-        full coverage range; the right panel covers the last tenth, where the differences are
-        visible. Every marker is an achievable operating point, and T = 2 has only a handful.">
-      <figcaption>Risk against coverage, count readout, seed 0. Drawn as steps on purpose:
-        joining the points with a smooth line would draw operating points that do not exist.
-        The right panel is the last tenth of the coverage range, where the differences
-        live.</figcaption>
-    </figure>
-</section>
-  </div>
-</dialog>
-
-<dialog class="modal" id="m8" aria-labelledby="m8-h">
-  <div class="modal-head">
-    <div><h2 id="m8-h">The disagreement with the literature is a regime difference</h2><div class="modal-pills"><span class="pill pill-lit">lit</span><span class="pill pill-measured">measured</span></div></div>
-    <button class="modal-x" type="button" data-close aria-label="Close">&times;</button>
-  </div>
-  <div class="modal-body">
-<section class="modal-part"><h3>The sign of the miscalibration differs from the literature's<span class="pill pill-lit">lit</span><span class="pill pill-measured">measured</span></h3>
-<p>
-      The SNN literature mostly reports <strong>over</strong>confidence as the characteristic
-      calibration failure, and "Agreeing to Stop" says so using the <em>same readout this
-      study uses</em>. The same authors' "Knowing When to Stop" reports that readout as
-      "first under-confident and then over-confident" as time passes, so early
-      underconfidence is a published observation and not this study's. This study measures
-      it directly at low <em>T</em>: mean confidence minus accuracy is
-      <strong>−0.5386 at T = 2</strong> and −0.1446 at T = 4, averaged over three
-      seeds. That is severe
-      <strong>under</strong>confidence, and it is structural — the ceiling at T = 2 is
-      0.4509 against a test accuracy of 0.9850, so no reachable output could have been
-      correctly confident.
-    </p>
-    <p style="color:var(--ink-3)">
-      This is a regime difference, not a contradiction, and neither result is in error.
-      "Agreeing to Stop" runs at T = 80, where the ceiling is 1.0 to double precision; even
-      at its earliest checkpoint, T = 20, the ceiling is 0.99999998. Nothing forces
-      underconfidence there. The ceiling binds only while accuracy exceeds it. On N-MNIST at
-      T = 8 and T = 10 this study's own models sit below it and the structural
-      underconfidence duly disappears, without becoming overconfidence: conf − acc is
-      −0.0065 at T = 8 and −0.0008 at T = 10. On N-Caltech101, where accuracy is 0.64
-      rather than 0.99, the same count readout is overconfident at T = 10, by +0.0344 in
-      3 of 3 seeds. What this study defends is narrow: at low T, with a spike-count
-      readout, on a task where accuracy exceeds the ceiling, the miscalibration is
-      underconfidence and it is forced.
-    </p>
-    <p>
-      One tidy resolution was available and was <strong>tested and rejected</strong>. If
-      removing the cap restored overconfidence, both observations would be the same
-      phenomenon seen through different readouts. It does not — but the three-seed picture
-      is more qualified than one seed suggested, and the qualification matters.
-      <strong>The membrane readout's mean confidence stays below its accuracy at every
-      timestep setting</strong>: −0.0289, −0.0010, −0.0013, −0.0036 and −0.0008 at
-      T = 2, 4, 6, 8 and 10, averaged over three seeds. <strong>But only at T = 2 is that gap
-      larger than the spread between seeds.</strong> From T = 4 up the individual seeds fall
-      on both sides of zero — three of the twelve cells at T ≥ 4 are mildly
-      <em>over</em>confident (+0.0020, +0.0009, +0.0020) — so what survives the removal of the
-      cap is small and not consistently signed.
-    </p>
-    <p>
-      At T = 2, where the cap binds hardest, all three seeds are underconfident and removing
-      the cap shrinks the gap by roughly 12× to 64× depending on seed. (Rounded, because
-      this is the gap between mean confidence and accuracy; the ECE ratios quoted in the
-      readout panel are 11.9×–63.5× and are a different quantity.) That is the one regime
-      where the sign is unambiguous, and removing the cap alone does not reverse it: the
-      leaky membrane readout is still underconfident there. Above T = 4 this study
-      cannot resolve the sign at all — a weaker statement than seed 0 alone supported, and
-      the honest one.
-    </p>
-    <p>
-      <strong>One readout does show the literature's direction.</strong> The non-leaky
-      accumulator is mildly but consistently <em>over</em>confident at T ≥ 6 — conf − acc
-      +0.0032 and +0.0047, positive in 3 of 3 seeds at both. So an uncapped readout that also
-      integrates over the full window lands on the side the literature reports, while the
-      capped and the leaky ones do not. The second dataset confirms it. On N-Caltech101 the
-      accumulator is overconfident in 9 of 9 runs, by +0.0816, +0.1843 and +0.2254 at
-      T = 2, 6 and 10, and the count readout itself turns overconfident at T = 10, where
-      its cap is slack: +0.0344, positive in 3 of 3 seeds.
-    </p>
-</section>
-<section class="modal-part"><h3>Does the ceiling bind in published work? No — and the reason is the finding<span class="pill pill-lit">lit</span></h3>
-<p>
-      Li, Jones &amp; Furber report <strong>94.11% accuracy at 4 timesteps on CIFAR-10</strong>
-      (ICCV 2023). At C = 10, T = 4 the ceiling is <strong>0.8585</strong>. If their
-      confidence were a softmax over integer spike counts, the bound would constrain a
-      published result. Their method section settles it, and nothing here is inferred from
-      the accuracy number.
-    </p>
-    <p>
-      <strong>It does not bind: they use a real-valued readout.</strong> Verbatim from their
-      experimental setup — <em>"keeping the output layer at full precision… the neurons in
-      the output layer only accumulate input currents"</em>. The output neurons integrate but
-      do not fire, so the logits are accumulated real-valued currents rather than integers in
-      [0, T], and e<sup>T</sup>/(e<sup>T</sup>+C−1) simply does not apply to them.
-    </p>
-    <p>
-      That is the same construction as this study's <strong>accumulator</strong> readout,
-      reached independently and for a different reason: conversion keeps the output layer at
-      full precision because conversion needs the precision. <strong>Conversion-based work
-      sidesteps the cap as a side effect of a choice made for accuracy.</strong>
-    </p>
-    <p>
-      <strong>And the same paragraph corroborates the other half of this study.</strong> It
-      states that with such a readout "the output logits of SNNs increase with t
-      continuously, which causes the <em>saturated confidence</em>", and its Figure 2 shows
-      confidence "saturates to 100% quickly with time" before a scalar α — temperature
-      scaling — softens it. An unbounded accumulator is <em>over</em>confident. That is
-      exactly what this study measures for its own accumulator: conf − acc of +0.0032 at
-      T = 6 and +0.0047 at T = 10 on N-MNIST, positive in 3 of 3 seeds at both, and +0.08 to
-      +0.23 at C = 101. Two independent lines of work, two datasets, same direction.
-    </p>
-    <div class="scroll panel-table">
-      <table>
-        <thead><tr><th style="cursor:default">readout</th>
-          <th style="cursor:default">bound</th>
-          <th style="cursor:default">failure mode</th>
-          <th style="cursor:default">reported by</th></tr></thead>
-        <tbody>
-          <tr><td class="k">softmax over spike counts</td><td>capped at e<sup>T</sup>/(e<sup>T</sup>+C−1)</td><td><strong>under</strong>confidence where the cap binds</td><td>this study, T ≤ 6</td></tr>
-          <tr><td class="k">non-spiking accumulator</td><td>unbounded, grows with t</td><td><strong>over</strong>confidence, saturating to 1</td><td>Li et al.; this study's accumulator</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>
-      <strong>So the claim the paper may make is narrower than "the bound constrains
-      published work", and it is the one the evidence supports.</strong> Of the two
-      references verified to report both a timestep count and a confidence measure, neither
-      is constrained: Li et al. use an uncapped readout, and Chen, Park &amp; Simeone do use
-      softmax over integer spike counts but at <strong>T = 80</strong>, where the ceiling is
-      1.0 to double precision and inert. The ceiling binds in a regime the literature has not
-      published in — <strong>a spike-count readout at low T</strong> — which is where this
-      study works.
-    </p>
-</section>
-  </div>
-</dialog>
 
 </main>
 
-<script src="data.js?v=20261014b"></script>
-<script src="app.js?v=20261014b"></script>
+<footer class="foot">
+  <div class="wrap">
+    <p id="last-updated"></p>
+    <p>Every number on this page is rendered from <code>data.js</code>, which <code>scripts/export_dashboard_data.py</code> writes from the result artifacts.</p>
+  </div>
+</footer>
+
+<div class="tip" id="tip" role="tooltip"></div>
+<script src="data.js?v=20261017"></script>
+<script src="app.js?v=20261017"></script>
 </body>
 </html>

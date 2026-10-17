@@ -3665,3 +3665,63 @@ appendix, A and B, runs from page 16 to ten lines of page 18.
 **Verified.** `tectonic`: 0 warnings. `pytest -q`: 415 passed. Figures, `numbers.tex` and
 `docs/data.js` regenerated. Only `fig9-fusion` changed, for its axis label; the other SVGs'
 metadata-only churn was discarded.
+
+## 2026-10-17 — The dashboard rebuilt as a chart-first summary of the paper
+
+**Why.** The author asked for a page that a neuromorphic supervisor can read in three
+minutes: the fewest possible words, every claim carried by a chart or a number, detail in
+collapsible blocks, and every number rendered from `data.js`.
+
+**Did.**
+- `docs/index.html`, `docs/app.js` and `docs/style.css` were rewritten. The bands are, in
+  order: hero (title, one-sentence finding, "Preprint in preparation" chip, four tiles); the
+  cap; calibration fixes the average, not the ranking; the readout sets the direction of
+  failure; the learned scale; calibrators; the fusion pilot; the pre-registration ledger;
+  limitations and reproduce steps. Each chart is hand-drawn SVG sized to its container,
+  with a hover and focus tooltip and a table view in a `<details>` block. The modals are
+  gone. The theme is light by default; dark is a selectable theme with its own colour steps.
+- `scripts/dashboard_summary.py` is new. The export calls it, and it writes a `summary`
+  (the hero numbers and the count-cell union) and a `ledger` into `data.js`.
+- No number is typed into the page. The digits left in its text are condition labels
+  (T = 2, 4, 6, 10), prediction identifiers, the formula's "−1", "95%" naming the interval
+  level, the ORCID, and a command-line flag. A test enforces this.
+
+**Decisions, with reasons.**
+- *Predictions 1 to 5 in the ledger.* Their outcomes are recorded only in prose in
+  `NOTES.md`. The export re-applies each registered condition to the artifact rows and stops
+  if the result disagrees with the recorded verdict, which is kept in `RECORDED` and
+  checked by a test against the NOTES wording. Prediction 5 had four parts, each with its
+  own falsification condition, so the ledger carries 5.1 to 5.4. That makes eight earlier
+  verdicts, five held and three falsified, beside the paper's eleven. Where NOTES records a
+  split outcome, the ledger states it in the measured column. Prediction 1 is shown as
+  falsified, "as stated", with its counts under both estimators. Prediction 3 is shown as
+  held, because its falsification condition was not met, and its unmet headline is stated
+  ("the accumulator wins 0 of 6 seeds"). The NOTES verdicts for prediction 2 were
+  evaluated on seed 0; the ledger shows three-seed means, and the verdict is the same.
+- *The hero tile counts the paper's eleven*, five held and six falsified, so that it agrees
+  with the abstract. The earlier eight are given beneath it and in the ledger.
+- *The learned-scale readout has no hue of its own.* A fifth categorical hue was validated
+  beside count and accumulator, which share its chart. Magenta failed the all-pairs
+  normal-vision floor against orange (ΔE 12.9 light, 11.6 dark) and violet failed against
+  blue. It is drawn in the count readout's blue with a hollow marker and labelled, since
+  it is the count readout with one scale added. The four readout colours are the ones the
+  brief fixed, and they pass the validator on adjacent pairs in both modes (worst CVD ΔE
+  9.1 light, 8.4 dark). Membrane and weighted count fall below 3:1 against the light
+  surface, so every chart has a legend and a table view.
+- *Reliability diagrams draw dots sized by bin count, with no connecting lines.* Lines
+  through bins holding one or two predictions zig-zagged between 0 and 1 and read as noise.
+- *No energy note.* Energy is not among the claims the brief listed. The provenance test
+  that checked the old note's ranges now fails if energy reappears on the page without
+  being rendered from data.
+
+**Tests.** `tests/test_dashboard.py` was rewritten: empty number spans, a renderer for every
+span, no measured number in the page text, the payload fields, the ledger against the
+verdict blocks and NOTES, the order of interface and data, isolated renderers, versioned
+assets, the generated footer, the band order, the pilot's limits, the readout colours in
+both themes, and the limitations heading. Three tests in `tests/test_provenance.py` that
+read typed sentences from the old page now check the rendered equivalents. `pytest -q`:
+422 passed.
+
+**Browser check.** `[MEASURED]` Headless Chromium over CDP at 1920, 1440, 900 and 400 wide:
+no console output, no horizontal overflow, every number span filled, every chart drawn
+within its container, a tooltip from every chart, and a working theme toggle.

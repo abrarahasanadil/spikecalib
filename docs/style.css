@@ -1,996 +1,245 @@
-/* SpikeCalib — measurement instrument for spiking neural networks.
- *
- * TOKEN PLAN (fixed before any component was written)
- * ---------------------------------------------------
- * Vernacular: oscilloscopes and lab equipment. A scope is a dark bezel with a
- * recessed phosphor screen, grotesque labels silk-screened on the panel, and
- * numeric readouts in a monospace face. That maps directly:
- *
- *   ground   #080b0c   the bezel
- *   panel    #0e1315   the instrument body, glass-surfaced
- *   screen   #060909   chart wells, recessed BELOW the panel, with a graticule
- *
- * Glass is a flat translucent fill plus a 1px inset top highlight and a layered
- * shadow — depth from a light edge, not from a gradient wash.
- *
- * One accent, phosphor cyan #5ad1c8 (10.5:1 on ground): active control state, the
- * live trace, the focus ring. Amber #f0b429 is a RESERVED STATUS colour for the
- * verdict lamp only; it never encodes data.
- *
- * Data hues are validated, not chosen: blue/orange/aqua clear every all-pairs check
- * on this dark ground (worst CVD dE 9.4, worst normal-vision dE 20.9). No four-hue
- * set from the ramp passes on dark, so the fourth arm — isotonic one-vs-rest, which
- * the study designates secondary — is folded to muted grey with a dashed stroke
- * rather than given a hue that fails.
- *
- * LAYOUT: built for a landscape monitor. Fixed 320px rail, no page max-width, and a
- * 12-column dashboard grid in the main area so panels sit side by side. Narrative
- * panels hold a ~70ch measure inside the panel rather than centring the page.
- *
- * Radii vary by role so not everything is the same rounded card. No entrance
- * animation anywhere; transitions fire on interaction only and are removed entirely
- * under prefers-reduced-motion.
- */
+/* SpikeCalib dashboard and briefing. Plain CSS, no build step.
+   Colours are tokens on :root; dark mode is a selected theme with its own steps, set by
+   data-theme on <html>. One colour per readout everywhere:
+   count #2a78d6 / #3987e5, accumulator #eb6834 / #d95926, membrane #1baf7a / #199e70,
+   weighted count #eda100 / #c98500. */
 
 :root {
-  /* ============================================================================
-     Design system. These values are the reference page's, used verbatim rather
-     than approximated. Legacy names below are aliases onto them, so every rule
-     written before this port picks up the new values without being rewritten.
-     ============================================================================ */
-
-  --bg:        #0A0B10;
-  --surface:   rgba(255, 255, 255, 0.06);
-  --surface-2: rgba(255, 255, 255, 0.10);
-  --surface-3: rgba(6, 9, 13, 0.44);
-  --border:    rgba(255, 255, 255, 0.11);
-  --border-2:  rgba(255, 255, 255, 0.20);
-
-  --text:   #eaf0f7;
-  --text-2: #aabbce;
-  --text-3: #8a99ad;
-
-  --blue:   #0A84FF;
-  --indigo: #5E5CE6;
-  --teal:   #64D2FF;
-  --mint:   #66D4CF;
-  --purple: #BF5AF2;
-
-  --sys-green:  #30D158;
-  --sys-orange: #FF9F0A;
-  --sys-red:    #FF453A;
-
-  /* Ghost fills for chips and pills. .18 reads as a tint on this ground without
-     competing with the text it sits behind. */
-  --ghost-blue:   rgba(10, 132, 255, .18);
-  --ghost-indigo: rgba(94, 92, 230, .18);
-  --ghost-teal:   rgba(100, 210, 255, .18);
-  --ghost-mint:   rgba(102, 212, 207, .18);
-  --ghost-purple: rgba(191, 90, 242, .18);
-  --ghost-green:  rgba(48, 209, 88, .18);
-  --ghost-orange: rgba(255, 159, 10, .20);
-  --ghost-red:    rgba(255, 69, 58, .18);
-
-  /* Radius */
-  --r-xs: 8px;  --r-sm: 11px;  --r: 14px;  --r-lg: 20px;  --r-xl: 24px;
-  --r-pill: 999px;
-
-  /* Spacing. Every gap and inset on the page is one of these. */
-  --s1: 4px;  --s2: 8px;  --s3: 12px;  --s4: 16px;
-  --s5: 20px; --s6: 24px; --s7: 32px;  --s8: 44px;
-
-  /* The surface treatment. The inset top highlight is what makes a panel read as lit
-     from above; a flat box with a hairline border does not. */
-  --lift: inset 0 1px 0 rgba(255, 255, 255, .10), 0 8px 32px rgba(0, 0, 0, .36);
-  --blur: blur(24px) saturate(160%);
-  --well: inset 0 1px 2px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.04);
-
-  --sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-
-  --rail-w: 320px;
-
-  /* ---- legacy aliases: old names, new values ---- */
-  --panel:      var(--surface);
-  --screen:     var(--surface-3);
-  --glass:      var(--surface);
-  --glass-2:    var(--surface-2);
-  --glass-3:    var(--surface-2);
-  --edge:       var(--border-2);
-  --edge-soft:  var(--border);
-  --hi:         inset 0 1px 0 rgba(255, 255, 255, .10);
-  --shadow:     0 8px 32px rgba(0, 0, 0, .36);
-  --ink:        var(--text);
-  --ink-2:      var(--text-2);
-  --ink-3:      var(--text-3);
-  --rule:       var(--border);
-  --accent:     var(--mint);
-  --accent-dim: var(--ghost-mint);
-  --status:     var(--sys-orange);
-  --status-dim: var(--ghost-orange);
-
-  /* Chart series. Mapped onto the new palette, keeping the hue ORDER that was
-     validated for colour-vision deficiency: blue, orange, green, muted grey. */
-  --d1: var(--blue);        /* uncalibrated */
-  --d2: var(--sys-orange);  /* temperature */
-  --d3: var(--sys-green);   /* isotonic top-label */
-  --d4: #8a99ad;            /* isotonic one-vs-rest -- folded, dashed */
-  --graticule: rgba(100, 210, 255, .07);
-
-  /* Old spacing names map onto the new scale. */
-  --sp-1: var(--s2); --sp-2: var(--s3); --sp-3: var(--s3);
-  --sp-4: var(--s6); --sp-5: var(--s6); --sp-6: var(--s7);
-  --r-panel: var(--r-lg);
-  --r-tile: var(--r-sm);
-  --r-ctl: var(--r-xs);
+  color-scheme: light;
+  --bg: #f4f4f1;
+  --panel: #fcfcfb;          /* chart surface; the palette was validated against it */
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #6f6e69;
+  --grid: #e1e0d9;
+  --axis: #c9c8c0;
+  --border: rgba(11, 11, 11, 0.10);
+  --wash: rgba(11, 11, 11, 0.035);
+  --count: #2a78d6;
+  --accum: #eb6834;
+  --membrane: #1baf7a;
+  --wcount: #eda100;
+  --good: #0ca30c;
+  --good-ink: #006300;
+  --critical: #d03b3b;
+  --critical-ink: #b42f2f;
+  --chip: #e8eefb;
+  --chip-ink: #1c5cab;
+  --code: #efeee9;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211;
+  --panel: #1a1a19;
+  --ink: #f0efec;
+  --ink-2: #c3c2b7;
+  --muted: #9a9991;
+  --grid: #2c2c2a;
+  --axis: #45453f;
+  --border: rgba(255, 255, 255, 0.10);
+  --wash: rgba(255, 255, 255, 0.04);
+  --count: #3987e5;
+  --accum: #d95926;
+  --membrane: #199e70;
+  --wcount: #c98500;
+  --good: #0ca30c;
+  --good-ink: #5fcf5f;
+  --critical: #d03b3b;
+  --critical-ink: #f07a7a;
+  --chip: #1d2a3d;
+  --chip-ink: #9ec5f4;
+  --code: #232321;
+}
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
-
 body {
   margin: 0;
-  /* Two soft radials over the black base: blue across the top, orange across the lower
-     band. Both are viewport-fixed, so they stay put as the page scrolls.
-
-     The orange was invisible, and the cause was geometry rather than opacity. Its colour
-     stop reached zero at 60% of a 1000px radius -- 600px -- from a centre at x = -4%, so it
-     died around x = 530 and never left the rail and the left gutter; and the rail's own
-     rgba(6,9,13,.82) passes only 18% of what is behind it, so the little that landed there
-     contributed +2 of 255 to the final pixel. Measured against the rendered page it added
-     nothing at all to any panel face. It is now as wide as the blue and anchored inside the
-     page, and measures a +24 peak contribution against the blue's +23. */
-  background:
-    radial-gradient(1500px 820px at 46% -12%, rgba(10, 132, 255, .13) 0%, rgba(10, 132, 255, 0) 64%),
-    radial-gradient(1700px 950px at 24% 96%, rgba(255, 159, 10, .12) 0%, rgba(255, 159, 10, 0) 68%),
-    var(--bg);
-  background-attachment: fixed;
-  color: var(--text);
-  font-family: var(--sans);
-  font-size: 14px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.55 var(--sans);
 }
+a { color: var(--chip-ink); }
+code, pre { font-family: var(--mono); font-size: 0.86em; }
 
-.tile-value, .readout-value, td, th { font-variant-numeric: tabular-nums; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
 
-a { color: var(--accent); text-underline-offset: 2px; text-decoration-thickness: 1px; }
-a:hover { color: var(--teal); }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
-
-/* ---------- fixed rail ---------- */
-
-.rail {
-  position: fixed; inset: 0 auto 0 0; width: var(--rail-w);
-  overflow-y: auto; overscroll-behavior: contain;
-  /* Centred when the argument fits, top-aligned and scrolling when it does not. An auto
-     block margin on a flex item absorbs positive free space only -- with negative free
-     space it resolves to zero -- so this cannot produce the classic centred-overflow bug
-     where the top of the content becomes unreachable. `justify-content: center` would. */
-  display: flex; flex-direction: column;
-  padding: var(--s6) var(--s4) var(--s5);
-  /* The same material as the modal rather than a solid slab. The old rgba(6,9,13,.82)
-     passed only 18% of what was behind it, which is also what made the ground gradient
-     invisible under it. */
-  background: rgba(255, 255, 255, .045);
-  backdrop-filter: blur(32px) saturate(170%);
-  -webkit-backdrop-filter: blur(32px) saturate(170%);
-  border-right: 1px solid var(--rule);
-  z-index: 10;
-}
-.rail-inner { margin-block: auto; }
-.rail-head { padding-bottom: var(--s4); margin-bottom: var(--s4); border-bottom: 1px solid var(--rule); }
-.rail-head .name { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
-.rail-head .what { font-size: 12.5px; color: var(--ink-3); margin-top: var(--s1); line-height: 1.45; }
-/* The rail used to carry two unrelated control sets -- a derived-arithmetic instrument and
-   the filters over measured runs -- each with its own "timesteps" meaning a different
-   thing. The instrument now lives beside the chart it drives, so h3 names the one job the
-   rail still has and h4 names each control under it. */
-/* The rail holds the argument now that the filters live with what they filter. Four short
-   blocks, prose, no lists -- something a reader can take in standing up. */
-.rail-arg { margin-bottom: var(--s4); }
-.rail-arg > h3 { margin: 0 0 var(--s2); font-size: 11.5px; font-weight: 600;
-  color: var(--mint); letter-spacing: .04em; text-transform: uppercase; }
-.rail-arg > p { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--ink-2); }
-.rail-arg > p sup { font-size: .75em; }
-
-/* The filters, in the panel with the table and the chart they narrow. */
-.sweep-controls {
-  display: flex; flex-wrap: wrap; align-items: flex-start;
-  gap: var(--s4) var(--s6);
-}
-.filter-group { min-width: 0; }
-/* --ink-2 rather than --ink-3: these labels sit over the brightest part of the ground
-   gradient and measured 4.52:1 there, which passes but leaves nothing in hand. */
-.filter-group > h4 { margin: 0 0 var(--s2); font-size: 11.5px; font-weight: 600;
-  color: var(--ink-2); letter-spacing: .04em; text-transform: uppercase; }
-/* in the rail the track filled the column, so its segments stretched equally; here there
-   is room, and stretching them broke "equal-width" across two lines */
-.sweep-controls .segmented { flex: 0 0 auto; }
-.sweep-controls .segmented .chip { flex: 0 0 auto; white-space: nowrap; padding: var(--s1) var(--s3); }
-.sweep-controls > .hint { flex: 1 1 260px; margin: 0; align-self: center;
-  font-size: 12px; color: var(--ink-3); line-height: 1.5; max-width: 62ch; }
-
-/* The instrument's controls, in the panel with their output. */
-.instrument-controls {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--s3) var(--s5); align-items: start;
-  margin-bottom: var(--s4); padding-bottom: var(--s4);
-  border-bottom: 1px solid var(--border);
-}
-.instrument-controls .field { margin: 0; }
-.instrument-controls .preset-row { grid-column: 1 / -1; }
-/* Four presets: sized by their labels, not in equal quarters, or the longest one wraps. */
-.instrument-controls .preset-row .chip { flex: 1 1 auto; white-space: nowrap; }
-@media (max-width: 1000px) {
-  /* four labels this long need their own line once the panel is this narrow */
-  .instrument-controls .preset-row { flex-direction: column; border-radius: var(--r); gap: 2px; }
-  .instrument-controls .preset-row .chip { text-align: left; border-radius: calc(var(--r) - 5px); }
-}
-@media (max-width: 560px) { .instrument-controls { grid-template-columns: 1fr; } }
-
-/* The provenance key is a legend: read once, then out of the way. It used to take half the
-   rail height, which is why the rail did not fit on a screen. */
-.prov-note {
-  margin-top: var(--s3); padding-top: var(--s3);
-  border-top: 1px solid var(--rule);
-}
-.prov-note > summary {
-  cursor: pointer; font-size: 11.5px; font-weight: 600; color: var(--ink-3);
-  letter-spacing: .04em; text-transform: uppercase; list-style: none;
-}
-.prov-note > summary::-webkit-details-marker { display: none; }
-.prov-note > summary::before { content: "\25B8\00a0"; color: var(--text-3); }
-.prov-note[open] > summary::before { content: "\25BE\00a0"; }
-.prov-note[open] > summary { margin-bottom: var(--s3); }
-.prov-note .hint { margin: 0 0 var(--s3); font-size: 12px; color: var(--ink-3); line-height: 1.5; }
-.prov-note .prov-key { display: flex; flex-direction: column; gap: var(--s2); }
-.rail-sep { height: 1px; background: var(--rule); margin: var(--s1) 0 var(--s5); }
-
-/* ---------- dashboard grid ---------- */
-
-.main {
-  margin-left: var(--rail-w);
-  padding: var(--s5) var(--s6) var(--s8);
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: var(--sp-4);
-  align-content: start;
-  /* start, not stretch. With stretch a short panel is inflated to the height of the tallest
-     panel in its row and shows that difference as empty space inside its own border -- which
-     was up to 1,237px on one row. With start, a panel is exactly as tall as its content and
-     a height mismatch costs nothing. Row balance is then handled by SPAN, not by padding:
-     anything long enough to dominate a row is given the full twelve columns. */
-  align-items: start;
-}
-.c12 { grid-column: span 12; }
-.c7  { grid-column: span 7; }
-.c6  { grid-column: span 6; }
-.c5  { grid-column: span 5; }
-
-.band {
-  grid-column: span 12;
-  /* The only two vertical gaps on the page: --sp-4 between panels (the grid gap) and
-     --sp-6 before a new section. The old rule set a negative bottom margin, which made the
-     gap after a band header 10px against 16px elsewhere. */
-  margin: calc(var(--sp-6) - var(--sp-4)) 0 0;
-  display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--s3);
-}
-.band:first-of-type { margin-top: 0; }
-.band .idx { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
-.band h2 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
-.band .sub { margin: 0; font-size: 13px; color: var(--ink-3); }
-
-/* ---------- masthead ---------- */
-
-/* Title, subtitle and author stay; the summary and the links scroll away with the content.
-   Sticky on .main rather than inside the old header, because a sticky child only sticks
-   within its own parent's box and would unstick the moment the header scrolled past. */
-.masthead-bar {
+/* ---------- top bar ---------- */
+.top {
   position: sticky; top: 0; z-index: 20;
-  /* bleeds to the edge of .main's padding box, so the glass spans the column rather than
-     floating inside it. The negatives must match .main's padding exactly or the page
-     overflows sideways -- it did, by 12px, at the 900px breakpoint where that padding
-     changes. */
-  margin: calc(var(--s5) * -1) calc(var(--s6) * -1) 0;
-  padding: var(--s3) var(--s6) var(--s3);
-  background: rgba(255, 255, 255, .06);
-  backdrop-filter: blur(28px) saturate(170%);
-  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(6px);
   border-bottom: 1px solid var(--border);
 }
-.masthead-bar h1 { margin: 0; font-size: 20px; line-height: 1.2; letter-spacing: -0.015em; font-weight: 600; }
-.masthead-bar .tagline { margin: 0; color: var(--ink-2); font-size: 13px; line-height: 1.35; }
-.masthead-bar .who { margin: var(--s2) 0 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.35; }
-/* The bar already reserves its own space as a grid item, so the old margin here counted
-   it a second time: 24px of grid gap plus 20 plus the hero's own 16 came to 60px under
-   the border. The grid gap alone is the gap. */
-.masthead { margin-top: 0; }
-/* no in-page anchors exist today; this keeps any future one clear of the bar */
-[id] { scroll-margin-top: 104px; }
+.top .wrap { display: flex; align-items: center; gap: 18px; height: 52px; }
+.brand { font-weight: 650; letter-spacing: -0.01em; text-decoration: none; color: var(--ink); }
+.nav { display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; }
+.nav::-webkit-scrollbar { display: none; }
+.nav a { color: var(--ink-2); text-decoration: none; font-size: 13px; white-space: nowrap; }
+.nav a:hover { color: var(--ink); }
+.theme-toggle {
+  border: 1px solid var(--border); background: var(--panel); color: var(--ink-2);
+  border-radius: 999px; padding: 4px 12px; font: 13px var(--sans); cursor: pointer; white-space: nowrap;
+}
+.theme-toggle:hover { color: var(--ink); }
 
-/* ---------- masthead (scrolling part) ---------- */
-
-.masthead h1 { margin: 0 0 var(--s1); font-size: 25px; line-height: 1.15; letter-spacing: -0.015em; font-weight: 600; }
-.masthead .tagline { margin: 0 0 var(--s3); color: var(--ink-2); font-size: 15px; }
-.masthead .who { margin: 0; font-size: 13.5px; color: var(--ink-2); }
-.masthead .who strong { color: var(--ink); font-weight: 600; }
-.masthead .who a { color: var(--ink-2); }
-.masthead .who a:hover { color: var(--accent); }
-.masthead-links { display: flex; flex-wrap: wrap; gap: var(--s2); margin: var(--s3) 0 0; padding: 0; list-style: none; }
-.masthead-links li { list-style: none; }
-.masthead-links a, .masthead-links span {
-  display: inline-block; padding: var(--s1) var(--s3); border-radius: var(--r-ctl);
-  border: 1px solid var(--edge-soft); background: var(--glass);
-  font-size: 13px; text-decoration: none;
-}
-.masthead-links a { color: var(--ink); }
-.masthead-links a:hover { border-color: var(--accent); color: var(--accent); }
-.masthead-links .pending { color: var(--ink-3); }
-/* The measure is the panel, not a cap on the text. Uncapped inside the full masthead the
-   summary ran 224 characters at 1920; capping the text instead left it stopping at an
-   invisible wall with empty space to its right. A 900px panel gives the same measure a
-   visible edge, and the links fill the space beside it. */
-.hero {
-  display: grid;
-  /* the links track takes its content width, so it never reserves space it does not use;
-     what is left over past the panel is trailing breathing room, not a stranded column */
-  grid-template-columns: minmax(0, 900px) auto;
-  justify-content: start;
-  gap: var(--s5); align-items: start; margin-top: 0;
-}
-.hero-panel {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r-lg); box-shadow: var(--lift);
-  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-  padding: var(--s5) var(--s7);
-}
-.hero .masthead-links { margin: 0; flex-direction: column; align-items: flex-start; gap: var(--s2); }
-@media (max-width: 1100px) {
-  .hero { grid-template-columns: minmax(0, 1fr); }
-  .hero .masthead-links { flex-direction: row; }
-}
-.lede { max-width: none; color: var(--ink); font-size: 15.5px; line-height: 1.65; margin: 0; }
-
-/* ---------- glass panel ---------- */
+/* ---------- bands ---------- */
+.band { padding: 44px 0 8px; scroll-margin-top: 60px; }
+.band > h2 { font-size: 22px; letter-spacing: -0.015em; margin: 0 0 4px; font-weight: 650; }
+.band > .take { color: var(--ink-2); margin: 0 0 18px; max-width: 72ch; }
+.band > .take b, .take strong { color: var(--ink); font-weight: 600; }
 
 .panel {
-  background: var(--surface);
+  background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  box-shadow: var(--lift);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-  padding: var(--s6);
+  border-radius: 12px;
+  padding: 16px 18px 12px;
+  min-width: 0;
 }
-/* Anything nested inside a panel sits on --surface-2, a step brighter, so depth stays
-   legible instead of every surface reading at the same level. */
-.panel .well,
-.panel .tile,
-.panel .readout,
-.panel .verdict,
-.panel .pre-reg,
-.panel .scroll { background: var(--surface-2); border-color: var(--border); }
-/* Anything nested inside a panel sits a step brighter, so depth stays legible
-   instead of every surface reading at the same level. */
-.panel .readout,
-.panel .verdict,
-.panel .pre-reg { box-shadow: var(--hi); }
-.panel .pre-reg { background: var(--glass-3); }
-.panel > h3 { margin: 0 0 var(--s3); font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
-.panel .sub, .panel .card-sub { font-size: 12px; color: var(--text-3); }
-.sub-h { margin: var(--s5) 0 var(--s2); font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
-.panel .hint { margin: var(--s3) 0 0; font-size: 12.5px; color: var(--ink-3); line-height: 1.5; }
-
-/* ---------- controls ---------- */
-
-.field { display: block; margin: 0 0 var(--s3); }
-.field-top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s2); margin-bottom: var(--s1); }
-.field-label { font-size: 13px; color: var(--ink-2); }
-.field-value { font-family: var(--mono); font-size: 13px; color: #7fb4ff; }
-
-input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 22px; background: transparent; cursor: pointer; margin: 0; }
-input[type="range"]::-webkit-slider-runnable-track {
-  height: 3px; border-radius: 2px;
-  /* the filled run is a gradient across its own length, in the same blue-to-indigo
-     accent the selected chips take */
-  background: linear-gradient(90deg, var(--blue), var(--indigo)) 0 / var(--fill, 0%) 100% no-repeat,
-              rgba(255, 255, 255, .11);
-}
-input[type="range"]::-moz-range-track { height: 3px; border-radius: 2px; background: rgba(255,255,255,.11); }
-input[type="range"]::-moz-range-progress {
-  height: 3px; border-radius: 2px;
-  background: linear-gradient(90deg, var(--blue), var(--indigo));
-}
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none; appearance: none;
-  width: 14px; height: 14px; margin-top: -5.5px; border-radius: 50%;
-  background: var(--ink); border: 2px solid var(--bg);
-  box-shadow: 0 0 0 1px var(--blue), 0 1px 3px rgba(0,0,0,.6);
-  transition: transform 120ms ease;
-}
-input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--ink); border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--blue); }
-input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.12); }
-
-.chips, .preset-row { display: flex; flex-wrap: wrap; gap: var(--s1); }
-.chip {
-  font: inherit; font-size: 12.5px; line-height: 1;
-  padding: var(--s1) var(--s2); border-radius: var(--r-ctl);
-  background: var(--surface); color: var(--ink-2);
-  border: 1px solid var(--border); cursor: pointer;
-  transition: background 120ms ease, color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
-}
-.chip:hover { color: var(--ink); border-color: var(--border-2); background: var(--surface-2); }
-/* Selected wears the same treatment as a card -- a gradient, the brighter border, and the
-   inset top highlight. The gradient is blue to indigo, not the mint accent: green on this
-   page means an improvement delta and nothing else, so a filter control must not wear it. */
-.chip[aria-pressed="true"] {
-  background: linear-gradient(135deg, rgba(10, 132, 255, .36), rgba(94, 92, 230, .24));
-  color: #dbe9ff;
-  border-color: var(--border-2);
-  box-shadow: var(--hi);
-}
-.chip[aria-pressed="true"]:hover { border-color: rgba(120, 170, 255, .62); }
-.chip.mono { font-family: var(--mono); }
-
-/* A segmented control, for the rail groups where exactly one option must be active.
-   Timesteps, Seed and Calibrator are genuine multi-select filters -- deselecting one
-   narrows the view -- and they keep separate chips. The ECE estimator and the instrument
-   preset are pick-one: two ways of computing the same metric, and one dataset shape. They
-   were styled identically to the filters, which implied they behaved the same way. Joining
-   them in one track says "pick one" without a line of explanatory text, and the role is
-   radiogroup so it says the same thing to a screen reader. */
-.segmented {
-  display: flex; gap: 0; padding: 3px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-}
-.segmented .chip {
-  flex: 1 1 0; min-width: 0; text-align: center;
-  background: none; box-shadow: none;
-  border: 1px solid transparent;   /* transparent, not none, so the metrics do not shift */
-  border-radius: var(--r-pill); padding: var(--s1) var(--s2);
-}
-.segmented .chip:hover { background: var(--surface-2); border-color: transparent; color: var(--ink); }
-.segmented .chip[aria-checked="true"] {
-  background: linear-gradient(135deg, rgba(10, 132, 255, .36), rgba(94, 92, 230, .24));
-  border-color: var(--border-2); box-shadow: var(--hi); color: #dbe9ff;
-}
-/* Three labels this long do not fit across a 208px rail, so that track runs downwards.
-   A vertical joined track reads as one control and one choice just as a row does. */
-.segmented.stack { flex-direction: column; border-radius: var(--r); gap: 2px; }
-.segmented.stack .chip { text-align: left; border-radius: calc(var(--r) - 5px); }
-
-/* ---------- readout ---------- */
-
-.readout { display: grid; gap: var(--s1); background: var(--rule); border-radius: var(--r-tile); overflow: hidden; }
-.readout-row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s2); padding: var(--sp-2) var(--sp-3); background: var(--screen); }
-.readout-label { font-size: 12.5px; color: var(--ink-2); }
-.readout-value { font-family: var(--mono); font-size: 15px; color: var(--ink); }
-.readout-value.big { font-size: 19px; color: var(--accent); }
-
-/* ---------- verdict lamp ---------- */
-
-.verdict {
-  display: flex; align-items: flex-start; gap: var(--s3);
-  margin-top: var(--s3); padding: var(--s3) var(--s3); border-radius: var(--r-tile);
-  background: var(--status-dim); border: 1px solid rgba(255,159,10,.28);
-  border-left: 3px solid var(--status);
-}
-.verdict .lamp { flex: none; width: 8px; height: 8px; margin-top: var(--s2); border-radius: 50%; background: var(--status); box-shadow: 0 0 8px rgba(255,159,10,.7); }
-.verdict p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink); }
-/* Inside a verdict the tag used to be a block-level label. Now that it is a pill it must
-   size to its text, or it renders as a full-width bar. */
-.verdict .tag { display: inline-flex; width: auto; align-self: flex-start; margin: 0 0 var(--s2); font-size: 10px; }
-
-/* ---------- metric tiles ---------- */
-
-.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s3); }
-/* The tiles used to be a band of their own below the cards, while the T = 80 card left
-   four columns empty beside it. They now fill that column, one per row. Below 1200px the
-   column is gone, so they fall back to a horizontal row above the cards. */
-.cards .tiles { grid-column: span 6; grid-template-columns: 1fr; align-content: start; }
-/* Four stacked tiles used to come to 509px whatever width they were given, against a card
-   that topped out near 400px, and no column split moved that by more than 19px because the
-   mismatch is vertical. Stretching the card closed the row but spent the height on blank
-   space inside it. The tiles are compacted instead: in the stacked layout the caption and
-   the CSV column name share a row rather than taking one each, which is ~27px per tile and
-   brings the stack to the card's own height. Nothing stretches. */
-.cards .tiles .tile {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas: "label label" "value value" "sub code";
-  align-items: end; column-gap: var(--s3);
-}
-.cards .tiles .tile-label { grid-area: label; }
-.cards .tiles .tile-value { grid-area: value; }
-.cards .tiles .tile-sub   { grid-area: sub; }
-.cards .tiles .tile-code  { grid-area: code; margin-top: 0; padding-top: 0; text-align: right; }
-.cards .tiles .tile-label { min-height: 0; }
-.tiles-label { grid-column: 1 / -1; margin: 0; font-size: 11.5px; font-weight: 600;
-  letter-spacing: .04em; text-transform: uppercase; color: var(--mint); }
-@media (max-width: 1200px) {
-  .cards .tiles { grid-column: span 12; order: -1; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  /* four abreast leaves no room to share a row; back to the stacked tile */
-  .cards .tiles .tile { display: flex; flex-direction: column; }
-  .cards .tiles .tile-code { margin-top: auto; padding-top: var(--s2); text-align: left; }
-}
-@media (max-width: 900px) { .cards .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 440px) { .cards .tiles { grid-template-columns: 1fr; } }
-
-/* Two panels sharing one grid column, flush against each other. The energy note used to
-   sit alone in a half-width row with its right half empty, under a bootstrap panel with
-   dead space below it; stacking closes both gaps at once. */
-.stack { display: flex; flex-direction: column; gap: var(--sp-4); align-self: start; }
-/* The one panel that should stretch to its row. Everything else on this page is sized by
-   its content, because an inflated panel shows the difference as empty space inside its
-   own border. This one is different: the table scrolls, so the height it gains is spent
-   on visible rows. flex-basis 0 with a min-height keeps its INTRINSIC height at today's
-   560px, so it never drives the row height -- it only absorbs what the row already has. */
-.sweep-rows { align-self: stretch; display: flex; flex-direction: column; }
-.sweep-rows .scroll { flex: 1 1 0; min-height: 560px; max-height: 1100px; }
-.tile {
-  display: flex; flex-direction: column;
-  padding: var(--s3) var(--s3) var(--s3);
-  background: var(--glass);
-  backdrop-filter: blur(14px) saturate(115%);
-  -webkit-backdrop-filter: blur(14px) saturate(115%);
-  box-shadow: var(--hi);
-  border: 1px solid var(--edge-soft);
-  border-radius: var(--r-tile);
-  border-top: 1px solid rgba(102,212,207,.34);
-}
-.tile-label { font-size: 12.5px; color: var(--ink-2); margin-bottom: var(--s1); min-height: 2.4em; }
-.tile-value { font-family: var(--mono); font-size: 22px; line-height: 1.1; color: var(--ink); }
-.tile-value.muted { color: var(--ink-3); }
-/* the estimator tag beside each of the paired tile's two values */
-.tile-value small { font-family: var(--sans); font-size: 11px; font-weight: 500; color: var(--ink-3); }
-.tile-code { display: block; margin-top: auto; padding-top: var(--s2); font-family: var(--mono); font-size: 11px; color: var(--ink-3); word-break: break-all; }
-.tile-sub { display: block; margin-top: var(--s1); font-size: 12px; color: var(--ink-3); line-height: 1.4; }
-
-/* ---------- chart wells ---------- */
-
-.well { background: var(--screen); border-radius: var(--r-panel); box-shadow: var(--well); padding: var(--sp-2) var(--sp-3) var(--sp-1); }
-.well svg { display: block; width: 100%; height: auto; max-width: 100%; overflow: visible; }
-.chart-note { margin: var(--s2) var(--s1) var(--s1); font-size: 12.5px; color: var(--ink-3); line-height: 1.5; }
-
-/* Figures rendered by matplotlib rather than drawn in the browser.
-
-   These are paper figures: their palette was validated against a LIGHT chart surface, and
-   re-stepping it for this dark page would invalidate that validation. So they keep their
-   own surface and are framed as inset documents rather than recoloured. The inset shadow
-   and the muted border stop a bright rectangle from floating unattached on the dark ground.
-
-   Width is capped because a five-panel figure stretched to full panel width on a 1920px
-   monitor renders its axis labels larger than the body text around it. */
-.fig { margin: var(--s4) 0 var(--s1); padding: 0; }
-.fig img {
-  display: block; width: 100%; max-width: 1180px; margin: 0 auto;
-  border-radius: 10px; background: #fcfcfb;
-  border: 1px solid var(--edge-soft);
-  box-shadow: 0 10px 28px -18px rgba(0,0,0,.9);
-}
-.fig figcaption {
-  margin: var(--s3) auto 0; max-width: 1180px;
-  font-size: 12.5px; color: var(--ink-3); line-height: 1.55;
-}
-/* Verification status on a citation. `.unver` already exists and reads as a warning; this
-   is its counterpart, and it is deliberately quieter -- a confirmed reference is the normal
-   case and should not shout. */
-/* ============================================================================
-   Provenance pills.
-
-   This study tags every number by where it came from -- [DERIVED] from arithmetic,
-   [MEASURED] by a run in this repository, [LIT] from a verified primary source. That
-   discipline lives in NOTES.md and SOURCES.md and was previously invisible on the page,
-   which is a waste: a reader's first question about any figure is which kind it is.
-   Each tag is a pill in its own colour so the answer is available at a glance.
-
-   The mapping is the reference page's --pid-color / --rule-color pattern applied to the
-   thing this page actually needs to distinguish.
-   ============================================================================ */
-.pill {
-  display: inline-flex; align-items: center;
-  padding: 2px var(--s2);
-  border-radius: var(--r-pill);
-  border: 1px solid transparent;
-  font-family: var(--mono); font-size: 10px; font-weight: 600;
-  letter-spacing: .05em; text-transform: uppercase; white-space: nowrap;
-  vertical-align: 1px;
-}
-.pill + .pill { margin-left: var(--s1); }
-h3 .pill, h4 .pill { margin-left: var(--s2); vertical-align: 2px; }
-
-.pill-derived  { color: var(--teal);       background: var(--ghost-teal);   border-color: rgba(100,210,255,.32); }
-.pill-measured { color: var(--purple);     background: var(--ghost-purple); border-color: rgba(191,90,242,.32); }
-.pill-lit      { color: var(--mint);       background: var(--ghost-mint);   border-color: rgba(102,212,207,.32); }
-.pill-warn     { color: var(--sys-orange); background: var(--ghost-orange); border-color: rgba(255,159,10,.34); }
-.pill-good     { color: var(--sys-green);  background: var(--ghost-green);  border-color: rgba(48,209,88,.32); }
-.pill-bad      { color: var(--sys-red);    background: var(--ghost-red);    border-color: rgba(255,69,58,.32); }
-
-/* The legend. A colour system without a key is decoration, so the rail carries one. */
-.prov-key { display: flex; flex-direction: column; gap: var(--s2); margin: var(--s3) 0 0; }
-.prov-key .row { display: flex; align-items: flex-start; gap: var(--s2); font-size: 12px; color: var(--text-3); line-height: 1.45; }
-.prov-key .row > .pill { flex: 0 0 auto; margin-top: 1px; }
-.prov-key .row > span:last-child { flex: 1 1 auto; min-width: 0; }
-.prov-key .row b { color: var(--text-2); font-weight: 500; }
-
-/* The three legacy markers become pills in the same system. */
-.tag { display: inline-flex; align-items: center; padding: 2px var(--s2);
-  border-radius: var(--r-pill); border: 1px solid rgba(94,92,230,.32);
-  background: var(--ghost-indigo); color: var(--indigo);
-  font-family: var(--mono); font-size: 10px; font-weight: 600;
-  letter-spacing: .05em; text-transform: uppercase; margin-right: var(--s2); }
-.ver { color: var(--mint); font-size: 11.5px; }
-
-/* Standard deviations ride alongside a mean and must not compete with it. */
-.sd { font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
-
-.chart-note b { color: var(--ink-2); font-weight: 600; }
-
-.legend { display: flex; flex-wrap: wrap; gap: var(--s3); margin: var(--s2) var(--s1) 0; font-size: 12.5px; color: var(--ink-2); }
-.legend span { display: inline-flex; align-items: center; gap: var(--s1); }
-.legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
-.legend i.block { height: 12px; border-radius: 2px; }
-.legend i.ring { width: 11px; height: 11px; border-radius: 50%; background: none; border: 2px solid var(--d2); }
-
-.rel-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s3); }
-@media (max-width: 820px) { .rel-grid { grid-template-columns: 1fr; } }
-.rel-grid .well { padding: var(--sp-2) var(--sp-3) var(--sp-1); }
-
-/* ---------- table ---------- */
-
-.panel-table { margin: var(--sp-3) 0; }
-/* The reproduce panel is full width because its command block and environment table need
-   it, but both are boxes whose CONTENT is narrow -- the commands run to 504px inside a
-   1,502px box, and the prose beside them stopped at 75ch and left 843px empty. Commands on
-   the left at the width they actually need, the environment table and the fingerprint note
-   on the right. Reading order is preserved: intro, commands, table, note. */
-.repro-grid { display: grid; grid-template-columns: minmax(0, 540px) minmax(0, 1fr);
-  gap: var(--s6); align-items: start; }
-.repro-grid > div > :first-child { margin-top: 0; }
-.repro-grid .panel-table { margin-top: 0; }
-/* tbody td is nowrap because the sweep table's numeric columns must not wrap. This one is
-   key/value prose -- "50, 5 -- all 15 stopped early (10-21 epochs)" -- so it wraps instead
-   of forcing a 33px horizontal scroll at 1440. */
-.repro-grid tbody td { white-space: normal; }
-@media (max-width: 1000px) { .repro-grid { grid-template-columns: minmax(0, 1fr); } }
-.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--r-panel); border: 1px solid var(--edge-soft); max-height: 560px; overflow-y: auto; }
-table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
-thead th {
-  position: sticky; top: 0; z-index: 1;
-  background: #101618; color: var(--ink-2); font-weight: 600;
-  text-align: right; padding: var(--s2) var(--s3); white-space: nowrap;
-  border-bottom: 1px solid var(--edge); cursor: pointer; user-select: none;
-}
-thead th:first-child, tbody td:first-child { text-align: left; }
-thead th:hover { color: var(--ink); }
-thead th .dir { color: var(--accent); }
-tbody td { padding: var(--s2) var(--s3); text-align: right; white-space: nowrap; border-bottom: 1px solid rgba(255,255,255,.045); font-family: var(--mono); color: var(--ink-2); }
-tbody td.k { font-family: var(--sans); color: var(--ink); }
-tbody tr:hover td { background: rgba(255,255,255,.03); color: var(--ink); }
-.table-meta { margin: var(--s2) var(--s1) 0; font-size: 12.5px; color: var(--ink-3); }
-
-/* ---------- prose ---------- */
-
-.prose { max-width: 70ch; }
-/* A full-width panel lets its tables and figures use the whole width, but running text at
-   1,072px is unreadable. Constrain the text elements only, so the panel is wide and the
-   measure is not. */
-.prose.wide { max-width: none; }
-.prose.wide > p,
-.prose.wide > h3,
-.prose.wide > h4,
-.prose.wide > ul,
-.prose.wide > ol,
-.prose.wide > blockquote,
-.prose.wide > .chart-note { max-width: 75ch; }
-/* A full-width panel of prose needs columns, or the measure runs to 200 characters. */
-.two-col { columns: 2; column-gap: var(--s7); }
-.two-col h3 { column-span: all; }
-.two-col p { break-inside: avoid; }
-@media (max-width: 1100px) { .two-col { columns: 1; } }
-/* A full-width panel whose content sits in one narrow left column is worse than a narrow
-   panel. Two columns at the widths where the third is otherwise empty; each bullet stays
-   whole. The panel-level "unverified" pill is gone: a limitation is a known gap, which is
-   the opposite of an unverified claim. */
-.lim-list { max-width: none !important; columns: 2; column-gap: var(--s7); }
-.lim-list li { break-inside: avoid; margin-bottom: var(--s3); }
-/* A known-gaps appendix should not compete with the findings, so the body of each bullet
-   drops to --text-3 while its bold lead-in stays at full strength and keeps the list
-   scannable. Measured at 5.94:1 against the panel, so it stays well clear of 4.5. */
-.lim-list li { color: var(--text-3); }
-.lim-list li strong { color: var(--text); }
-@media (max-width: 1199px) { .lim-list { columns: 1; } }
-
-.unverified-note { border-left: 2px solid var(--status); padding-left: var(--s3); color: var(--ink-3); }
-/* Body prose sits at --text-2 like the modals and the card claims. It was inheriting
-   full-strength --text from the panel, which made the energy note read louder than the
-   findings it qualifies. Headings, bold and code stay at full strength. */
-.prose p, .prose li { margin: 0 0 var(--s3); color: var(--text-2); }
-.prose li { margin: 0 0 var(--s2); }
-.prose h3 { margin: var(--s5) 0 var(--s2); font-size: 14.5px; font-weight: 600; color: var(--ink); }
-.prose h3:first-child { margin-top: 0; }
-.prose ul { padding-left: var(--s4); margin: 0 0 var(--s3); }
-.prose li { margin-bottom: var(--s2); }
-.prose code { font-family: var(--mono); font-size: 12.5px; background: rgba(255,255,255,.06); padding: var(--s1) var(--s1); border-radius: 3px; color: var(--ink); }
-.prose strong { font-weight: 600; color: var(--ink); }
-
-/* Masonry, not a grid. These citations differ in height by hundreds of pixels, and in a
-   grid every one in a row is inflated to the tallest -- measured at 1,241px of empty space
-   across the section at 1920px. Multi-column packs them by flow instead.
-
-   Two columns, though, not a width-driven count. With five unbreakable citations, four
-   columns means 1.25 items each and the balancer can do nothing with that: measured at
-   348px of short column at 1920 and 555px at 1440. Two pack 3/2 and come within 48-84px at
-   every width. The 70ch cap goes with it -- inside a 739px column it stranded 228px, and
-   the column is the measure now, at most 101 characters. */
-.rel-work { columns: 2; column-gap: var(--s6); }
-@media (max-width: 700px) { .rel-work { columns: 1; } }
-.cite { padding: var(--s3) 0; border-top: 1px solid var(--rule); max-width: none; break-inside: avoid; }
-/* In column flow the first card of each column sits at the top, so a top border there reads
-   as a stray rule. Only the very first card is reliably at a column top, so it alone loses
-   the border; the rest keep it as a separator between stacked cards. */
-.rel-work .cite:first-child { border-top: none; padding-top: 0; }
-/* A citation stays whole. Allowing it to split balanced the columns, but the later
-   paragraphs then landed at the top of the next column under a different paper's heading,
-   which reads as misattribution -- a worse failure here than an uneven column. */
-.rel-work .cite { break-inside: avoid; }
-.rel-work .cite h4,
-.rel-work .cite .venue { break-after: avoid; }
-.rel-work .cite p { break-inside: avoid; orphans: 2; widows: 2; }
-.cite h4 { margin: 0 0 var(--s1); font-size: 14px; font-weight: 600; }
-.cite .venue { font-size: 12.5px; color: var(--ink-3); margin: 0 0 var(--s2); }
-.cite p { margin: 0 0 var(--s1); font-size: 13.5px; color: var(--ink-2); }
-.cite .diff { color: var(--ink); }
-.cite .diff b { color: var(--accent); font-weight: 600; }
-.unver { font-family: var(--mono); font-size: 11.5px; color: var(--status); }
-
-pre { background: var(--screen); border: 1px solid var(--edge-soft); border-radius: var(--r-panel); padding: var(--s3) var(--s4); overflow-x: auto; font-family: var(--mono); font-size: 12.5px; line-height: 1.6; color: var(--ink-2); box-shadow: var(--well); }
-pre .c { color: var(--ink-3); }
-
-.pre-reg { border: 1px solid var(--edge-soft); border-left: 3px solid var(--accent); border-radius: var(--r-tile); padding: var(--s3) var(--s4); background: rgba(255,255,255,.025); margin: var(--s4) 0; }
-.pre-reg .stamp { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); margin: 0 0 var(--s2); }
-.pre-reg blockquote { margin: 0 0 var(--s3); font-size: 14px; color: var(--ink); line-height: 1.55; }
-.pre-reg .verdict-text { margin: 0; font-size: 13.5px; color: var(--ink-2); }
-.pre-reg .verdict-text strong { color: var(--ink); }
-/* Outcome of a registered prediction. The word carries the meaning; the colour repeats it. */
-.verdict-held, .verdict-falsified { font-family: var(--sans); font-weight: 600; }
-/* a table cell that holds a sentence, not a number */
-tbody td.t, thead th.t { text-align: left; white-space: normal; font-family: var(--sans); color: var(--ink-2); line-height: 1.45; }
-.verdict-held { color: var(--sys-green); }
-.verdict-falsified { color: var(--status); }
-
-section.panel > .prose[style] { max-width: none; }
-
-footer { padding-top: var(--s4); border-top: 1px solid var(--rule); font-size: 12.5px; color: var(--ink-3); }
-footer p { margin: 0 0 var(--s1); max-width: 100ch; }
-
-/* ---------- responsive ---------- */
-
-@media (max-width: 1200px) {
-  /* .c7/.c5 used to collapse to 6/6 here. Once the instrument's controls moved into the
-     c7 panel it grew, and an even split left 229px under the c5 beside it; 7/5 holds the
-     proportion and the gap measures 117px. */
-  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
+.grid { display: grid; gap: 14px; }
+.grid.two { grid-template-columns: 1fr 1fr; }
+.grid.three { grid-template-columns: 1.15fr 1.15fr 1fr; }
 @media (max-width: 900px) {
-  .rail { position: static; width: auto; inset: auto; height: auto; border-right: none; border-bottom: 1px solid var(--rule); padding: var(--s4) var(--s3) var(--s5); }
-  /* static here, so the auto margins have no free space to absorb and do nothing */
-  .rail-inner { margin-block: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0 var(--s4); align-items: start; }
-  .rail-head { grid-column: 1 / -1; }
-  /* the divider is a grid item here; span it so it does not occupy a cell */
-  .rail-sep { grid-column: 1 / -1; margin: var(--s1) 0 var(--s3); }
-  .main { margin-left: 0; padding: var(--s4) var(--s3) var(--s8); }
-  .masthead-bar { margin: calc(var(--s4) * -1) calc(var(--s3) * -1) 0; padding: var(--s3); }
-  .c12, .c7, .c6, .c5 { grid-column: span 12; }
+  .grid.two, .grid.three { grid-template-columns: 1fr; }
 }
-@media (max-width: 440px) {
-  .tiles { grid-template-columns: 1fr; }
-  .masthead h1 { font-size: 21px; }
-}
+.panel h3 { margin: 0 0 2px; font-size: 14px; font-weight: 600; }
+.panel .note { margin: 0 0 6px; color: var(--muted); font-size: 12.5px; }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+/* ---------- hero ---------- */
+.hero { padding-top: 40px; }
+.chip {
+  display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+  background: var(--chip); color: var(--chip-ink); border-radius: 999px; padding: 3px 10px; margin: 0 0 14px;
 }
+.hero h1 { font-size: clamp(24px, 3.4vw, 36px); line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 12px; max-width: 30ch; font-weight: 700; }
+.lede { font-size: 17px; color: var(--ink-2); max-width: 64ch; margin: 0 0 22px; }
+.byline { color: var(--muted); font-size: 13px; margin: 18px 0 0; }
 
-/* ============================================================================
-   Cards and modals.
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 980px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .tiles { grid-template-columns: 1fr; } }
+.tile { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+.tile .label { font-size: 12.5px; color: var(--ink-2); margin: 0 0 8px; min-height: 2.6em; }
+.tile .value { font-size: 30px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.1; margin: 0; }
+.tile .value .sep { color: var(--muted); font-weight: 400; padding: 0 4px; }
+.tile .value .arrow { color: var(--muted); font-weight: 400; padding: 0 2px; }
+.tile .sub { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+.tile .keys { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--ink-2); margin-top: 8px; }
 
-   The page was a wall of prose: the findings were all there and none of them
-   were visible in under a minute. Each finding is now a card carrying the
-   headline number, a one-line claim and the table that makes the point; the
-   full argument -- caveats, qualifications, the "what this does not show"
-   notes -- is nested in a modal rather than deleted.
-   ============================================================================ */
-.cards {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: var(--s4);
-  align-items: start;   /* a short card never inherits a tall one's height */
-}
-.cards .c4  { grid-column: span 4; }
-.cards .c6  { grid-column: span 6; }
-.cards .c12 { grid-column: span 12; }
+/* legend keys: a short stroke or a dot in the series colour, text in ink */
+.key { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.key i { display: inline-block; width: 14px; height: 2px; border-radius: 1px; background: currentColor; }
+.key i.dot { width: 8px; height: 8px; border-radius: 50%; }
+.key i.ring { width: 8px; height: 8px; border-radius: 50%; background: transparent; border: 2px solid currentColor; }
+.key i.dia { width: 8px; height: 8px; transform: rotate(45deg); border-radius: 1px; background: transparent; border: 1.5px solid currentColor; }
+.key span { color: var(--ink-2); }
+.k-count { color: var(--count); } .k-accum { color: var(--accum); }
+.k-membrane { color: var(--membrane); } .k-wcount { color: var(--wcount); }
+.k-ink { color: var(--ink); } .k-muted { color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; margin: 2px 0 6px; }
 
-.card {
-  display: flex; flex-direction: column; gap: var(--s3);
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r-lg); box-shadow: var(--lift);
-  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-  padding: var(--s6);
-}
-.card-pills { display: flex; flex-wrap: wrap; gap: var(--s1); }
-.stat { margin: 0; display: flex; flex-direction: column; gap: var(--s1); }
-.stat-num {
-  font-family: var(--mono); font-size: 34px; font-weight: 700;
-  letter-spacing: -0.02em; line-height: 1.05;
-}
-.c12 .stat-num { font-size: 42px; }
-.stat-teal   { color: var(--teal); }
-.stat-purple { color: var(--purple); }
-.stat-mint   { color: var(--mint); }
-.stat-green  { color: var(--sys-green); }
-.stat-orange { color: var(--sys-orange); }
-.stat-unit { font-size: 12px; color: var(--text-3); }
-.card-title { margin: 0; font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
-.card-claim { margin: 0; font-size: 13px; line-height: 1.5; color: var(--text-2); max-width: 68ch; }
-/* 68ch is the measure for a four-column card. A full-width card fills instead -- there the
-   cap stops the text a third of the way across and leaves the rest empty.
-   The six-column card is the case between the two: uncapped it runs to 127 characters at
-   1920, past the ceiling, while 68ch strands 211px of a 768px card. 87ch lands at 118
-   characters and 54px of slack, and does not bind at all below about 1620px. */
-.cards .c6 .card-claim { max-width: 87ch; }
-.cards .c12 .card-claim { max-width: none; }
-.card-fig { margin-top: auto; }
+/* ---------- charts ---------- */
+.chart { position: relative; width: 100%; }
+.chart svg { display: block; overflow: visible; }
+svg text { font-family: var(--sans); fill: var(--muted); font-size: 11px; }
+svg .t-ink { fill: var(--ink-2); }
+svg .t-strong { fill: var(--ink); font-weight: 600; }
+svg .grid line { stroke: var(--grid); stroke-width: 1; }
+svg .axis line, svg .axis path { stroke: var(--axis); stroke-width: 1; }
+svg .zero { stroke: var(--ink-2); stroke-width: 1; }
+svg .diag { stroke: var(--axis); stroke-width: 1; }
+svg .ln { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+svg .whisk { stroke-width: 1.5; stroke-linecap: round; }
+svg .mk { stroke: var(--panel); stroke-width: 2; }
+svg .open { fill: var(--panel); stroke-width: 2; }
+svg .c-count { stroke: var(--count); } svg .f-count { fill: var(--count); }
+svg .c-accum { stroke: var(--accum); } svg .f-accum { fill: var(--accum); }
+svg .c-membrane { stroke: var(--membrane); } svg .f-membrane { fill: var(--membrane); }
+svg .c-wcount { stroke: var(--wcount); } svg .f-wcount { fill: var(--wcount); }
+svg .c-ink { stroke: var(--ink); } svg .f-ink { fill: var(--ink); }
+svg .c-muted { stroke: var(--muted); } svg .f-muted { fill: var(--muted); }
+svg .open.c-count { stroke: var(--count); } svg .open.c-ink { stroke: var(--ink); } svg .open.c-muted { stroke: var(--muted); }
+svg .hit { fill: transparent; cursor: default; }
+svg .hit:focus { outline: none; }
+svg .hit:focus-visible, svg .hit.on { stroke: var(--ink-2); stroke-width: 1; fill: var(--wash); }
+svg .band-shade { fill: var(--wash); }
 
-/* The card-face table is an extract, not the full thing -- it is deliberately
-   small and never scrolls. The complete table lives in the modal. */
-table.mini { width: 100%; border-collapse: collapse; font-size: 11.5px; font-family: var(--mono); }
-table.mini th {
-  text-align: right; padding: var(--s1) var(--s2); font-weight: 500; font-family: var(--sans);
-  font-size: 11px; color: var(--text-3); border-bottom: 1px solid var(--border);
+.tip {
+  position: fixed; z-index: 50; pointer-events: none; display: none;
+  background: var(--panel); color: var(--ink); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px; font-size: 12.5px; line-height: 1.4;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12); max-width: 280px;
 }
-table.mini th:first-child, table.mini td:first-child { text-align: left; }
-table.mini td { text-align: right; padding: var(--s1) var(--s2); color: var(--text-2);
-  border-bottom: 1px solid rgba(255,255,255,.045); white-space: nowrap; }
-table.mini tr:last-child td { border-bottom: none; }
+.tip .tt { color: var(--muted); font-size: 11.5px; margin-bottom: 4px; }
+.tip .row { display: flex; align-items: center; gap: 8px; }
+.tip .row i { width: 12px; height: 2px; border-radius: 1px; background: currentColor; flex: none; }
+.tip .row b { font-weight: 650; font-variant-numeric: tabular-nums; }
+.tip .row span { color: var(--ink-2); }
 
-.card-more {
-  display: inline-flex; align-items: center; justify-content: space-between; gap: var(--s2);
-  width: 100%; margin-top: var(--s1); padding: var(--s3) var(--s4);
-  background: var(--surface-2); border: 1px solid var(--border-2);
-  border-radius: var(--r-sm); color: var(--text); font: inherit; font-size: 12.5px;
-  font-weight: 500; text-align: left; cursor: pointer;
-  transition: background .15s ease, border-color .15s ease, transform .15s ease;
-}
-.card-more:hover { background: var(--ghost-blue); border-color: var(--blue); color: var(--text); }
-.card-more:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-.card-more .chev { color: var(--blue); transition: transform .15s ease; }
-.card-more:hover .chev { transform: translateX(3px); }
+/* ---------- details, tables ---------- */
+details { margin: 12px 0 0; border-top: 1px solid var(--border); padding-top: 8px; }
+details > summary { cursor: pointer; color: var(--ink-2); font-size: 13px; list-style: none; }
+details > summary::before { content: "+"; display: inline-block; width: 14px; color: var(--muted); }
+details[open] > summary::before { content: "\2212"; }
+details > summary::-webkit-details-marker { display: none; }
+details .body { padding: 8px 0 4px; color: var(--ink-2); font-size: 13.5px; }
+details .body p { margin: 0 0 8px; max-width: 80ch; }
+.scroll { overflow-x: auto; max-width: 100%; }
+table { border-collapse: collapse; font-size: 12.5px; min-width: 100%; }
+th, td { text-align: right; padding: 5px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; font-variant-numeric: tabular-nums; }
+th { color: var(--muted); font-weight: 600; font-size: 11.5px; }
+th:first-child, td:first-child { text-align: left; }
+td.t, th.t { text-align: left; white-space: normal; min-width: 14ch; }
 
-/* ---------- modal ---------- */
-dialog.modal {
-  /* The floating surface, one step stronger than the panels: more blur, so what is behind
-     reads as genuinely out of focus rather than merely dimmed, a brighter edge, and a
-     deeper shadow than a card because this one sits above everything. This was the only
-     flat opaque box left on a page of layered glass. */
-  width: min(1080px, calc(100vw - var(--s8)));
-  max-height: min(86vh, 1000px);
-  padding: 0;
-  border: 1px solid var(--border-2);
-  border-radius: var(--r-xl);
-  background: rgba(255, 255, 255, .075);
-  backdrop-filter: blur(32px) saturate(180%);
-  -webkit-backdrop-filter: blur(32px) saturate(180%);
-  color: var(--text);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 32px 90px rgba(0, 0, 0, .62);
-  overflow: hidden;
-}
-/* Dim and blur the page rather than flat-blacking it, so the reader keeps a sense of where
-   they were. */
-/* The panel fades and rises into place so the eye can see where it came from, and leaves
-   faster because the reader has already decided. The destination state carries the
-   duration: opening lands on [open] at 200ms, closing lands on the base rule at 140ms.
-   display and overlay need allow-discrete or the element would vanish before it faded. */
-dialog.modal {
-  opacity: 0;
-  transform: translateY(8px) scale(.96);
-  transition:
-    opacity 140ms ease-out,
-    transform 140ms ease-out,
-    overlay 140ms ease-out allow-discrete,
-    display 140ms ease-out allow-discrete;
-}
-dialog.modal[open] {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  transition:
-    opacity 200ms cubic-bezier(.16, 1, .3, 1),
-    transform 200ms cubic-bezier(.16, 1, .3, 1),
-    overlay 200ms ease-out allow-discrete,
-    display 200ms ease-out allow-discrete;
-}
-@starting-style {
-  dialog.modal[open] { opacity: 0; transform: translateY(8px) scale(.96); }
-}
-/* Stated locally as well as in the global rule, so the intent is visible where the
-   transform is: under reduce there is no movement, only the instant state change. */
-@media (prefers-reduced-motion: reduce) {
-  dialog.modal, dialog.modal[open] { transform: none; }
-}
+/* ---------- ledger ---------- */
+.ledger { width: 100%; }
+.ledger td { vertical-align: top; }
+.ledger td.id { font-weight: 650; color: var(--ink); }
+.ledger td.when { color: var(--muted); }
+.ledger tr.group td { color: var(--ink-2); font-weight: 600; background: var(--wash); text-align: left; }
+.pill { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-size: 12px; white-space: nowrap; }
+.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.pill.held { color: var(--good-ink); }
+.pill.held::before { background: var(--good); }
+.pill.falsified { color: var(--critical-ink); }
+.pill.falsified::before { background: var(--critical); border-radius: 1px; }
+.pill.status { font-weight: 600; border-radius: 999px; padding: 2px 9px; border: 1px solid var(--border); }
+.pill.status::before { display: none; }
+.pill.s-hand { color: var(--good-ink); }
+.pill.s-pilot { color: var(--chip-ink); background: var(--chip); }
+.pill.s-open { color: var(--muted); }
 
-dialog.modal::backdrop {
-  background: rgba(4, 6, 10, .52);
-  backdrop-filter: blur(10px) saturate(115%);
-  opacity: 0;
-  transition:
-    opacity 140ms ease-out,
-    overlay 140ms ease-out allow-discrete,
-    display 140ms ease-out allow-discrete;
-}
-dialog.modal[open]::backdrop {
-  opacity: 1;
-  transition:
-    opacity 200ms ease-out,
-    overlay 200ms ease-out allow-discrete,
-    display 200ms ease-out allow-discrete;
-}
-@starting-style { dialog.modal[open]::backdrop { opacity: 0; } }
+/* ---------- lists, code, footer ---------- */
+ul.tight { margin: 0; padding-left: 18px; color: var(--ink-2); }
+ul.tight li { margin: 0 0 6px; }
+pre { background: var(--code); border-radius: 8px; padding: 12px 14px; overflow-x: auto; margin: 0; color: var(--ink); line-height: 1.5; }
+.foot { border-top: 1px solid var(--border); margin-top: 48px; padding: 18px 0 40px; color: var(--muted); font-size: 12.5px; }
+.foot p { margin: 0 0 4px; }
 
-/* The one animation on the page. Nothing fades in on load and nothing reveals on scroll;
-   this earns its place by showing where the panel came from. Under reduced motion the
-   global rule below strips every transition, which leaves an instant open and close. */
-/* Nested surfaces step up one level, or they dissolve into a translucent panel. */
-.modal-body .scroll,
-.modal-body pre,
-.modal-body .well { background: rgba(8, 11, 17, .58); border-color: var(--border-2); }
-.modal-body thead th { background: rgba(8, 11, 17, .72); }
-.modal-body tbody tr:nth-child(odd) td { background: rgba(255, 255, 255, .022); }
-.modal-head {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s4);
-  padding: var(--s6); border-bottom: 1px solid var(--border);
-  background: var(--surface); position: sticky; top: 0; z-index: 1;
-}
-.modal-head h2 { margin: 0 0 var(--s2); font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
-.modal-pills { display: flex; gap: var(--s1); }
-.modal-x {
-  flex: none; width: 32px; height: 32px; border-radius: var(--r-pill);
-  background: var(--surface-2); border: 1px solid var(--border);
-  color: var(--text-2); font-size: 19px; line-height: 1; cursor: pointer;
-}
-.modal-x:hover { background: var(--ghost-red); border-color: var(--sys-red); color: var(--sys-red); }
-.modal-x:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
-/* The body scrolls; the page behind it does not. */
-.modal-body { overflow-y: auto; max-height: calc(86vh - 92px); padding: var(--s6); }
-.modal-part + .modal-part { margin-top: var(--s7); padding-top: var(--s6); border-top: 1px solid var(--border); }
-.modal-part > h3 { margin: 0 0 var(--s4); font-size: 14px; font-weight: 700; color: var(--text); }
-/* No measure on modal prose. 74ch stopped paragraphs at 629px inside a 1,030px body while
-   the tables beneath ran the full width, and that mismatch is what read as broken. Narrowing
-   the panel to the prose instead was measured first and is worse: the six tables in these
-   modals want 735 to 1,051px, so every one of them would scroll, and the two figures would
-   drop from 1,209px and 827px to 629px. The modals are where the complete tables live, so
-   the prose gives way rather than the data. The cost is a ~158-character line, accepted
-   here and nowhere else on the page. */
-.modal-body p { margin: 0 0 var(--s3); font-size: 13.5px; line-height: 1.6; color: var(--text-2); }
-.modal-body p strong, .modal-body b { color: var(--text); }
-.modal-body .scroll { margin: var(--s4) 0; }
-.modal-body .fig img { max-width: 100%; }
-body.modal-open { overflow: hidden; }
-
-/* The tiles go to the top of the section here, so the card that shared their row would sit
-   alone in six of twelve columns -- 424px empty. This has to live after the base span rule
-   rather than beside the tiles rule, or source order beats it at equal specificity. */
-@media (max-width: 1200px) { .cards .c6 { grid-column: span 12; } }
-/* Three four-column cards cannot pack into six-wide rows -- the third is orphaned and
-   leaves half a row empty, measured at 374px. One column instead. */
-@media (max-width: 1100px) {
-  .cards .c4, .cards .c6, .cards .c12 { grid-column: span 12; }
-}
-@media (max-width: 820px) {
-  .cards .c4, .cards .c6 { grid-column: span 12; }
-  dialog.modal { width: calc(100vw - var(--s5)); max-height: 92vh; }
-  .modal-body { max-height: calc(92vh - 92px); padding: var(--s5); }
-  .modal-head { padding: var(--s5); }
-}
+/* ---------- briefing ---------- */
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 900px) { .cards { grid-template-columns: 1fr; } }
+.card h3 { margin: 0 0 4px; font-size: 16px; }
+.card .num { font-size: 26px; font-weight: 650; letter-spacing: -0.02em; margin: 0; }
+.card .num .sep { color: var(--muted); font-weight: 400; padding: 0 3px; }
+.cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 900px) { .cols { grid-template-columns: 1fr; } }
+.cols h3 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--panel); }
+.strip > div { padding: 14px 16px; border-left: 1px solid var(--border); }
+.strip > div:first-child { border-left: 0; }
+.strip .yr { font-size: 12px; color: var(--muted); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+@media (max-width: 700px) { .strip { grid-template-columns: 1fr; } .strip > div { border-left: 0; border-top: 1px solid var(--border); } .strip > div:first-child { border-top: 0; } }
+.diagram svg { width: 100%; height: auto; display: block; }
+.diagram .node { fill: var(--panel); stroke: var(--axis); stroke-width: 1.2; }
+.diagram .node.em { stroke: var(--ink-2); }
+.diagram .lbl { fill: var(--ink); font-size: 13px; font-weight: 600; }
+.diagram .sub { fill: var(--muted); font-size: 11px; }
+.diagram .edge { stroke: var(--ink-2); stroke-width: 1.4; fill: none; }
+.diagram .edge.loop { stroke: var(--count); }
+.diagram .arrowhead { fill: var(--ink-2); }
+.diagram .arrowhead.loop { fill: var(--count); }
+.diagram .rel { fill: var(--count); }

@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import csv
 import io
 import json
 import os
@@ -224,6 +225,20 @@ def main() -> int:
         cal_size.pop("rows", None)                    # 180 per-draw rows; the summary is rendered
     fusion = whole("fusion_experiment.json")
 
+    # The hero tiles and the prediction ledger, built from the same artifacts. The page
+    # renders these fields and types no number of its own.
+    from dashboard_summary import build_ledger, build_summary, count_cells
+
+    def blocks_of(ds, T, seed):
+        with open(source(os.path.join(args.results, f"{ds}_T{T}_seed{seed}_record.json"))) as fh:
+            return len(json.load(fh)["model_config"]["channels"])
+
+    summary = build_summary(readout_rows, conditional_rows, csv_text, caltech_rows)
+    summary["cells_union"] = count_cells(readout_rows, caltech_rows, arch_rows, blocks_of)
+    summary["n_sweep_runs"] = len({(r["timesteps"], r["seed"]) for r in csv.DictReader(io.StringIO(csv_text))})
+    ledger = build_ledger(readout_rows, conditional_rows, arch_rows, csv_text, scaled, resolution,
+                          caltech_cal, cal_size, fusion)
+
     newest = max(sources, key=os.path.getmtime)
     payload = {
         "dataset": spec.key,
@@ -243,6 +258,8 @@ def main() -> int:
         "caltech_calibrators": caltech_cal,
         "calibration_size": cal_size,
         "fusion": fusion,
+        "summary": summary,
+        "ledger": ledger,
         "measured": [
             {
                 "T": int(t),

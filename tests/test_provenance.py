@@ -133,12 +133,12 @@ def test_the_paired_bootstrap_reports_both_estimators() -> None:
 
 @pytest.mark.parametrize("claimed", ["72"])
 def test_the_dashboard_states_the_real_column_count(claimed: str) -> None:
+    """The page once typed the column count. Since 2026-10-17 it counts the embedded CSV."""
     with open(os.path.join(ROOT, "docs", "sweep.csv")) as fh:
         n = len(next(csv.reader(fh)))
-    page = _read("docs", "index.html")
-    assert f"carries {n} columns" in page, (
-        f"the page claims a column count that is not {n}; sweep.csv has {n}"
-    )
+    page, app = _read("docs", "index.html"), _read("docs", "app.js")
+    assert '<span data-n="csv-columns"></span>' in page, "the column count must be rendered, not typed"
+    assert 'setN("csv-columns", String(lines[0].split(",").length))' in app
     assert claimed == str(n)
 
 
@@ -170,10 +170,12 @@ def test_count_cells_are_counted_once() -> None:
     )
     assert f"**{n} of {n}** distinct" in _read("README.md")
     page = _read("docs", "index.html")
-    assert f'<span data-n="cells-all">{n}</span>' in page, (
-        f"the dashboard's fallback cell count is not {n}"
+    assert '<span data-n="cells-all"></span>' in page, "the cell count must be rendered, not typed"
+    js = _read("docs", "data.js")
+    payload = json.loads(js[js.index("window.SPIKECALIB = ") + len("window.SPIKECALIB = "):js.rindex(";")])
+    assert payload["summary"]["cells_union"] == n, (
+        f"data.js counts {payload['summary']['cells_union']} cells, not {n}; re-run export_dashboard_data.py"
     )
-    assert f'<span data-n="grid-all">{len(grid)}</span>' in page
 
 
 # --------------------------------------------------------------------------- registered predictions
@@ -360,21 +362,13 @@ def test_notes_record_each_fusion_verdict_as_the_artifact_has_it() -> None:
 # --------------------------------------------------------------------------- energy
 
 def test_dashboard_energy_ranges_match_the_sweep() -> None:
-    """The energy note once quoted seed 0's range, 41-65%, as if it covered every run."""
-    with open(os.path.join(ROOT, "docs", "sweep.csv")) as fh:
-        rows = list(csv.DictReader(fh))
-    runs: dict[tuple[str, str], float] = {}
-    for r in rows:
-        runs.setdefault((r["timesteps"], r["seed"]), float(r["encoder_energy_fraction"]))
-    by_t: dict[str, list[float]] = {}
-    for (t, _), v in runs.items():
-        by_t.setdefault(t, []).append(v)
-    lo, hi = round(100 * min(runs.values())), round(100 * max(runs.values()))
-    means = [100 * sum(v) / len(v) for v in by_t.values()]
+    """The energy note once quoted seed 0's range, 41-65%, as if it covered every run.
+
+    The page rebuilt on 2026-10-17 carries no energy note, because energy is not among the
+    paper's results. If one returns, it must be rendered from ``encoder_energy_fraction``
+    in the embedded CSV and this test rewritten to check that, not typed.
+    """
     page = " ".join(_read("docs", "index.html").split())
-    assert f"between {lo}% and {hi}% of the modelled energy across the fifteen sweep runs" in page, (
-        f"the per-run range in the energy note should read {lo}-{hi}%"
-    )
-    assert f"between {round(min(means))}% and {round(max(means))}% when the three seeds" in page, (
-        "the per-timestep-mean range in the energy note does not match the sweep"
+    assert "modelled energy" not in page and "SynOps" not in page, (
+        "the page reports energy again; render the ranges from data.js and restore a range check"
     )
