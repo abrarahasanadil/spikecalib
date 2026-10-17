@@ -89,10 +89,12 @@ def test_the_payload_carries_what_the_page_renders(payload: dict) -> None:
     for est in ("ew", "em"):     # both estimators wherever a calibration number is claimed
         assert est in s["ece_t2"]["uncalibrated"] and est in s["ece_t2"]["temperature"]
     led = payload["ledger"]
-    assert led["paper"]["total"] == 11 and led["early"]["total"] == 8
+    assert led["paper"]["total"] == 11 and led["early"]["total"] == 14
+    assert led["all"]["total"] == 25 and led["all"]["held"] + led["all"]["falsified"] == 25
     assert led["paper"]["held"] + led["paper"]["falsified"] == led["paper"]["total"]
     ids = [r["id"] for r in led["rows"]]
-    assert ids == ["1", "2", "3", "4", "5.1", "5.2", "5.3", "5.4",
+    assert ids == ["1", "2.1", "2.2", "2.L", "3.1", "3.2", "3.3", "4.1", "4.2", "4.3",
+                   "5.1", "5.2", "5.3", "5.4",
                    "6a", "6b", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
 
 
@@ -118,13 +120,19 @@ def test_the_early_verdicts_are_the_ones_notes_records() -> None:
         from dashboard_summary import RECORDED
     finally:
         sys.path.pop(0)
-    assert RECORDED == {"1": False, "2": True, "3": True, "4": False,
+    assert RECORDED == {"1": False, "2.1": True, "2.2": True, "2.L": False,
+                        "3.1": True, "3.2": True, "3.3": False,
+                        "4.1": False, "4.2": True, "4.3": False,
                         "5.1": True, "5.2": False, "5.3": True, "5.4": True}
     with open(os.path.join(ROOT, "NOTES.md")) as fh:
         notes = fh.read()
     assert "the prediction as stated is wrong" in notes
     assert "Part 1 is falsified, and that is the result" in notes
     assert "The stated falsification condition is not met, so the prediction stands" in notes
+    assert "**Prediction 1 held.**" in notes and "**Prediction 2 held, and it is the sharper" in notes
+    assert "**It was tested. It does not hold**" in notes
+    assert "Part 2 of the prediction held cleanly" in notes and "### Part 3 was wrong" in notes
+    assert "### Part 2 held" in notes and "Part 3 also missed" in notes
     assert "prediction FALSIFIED" in notes and notes.count("prediction HELD") >= 3
 
 

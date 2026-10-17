@@ -87,9 +87,9 @@ falsified, and each is reported as it fell (`NOTES.md`, "Outcome of predictions 
 
 **A pilot: two capped readouts that both saturate cannot be weighted against each other.**
 This is a corollary of known decision-fusion theory applied to spike counts, not a new
-theorem, and the test is a pilot: one dataset, the second input a degraded copy from the
-same sensor rather than a second modality, no fusion network trained, no reference-frame
-transformation and no closed loop.
+theorem, and the test is a pilot: one dataset, the second input a degraded sample of the
+same class from the same sensor rather than a second modality, no fusion network trained,
+no reference-frame transformation and no closed loop.
 `[DERIVED]` A count readout that fires its winner at every step and nothing else reports one
 fixed vector, so where two inputs both do this the product rule is an unweighted vote, a
 coin flip on every disagreement, and it gives up `0.5 · P(S) · (a_1 − a_2)` in accuracy on

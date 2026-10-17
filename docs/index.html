@@ -50,9 +50,9 @@
       <div class="keys"><span class="key k-count"><i class="dot"></i><span>count</span></span><span class="key k-accum"><i class="dot"></i><span>accumulator</span></span></div>
     </div>
     <div class="tile">
-      <p class="label">Predictions recorded before the paper's runs</p>
-      <p class="value"><span data-n="pred-held"></span> held<span class="sep">·</span><span data-n="pred-false"></span> falsified</p>
-      <p class="sub">earlier verdicts: <span data-n="early-held"></span> held, <span data-n="early-false"></span> falsified</p>
+      <p class="label">Pre-registered predictions and parts</p>
+      <p class="value"><span data-n="all-held"></span> held<span class="sep">·</span><span data-n="all-false"></span> falsified</p>
+      <p class="sub">main table <span data-n="pred-held"></span> held, <span data-n="pred-false"></span> falsified; earlier <span data-n="early-held"></span> held, <span data-n="early-false"></span> falsified</p>
     </div>
   </div>
   <p class="byline">Mohammed Abrar Ahasan Chowdhury · ORCID <a href="https://orcid.org/0009-0006-9273-6593">0009-0006-9273-6593</a> · <a href="https://github.com/abrarahasanadil/spikecalib">code and artifacts</a></p>
@@ -153,7 +153,7 @@
     <h3>Accuracy gained by calibrating each input before fusing</h3>
     <p class="note">N-MNIST; points are seeds with 95% intervals</p>
     <div class="chart" id="chart-fusion"></div>
-    <p class="note" style="margin-top:8px">Limits: one dataset; the second input is a degraded copy from the same sensor, not a second modality; no fusion network trained; no reference-frame transformation; no closed loop.</p>
+    <p class="note" style="margin-top:8px">Limits: one dataset; the second input is a degraded sample of the same class from the same sensor, not a second modality; no fusion network trained; no reference-frame transformation; no closed loop.</p>
     <details><summary>Setup, and the table</summary><div class="body">
       <p>Input A is a test sample; input B a different sample of the same class with events removed at a rate fixed beforehand on the calibration split. The gain is the product rule's accuracy after temperature scaling each input minus its accuracy on the raw outputs.</p>
       <div class="scroll"><table id="table-fusion"></table></div>
@@ -168,7 +168,7 @@
   <div class="panel">
     <div class="scroll"><table class="ledger" id="table-ledger"></table></div>
     <details><summary>How verdicts are derived</summary><div class="body">
-      <p>Predictions 6a to 15 carry verdicts written by the scripts that tested them. Predictions 1 to 5 predate those blocks; the export re-applies each registered condition to the result files and stops if the verdict disagrees with the one recorded in NOTES.md. Prediction 5 had four parts, each with its own condition.</p>
+      <p>Predictions 6a to 15 carry verdicts written by the scripts that tested them. Predictions 1 to 5 predate those blocks; the export re-applies each registered condition to the result files and stops if the verdict disagrees with the one recorded in NOTES.md. Predictions 2 to 5 had parts with their own conditions or recorded outcomes, and each part has its own line.</p>
     </div></details>
   </div>
 </section>

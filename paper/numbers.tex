@@ -41,6 +41,9 @@
 \newcommand{\epochCap}{50}% results/sweep_nmnist.csv epochs_requested
 \newcommand{\epochsMin}{10}% results/sweep_nmnist.csv epochs_run
 \newcommand{\epochsMax}{21}% results/sweep_nmnist.csv epochs_run
+\newcommand{\recordsAll}{105}% results/*_record.json, every training record
+\newcommand{\epochsAllMin}{9}% results/*_record.json epochs_run, smallest
+\newcommand{\epochsAllMax}{40}% results/*_record.json epochs_run, largest
 \newcommand{\nBins}{15}% results/sweep_nmnist.csv n_bins
 \newcommand{\nBootstrap}{1{,}000}% results/sweep_nmnist.csv n_bootstrap
 \newcommand{\encoderMin}{41}% results/sweep_nmnist.csv encoder_energy_fraction
@@ -543,3 +546,57 @@
 \newcommand{\predictionsAll}{11}% NOTES.md predictions 6a to 15
 \newcommand{\predictionsAllHeld}{5}% verdict blocks of the five experiment files
 \newcommand{\predictionsAllFalsified}{6}% verdict blocks of the five experiment files
+\newcommand{\epOneIso}{1}% scripts/dashboard_summary.py early_predictions 1, results/sweep_nmnist.csv iso_minus_temp_ci_high
+\newcommand{\epOneRuns}{15}% scripts/dashboard_summary.py early_predictions 1
+\newcommand{\epOneIsoT}{6}% scripts/dashboard_summary.py early_predictions 1
+\newcommand{\epOneIsoSeed}{0}% scripts/dashboard_summary.py early_predictions 1
+\newcommand{\epOneEm}{3}% scripts/dashboard_summary.py early_predictions 1, iso_minus_temp_em_resolvable
+\newcommand{\epOneBoth}{0}% scripts/dashboard_summary.py early_predictions 1
+\newcommand{\epTwoMemEce}{0.0290}% scripts/dashboard_summary.py early_predictions 2.1, results/readout_experiment.json ece_equal_width, membrane, T=2
+\newcommand{\epTwoCountEce}{0.5386}% scripts/dashboard_summary.py early_predictions 2.1, ece_equal_width, count, T=2
+\newcommand{\epTwoMemAcc}{0.9851}% scripts/dashboard_summary.py early_predictions 2.1, test_accuracy, membrane, T=2
+\newcommand{\epTwoCountAcc}{0.9850}% scripts/dashboard_summary.py early_predictions 2.1, test_accuracy, count, T=2
+\newcommand{\epTwoWcEce}{0.5385}% scripts/dashboard_summary.py early_predictions 2.2, ece_equal_width, weighted-count, T=2
+\newcommand{\epTwoLGap}{0.0289}% scripts/dashboard_summary.py early_predictions 2.L, accuracy minus mean confidence, membrane, T=2
+\newcommand{\epTwoLUnder}{3}% scripts/dashboard_summary.py early_predictions 2.L
+\newcommand{\epTwoLSeeds}{3}% scripts/dashboard_summary.py early_predictions 2.L
+\newcommand{\epThreeDefSix}{0.0061}% scripts/dashboard_summary.py early_predictions 3.1, AUROC count minus accumulator, T=6
+\newcommand{\epThreeDefTen}{0.0035}% scripts/dashboard_summary.py early_predictions 3.1, AUROC count minus accumulator, T=10
+\newcommand{\epThreeEce}{0.0031}% scripts/dashboard_summary.py early_predictions 3.1, ece_equal_width, accumulator, T=2
+\newcommand{\epThreeWins}{0}% scripts/dashboard_summary.py early_predictions 3.1, seeds where the accumulator matches or beats count
+\newcommand{\epThreeBeats}{6}% scripts/dashboard_summary.py early_predictions 3.2
+\newcommand{\epThreeAuAcc}{0.9698}% scripts/dashboard_summary.py early_predictions 3.3, auroc, accumulator, T=2
+\newcommand{\epThreeAuMem}{0.9659}% scripts/dashboard_summary.py early_predictions 3.3, auroc, membrane, T=2
+\newcommand{\epFourShare}{0}% scripts/dashboard_summary.py early_predictions 4.1, results/conditional_ceiling.json share_explained_conditional
+\newcommand{\epFourCond}{0.6804}% scripts/dashboard_summary.py early_predictions 4.1, conditional_ceiling_mean, N-Caltech101, T=6
+\newcommand{\epFourAcc}{0.6427}% scripts/dashboard_summary.py early_predictions 4.1, test_accuracy, N-Caltech101, T=6
+\newcommand{\epFourGapTen}{0.0047}% scripts/dashboard_summary.py early_predictions 4.2, ceiling_gap_theo_minus_cond, N-MNIST, T=6
+\newcommand{\epFourGapHundred}{0.1210}% scripts/dashboard_summary.py early_predictions 4.3, ceiling_gap_theo_minus_cond, N-Caltech101, T=6
+\newcommand{\epFiveWorst}{$3.8\times10^{-13}$}% scripts/dashboard_summary.py early_predictions 5.1, results/arch_matched.json ceiling_signed_excess, largest
+\newcommand{\epFiveRuns}{24}% scripts/dashboard_summary.py early_predictions 5.1, count rows
+\newcommand{\epFiveGainFour}{$+$0.1282}% scripts/dashboard_summary.py early_predictions 5.2, four blocks
+\newcommand{\epFiveGainTwo}{$+$0.0308}% scripts/dashboard_summary.py early_predictions 5.2, two blocks
+\newcommand{\epFiveResFour}{0.1534}% scripts/dashboard_summary.py early_predictions 5.3, residual, four blocks
+\newcommand{\epFiveResTwo}{0.1159}% scripts/dashboard_summary.py early_predictions 5.3, residual, two blocks
+\newcommand{\epFiveShareFour}{0}% scripts/dashboard_summary.py early_predictions 5.4, four blocks
+\newcommand{\epFiveShareTwo}{0}% scripts/dashboard_summary.py early_predictions 5.4, two blocks
+\newcommand{\verdictEpOne}{falsified}% scripts/dashboard_summary.py early_predictions 1, checked against NOTES.md
+\newcommand{\verdictEpTwoOne}{held}% scripts/dashboard_summary.py early_predictions 2.1, checked against NOTES.md
+\newcommand{\verdictEpTwoTwo}{held}% scripts/dashboard_summary.py early_predictions 2.2, checked against NOTES.md
+\newcommand{\verdictEpTwoL}{falsified}% scripts/dashboard_summary.py early_predictions 2.L, checked against NOTES.md
+\newcommand{\verdictEpThreeOne}{held}% scripts/dashboard_summary.py early_predictions 3.1, checked against NOTES.md
+\newcommand{\verdictEpThreeTwo}{held}% scripts/dashboard_summary.py early_predictions 3.2, checked against NOTES.md
+\newcommand{\verdictEpThreeThree}{falsified}% scripts/dashboard_summary.py early_predictions 3.3, checked against NOTES.md
+\newcommand{\verdictEpFourOne}{falsified}% scripts/dashboard_summary.py early_predictions 4.1, checked against NOTES.md
+\newcommand{\verdictEpFourTwo}{held}% scripts/dashboard_summary.py early_predictions 4.2, checked against NOTES.md
+\newcommand{\verdictEpFourThree}{falsified}% scripts/dashboard_summary.py early_predictions 4.3, checked against NOTES.md
+\newcommand{\verdictEpFiveOne}{held}% scripts/dashboard_summary.py early_predictions 5.1, checked against NOTES.md
+\newcommand{\verdictEpFiveTwo}{falsified}% scripts/dashboard_summary.py early_predictions 5.2, checked against NOTES.md
+\newcommand{\verdictEpFiveThree}{held}% scripts/dashboard_summary.py early_predictions 5.3, checked against NOTES.md
+\newcommand{\verdictEpFiveFour}{held}% scripts/dashboard_summary.py early_predictions 5.4, checked against NOTES.md
+\newcommand{\predictionsEarly}{14}% NOTES.md predictions 1 to 5 and their parts
+\newcommand{\predictionsEarlyHeld}{8}% scripts/dashboard_summary.py early_predictions
+\newcommand{\predictionsEarlyFalsified}{6}% scripts/dashboard_summary.py early_predictions
+\newcommand{\predictionsEverything}{25}% NOTES.md, every prediction and part, 1 to 15
+\newcommand{\predictionsEverythingHeld}{13}% verdict blocks and scripts/dashboard_summary.py early_predictions
+\newcommand{\predictionsEverythingFalsified}{12}% verdict blocks and scripts/dashboard_summary.py early_predictions

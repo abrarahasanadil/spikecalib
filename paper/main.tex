@@ -52,8 +52,8 @@ with an area under the ROC curve of \aurocCountNmTwo{} against \aurocAccumNmTwo.
 In a pilot, when two capped readouts are fused, known decision-fusion theory implies that the product rule
 cannot weight them where both saturate; at $T=2$ calibrating each first removes \fuTwoErrCut\% % src: results/fusion_experiment.json
 of the fused errors, \fuTwoDeltaPoints{} points of accuracy, and from $T=4$ nothing measurable. % src: results/fusion_experiment.json
-Of \predictionsAll{} predictions recorded before these experiments, \predictionsAllHeld{} held and % src: NOTES.md; results/*_experiment.json verdict blocks
-\predictionsAllFalsified{} were falsified. % src: NOTES.md; results/*_experiment.json verdict blocks
+Of \predictionsEverything{} predictions and prediction parts recorded before the experiments that tested % src: NOTES.md; results/*_experiment.json verdict blocks; scripts/dashboard_summary.py
+them, \predictionsEverythingHeld{} held and \predictionsEverythingFalsified{} were falsified. % src: NOTES.md; results/*_experiment.json verdict blocks; scripts/dashboard_summary.py
 \end{abstract}
 
 % =========================================================================================
@@ -68,8 +68,10 @@ whose confidence matches its accuracy in this way is called calibrated.
 
 Spiking neural networks suit event-driven sensors and low-power hardware because they compute
 with sparse binary events spread over time. Every timestep costs latency and energy, so the
-pressure in practice is to use as few as possible. That low-timestep regime is also where
-spiking networks are reported to be badly calibrated. The natural reading is that such models
+pressure in practice is to use as few as possible. Few timesteps are also where a spike-count
+readout has been reported to be miscalibrated: read after only part of its run, a network's
+decisions are first under-confident and then over-confident~\citep{chen2025knowing}. The natural % [LIT] chen2025knowing, Section I and Figure 1(b)
+reading is that such models
 are harder to train well.
 
 This paper argues that, for the most common way of reading a spiking network, the problem is
@@ -104,12 +106,13 @@ The contributions are six.
   and~\ref{sec:resolution}).
 \item A pilot on fusion, as a corollary of known decision-fusion theory. Where two count
   readouts both saturate, the product rule reduces to an unweighted vote, and calibrating each
-  input restores the weighting. On one dataset, with a degraded copy from the same sensor as the
-  second input, the measured cost is confined to $T=2$ (Section~\ref{sec:fusion}).
+  input restores the weighting. On one dataset, with a degraded sample of the same class from the
+  same sensor as the second input, the measured cost is confined to $T=2$ (Section~\ref{sec:fusion}).
 \end{enumerate}
-The last four rest on \predictionsAll{} predictions recorded before the experiments that test % src: NOTES.md
-them; \predictionsAllFalsified{} were falsified, and each is reported as such % src: results/*_experiment.json verdict blocks
-(Table~\ref{tab:predictions}).
+Throughout, predictions were recorded before the experiments that tested them:
+\predictionsEverything{} predictions and prediction parts in all, of which \predictionsEverythingFalsified{} were % src: NOTES.md; results/*_experiment.json verdict blocks; scripts/dashboard_summary.py
+falsified, and each is reported as such (Table~\ref{tab:predictions} for the \predictionsAll{} behind % src: NOTES.md
+the last four contributions, Table~\ref{tab:earlypredictions} for the \predictionsEarly{} before them).
 Code, result artifacts and an interactive view of every number are available at
 \url{https://github.com/abrarahasanadil/spikecalib}.
 
@@ -314,8 +317,10 @@ matched grid trains both depths on both datasets.
 Models are trained with Adam at learning rate $\learningRate$, with batch size \batchSize{} on % optimiser: spikecalib/train.py; lr and batch size: results/nmnist_T2_seed0_record.json
 N-MNIST and \batchSizeNc{} on N-Caltech101, % src: results/ncaltech101_T2_seed0_record.json batch_size
 for at most \epochCap{} epochs, with early stopping after \patienceEpochs{} epochs without % src: results/sweep_nmnist.csv epochs_requested; results/*_record.json
-improvement in validation accuracy. Every run stopped early; the calibration sweep's runs took
-\epochsMin--\epochsMax{} epochs. Each configuration is trained at \nSeeds{} seeds, \modelsTotal{} % src: results/sweep_nmnist.csv; results/*_weights.pt
+improvement in validation accuracy. All \recordsAll{} training records stopped early, after % src: results/*_record.json early_stopped, epochs_run
+\epochsAllMin{} to \epochsAllMax{} epochs, and the calibration sweep's runs took \epochsMin--\epochsMax{} % src: results/*_record.json epochs_run; results/sweep_nmnist.csv epochs_run
+epochs. Runs made before the sweep, to explore settings and to test the training harness, reached
+their epoch caps without stopping; none was kept, and no result uses them. Each configuration is trained at \nSeeds{} seeds, \modelsTotal{} % src: results/sweep_nmnist.csv; results/*_weights.pt
 models in all: \modelsNm{} on N-MNIST and \modelsNc{} on N-Caltech101. % src: results/*_weights.pt
 
 \paragraph{Readouts.}
@@ -540,7 +545,8 @@ N-Caltech101 & 6 & \scaleMinScNcSix--\scaleMaxScNcSix & \sminMinScNcSix--\sminMa
 \centering
 \caption{Predictions recorded before the corresponding runs, with the condition each had to
 meet and what was measured. Gaps are mean confidence minus accuracy; ``tie'' and ``differ''
-follow the rule of Section~\ref{sec:method}; $\delta$ is defined in Section~\ref{sec:fusion}.}
+follow the rule of Section~\ref{sec:method}; $\delta$ is defined in Section~\ref{sec:fusion}. The
+\predictionsEarly{} earlier predictions and parts are in Table~\ref{tab:earlypredictions}.}
 \label{tab:predictions}
 \small
 \begin{tabular}{l>{\raggedright\arraybackslash}p{0.47\linewidth}>{\raggedright\arraybackslash}p{0.25\linewidth}l}
@@ -883,5 +889,45 @@ $T$ & accuracy & w & m & w & m & w & m & differ \\
 \end{table}
 
 \input{fusion_appendix}
+
+\section{The earlier pre-registered predictions}
+\label{app:earlypredictions}
+
+Table~\ref{tab:earlypredictions} lists the predictions recorded before the experiments of
+Table~\ref{tab:predictions}, from the first calibrator prediction to the matched-architecture
+grid, with each part that carried its own condition. Outcomes are the ones recorded at the
+time; each is re-derived here from the result files against its registered condition, and the
+generator stops if the two disagree. Of the \predictionsEarly{}, \predictionsEarlyHeld{} held % src: scripts/dashboard_summary.py early_predictions
+and \predictionsEarlyFalsified{} were falsified. Means are over three seeds. Prediction 2 also % src: scripts/dashboard_summary.py early_predictions
+named a third outcome, membrane as underconfident as count, as the more interesting failure;
+it was a stated alternative, not a prediction, and is not listed.
+
+\begin{table}[!ht]
+\centering
+\caption{Earlier pre-registered predictions and their parts, with the condition each had to
+meet, what was measured, and the outcome recorded. ECE is equal-width unless stated.}
+\label{tab:earlypredictions}
+\footnotesize
+\begin{tabular}{l>{\raggedright\arraybackslash}p{0.40\linewidth}>{\raggedright\arraybackslash}p{0.36\linewidth}l}
+\toprule
+ & condition & measured & outcome \\
+\midrule
+1 & N-MNIST, recorded 2026-09-10: temperature scaling matches or beats top-label isotonic regression at every $T$; no isotonic advantage resolvable under equal-width ECE & isotonic resolvably better in \epOneIso{} of \epOneRuns{} runs ($T=\epOneIsoT$, seed \epOneIsoSeed); \epOneEm{} resolve under equal-mass, \epOneBoth{} under both & \verdictEpOne \\ % src: results/sweep_nmnist.csv; NOTES.md "Outcome, recorded 2026-09-10"
+2.1 & N-MNIST, $T=2$: a membrane readout's uncalibrated ECE is not within a factor of two of count's, at comparable accuracy & \epTwoMemEce{} against \epTwoCountEce; accuracy \epTwoMemAcc{} against \epTwoCountAcc & \verdictEpTwoOne \\ % src: results/readout_experiment.json; NOTES.md "Outcome of prediction 2"
+2.2 & N-MNIST, $T=2$: weighted count, sharing the cap, stays near count rather than membrane & \epTwoWcEce{} against count's \epTwoCountEce & \verdictEpTwoTwo \\ % src: results/readout_experiment.json
+2, link & Stated in advance: removing the cap restores the overconfidence the literature reports & membrane's mean confidence below its accuracy at every $T$; by \epTwoLGap{} at $T=2$, in \epTwoLUnder{} of \epTwoLSeeds{} seeds & \verdictEpTwoL \\ % src: results/readout_experiment.json; NOTES.md "tested, and it does not hold"
+3.1 & N-MNIST: the accumulator's AUROC deficit against count is at most half the leaky membrane's (0.0066 at $T=6$, 0.0045 at $T=10$), and it keeps membrane's $T=2$ calibration & deficit \epThreeDefSix{} and \epThreeDefTen; $T=2$ ECE \epThreeEce. Its headline, match or beat count, was not met: \epThreeWins{} of 6 seeds & \verdictEpThreeOne \\ % thresholds: NOTES.md prediction 3; src: results/readout_experiment.json
+3.2 & N-MNIST: the accumulator ranks better than the leaky membrane at $T=6$ and $T=10$ & higher AUROC in \epThreeBeats{} of 6 seeds & \verdictEpThreeTwo \\ % src: results/readout_experiment.json
+3.3 & N-MNIST, $T=2$: accumulator and membrane are close & close on ranking, AUROC \epThreeAuAcc{} against \epThreeAuMem; not on calibration, ECE \epThreeEce{} against \epTwoMemEce & \verdictEpThreeThree \\ % src: results/readout_experiment.json; NOTES.md "Part 3 was wrong"
+4.1 & N-Caltech101, $T=6$: a ceiling conditioned on measured competitor activity explains more than half of the underconfidence & \epFourShare\%: the conditional ceiling, \epFourCond, sits above accuracy, \epFourAcc & \verdictEpFourOne \\ % src: results/conditional_ceiling.json
+4.2 & N-MNIST, $T=6$: the conditional and theoretical ceilings lie within 0.05 of each other & they differ by \epFourGapTen & \verdictEpFourTwo \\ % threshold: NOTES.md prediction 4; src: results/conditional_ceiling.json
+4.3 & N-Caltech101, $T=6$: the two ceilings differ by more than 0.15 & they differ by \epFourGapHundred & \verdictEpFourThree \\ % threshold: NOTES.md prediction 4; src: results/conditional_ceiling.json
+5.1 & Both depths, both datasets: no count readout exceeds its derived ceiling & worst excess \epFiveWorst{} over \epFiveRuns{} runs & \verdictEpFiveOne \\ % src: results/arch_matched.json
+5.2 & N-Caltech101, $T=2$: removing the cap gains more than 0.05 accuracy at both depths & \epFiveGainFour{} with four blocks, \epFiveGainTwo{} with two & \verdictEpFiveTwo \\ % threshold: NOTES.md prediction 5; src: results/arch_matched.json
+5.3 & N-Caltech101, $T=6$: the underconfidence stays above 0.08 at both depths & \epFiveResFour{} with four blocks, \epFiveResTwo{} with two & \verdictEpFiveThree \\ % threshold: NOTES.md prediction 5; src: results/arch_matched.json
+5.4 & N-Caltech101, $T=6$: the conditional ceiling explains none of it at either depth & \epFiveShareFour\% with four blocks, \epFiveShareTwo\% with two & \verdictEpFiveFour \\ % src: results/arch_matched.json
+\bottomrule
+\end{tabular}
+\end{table}
 
 \end{document}

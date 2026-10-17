@@ -127,6 +127,12 @@ er = [int(r["epochs_run"]) for r in sweep]
 put("epochsMin", str(min(er)), "results/sweep_nmnist.csv epochs_run")
 put("epochsMax", str(max(er)), "results/sweep_nmnist.csv epochs_run")
 assert {r["hit_epoch_cap"] for r in sweep} == {"False"}
+all_records = [json.load(open(p_)) for p_ in sorted(glob.glob(os.path.join(R, "*_record.json")))]
+assert all(r_["early_stopped"] for r_ in all_records), "a training record did not stop early"
+assert all(r_["epochs_run"] < r_["epochs_requested"] for r_ in all_records), "a training record reached its epoch cap"
+put("recordsAll", str(len(all_records)), "results/*_record.json, every training record")
+put("epochsAllMin", str(min(r_["epochs_run"] for r_ in all_records)), "results/*_record.json epochs_run, smallest")
+put("epochsAllMax", str(max(r_["epochs_run"] for r_ in all_records)), "results/*_record.json epochs_run, largest")
 put("nBins", sweep[0]["n_bins"], "results/sweep_nmnist.csv n_bins")
 put("nBootstrap", thousands(int(sweep[0]["n_bootstrap"])), "results/sweep_nmnist.csv n_bootstrap")
 enc = [float(r["encoder_energy_fraction"]) for r in sweep]
@@ -665,6 +671,68 @@ held += [fu_pred[k_]["held"] for k_ in ("12", "13", "14", "15")]
 put("predictionsAll", str(len(held)), "NOTES.md predictions 6a to 15")
 put("predictionsAllHeld", str(sum(held)), "verdict blocks of the five experiment files")
 put("predictionsAllFalsified", str(len(held) - sum(held)), "verdict blocks of the five experiment files")
+
+# ------------------------------------------------------------------ predictions 1 to 5, with their parts
+# The same computation the dashboard's ledger uses: each registered condition re-applied to the
+# artifacts, and the export stops if a verdict disagrees with the one NOTES.md records.
+sys.path.insert(0, os.path.join(ROOT, "scripts"))
+from dashboard_summary import early_predictions  # noqa: E402
+
+with open(os.path.join(R, "sweep_nmnist.csv")) as fh:
+    sweep_text = fh.read()
+early = early_predictions(load("readout_experiment.json")["rows"], load("conditional_ceiling.json")["rows"],
+                          load("arch_matched.json")["rows"], sweep_text)
+EP = {r["id"]: r for r in early}
+SRC_EP = "scripts/dashboard_summary.py early_predictions"
+V = lambda pid: EP[pid]["values"]  # noqa: E731
+put("epOneIso", str(V("1")["ew_iso"]), SRC_EP + " 1, results/sweep_nmnist.csv iso_minus_temp_ci_high")
+put("epOneRuns", str(V("1")["runs"]), SRC_EP + " 1")
+put("epOneIsoT", str(V("1")["iso_t"]), SRC_EP + " 1")
+put("epOneIsoSeed", str(V("1")["iso_seed"]), SRC_EP + " 1")
+put("epOneEm", str(V("1")["em_res"]), SRC_EP + " 1, iso_minus_temp_em_resolvable")
+put("epOneBoth", str(V("1")["both"]), SRC_EP + " 1")
+put("epTwoMemEce", f(V("2.1")["mem"]), SRC_EP + " 2.1, results/readout_experiment.json ece_equal_width, membrane, T=2")
+put("epTwoCountEce", f(V("2.1")["count"]), SRC_EP + " 2.1, ece_equal_width, count, T=2")
+put("epTwoMemAcc", f(V("2.1")["acc_mem"]), SRC_EP + " 2.1, test_accuracy, membrane, T=2")
+put("epTwoCountAcc", f(V("2.1")["acc_count"]), SRC_EP + " 2.1, test_accuracy, count, T=2")
+put("epTwoWcEce", f(V("2.2")["wc"]), SRC_EP + " 2.2, ece_equal_width, weighted-count, T=2")
+put("epTwoLGap", f(-V("2.L")["gap2"]), SRC_EP + " 2.L, accuracy minus mean confidence, membrane, T=2")
+put("epTwoLUnder", str(V("2.L")["under2"]), SRC_EP + " 2.L")
+put("epTwoLSeeds", str(V("2.L")["seeds"]), SRC_EP + " 2.L")
+put("epThreeDefSix", f(V("3.1")["d6"]), SRC_EP + " 3.1, AUROC count minus accumulator, T=6")
+put("epThreeDefTen", f(V("3.1")["d10"]), SRC_EP + " 3.1, AUROC count minus accumulator, T=10")
+put("epThreeEce", f(V("3.1")["ece"]), SRC_EP + " 3.1, ece_equal_width, accumulator, T=2")
+put("epThreeWins", str(V("3.1")["wins"]), SRC_EP + " 3.1, seeds where the accumulator matches or beats count")
+put("epThreeBeats", str(V("3.2")["beats"]), SRC_EP + " 3.2")
+put("epThreeAuAcc", f(V("3.3")["au_acc"]), SRC_EP + " 3.3, auroc, accumulator, T=2")
+put("epThreeAuMem", f(V("3.3")["au_mem"]), SRC_EP + " 3.3, auroc, membrane, T=2")
+put("epFourShare", f"{100 * V('4.1')['share']:.0f}", SRC_EP + " 4.1, results/conditional_ceiling.json share_explained_conditional")
+put("epFourCond", f(V("4.1")["cond"]), SRC_EP + " 4.1, conditional_ceiling_mean, N-Caltech101, T=6")
+put("epFourAcc", f(V("4.1")["acc"]), SRC_EP + " 4.1, test_accuracy, N-Caltech101, T=6")
+put("epFourGapTen", f(V("4.2")["gap"]), SRC_EP + " 4.2, ceiling_gap_theo_minus_cond, N-MNIST, T=6")
+put("epFourGapHundred", f(V("4.3")["gap"]), SRC_EP + " 4.3, ceiling_gap_theo_minus_cond, N-Caltech101, T=6")
+mant, ex = f"{V('5.1')['worst']:.1e}".split("e")
+put("epFiveWorst", f"${mant}\\times10^{{{int(ex)}}}$", SRC_EP + " 5.1, results/arch_matched.json ceiling_signed_excess, largest")
+put("epFiveRuns", str(V("5.1")["runs"]), SRC_EP + " 5.1, count rows")
+put("epFiveGainFour", f(V("5.2")["gain4"], sign=True), SRC_EP + " 5.2, four blocks")
+put("epFiveGainTwo", f(V("5.2")["gain2"], sign=True), SRC_EP + " 5.2, two blocks")
+put("epFiveResFour", f(V("5.3")["res4"]), SRC_EP + " 5.3, residual, four blocks")
+put("epFiveResTwo", f(V("5.3")["res2"]), SRC_EP + " 5.3, residual, two blocks")
+put("epFiveShareFour", f"{100 * V('5.4')['share4']:.0f}", SRC_EP + " 5.4, four blocks")
+put("epFiveShareTwo", f"{100 * V('5.4')['share2']:.0f}", SRC_EP + " 5.4, two blocks")
+VNAME = {"1": "One", "2.1": "TwoOne", "2.2": "TwoTwo", "2.L": "TwoL", "3.1": "ThreeOne", "3.2": "ThreeTwo",
+         "3.3": "ThreeThree", "4.1": "FourOne", "4.2": "FourTwo", "4.3": "FourThree",
+         "5.1": "FiveOne", "5.2": "FiveTwo", "5.3": "FiveThree", "5.4": "FiveFour"}
+assert set(VNAME) == set(EP)
+for pid, name in VNAME.items():
+    put("verdictEp" + name, verdict(EP[pid]["held"]), SRC_EP + f" {pid}, checked against NOTES.md")
+eh = sum(r["held"] for r in early)
+put("predictionsEarly", str(len(early)), "NOTES.md predictions 1 to 5 and their parts")
+put("predictionsEarlyHeld", str(eh), SRC_EP)
+put("predictionsEarlyFalsified", str(len(early) - eh), SRC_EP)
+put("predictionsEverything", str(len(early) + len(held)), "NOTES.md, every prediction and part, 1 to 15")
+put("predictionsEverythingHeld", str(eh + sum(held)), "verdict blocks and " + SRC_EP)
+put("predictionsEverythingFalsified", str(len(early) - eh + len(held) - sum(held)), "verdict blocks and " + SRC_EP)
 
 # ------------------------------------------------------------------ write
 with open(OUT, "w") as fh:

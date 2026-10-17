@@ -3725,3 +3725,67 @@ read typed sentences from the old page now check the rendered equivalents. `pyte
 **Browser check.** `[MEASURED]` Headless Chromium over CDP at 1920, 1440, 900 and 400 wide:
 no console output, no horizontal overflow, every number span filled, every chart drawn
 within its container, a tooltip from every chart, and a working theme toggle.
+
+## 2026-10-17 — Four paper fixes: every prediction counted, one wording, one citation, the stopping claim checked
+
+**Why.** The author asked for four corrections before posting.
+
+**1. The prediction record now covers every pre-registered prediction.** Table 3 and the
+abstract counted only predictions 6a to 15. Appendix C, Table A3, now lists the earlier
+ones with their parts: the 2026-09-10 calibrator prediction; prediction 2 parts 1 and 2,
+and the connection to prior work that it stated in advance; prediction 3 parts 1 to 3;
+prediction 4 parts 1 to 3; prediction 5 parts 1 to 4. That makes 14 rows. Each row gives
+the registered condition, the measurement as macros, and the outcome NOTES.md records:
+8 held and 6 falsified. `scripts/dashboard_summary.py` computes each verdict from the
+artifacts against the registered condition and stops if it disagrees with `RECORDED`,
+which quotes the NOTES heading for each part. `paper/make_numbers.py` takes its macros
+from that same computation. The abstract now reads "Of 25 predictions and prediction parts
+recorded before the experiments that tested them, 13 held and 12 were falsified". The
+Introduction gives both groups, and Table 3's caption points to Table A3. No prediction
+was edited.
+- *Decided:* prediction 2's third numbered item, membrane as underconfident as count, is
+  listed in NOTES as "the failure mode that would be more interesting". It is an
+  alternative outcome, not a prediction, so it is left out, and the appendix says so.
+- *Decided:* the connection to prior work that prediction 2 stated in advance is counted
+  as a part. NOTES records an outcome for it ("It was tested. It does not hold").
+- *Decided:* prediction 3 part 1 is recorded as held, because NOTES says its stated
+  falsification condition was not met. The measured column also says that its headline,
+  "match or beat count", was not met: 0 of 6 seeds.
+- *Decided:* part 3 of prediction 3 had no numerical condition. NOTES records it as wrong,
+  and the derivation reproduces that verdict with the factor-of-two convention of
+  prediction 2.
+- The dashboard's ledger uses the same 14 rows, and its prediction tile now counts all
+  25, matching the abstract.
+
+**2. Wording.** In contribution 6 and the first paragraph of Section 6, "a degraded copy
+from the same sensor" is now "a degraded sample of the same class from the same sensor".
+The same change was made in the README, on the dashboard and on the local briefing page,
+so that no published text says "copy".
+
+**3. The Introduction's citation.** "That low-timestep regime is also where spiking
+networks are reported to be badly calibrated" had no source. Of the references in
+`refs.bib`, only Chen, Park and Simeone (SpikeCP) report miscalibration tied to the number
+of timesteps a spike-count readout has seen. The sentence now says what they report: read
+after only part of its run, a network's decisions are first under-confident and then
+over-confident. Chen et al. 2024 (overconfidence at T = 80), Li, Jones and Furber, and
+Skatchkovsky et al. do not support a low-timestep statement, and are not cited there.
+
+**4. "Every run stopped early" was checked.** `[MEASURED]` All 105 records in
+`results/*_record.json` report `early_stopped: true` at a 50-epoch cap, after 9 to 40
+epochs; none reached its cap. The note that a saved run "hit its 15-epoch cap" (this log,
+the harness entries) refers to two exploratory runs, at T = 2 and T = 4, made before the
+sweep. The 50-epoch sweep refused to reuse them, and they were retrained. The harness smoke
+tests, at 2 epochs, also hit their cap by design. None of these is among the 105 records,
+and no result uses them. The sentence was true of every reported model. It now says so with
+macros ("All 105 training records stopped early, after 9 to 40 epochs") and adds that the
+earlier exploratory and harness runs reached their caps and were not kept.
+`make_numbers.py` asserts that every record stopped early and below its cap.
+
+**Page count.** `[MEASURED]` 18 pages. The main text runs 12 full pages and about
+three-quarters of page 13. The references run from page 13 to page 15. The appendix runs
+from page 16 to page 18. Table A3 is set in footnote size so that it fits on page 18 with
+its section; at the table's earlier size the appendix ran to page 19.
+
+**Verified.** `tectonic`: 0 warnings. `pytest -q`: 422 passed. Figures, `numbers.tex`
+(600 macros) and `docs/data.js` regenerated. Browser check of both pages at 1440 and 400
+wide: no console output, no overflow.

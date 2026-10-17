@@ -220,6 +220,7 @@
       setN("pred-held", String(L.paper.held)); setN("pred-false", String(L.paper.falsified));
       setN("pred-total", String(L.paper.total));
       setN("early-held", String(L.early.held)); setN("early-false", String(L.early.falsified));
+      setN("all-held", String(L.all.held)); setN("all-false", String(L.all.falsified));
     }
     setN("c-small", String(D.n_classes));
     var cc = D.caltech && D.caltech[0]; if (cc) setN("c-large", String(cc.n_classes));

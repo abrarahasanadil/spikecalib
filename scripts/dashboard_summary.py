@@ -18,13 +18,19 @@ import csv
 import io
 import statistics as st
 
-# The verdicts NOTES.md records for predictions 1 to 5, under the headings named. These are
-# the cross-check, not the source: the source is the computation below.
+# The verdicts NOTES.md records for predictions 1 to 5 and their parts, under the headings
+# named. These are the cross-check, not the source: the source is the computation below.
 RECORDED = {
     "1": False,    # "Outcome, recorded 2026-09-10 after the sweep": "the prediction as stated is wrong"
-    "2": True,     # "Outcome of prediction 2": "Prediction 1 held" and "Prediction 2 held"
-    "3": True,     # "Outcome of prediction 3": "the stated falsification condition is not met, so the prediction stands"
-    "4": False,    # "Outcome of prediction 4": "Part 1 is falsified, and that is the result"
+    "2.1": True,   # "Outcome of prediction 2": "Prediction 1 held"
+    "2.2": True,   # "Outcome of prediction 2": "Prediction 2 held"
+    "2.L": False,  # "The connection to prior work: tested, and it does not hold"
+    "3.1": True,   # "Outcome of prediction 3": "The stated falsification condition is not met, so the prediction stands"
+    "3.2": True,   # "Part 2 of the prediction held cleanly"
+    "3.3": False,  # "Part 3 was wrong"
+    "4.1": False,  # "Outcome of prediction 4": "Part 1 is falsified, and that is the result"
+    "4.2": True,   # "Part 2 held"
+    "4.3": False,  # "Part 3 also missed"
     "5.1": True,   # "Outcome of prediction 5", 1: "prediction HELD"
     "5.2": False,  # "Outcome of prediction 5", 2: "prediction FALSIFIED"
     "5.3": True,   # "Outcome of prediction 5", 3: "prediction HELD"
@@ -36,6 +42,9 @@ P3_DEFICIT_LIMIT = {6: 0.0066, 10: 0.0045}
 P4_SHARE_LIMIT = 0.5
 P5_GAIN_LIMIT = 0.05
 P5_RESIDUAL_LIMIT = 0.08
+P2_FACTOR = 2.0
+P4_C10_LIMIT = 0.05
+P4_C101_GAP = 0.15
 
 
 def _mean(rows, key):
@@ -83,103 +92,132 @@ def _f(x, d=4, sign=False):
 
 
 def early_predictions(readout, conditional, arch, csv_text):
-    """Predictions 1 to 5, each re-derived from its registered condition."""
+    """Predictions 1 to 5 and their parts, each re-derived from its registered condition.
+
+    Each row carries ``values``, the numbers its measurement is stated in, so that the paper's
+    macros and the dashboard read the same computation.
+    """
     sweep = sweep_rows(csv_text)
     runs = {(r["timesteps"], r["seed"]): r for r in sweep if r["arm"] == "isotonic-top-label"}
-    ew_iso = [k for k, r in runs.items() if float(r["iso_minus_temp_ci_high"]) < 0]
+    ew_iso = sorted(k for k, r in runs.items() if float(r["iso_minus_temp_ci_high"]) < 0)
     ew_res = [k for k, r in runs.items() if r["iso_minus_temp_resolvable"] == "True"]
     em_res = [k for k, r in runs.items() if r["iso_minus_temp_em_resolvable"] == "True"]
-    out = []
-    out.append({
-        "id": "1", "recorded": "2026-09-10",
-        "statement": "N-MNIST: temperature scaling matches or beats top-label isotonic regression at every T; "
-                     "no isotonic advantage resolvable under equal-width ECE",
-        "measured": f"isotonic resolvably better in {len(ew_iso)} of {len(runs)} runs under equal-width "
-                    f"({len(ew_res)} resolve either way; {len(em_res)} under equal-mass; "
-                    f"{len(set(ew_res) & set(em_res))} under both)",
-        "held": not ew_iso,
-    })
+    rows = []
 
-    def ece_t2(name):
-        return _mean(_sel(readout, readout=name, timesteps=2), "ece_equal_width")
-    count, wc, mem = ece_t2("count"), ece_t2("weighted-count"), ece_t2("membrane")
-    out.append({
-        "id": "2", "recorded": "2026-09-11",
-        "statement": "N-MNIST, T = 2: a membrane readout removes the cap and cuts uncalibrated ECE by more "
-                     "than half; weighted-count, sharing the cap, stays near count",
-        "measured": f"ECE (equal-width) count {_f(count)}, membrane {_f(mem)}, weighted-count {_f(wc)}",
-        "held": mem < count / 2 and abs(wc - count) < abs(wc - mem),
-    })
+    def add(pid, recorded, statement, measured, held, **values):
+        rows.append({"id": pid, "recorded": recorded, "statement": statement, "measured": measured,
+                     "held": bool(held), "values": values})
 
-    def auroc(name, T):
-        return _mean(_sel(readout, readout=name, timesteps=T), "auroc")
-    deficit = {T: auroc("count", T) - auroc("accumulator", T) for T in (6, 10)}
-    acc_ece2 = ece_t2("accumulator")
-    wins = sum(a["auroc"] >= c["auroc"]
-               for T in (6, 10)
-               for a, c in zip(sorted(_sel(readout, readout="accumulator", timesteps=T), key=lambda r: r["seed"]),
-                               sorted(_sel(readout, readout="count", timesteps=T), key=lambda r: r["seed"])))
-    out.append({
-        "id": "3", "recorded": "2026-09-11",
-        "statement": "N-MNIST: removing the leak (accumulator) leaves an AUROC deficit against count of at most "
-                     "half the leaky membrane's at T = 6 and 10, and keeps membrane's T = 2 calibration",
-        "measured": f"deficit {_f(deficit[6])} and {_f(deficit[10])} against limits {P3_DEFICIT_LIMIT[6]} and "
-                    f"{P3_DEFICIT_LIMIT[10]}; T = 2 ECE {_f(acc_ece2)}. Its headline, match or beat count, "
-                    f"was not met: the accumulator wins {wins} of 6 seeds",
-        "held": all(deficit[T] <= P3_DEFICIT_LIMIT[T] for T in (6, 10)) and acc_ece2 <= mem,
-    })
+    add("1", "2026-09-10",
+        "N-MNIST: temperature scaling matches or beats top-label isotonic regression at every T, with no "
+        "isotonic advantage resolvable under equal-width ECE",
+        f"isotonic resolvably better in {len(ew_iso)} of {len(runs)} runs under equal-width "
+        f"(T = {ew_iso[0][0]}, seed {ew_iso[0][1]}); {len(em_res)} resolve under equal-mass, "
+        f"{len(set(ew_res) & set(em_res))} under both" if ew_iso else "none",
+        not ew_iso, runs=len(runs), ew_iso=len(ew_iso), iso_t=ew_iso[0][0] if ew_iso else None,
+        iso_seed=ew_iso[0][1] if ew_iso else None, em_res=len(em_res), both=len(set(ew_res) & set(em_res)))
 
-    c = _sel(conditional, dataset="ncaltech101", timesteps=6)
-    share = _mean(c, "share_explained_conditional")
-    out.append({
-        "id": "4", "recorded": "2026-09-11",
-        "statement": "N-Caltech101, T = 6: a ceiling conditioned on measured competitor activity explains "
-                     "at least half of the underconfidence",
-        "measured": f"explains {100 * share:.0f}%: the conditional ceiling, {_f(_mean(c, 'conditional_ceiling_mean'))}, "
-                    f"sits above accuracy, {_f(_mean(c, 'test_accuracy'))}",
-        "held": share >= P4_SHARE_LIMIT,
-    })
+    def m(name, T, key):
+        return _mean(_sel(readout, readout=name, timesteps=T), key)
+    count, wc, mem, acc_ece2 = (m(n, 2, "ece_equal_width") for n in ("count", "weighted-count", "membrane", "accumulator"))
+    add("2.1", "2026-09-11",
+        "N-MNIST, T = 2: a membrane readout removes the cap; its uncalibrated ECE is not within a factor of "
+        "two of count's",
+        f"ECE (equal-width) {_f(mem)} against {_f(count)}, accuracy {_f(m('membrane', 2, 'test_accuracy'))} "
+        f"against {_f(m('count', 2, 'test_accuracy'))}",
+        mem * P2_FACTOR < count, mem=mem, count=count,
+        acc_mem=m("membrane", 2, "test_accuracy"), acc_count=m("count", 2, "test_accuracy"),
+        max_mem=m("membrane", 2, "max_confidence_observed"))
+    add("2.2", "2026-09-11",
+        "N-MNIST, T = 2: weighted count, which shares the cap, stays near count rather than membrane",
+        f"ECE (equal-width) {_f(wc)} against count's {_f(count)}",
+        abs(wc - count) < abs(wc - mem), wc=wc, count=count)
+    mem_gaps = {T: m("membrane", T, "mean_conf_minus_acc") for T in (2, 4, 6, 8, 10)}
+    mem2 = _sel(readout, readout="membrane", timesteps=2)
+    add("2.L", "2026-09-11",
+        "Connection stated in advance: removing the cap restores the overconfidence the literature reports",
+        "membrane's mean confidence is below its accuracy at every T, by "
+        f"{_f(-mem_gaps[2])} at T = 2, in {sum(r['mean_conf_minus_acc'] < 0 for r in mem2)} of {len(mem2)} seeds",
+        any(v > 0 for v in mem_gaps.values()), gap2=mem_gaps[2],
+        under2=sum(r["mean_conf_minus_acc"] < 0 for r in mem2), seeds=len(mem2),
+        max_gap=max(mem_gaps.values()))
+
+    deficit = {T: m("count", T, "auroc") - m("accumulator", T, "auroc") for T in (6, 10)}
+
+    def by_seed(name, T):
+        return {r["seed"]: r for r in _sel(readout, readout=name, timesteps=T)}
+    wins = sum(by_seed("accumulator", T)[s]["auroc"] >= by_seed("count", T)[s]["auroc"]
+               for T in (6, 10) for s in by_seed("count", T))
+    add("3.1", "2026-09-11",
+        "N-MNIST: removing the leak leaves an AUROC deficit against count of at most half the leaky "
+        f"membrane's ({P3_DEFICIT_LIMIT[6]} at T = 6, {P3_DEFICIT_LIMIT[10]} at T = 10), and keeps "
+        "membrane's T = 2 calibration",
+        f"deficit {_f(deficit[6])} and {_f(deficit[10])}; T = 2 ECE {_f(acc_ece2)}. Its headline, "
+        f"match or beat count, was not met: the accumulator wins {wins} of 6 seeds",
+        all(deficit[T] <= P3_DEFICIT_LIMIT[T] for T in (6, 10)) and acc_ece2 <= mem,
+        d6=deficit[6], d10=deficit[10], ece=acc_ece2, wins=wins)
+    beats = sum(by_seed("accumulator", T)[s]["auroc"] > by_seed("membrane", T)[s]["auroc"]
+                for T in (6, 10) for s in by_seed("membrane", T))
+    add("3.2", "2026-09-11", "N-MNIST: the accumulator ranks better than the leaky membrane at T = 6 and 10",
+        f"higher AUROC in {beats} of 6 seeds", beats == 6, beats=beats)
+    au_acc2, au_mem2 = m("accumulator", 2, "auroc"), m("membrane", 2, "auroc")
+    add("3.3", "2026-09-11", "N-MNIST, T = 2: accumulator and membrane are close",
+        f"close on ranking (AUROC {_f(au_acc2)} against {_f(au_mem2)}) but not on calibration "
+        f"(ECE {_f(acc_ece2)} against {_f(mem)})",
+        mem <= P2_FACTOR * acc_ece2, au_acc=au_acc2, au_mem=au_mem2, ece_acc=acc_ece2, ece_mem=mem)
+
+    c101, c10 = _sel(conditional, dataset="ncaltech101", timesteps=6), _sel(conditional, dataset="nmnist", timesteps=6)
+    share = _mean(c101, "share_explained_conditional")
+    add("4.1", "2026-09-11",
+        "N-Caltech101, T = 6: a ceiling conditioned on measured competitor activity explains more than "
+        "half of the underconfidence",
+        f"explains {100 * share:.0f}%: the conditional ceiling, {_f(_mean(c101, 'conditional_ceiling_mean'))}, "
+        f"sits above accuracy, {_f(_mean(c101, 'test_accuracy'))}",
+        share >= P4_SHARE_LIMIT, share=share, cond=_mean(c101, "conditional_ceiling_mean"),
+        acc=_mean(c101, "test_accuracy"))
+    gap10 = _mean(c10, "ceiling_gap_theo_minus_cond")
+    add("4.2", "2026-09-11",
+        f"N-MNIST, T = 6: the conditional and theoretical ceilings lie within {P4_C10_LIMIT} of each other",
+        f"they differ by {_f(gap10)}", gap10 < P4_C10_LIMIT, gap=gap10)
+    gap101 = _mean(c101, "ceiling_gap_theo_minus_cond")
+    add("4.3", "2026-09-11",
+        f"N-Caltech101, T = 6: the two ceilings differ by more than {P4_C101_GAP}",
+        f"they differ by {_f(gap101)}", gap101 > P4_C101_GAP, gap=gap101)
 
     count_arch = _sel(arch, readout="count")
     worst = max(r["ceiling_signed_excess"] for r in count_arch)
-    out.append({
-        "id": "5.1", "recorded": "2026-09-11",
-        "statement": "Both architectures, both datasets: no count readout exceeds its derived ceiling",
-        "measured": f"worst excess {worst:.1e} over {len(count_arch)} runs",
-        "held": worst <= 1e-9,
-    })
+    add("5.1", "2026-09-11",
+        "Matched architectures, both datasets: no count readout exceeds its derived ceiling",
+        f"worst excess {worst:.1e} over {len(count_arch)} runs", worst <= 1e-9, worst=worst, runs=len(count_arch))
     gains = {}
     for b in (2, 4):
         cnt = _sel(arch, dataset="ncaltech101", n_blocks=b, readout="count", timesteps=2)
         acc = _sel(arch, dataset="ncaltech101", n_blocks=b, readout="accumulator", timesteps=2)
         gains[b] = _mean(acc, "test_accuracy") - _mean(cnt, "test_accuracy")
-    out.append({
-        "id": "5.2", "recorded": "2026-09-11",
-        "statement": f"N-Caltech101, T = 2: removing the cap gains more than {P5_GAIN_LIMIT} accuracy at both depths",
-        "measured": f"gain {_f(gains[4], sign=True)} with four blocks, {_f(gains[2], sign=True)} with two",
-        "held": all(g > P5_GAIN_LIMIT for g in gains.values()),
-    })
+    add("5.2", "2026-09-11",
+        f"N-Caltech101, T = 2: removing the cap gains more than {P5_GAIN_LIMIT} accuracy at both depths",
+        f"gain {_f(gains[4], sign=True)} with four blocks, {_f(gains[2], sign=True)} with two",
+        all(g > P5_GAIN_LIMIT for g in gains.values()), gain4=gains[4], gain2=gains[2])
     res = {b: _mean(_sel(arch, dataset="ncaltech101", n_blocks=b, readout="count", timesteps=6), "residual")
            for b in (2, 4)}
-    out.append({
-        "id": "5.3", "recorded": "2026-09-11",
-        "statement": f"N-Caltech101, T = 6: the underconfidence stays above {P5_RESIDUAL_LIMIT} at both depths",
-        "measured": f"{_f(res[4])} with four blocks, {_f(res[2])} with two",
-        "held": all(v > P5_RESIDUAL_LIMIT for v in res.values()),
-    })
+    add("5.3", "2026-09-11",
+        f"N-Caltech101, T = 6: the underconfidence stays above {P5_RESIDUAL_LIMIT} at both depths",
+        f"{_f(res[4])} with four blocks, {_f(res[2])} with two",
+        all(v > P5_RESIDUAL_LIMIT for v in res.values()), res4=res[4], res2=res[2])
     shares = {b: _mean(_sel(arch, dataset="ncaltech101", n_blocks=b, readout="count", timesteps=6),
                        "share_explained_conditional") for b in (2, 4)}
-    out.append({
-        "id": "5.4", "recorded": "2026-09-11",
-        "statement": "N-Caltech101, T = 6: the conditional ceiling explains none of it at either depth",
-        "measured": f"{100 * shares[4]:.0f}% with four blocks, {100 * shares[2]:.0f}% with two",
-        "held": all(v == 0 for v in shares.values()),
-    })
-    for p in out:
+    add("5.4", "2026-09-11",
+        "N-Caltech101, T = 6: the conditional ceiling explains none of it at either depth",
+        f"{100 * shares[4]:.0f}% with four blocks, {100 * shares[2]:.0f}% with two",
+        all(v == 0 for v in shares.values()), share4=shares[4], share2=shares[2])
+
+    if [r["id"] for r in rows] != list(RECORDED):
+        raise SystemExit("the earlier predictions and RECORDED list different parts")
+    for p in rows:
         if p["held"] != RECORDED[p["id"]]:
             raise SystemExit(f"prediction {p['id']}: recomputed verdict {p['held']} disagrees with NOTES.md")
         p["group"] = "early"
-    return out
+    return rows
 
 
 def paper_predictions(scaled, resolution, caltech_cal, cal_size, fusion):
@@ -245,4 +283,4 @@ def build_ledger(readout, conditional, arch, csv_text, scaled, resolution, calte
     paper = paper_predictions(scaled, resolution, caltech_cal, cal_size, fusion)
     tally = lambda rows: {"total": len(rows), "held": sum(r["held"] for r in rows),  # noqa: E731
                           "falsified": sum(not r["held"] for r in rows)}
-    return {"rows": early + paper, "early": tally(early), "paper": tally(paper)}
+    return {"rows": early + paper, "early": tally(early), "paper": tally(paper), "all": tally(early + paper)}
