@@ -1,161 +1,87 @@
-% Consequence for multisensory fusion. Input by main.tex. Every measured value is a macro
-% from numbers.tex, read from results/fusion_experiment.json by paper/make_numbers.py.
+% A pilot: two capped readouts fused. Input by main.tex; kept to one page. Its theory,
+% derivation, setup in full and remaining results are in fusion_appendix.tex. Every measured
+% value is a macro from numbers.tex, read from results/fusion_experiment.json by
+% paper/make_numbers.py.
 % =========================================================================================
-\section{Consequence for multisensory fusion}
+\section{A pilot: two capped readouts fused}
 \label{sec:fusion}
 
-A cap on confidence matters beyond the calibration of one network when two networks are
-combined. This section applies known decision-fusion theory to two spike-count readouts. It
-states no new theorem.
+This section is a pilot, and what it does not show comes first. It uses one dataset,
+N-MNIST. Its second input is a degraded copy from the same sensor, not a second modality: a
+different test sample of the same class, read by the same network after each event is
+removed with probability \fuRate. No fusion network is trained. There is no reference-frame % src: results/fusion_dropout_rate.json
+transformation between the two inputs, and no closed loop: the fused decision is scored, not
+acted on.
 
-\paragraph{The theory being applied.}
-When two classifiers see conditionally independent inputs, the Bayes decision under equal
-priors multiplies their posteriors, the product rule~\citep{kittler1998combining}. % [LIT] kittler1998combining, Section 2.1
-When all that is known of each classifier is its accuracy $a_k$, the optimal rule for a choice
-between two alternatives is a weighted vote with weights proportional to
-$\log\big(a_k/(1-a_k)\big)$~\citep{shapley1984optimizing}, % [LIT] shapley1984optimizing, Theorem II
-a result Shapley and Grofman credit also to Nitzan and Paroush~\citep{nitzan1982optimal}, and % [LIT] shapley1984optimizing, note 8; nitzan1982optimal was not opened
-which Chair and Varshney give for sensor decisions weighted ``according to the reliability of
-the detector''~\citep{chair1986optimal}. % [LIT] chair1986optimal, abstract only
-For $C$ balanced classes with errors spread evenly over the wrong ones the weight is
-$\ln\big((C-1)a_k/(1-a_k)\big)$~\citep{kuncheva2014weighted,li2014error}. % [LIT] kuncheva2014weighted, Eq. (15); li2014error, Corollary 9
-That expression is the minimum logit width of Equation~\eqref{eq:tmin}. The standard remedy
-for sources whose confidences cannot be trusted is to calibrate each one and then
-combine~\citep{brummer2007fusion,kumar2022calibrated}. % [LIT] brummer2007fusion, Section IV; kumar2022calibrated, Proposition 4.1
+\paragraph{What it tests.}
+A source known only by its accuracy $a$ is weighted by $\ln\big((C-1)a/(1-a)\big)$ in
+decision-fusion theory~\citep{shapley1984optimizing,kuncheva2014weighted,li2014error}, the % [LIT] shapley1984optimizing, Theorem II; kuncheva2014weighted, Eq. (15); li2014error, Corollary 9
+minimum logit width of Equation~\eqref{eq:tmin}, and calibrating each source before combining is
+the standard remedy for confidences that cannot be trusted~\citep{brummer2007fusion,kumar2022calibrated}. % [LIT] brummer2007fusion, Section IV; kumar2022calibrated, Proposition 4.1
+A count readout is \emph{saturated} when its winner fires at all $T$ steps and no other class
+fires; its output is then the ceiling of Equation~\eqref{eq:ceiling}, one vector up to which
+class wins. Where both inputs saturate, an event $S$, the product
+rule~\citep{kittler1998combining} cannot weight one input above the other and becomes an % [LIT] kittler1998combining, Section 2.1
+unweighted vote. Against a rule that sides with input A on every disagreement in $S$ it loses
+\begin{equation}
+\tfrac12\,P(S)\,\big(a_{A,S}-a_{B,S}\big)
+\label{eq:fusioncost}
+\end{equation}
+in accuracy, $a_{k,S}$ being input $k$'s accuracy on $S$, and a scale with
+$s_kT=\ln\big((C-1)a_k/(1-a_k)\big)$ on each input's counts restores the weighting. This is a
+corollary of known theory, not a new result; Appendix~\ref{app:fusion} derives it.
 
-\paragraph{The corollary.}
-Call a count readout \emph{saturated} on an input when its winning class fired at all $T$
-steps and no other class fired. Its output is then the one vector that attains the ceiling of
-Equation~\eqref{eq:ceiling}, the same for every saturated input and every network, up to which
-class wins. Let $S$ be the event that both modalities saturate, and $a_{k,S}$ the accuracy of
-modality $k$ on $S$.
-\begin{enumerate}
-\item[(a)] On $S$ the two reports are permutations of each other. A fusion rule that uses only
-  the two reports, treats the modalities alike, treats the classes alike and rates a class
-  strictly higher when a modality does gives the two winners equal scores. With uniform
-  tie-breaking it is an unweighted vote: a coin flip whenever the modalities disagree. The
-  product, sum and max rules are of this kind. Ju et al.\ observe the like for networks whose
-  confidences have all saturated towards one, where averaging ``is identical to the majority
-  vote''~\citep{ju2018relative}. % [LIT] ju2018relative, Section 4.4.4
-\item[(b)] Against a rule that sides with modality 1 on every disagreement in $S$, such a rule
-  loses
-  \begin{equation}
-  \tfrac12\,P(S)\,\big(a_{1,S}-a_{2,S}\big)
-  \label{eq:fusioncost}
-  \end{equation}
-  in accuracy. This is an identity: where the two agree they are right or wrong together, so
-  the difference in their accuracies on $S$ is carried by the disagreements, and the coin gives
-  up half of it.
-\item[(c)] A scale $s_k$ on modality $k$'s counts with
-  $s_kT=\ln\big((C-1)a_k/(1-a_k)\big)$ makes the product rule on $S$ the reliability-weighted
-  vote of the theory above. A scale common to both modalities restores nothing.
-\end{enumerate}
-Parts (a) to (c) are checked by enumeration and by simulation in the accompanying code.
+\paragraph{Setup and result.}
+R0 is the product rule on the raw softmax outputs, R1 the product rule after temperature scaling
+each input, and $\delta=\operatorname{acc}(\mathrm{R1})-\operatorname{acc}(\mathrm{R0})$, with 95\%
+bootstrap intervals over \fuPairings{} pairings of the \nmSplitTest{} test samples in three seeds % src: results/fusion_experiment.json pairings; results/nmnist_T2_seed0_split.npz
+(Appendix~\ref{app:fusionsetup}). At $T=2$ both inputs saturate on \fuTwoPSMin{} to % src: results/fusion_experiment.json p_s
+\fuTwoPSMax{} of pairs, and calibrating first raises fused accuracy from \fuCountTwoRZero{} to % src: results/fusion_experiment.json acc_r0, acc_r1
+\fuCountTwoROne: \fuTwoErrCut\% of the fused errors, but only \fuTwoDeltaPoints{} points. Every % src: results/fusion_experiment.json acc_r0, acc_r1, delta
+seed's interval on $\delta$ excludes zero, and prediction 12 \verdictTwelve. % src: results/fusion_experiment.json predictions.12
+Equation~\eqref{eq:fusioncost} lies inside the interval of the part of $\delta$ from $S$ in
+\fuThirteenWithin{} of 3 seeds, and prediction 13 \verdictThirteen. From $T=4$ every interval % src: results/fusion_experiment.json predictions.13
+includes zero (Figure~\ref{fig:fusion}), because two saturated inputs there almost never
+disagree. Prediction 14 is \verdictFourteen, since its means at $T=6$ and $T=10$ are equal where % src: results/fusion_experiment.json predictions.14
+it asked for a strict fall, and prediction 15 is \verdictFifteen, since \fuAccumExcl{} of % src: results/fusion_experiment.json predictions.15
+\fuAccumRuns{} accumulator runs excludes zero, against calibration
+(Appendix~\ref{app:fusionresults}).
 
-\paragraph{Validation.}
-No network was trained. Modality A is an N-MNIST test sample read by a trained network;
-modality B is a different test sample of the same class, read by the same network after each
-event is removed with probability \fuRate, so the two are independent given the class. The rate % src: results/fusion_dropout_rate.json
-was fixed on the calibration split before any fused prediction was computed, as the grid value
-that lowers calibration accuracy by closest to ten points (\fuCalClean{} to \fuCalDropped). % src: results/fusion_experiment.json dropout
-Three rules are compared over \fuPairings{} random pairings of the \nmSplitTest{} test samples: % src: results/fusion_experiment.json pairings; results/nmnist_T2_seed0_split.npz
-R0, the product rule on the raw softmax outputs; R1, the product rule after temperature scaling
-each modality on calibration data; and R2, the reliability-weighted vote. Write
-$\delta=\operatorname{acc}(\mathrm{R1})-\operatorname{acc}(\mathrm{R0})$. Intervals are 95\%
-bootstrap intervals over test samples. Four predictions were recorded before the run
-(Table~\ref{tab:predictions}).
-
-\paragraph{What was measured.}
-At $T=2$ both modalities saturate on \fuTwoPSMin{} to \fuTwoPSMax{} of pairs, depending on the % src: results/fusion_experiment.json p_s
-seed (Table~\ref{tab:fusion}). Calibrating each modality first raises fused accuracy from
-\fuCountTwoRZero{} to \fuCountTwoROne: $\delta$ is \fuTwoDeltaMin{} to \fuTwoDeltaMax{} across % src: results/fusion_experiment.json acc_r0, acc_r1, delta
-seeds, with the lower end of every interval at or above \fuTwoCiLowMin. Prediction 12 % src: results/fusion_experiment.json delta_ci
-\verdictTwelve. In absolute terms the gain is \fuTwoDeltaPoints{} points, because both % src: results/fusion_experiment.json predictions.12, delta
-modalities are accurate on N-MNIST and the raw product rule already beats either alone; in
-relative terms it removes \fuTwoErrCut\% of the fused errors, from \fuTwoErrZero\% to % src: results/fusion_experiment.json acc_r0, acc_r1
-\fuTwoErrOne\%. The saturated pairs contribute \fuCountTwoDeltaOnS{} of $\delta$, % src: results/fusion_experiment.json delta_on_s
-\fuTwoShareOnS\% of it. Equation~\eqref{eq:fusioncost} gives \fuCountTwoPredicted{} from $P(S)$ % src: results/fusion_experiment.json predicted_on_s
-and the two accuracies on $S$, \fuTwoAccAOnS{} and \fuTwoAccBOnS, and lies inside the interval % src: results/fusion_experiment.json accuracy_a_on_s, accuracy_b_on_s
-of the measured part in \fuThirteenWithin{} of 3 seeds; prediction 13 \verdictThirteen. The % src: results/fusion_experiment.json predictions.13
-identity describes R1 only where temperature scaling gives the clean modality the larger
-scale, which it did in all \fuTwoScaleOrderRuns{} runs at $T=2$ (temperatures \fuTwoTempA{} % src: results/fusion_experiment.json r1_gives_a_the_larger_scale, temperature_a
-against \fuTwoTempB). The rest of $\delta$, \fuTwoDeltaOffS, comes from pairs outside $S$, which % src: results/fusion_experiment.json temperature_b, delta_off_s
-the corollary does not describe. The fused confidence of the raw product rule has an ECE of
-\fuTwoEceRZeroW{} with equal-width and \fuTwoEceRZeroM{} with equal-mass bins, and after % src: results/fusion_experiment.json ece_r0_ew, ece_r0_em
-per-modality calibration \fuTwoEceROneW{} and \fuTwoEceROneM. % src: results/fusion_experiment.json ece_r1_ew, ece_r1_em
-
-The effect is confined to $T=2$. From $T=4$ the mean of $\delta$ is \fuCountFourDeltaFine, % src: results/fusion_experiment.json predictions.14 mean_delta_by_t
-\fuCountSixDeltaFine, \fuCountEightDeltaFine{} and \fuCountTenDeltaFine{} at $T=4$, 6, 8 and 10, % src: results/fusion_experiment.json predictions.14 mean_delta_by_t
-and the interval includes zero in all \fuHighRuns{} of those runs (Figure~\ref{fig:fusion}; % src: results/fusion_experiment.json delta_ci
-Table~\ref{tab:fusionhigh}).
-Saturation is still common at $T=4$, where $P(S)$ is \fuCountFourPS, but two saturated % src: results/fusion_experiment.json p_s
-modalities almost never disagree there: the joint probability falls from \fuTwoPSDisagree{} at % src: results/fusion_experiment.json p_s_and_disagree
-$T=2$ to \fuFourPSDisagree. Prediction 14 required the mean to fall strictly through $T=2$, 4 % src: results/fusion_experiment.json p_s_and_disagree
-and 6 and to be lower still at $T=8$ and 10. The means at $T=6$ and $T=10$ are equal, so it is
-\verdictFourteen; its other clause, intervals including zero at $T=8$ and 10, was met. The % src: results/fusion_experiment.json predictions.14
-prediction asked for an ordering among values that are indistinguishable from zero. For the
-accumulator, which has no cap, $\delta$ lies between \fuAccumDeltaMin{} and \fuAccumDeltaMax{} % src: results/fusion_experiment.json delta, accumulator
-in every run, but in \fuAccumExcl{} of \fuAccumRuns{} runs its interval excludes zero, at % src: results/fusion_experiment.json predictions.15
-$T=\fuAccumExclT$ with $\delta$ of \fuAccumExclDelta{} (\fuAccumExclLo{} to \fuAccumExclHi): % src: results/fusion_experiment.json delta_ci, accumulator
-temperature scaling made that fusion slightly worse. Prediction 15 allowed none, and is
-\verdictFifteen. % src: results/fusion_experiment.json predictions.15
-
-Two further observations qualify the picture. The reliability-weighted vote, R2, is not the
-better rule overall. With two voters it is modality A alone, and at $T=2$ its accuracy is
-\fuTwoRZeroMinusRTwo{} below the raw product rule's, because outside $S$ the counts carry graded % src: results/fusion_experiment.json r2_minus_r0
-evidence that a vote discards. Part (b) compares rules on $S$ only. And temperature scaling does not always
-favour the more accurate modality: in all \fuLateScaleB{} of the \fuLateRuns{} count runs at % src: results/fusion_experiment.json r1_gives_a_the_larger_scale
-$T\ge6$ it gave the event-dropped modality the larger scale, since dropping events lowers the
-counts themselves. There Equation~\eqref{eq:fusioncost} has the wrong sign for R1, and it
-falls outside the measured interval in \fuPredMissAll{} runs, each resting on fewer than ten % src: results/fusion_experiment.json predicted_within_on_s_interval
-saturated disagreements in 200{,}000 pairs. % 10,000 test samples x 20 pairings: results/fusion_experiment.json n_test, pairings
-
-\begin{table}[t]
-\centering
-\caption{Fusion of a clean and an event-dropped modality on N-MNIST, mean over three seeds and
-\fuPairings{} pairings. A and B are the single-modality accuracies; $P(S)$ is the share of % src: results/fusion_experiment.json pairings
-pairs on which both saturate; ``on $S$'' is the part of $\delta$ from those pairs and
-``Eq.~\eqref{eq:fusioncost}'' its value from part (b); the last column counts seeds whose
-interval on $\delta$ excludes zero. An accumulator has no counts, so nothing saturates. The
-rows for $T\ge4$ are in Table~\ref{tab:fusionhigh}, Appendix~\ref{app:fusionhigh}.}
-\label{tab:fusion}
-\small
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{lcrrrrrrrrrc}
-\toprule
-readout & $T$ & A & B & R0 & R1 & R2 & $P(S)$ & $\delta$ & on $S$ & Eq.~\eqref{eq:fusioncost} & excl. \\
-\midrule
-count & 2  & \fuCountTwoAccA   & \fuCountTwoAccB   & \fuCountTwoRZero   & \fuCountTwoROne   & \fuCountTwoRTwo   & \fuCountTwoPS   & \fuCountTwoDelta   & \fuCountTwoDeltaOnS   & \fuCountTwoPredicted   & \fuCountTwoExcl   \\ % src: results/fusion_experiment.json
-\midrule
-accumulator & 2  & \fuAccumTwoAccA & \fuAccumTwoAccB & \fuAccumTwoRZero & \fuAccumTwoROne & \fuAccumTwoRTwo & -- & \fuAccumTwoDelta & -- & -- & \fuAccumTwoExcl \\ % src: results/fusion_experiment.json
-\bottomrule
-\end{tabular}
-\end{table}
+\paragraph{Reliability from spikes, elsewhere.}
+Grillo et al.\ weight a sensory signal delayed by 100\,ms against a cerebellar prediction in a
+spiking state estimator in NEST, by reliabilities computed from the variability of spike counts
+within each input population, tested on simulated inputs as an isolated block with each
+population's variability set by the authors~\citep{grillo2022bayesian}. Here reliability is read % [LIT] grillo2022bayesian, Sections 2.1, 2.2 and 4
+from a readout's confidence, which the cap limits.
 
 \begin{figure}[t]
+\begin{minipage}[b]{0.5\linewidth}
 \centering
-\includegraphics[width=0.5\linewidth]{figures/fig9-fusion.png} % figures/fig9-fusion.png, drawn by spikecalib/figures.py from results/fusion_experiment.json
-\caption{$\delta$, the accuracy gained by calibrating each modality before the product rule,
-against $T$ on N-MNIST. Points are seeds with their 95\% bootstrap intervals; open diamonds are
-the value Equation~\eqref{eq:fusioncost} gives for the saturated pairs.} % src: results/fusion_experiment.json
+\includegraphics[width=\linewidth]{figures/fig9-fusion.png} % figures/fig9-fusion.png, drawn by spikecalib/figures.py from results/fusion_experiment.json
+\caption{The pilot: $\delta$, the accuracy gained by calibrating each input before the product
+rule, against $T$ on N-MNIST. Points are seeds with 95\% bootstrap intervals; open diamonds are
+Equation~\eqref{eq:fusioncost}.} % src: results/fusion_experiment.json
 \label{fig:fusion}
+\end{minipage}\hfill
+\begin{minipage}[b]{0.46\linewidth}
+\centering
+\small
+\begin{tabular}{lrr}
+\toprule
+$T=2$ & count & accum. \\
+\midrule
+input A alone        & \fuCountTwoAccA    & \fuAccumTwoAccA \\ % src: results/fusion_experiment.json accuracy_a
+input B alone        & \fuCountTwoAccB    & \fuAccumTwoAccB \\ % src: results/fusion_experiment.json accuracy_b
+R0, raw product      & \fuCountTwoRZero   & \fuAccumTwoRZero \\ % src: results/fusion_experiment.json acc_r0
+R1, calibrated first & \fuCountTwoROne    & \fuAccumTwoROne \\ % src: results/fusion_experiment.json acc_r1
+$P(S)$               & \fuCountTwoPS      & -- \\ % src: results/fusion_experiment.json p_s
+$\delta$             & \fuCountTwoDelta   & \fuAccumTwoDelta \\ % src: results/fusion_experiment.json delta
+$\delta$ on $S$      & \fuCountTwoDeltaOnS & -- \\ % src: results/fusion_experiment.json delta_on_s
+Eq.~\eqref{eq:fusioncost} & \fuCountTwoPredicted & -- \\ % src: results/fusion_experiment.json predicted_on_s
+\bottomrule
+\end{tabular}
+\captionof{table}{The pilot at $T=2$, mean of three seeds and \fuPairings{} pairings. An % src: results/fusion_experiment.json pairings
+accumulator has no counts, so nothing saturates. Every $T$ and the vote R2: Table~\ref{tab:fusionhigh}.}
+\label{tab:fusion}
+\end{minipage}
 \end{figure}
-
-\paragraph{What follows for fusion methods.}
-Two readings follow, and neither is a measurement. The first is given here: a fusion weight
-computed from a
-modality's own output is a function of that output, so on $S$ it takes one value. Zhang et
-al.\ and Cao et al.\ bound the generalisation error of dynamic fusion, and the bound improves on
-static fusion's when each modality's weight is negatively correlated with its
-loss~\citep{zhang2023provable,cao2024predictive}; % [LIT] zhang2023provable, Theorem 2; cao2024predictive, Theorem 3.1 and Corollary 3.2
-Zhang et al.\ note that a constant weight has zero covariance with every loss. Restricted to
-$S$, an output-derived weight is such a constant: the former condition is met only with
-equality, the strict form of the latter is not met, and whatever advantage remains must come
-from pairs outside $S$. Their theorems are not contradicted, and methods that predict weights
-from features instead of outputs are not affected. A second reading, on
-saturation in probabilistic population codes, is in Appendix~\ref{app:ppc}.
-
-Calibrating each modality restores the weighting between them and no more. Every saturated
-input still reports one confidence, whatever its true posterior, which is the grouping loss
-that Perez-Lebel et al.\ show calibration does not remove~\citep{perezlebel2023beyond}. % [LIT] perezlebel2023beyond
-Part (c) yields the best rule that knows two accuracies, not the Bayes rule.

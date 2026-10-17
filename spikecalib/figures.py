@@ -569,7 +569,7 @@ def figure_fusion(rows, stats, out_dir, fusion_path=None):
                     zorder=5, ls="none", label="proposition, on-$S$ part (count)")
     ax.set_xticks(sorted({int(r["timesteps"]) for r in fusion["rows"]}))
     ax.set_xlabel("timesteps $T$")
-    ax.set_ylabel("accuracy gained by calibrating\neach modality before fusion")
+    ax.set_ylabel("accuracy gained by calibrating\neach input before fusion")
     ax.legend(loc="upper right", fontsize=8.5)
     ax.grid(axis="x", visible=False)
     return save(fig, out_dir, "fig9-fusion")

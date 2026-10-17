@@ -3602,3 +3602,66 @@ references run from page 14 to page 16, and the one-page appendix is page 17.
 
 **Verified.** `tectonic`: 0 warnings. `pytest -q`: 415 passed. The figures and
 `docs/data.js` were regenerated and match the committed files byte for byte.
+
+## 2026-10-17 — Paper corrections before posting: the resolution claim, the fusion pilot, two citations
+
+**Why.** The author found that the abstract contradicted Section 5 on resolution, asked for
+the fusion section to be cut to a one-page pilot that says first what it does not show, and
+asked for two citations.
+
+**Did.**
+- *The resolution claim.* The abstract said the count readout's few values "resolve correct
+  from incorrect predictions as well as an unbounded readout's". Section 5 reports an area
+  under the ROC curve of 0.9204 against 0.9698. The abstract now says the few values match an
+  unbounded readout's Brier resolution but rank errors worse, using `\aurocCountNmTwo` and
+  `\aurocAccumNmTwo`. Contribution 5 in the Introduction and the Conclusion now say the same.
+  The README's bold heading ("few values are not poor resolution") and one dashboard heading
+  were changed the same way. The README body already said that ranking is what is given up.
+- *The fusion pilot.* Section 6 is now "A pilot: two capped readouts fused". It opens with
+  what it does not show: one dataset; a degraded copy from the same sensor, not a second
+  modality; no fusion network trained; no reference-frame transformation; no closed loop.
+  The theory, the corollary's conditions and derivation, the setup in full, the remaining
+  results, the two readings for fusion methods and population codes, and the grouping-loss
+  remark moved to `paper/fusion_appendix.tex`, Appendix B. Nothing was deleted. The body
+  keeps the cost identity as Equation 8, one paragraph of results with all four verdicts, the
+  figure, and a compact T = 2 table beside it. The table's R2 row and "seeds excluding zero"
+  row went to Table A2, which now holds every T. "Modality A/B" became "input A/B"
+  throughout the pilot, the README and the figure's axis label, since the brief says the
+  second input is not a second modality. The abstract's fusion sentence starts "In a pilot,";
+  contribution 6, the Conclusion and the Limitations heading say "pilot".
+- *Measured length of Section 6.* `[MEASURED]` from the PDF's bounding boxes. The text runs
+  from y = 224 to y = 650 on page 11, about 426 pt. Its float, figure and table side by side,
+  sits at the top of page 12 and takes about 200 pt. That totals about 0.96 of the 651 pt text
+  height. It reached one page only after the table went beside the figure and two clauses were
+  cut: "as Ju et al. observe for saturated ensembles", which is still in Appendix B.1, and a
+  tightened Grillo sentence.
+
+**Two citations, verified against their primary documents** (`SOURCES.md`, "References
+verified 2026-10-17").
+- *Skatchkovsky, Jang and Simeone (2022)*, read in the Frontiers PDF and in arXiv v2. They
+  measure calibration with reliability diagrams and ECE at 50 to 150 timesteps, and find
+  frequentist training overconfident and Bayesian learning better calibrated. **The brief's
+  phrase "where the cap is slack" is not supported as a statement about their readout.**
+  Their confidence (Eq. 37) is a time average of per-step softmaxes over a fixed random
+  projection of the output spikes. That is not a count readout, and its range is set by the
+  projection, which the paper does not report, not by T. Related work therefore says that a
+  count readout's cap would be slack at those lengths, and that theirs is not a count readout.
+- *Grillo, Geminiani, Alessandro, D'Angelo, Pedrocchi and Casellato (2022)*, read in the
+  publisher's typeset CC BY PDF through Zenodo. The MIT Press and Politecnico di Milano links
+  refused automated access. Every element of the brief's description is in the paper: a
+  100 ms delay; reliability from the variance of spike counts across neurons in a 25 ms
+  window, scaled by the mean; NEST; Poisson inputs on a simulated reaching task; "tested here
+  as an isolated block". The paper adds one thing, also stated: each input population's
+  variability was set by the authors for each learning stage.
+- `tests/test_provenance.py` barred the string "Skatchkovsky" from three live files because
+  the two-author attribution was withdrawn on 2026-09-12. The paper is now cited under its
+  real record, so the test bars only the withdrawn forms, "Skatchkovsky & Simeone" and
+  "Skatchkovsky and Simeone", and adds `paper/main.tex` to the files it checks.
+
+**Page count.** `[MEASURED]` 18 pages. The main text, title to Acknowledgements, runs 12 full
+pages and about two-thirds of page 13. The references run from page 13 to page 15. The
+appendix, A and B, runs from page 16 to ten lines of page 18.
+
+**Verified.** `tectonic`: 0 warnings. `pytest -q`: 415 passed. Figures, `numbers.tex` and
+`docs/data.js` regenerated. Only `fig9-fusion` changed, for its axis label; the other SVGs'
+metadata-only churn was discarded.

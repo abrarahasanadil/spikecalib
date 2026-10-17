@@ -77,11 +77,16 @@ def test_energy_is_described_as_a_proxy_wherever_it_is_reported() -> None:
 
 
 def test_no_withdrawn_reference_is_cited_in_live_files() -> None:
-    """Withdrawn on verification; they belong in SOURCES.md as a record, nowhere else."""
+    """Withdrawn on verification; they belong in SOURCES.md as a record, nowhere else.
+
+    The second was the two-author "Skatchkovsky & Simeone" attribution. The paper it meant,
+    Skatchkovsky, Jang and Simeone (2022), was found and is cited under its real record from
+    2026-10-17, so only the withdrawn form is barred.
+    """
     for rel in (os.path.join("spikecalib", "calibration.py"), os.path.join("docs", "index.html"),
-                "README.md"):
+                "README.md", os.path.join("paper", "main.tex")):
         text = _read(rel)
-        for bad in ("AOT-SNN", "Skatchkovsky"):
+        for bad in ("AOT-SNN", "Skatchkovsky & Simeone", "Skatchkovsky and Simeone"):
             assert bad not in text, f"{rel} still cites the withdrawn reference {bad}"
 
 

@@ -75,8 +75,8 @@ zero under both, in the same direction.
   60 subsample draws and isotonic in 3. At least half the draws in two of three seeds was
   predicted; no seed reaches half, so that prediction is **falsified** too.
 
-**The number of confidence values is fixed by `T` and `C`, and few values are not poor
-resolution.** `[DERIVED]` A count readout emits at most `binomial(T + C − 1, C − 1)` distinct
+**The number of confidence values is fixed by `T` and `C`; the few values match an unbounded
+readout's resolution but rank errors worse.** `[DERIVED]` A count readout emits at most `binomial(T + C − 1, C − 1)` distinct
 confidences at any logit scale, 55 at `T = 2, C = 10`; observed counts are within the bound
 in 45 of 45 cells. `[MEASURED]` A prediction that the count readout's Brier resolution would
 be below the accumulator's on N-MNIST was **falsified**: it is below in 4 of 12 comparisons,
@@ -86,14 +86,17 @@ three of them an artefact of equal-mass binning. What the count readout gives up
 Seven predictions were recorded before these last experiments. Three held and four were
 falsified, and each is reported as it fell (`NOTES.md`, "Outcome of predictions 6a to 11").
 
-**Two capped readouts that both saturate cannot be weighted against each other.** This is a
-corollary of known decision-fusion theory applied to spike counts, not a new theorem.
+**A pilot: two capped readouts that both saturate cannot be weighted against each other.**
+This is a corollary of known decision-fusion theory applied to spike counts, not a new
+theorem, and the test is a pilot: one dataset, the second input a degraded copy from the
+same sensor rather than a second modality, no fusion network trained, no reference-frame
+transformation and no closed loop.
 `[DERIVED]` A count readout that fires its winner at every step and nothing else reports one
-fixed vector, so where two modalities both do this the product rule is an unweighted vote, a
+fixed vector, so where two inputs both do this the product rule is an unweighted vote, a
 coin flip on every disagreement, and it gives up `0.5 · P(S) · (a_1 − a_2)` in accuracy on
-those pairs. A per-modality scale restores the weighting. `[MEASURED]` On N-MNIST, fusing a
+those pairs. A per-input scale restores the weighting. `[MEASURED]` On N-MNIST, fusing a
 clean sample with an event-dropped sample of the same class and training nothing, calibrating
-each modality before the product rule lifts fused accuracy from 0.9911 to 0.9954 at `T = 2`,
+each input before the product rule lifts fused accuracy from 0.9911 to 0.9954 at `T = 2`,
 which is 48% of the fused errors and 0.43 points of accuracy, and the identity matches the
 measured part in 3 of 3 seeds. From `T = 4` the gain is not measurable. Four predictions were
 recorded before the run. Two held; two were **falsified**: one asked for a strict ordering

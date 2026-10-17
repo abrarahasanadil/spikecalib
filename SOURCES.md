@@ -990,6 +990,62 @@ multimodal fusion degenerates to constant weights when unimodal confidences are 
 clipped or quantised. Eight searches were run and every candidate opened. The nearest is the
 remark in Zhang et al. quoted above. A failed search is not proof of absence.
 
+## References verified 2026-10-17
+
+**Skatchkovsky, Jang & Simeone (2022). "Bayesian continual learning via spiking neural
+networks." *Frontiers in Computational Neuroscience* 16:1037976.** Nicolas Skatchkovsky,
+Hyeryung Jang, Osvaldo Simeone; DOI 10.3389/fncom.2022.1037976 (Crossref: title, journal,
+volume, article number 1037976, published 2022-11-16, three authors); arXiv:2208.13723. `[LIT]`
+Read in the Frontiers PDF and in arXiv v2. The author decided on 2026-10-17 to cite it; it is
+the paper the reference withdrawn on 2026-09-12 as "Skatchkovsky & Simeone on SNN
+overconfidence" very probably meant (see "Literature check, 2026-10-13").
+- *Calibration is measured:* "performance metrics include calibration measures, namely
+  reliability diagrams and expected calibration error (ECE)"; "frequentist learning
+  algorithms produce overconfident decisions, while Bayesian learning outputs decisions whose
+  confidence levels match well the test accuracies".
+- *Timesteps:* two-moons "over T = 100 time-steps"; split-MNIST "rate-encoded over T = 50
+  time-steps"; MNIST-DVS "restrict the length to T = 80 time-samples"; DVS-Gestures
+  "sequences of length 500 ms for training and 1500 ms for testing, with a sampling rate of
+  10 ms", that is 50 and 150 steps. Hence "50 to 150 timesteps" in the paper.
+- *The readout is not a count readout.* Eq. (37): the predictive probability is
+  `(1/T) Σ_t Softmax_k(B^(L) f(w, x_t))`, where `f(w, x_t)` is the output of the read-out
+  layer at step `t` and `B^(L)` "are random, fixed weights". It is a time average of per-step
+  softmaxes over a fixed random projection of the output spikes. Training uses DECOLLE
+  surrogate gradients, so the networks are directly trained.
+- *What may be said:* they measure SNN calibration at 50 to 150 timesteps, where a count
+  readout's cap would be slack, and find frequentist training overconfident. *What may not:*
+  that their readout is subject to the count cap, or that its cap is slack. The cap of a
+  per-step softmax over `B^(L) s_t` is set by the range of `B^(L) s_t`, which the paper does
+  not report, not by `T`. The brief's phrase "where the cap is slack" is therefore used only
+  as a statement about count readouts at those lengths.
+
+**Grillo, Geminiani, Alessandro, D'Angelo, Pedrocchi & Casellato (2022). "Bayesian Integration
+in a Spiking Neural System for Sensorimotor Control." *Neural Computation*
+34(9):1893-1914.** DOI 10.1162/neco_a_01525 (Crossref: title, journal, volume, issue, pages,
+six authors). `[LIT]` Read in the publisher's typeset PDF (CC BY 4.0), fetched through the
+Zenodo record 8135935; the MIT Press and Politecnico di Milano links refused automated access.
+- *Abstract:* the estimator "receives spiking activity from two neural populations encoding
+  the sensory feedback and the cerebellar prediction, and it continuously computes the spike
+  variability within each population as a reliability index of the signal these populations
+  encode."
+- *Delay:* "the trajectory of the point mass was delayed by 100 ms before translating it into
+  the neural activity of the sensory population" (Section 2.1).
+- *Simulator and inputs:* the populations "were implemented as spiking neural networks (SNN)
+  ... in NEST"; the sensory and cerebellar neurons are "Poisson single-point neurons"; "We
+  simulated a reaching task" (Section 2.2 and abstract).
+- *Reliability:* "the variance in the number of incoming spikes across neurons was computed
+  within a 25 ms time window", scaled by the mean count (Eq. 2.3), and the estimate is "the
+  weighted sum of X_Fbk and μ_Pred based on their relative variabilities" (Eq. 2.2).
+- *Isolated block, variability set by the authors:* "Our model is a proof-of-concept and was
+  tested here as an isolated block, receiving spike-encoded input signals"; "we had to make
+  assumptions on the statistics of these areas' neural activity"; "we considered two
+  scenarios: high variability to simulate inaccurate cerebellar predictions (prelearning),
+  and low variability to simulate accurate cerebellar predictions (postlearning)"
+  (Sections 2.2 and 4).
+- *What may be said:* everything in the paper's one paragraph on it. *What may not:* that it
+  uses a readout's confidence, or that it was run in a closed loop. Closed-loop integration is
+  stated as future work.
+
 ## Still to verify
 
 1. **Amir et al. CVPR 2017 — full author list** for DVS-Gesture. Only "Amir et al." and the
