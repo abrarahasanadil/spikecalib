@@ -1681,7 +1681,7 @@ under the definition above. Nothing has been fitted on a subsample.
 
 ## Outcome of predictions 6a to 11, recorded 2026-10-14 after the runs
 
-The predictions above are unedited. They were committed at 23:29 on 2026-10-13 (`293d73c`);
+The predictions above are unedited. They were committed at 23:29 on 2026-10-13 (`33ebb02`);
 the first model was trained after that, and every experiment below ran between then and the
 first minutes of 2026-10-14. Each script evaluates its prediction against the registered
 condition and stores the verdict beside the numbers.

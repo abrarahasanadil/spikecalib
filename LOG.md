@@ -1609,14 +1609,14 @@ sessions, but five sessions between 2026-09-10 and 2026-09-11 have **no entry at
 
 | commit | session |
 |---|---|
-| `a51b0fb` | Publish the study as a static site under `docs/` |
-| `00ad822` | Rebuild `docs/` as a landscape dashboard |
-| `e4745e8` | Readout experiment, the bound as a design rule, selective prediction, prior art |
-| `6dbaf7f` | Three copy fixes, why the count readout exists, page rework |
-| `f95ffb6` | Readout comparison at three seeds |
+| `5a41445` | Publish the study as a static site under `docs/` |
+| `2351dde` | Rebuild `docs/` as a landscape dashboard |
+| `5a38a05` | Readout experiment, the bound as a design rule, selective prediction, prior art |
+| `a9bf44b` | Three copy fixes, why the count readout exists, page rework |
+| `1555b9d` | Readout comparison at three seeds |
 
-Two of those are substantial research sessions, not documentation work: `e4745e8` introduced
-the readout experiment, `min_timesteps`, and `spikecalib/selective.py`; `f95ffb6` produced
+Two of those are substantial research sessions, not documentation work: `5a38a05` introduced
+the readout experiment, `min_timesteps`, and `spikecalib/selective.py`; `1555b9d` produced
 the three-seed readout comparison that is cited throughout `NOTES.md` and the dashboard.
 **Their reasoning, their rejected alternatives and their mistakes are unrecorded.** That
 cannot be repaired now without writing entries dated in the past, which would be worse than
@@ -1630,7 +1630,7 @@ append look like an edit. No earlier entry has been softened in hindsight.
 
 **Found: one stale claim left on the dashboard, and no untraceable numbers.**
 The scoped recommendation still said the cap "costs 16× in uncalibrated ECE at `T = 2`" —
-seed 0's figure, the last survivor of the single-seed family corrected in `d88b423`. The
+seed 0's figure, the last survivor of the single-seed family corrected in `f471ce8`. The
 three-seed range is **11.9× to 63.5×, mean 30.5×**. Corrected. Otherwise all 31 load-bearing
 prose figures were checked programmatically against `sweep_nmnist.csv`,
 `readout_experiment.json`, `quantisation_test.json`, `caltech_experiment.json`,
@@ -1740,7 +1740,7 @@ bug does not appear. Two causes, both real, neither visible to that check:
   undefined (reading 'readout')`, and all eight buttons go dead behind one console error.
   The wiring now runs *first* and each renderer is wrapped individually, so a data fault
   costs a panel rather than the interface.
-- **Caching.** `app.js` was referenced with no version and had changed in `c7288b8`. A
+- **Caching.** `app.js` was referenced with no version and had changed in `04c4e5f`. A
   browser holding the previous copy — which contained no `wireModals` at all — serves dead
   buttons with *no* console error. All three assets now carry `?v=`.
 
@@ -3244,7 +3244,7 @@ definition.** Changes from the first drafts, all made before any run:
 
 ## 2026-10-14 — Seven predictions: three held, four falsified, and the calibrator result reversed at 101 classes
 
-**Order of events.** The predictions were committed at 23:29 on 2026-10-13 (`293d73c`). The
+**Order of events.** The predictions were committed at 23:29 on 2026-10-13 (`33ebb02`). The
 first model was trained after that. Every run below finished within the following half hour;
 the write-up is dated the 14th.
 
@@ -3402,7 +3402,7 @@ say what the cap costs when two capped readouts are combined.
 **The dropout rate was fixed first.** `scripts/fusion_experiment.py --select-rate`, on the
 calibration split with the seed-0 count model at `T = 2`, chose `r = 0.50`: calibration
 accuracy 0.9838 clean, 0.8800 with half of all events removed, the grid value closest to a
-ten-point drop. It was written to `results/fusion_dropout_rate.json` and committed (1ee4d58)
+ten-point drop. It was written to `results/fusion_dropout_rate.json` and committed (275ebbf)
 before any fused prediction was computed. The main run reads the rate from that file.
 
 **Result.** `[MEASURED]` `results/fusion_experiment.json`, 24 runs, 20 pairings each, no
@@ -3538,7 +3538,7 @@ font size; do not switch to ten-point type". The file was already at ten-point: 
 2026-10-14 on the seven predictions switched it and marked the switch "to be confirmed by the
 author". The two halves of the instruction agree only if "current" means the size the paper
 had before that unconfirmed switch, so this is taken as the confirmation being refused, and
-`main.tex` is back at `\documentclass[11pt]`, as it was in every commit up to f5e19b6. The
+`main.tex` is back at `\documentclass[11pt]`, as it was in every commit up to 64230c4. The
 bibliography stays at `\footnotesize` and the figure widths stay as they are; neither was
 mentioned. If ten-point was meant after all, it is the one token on line 1 of `main.tex`.
 
