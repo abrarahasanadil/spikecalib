@@ -507,7 +507,7 @@
     [["N-MNIST", R.nm], ["N-Caltech101", R.nc]].forEach(function (g) {
       g[1].forEach(function (r) {
         rows.push([g[0], String(r.T), String(r.seed), sg(r.ew.d, 4), "[" + sg(r.ew.lo, 4) + ", " + sg(r.ew.hi, 4) + "]",
-          sg(r.em.d, 4), "[" + sg(r.em.lo, 4) + ", " + sg(r.em.hi, 4) + "]", r.both ? "differ" : "tie"]);
+          sg(r.em.d, 4), "[" + sg(r.em.lo, 4) + ", " + sg(r.em.hi, 4) + "]", r.both ? "differ" : "not resolved"]);
       });
     });
     table("table-cal", ["dataset", "T", "seed", "equal-width", "interval", "equal-mass", "interval", "verdict"], rows);
