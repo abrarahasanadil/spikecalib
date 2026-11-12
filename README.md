@@ -46,10 +46,9 @@ experiments that tested them, 13 <!-- n:predictionsEverythingHeld --> held and
 
 - Reading a spike count as a bounded logit turns a known softmax bound into a floor on ECE under
   any binning. At *T* = 2 that floor is nearly all of the observed error on both datasets.
-- Lifting the cap on the same trained weights, by temperature scaling or by reading the network
-  without an output threshold, removes the underconfidence on N-MNIST and most of it on
-  N-Caltech101. Lifting it far above accuracy, by an unbounded readout or a learned scale, makes
-  N-Caltech101 overconfident.
+- Temperature scaling, which lifts the cap without retraining, removes the underconfidence on
+  N-MNIST and most of it on N-Caltech101. Lifting the cap far above accuracy, by an unbounded
+  readout or a learned scale, makes N-Caltech101 overconfident.
 - Most of the accuracy a count readout gives up on N-Caltech101 at *T* = 2 is lost at the readout
   at inference, to coarse and tied counts, and is present with identical weights.
 - Temperature scaling and isotonic regression are statistically equivalent on N-MNIST; isotonic

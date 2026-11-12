@@ -45,25 +45,24 @@ The Calibration Cost of a Known Softmax Bound in Low-Timestep Spiking Networks}
 \maketitle
 
 \begin{abstract}
-Spiking neural networks are often read by counting the spikes of each output neuron and
-passing the counts to a softmax. Over $T$ timesteps every count lies in $[0,T]$, and a softmax
-over logits confined to an interval of width $T$ cannot exceed $p^{*}=e^{T}/(e^{T}+C-1)$ for $C$
-classes. This bound is known for normalised and clipped logits. We read spike counts as such
-bounded logits and measure what the cap does to calibration on the event-camera datasets
-N-MNIST and N-Caltech101 at low $T$, with three seeds per setting. Wherever accuracy $a$ exceeds
-$p^{*}$, the cap sets a floor of $a-p^{*}$ on expected calibration error (ECE) under any binning.
-At two timesteps this floor is \frNmTwoInt\% of the observed ECE on N-MNIST and % src: results/ece_floor.json floor_ratio
-\frNcTwoInt\% on N-Caltech101. Lifting the cap on the same trained weights, by temperature % src: results/ece_floor.json floor_ratio
-scaling or by reading the network without an output threshold, removes the underconfidence on
-N-MNIST and most of it on N-Caltech101. Lifted far above accuracy, the cap gives way to
-overconfidence on N-Caltech101. Most of the accuracy a count readout gives up there is lost at
-the readout itself, to coarse and frequently tied counts. Temperature scaling and isotonic
-regression are statistically equivalent on N-MNIST; on N-Caltech101, where the cap binds,
-isotonic regression is better. A count readout can emit at most $\binom{T+C-1}{C-1}$ distinct
-confidences, and on N-MNIST it ranks its errors worse than an unbounded readout. Nearly half of
-the \predictionsEverything{} predictions recorded before the experiments failed, and each is % src: NOTES.md; results/*_experiment.json and results/caltech_calibrators.json verdict blocks; scripts/dashboard_summary.py
-reported. In practice, the cap should be compared with the expected accuracy before $T$ is
-chosen, and a low-timestep count readout should be calibrated before its confidence is used.
+Spiking neural networks are often read by passing the spike count of each output neuron to a
+softmax. Over $T$ timesteps every count lies in $[0,T]$, so the softmax
+cannot exceed $p^{*}=e^{T}/(e^{T}+C-1)$ for $C$ classes, a bound known for normalised and clipped
+logits. We read spike counts as such bounded logits and measure what the cap does to calibration
+on the event-camera datasets N-MNIST and N-Caltech101 at low $T$, with three seeds per setting.
+Wherever accuracy $a$ exceeds $p^{*}$, the cap sets a floor of $a-p^{*}$ on expected calibration
+error (ECE) under any binning. At two timesteps this floor is \frNmTwoInt\% of the observed ECE % src: results/ece_floor.json floor_ratio
+on N-MNIST and \frNcTwoInt\% on N-Caltech101. Temperature scaling, which lifts the cap without % src: results/ece_floor.json floor_ratio
+retraining, removes the underconfidence on N-MNIST and most of it on N-Caltech101. Lifting the cap
+far above accuracy, by an unbounded readout or a learned scale, gives way to overconfidence on
+N-Caltech101. Most of the accuracy a count readout gives up there is lost at the readout itself,
+to coarse and frequently tied counts. Temperature scaling and isotonic regression are
+statistically equivalent on N-MNIST; on N-Caltech101, where the cap binds, isotonic regression is
+better. A count readout emits at most $\binom{T+C-1}{C-1}$ distinct confidences and, on N-MNIST,
+ranks its errors worse than an unbounded readout. Nearly half of the \predictionsEverything{} % src: NOTES.md; results/*_experiment.json and results/caltech_calibrators.json verdict blocks; scripts/dashboard_summary.py
+predictions recorded in advance failed; all are reported. Before choosing $T$, the cap should be
+compared with the expected accuracy, and a low-timestep count readout should be calibrated before
+its confidence is used.
 \end{abstract}
 
 % =========================================================================================
@@ -1104,9 +1103,9 @@ Counting spikes confines the logits to an interval as wide as the number of time
 softmax over such logits cannot be more confident than a known bound allows. Wherever accuracy is
 above that cap, the cap sets a floor on calibration error under any binning, and at two timesteps
 the floor is \frNmTwoInt\% of the observed error on N-MNIST and \frNcTwoInt\% on N-Caltech101, % src: results/ece_floor.json floor_ratio
-with three seeds per setting. Lifting the cap on the same weights removes the underconfidence on
-N-MNIST and most of it on N-Caltech101; lifting it far above accuracy, by an unbounded readout or a
-learned scale, leaves the harder dataset overconfident. The accuracy a count readout loses at low
+with three seeds per setting. Temperature scaling, which lifts the cap on the same weights, removes
+the underconfidence on N-MNIST and most of it on N-Caltech101; lifting the cap far above accuracy,
+by an unbounded readout or a learned scale, leaves the harder dataset overconfident. The accuracy a count readout loses at low
 $T$ is lost mostly to coarse, tied counts at inference, which no logit scale can recover.
 Temperature scaling and isotonic regression are equivalent on N-MNIST within a stated margin; on
 N-Caltech101, where the cap binds, isotonic regression is better on nine runs of one architecture.
