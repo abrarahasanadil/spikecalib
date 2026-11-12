@@ -287,7 +287,7 @@ def test_notes_and_readme_report_each_verdict_as_the_artifact_has_it() -> None:
     n_held = sum(verdicts.values())
     words = {3: "Three", 4: "Four"}
     assert f"{words[n_held]} held and {words[7 - n_held].lower()} were falsified" in table
-    assert f"{words[n_held]} held and {words[7 - n_held].lower()} were" in " ".join(_read("README.md").split())
+    # The README's prediction counts are checked against numbers.tex by tests/test_readme.py.
 
 
 def test_fusion_verdicts_follow_from_the_rows() -> None:

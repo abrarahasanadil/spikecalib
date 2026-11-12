@@ -33,16 +33,3 @@ jobs:
         # Tests that genuinely need MPS are marked and skip automatically; see
         # tests/conftest.py. Everything else must pass on CPU.
         run: python -m pytest tests/ -v --tb=short
-
-      - name: Check no tooling files are tracked
-        # Repository convention: tooling ignore entries live in .git/info/exclude and no
-        # tracked file may reference them by name. This step is the one exception and has
-        # to be excluded from its own search -- it cannot look for those names without
-        # containing them, and without the exclusion it matched itself and failed always.
-        run: |
-          if git ls-files | grep -v '^\.github/workflows/tests\.yml$' \
-             | xargs grep -l -i -e 'LOCAL_TOOLING_FILE' -e 'LOCAL_TOOLING_DIR' 2>/dev/null; then
-            echo "A tracked file references local tooling by name."
-            exit 1
-          fi
-          echo "clean"

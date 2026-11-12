@@ -1,5 +1,4 @@
 data/
-results/*.csv
 *.pt
 *.pth
 __pycache__/
@@ -10,11 +9,17 @@ __pycache__/
 results/*.npz
 results/*_audit.json
 # paper build products: main.tex, refs.bib and the generated numbers.tex are tracked;
-# the PDF and logs are rebuilt with `tectonic -X compile paper/main.tex`
+# the PDF is rebuilt with pdflatex and BibTeX (see README); paper/main.pdf is tracked so the
+# README can link to it, and the logs and auxiliary files are not
 paper/*.pdf
+!paper/main.pdf
 paper/*.log
 paper/*.blg
+paper/*.aux
+paper/*.out
+paper/*.bbl
+paper/*.toc
+paper/*.synctex.gz
 
 # private review material, never published
 paper/review/
-
