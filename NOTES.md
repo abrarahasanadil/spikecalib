@@ -2086,6 +2086,131 @@ absent from `T = 4` on this dataset; that two of four predictions were falsified
 say that calibration before fusion matters in general for spiking networks: one dataset, a
 constructed second modality, and an effect at one timestep setting.
 
+## Post-review analyses, thresholds fixed 2026-11-12 before computation
+
+**Written before any of the analyses below was computed, and not to be revised afterwards.**
+They were added in response to a review received on 2026-11-12. None of them is a
+pre-registered prediction in the sense of the sections above, and the paper labels each one
+"added after review, not pre-registered". Every prediction, date and outcome recorded above
+stays exactly as it is. What is fixed here is every threshold, margin, stopping rule, seed and
+compute limit, so that none can be chosen after seeing a result.
+
+Common settings. Bootstraps use 1,000 resamples of the test set drawn with
+`numpy.random.default_rng(seed)`, `seed` being the run's seed, exactly as
+`spikecalib.calibration.bootstrap_ece_difference` draws them. Bins: 15, both estimators, as
+in every earlier result. Means over seeds are reported with the sample standard deviation
+(`ddof = 1`) and the range. No correction for multiplicity is applied anywhere below; the
+number of tests is stated beside each family instead.
+
+### A1. The cap as a floor on ECE
+
+For any partition of the test set into bins, `ECE >= |a - p_bar|` by the triangle
+inequality, `a` being accuracy and `p_bar` mean confidence, with equality exactly when every
+occupied bin's signed gap (accuracy minus mean confidence) has the same sign. Every
+confidence of a count readout is at most `p* = e^T / (e^T + C - 1)`, so `p_bar <= p*`, and
+wherever `a > p*` it follows that `ECE >= a - p*` under any binning, including grouping by
+distinct confidence value. For every count-readout cell with `a > p*`: the per-bin signed
+gaps under equal-width bins, equal-mass bins and grouping by distinct value; the number of
+overconfident bins (signed gap below zero), the share of test samples in them and the
+largest overconfident gap; the floor ratio `(a - p*) / ECE` under each estimator, as mean,
+standard deviation and range over seeds, and a test-set bootstrap 95% percentile interval.
+For the interval, each resample redraws every seed's test set with that seed's generator,
+recomputes accuracy and ECE (bins rebuilt on the resample, as in the paired bootstrap), and
+averages the ratio over seeds. Descriptive; no threshold.
+
+### A2. Equal-mass bins with repeated values
+
+`_equal_mass_bins` packs unique confidence values greedily and never splits a tie, so bins
+are not equal in mass. Per cell: the effective bin count, the smallest and largest bin
+occupancy, and ECE grouped by distinct value, `sum_k (n_k / n) |acc_k - conf_k|`, beside both
+binned estimates. Descriptive; no threshold.
+
+### A3. Equivalence of the two calibrators: two one-sided tests
+
+The registered rule of 2026-10-13 stays as registered. Its unresolved outcome is no longer
+to be called a tie or a match in the paper. Added beside it, for every run on which the
+paired bootstrap of isotonic minus temperature ECE was computed (N-MNIST: 15 count runs;
+N-Caltech101: 9 count, 9 accumulator and 6 scaled-count runs), under both estimators:
+
+- Equivalence at `alpha = 0.05` is declared at margin `delta` when the 90% paired-bootstrap
+  percentile interval (5th to 95th percentile of the same 1,000 resampled differences)
+  lies inside `[-delta, delta]`.
+- The resampled differences are regenerated with the same seed and the same draws as the
+  stored 95% intervals, and the regenerated 95% interval must reproduce the stored one to
+  within `1e-12` before any 90% interval is used.
+- Three margins, all reported, as a sensitivity analysis:
+  - `delta = 0.005`. Strict. It is about three binomial standard errors of an accuracy of
+    0.97 on the 10,000-sample N-MNIST test set, and of the order of N-MNIST's ECE after
+    temperature scaling.
+  - `delta = 0.01`. One percentage point of ECE, a conventional practical margin below
+    which the choice between two calibrators would not change a deployment decision.
+  - `delta = 0.02`. Lenient. It is about 1.7 binomial standard errors of an accuracy near
+    0.5 on the 1,742-sample N-Caltech101 test set, so smaller differences there are hard
+    to tell from sampling noise.
+- A run is reported as equivalent under both estimators only if each estimator's interval
+  lies inside the margin. The calibration-size subsamples are not included.
+
+### A4. Run-level metrics, scoring rules, reliability diagrams
+
+Per run, every seed and configuration: accuracy, ECE under both estimators, top-label Brier
+score, top-label log loss and the AUROC of confidence for correctness
+(`sklearn.metrics.roc_auc_score`). Multiclass negative log-likelihood and Brier score where
+the output is a full distribution (uncalibrated and temperature-scaled); isotonic regression
+is top-label and gets top-label scores only. Probabilities are clipped at `1e-12` before any
+logarithm, and the number clipped is reported. Calibrators refitted for this purpose must
+reproduce the published ECE to within `1e-9`, or the script stops. Reliability diagrams:
+for count readouts, accuracy against each distinct confidence value, marker area
+proportional to mass, Wilson 95% intervals (`z = 1.959964`); for continuous readouts,
+equal-mass bins.
+
+### A5. Spiking activity
+
+Spike rasters use the seed-0 weights and test-set index 0 of the seed-0 split, for N-MNIST
+and for N-Caltech101, at `T = 2` and `T = 10`, fixed here before any raster is drawn. Hidden
+neurons are subsampled with `numpy.random.default_rng(0)`, 32 per hidden layer, and every
+output neuron is shown. Firing statistics over the full test set, per layer: mean spikes per
+neuron per timestep, and the share of neurons that never fire on any test sample at any
+timestep. Output-layer count patterns at `T = 2`: the share of test samples whose top class
+fires at every step while every other class is silent (the vector that attains `p*`), the
+share with every class silent, and the share with a tie for the top count. Descriptive.
+
+### A6. Same weights, other readouts
+
+Exploratory. The count-trained networks are read without retraining: the output LIF is
+bypassed and the final BatchNorm1d output is aggregated as the accumulator (`v += z`) and as
+the leaky membrane (`v += (z - v) / tau`, `tau = 2`). Accuracy and ECE under both
+estimators are reported before and after temperature scaling fitted on the calibration
+split. No threshold; the paper labels it exploratory.
+
+### A7. The learned scale, trained to convergence
+
+The nine scaled-count models (N-MNIST `T = 2`; N-Caltech101 `T = 2` and `T = 6`; seeds 0,
+1 and 2) are retrained with every setting of the original runs except the stopping rule:
+architecture, neuron settings, optimiser (Adam, learning rate `1e-3`), batch size, split,
+seed, MPS device and zero loader workers. Each model is initialised after
+`set_seed(seed)`, so its initialisation depends on its seed alone.
+
+- **Convergence.** `theta = ln s` is read after every epoch. A run has converged at the
+  first epoch `e >= 5` at which the six end-of-epoch values `theta_(e-5), ..., theta_e`
+  span less than 0.01, so that `theta` has moved by less than 0.01 over five consecutive
+  epochs.
+- **Cap.** 150 epochs, three times the original cap of 50. Training stops at convergence
+  or at the cap, whichever comes first.
+- **Logged every epoch.** `theta`, `s`, training loss, validation accuracy (the original
+  evaluation), and validation ECE under both estimators.
+- **Two checkpoints reported.** The checkpoint the original rule would have selected in
+  this run (best validation accuracy, stopping after 5 epochs without improvement, within
+  50 epochs) and the end point (the weights at convergence or at the cap). For both: test
+  accuracy, ECE under both estimators, mean confidence minus accuracy, `s` against
+  `s_min`, the cap `e^(sT) / (e^(sT) + C - 1)` and the floor `max(0, a - cap)`.
+- **Compute limit.** One epoch per cell is timed first. If the projected total, at 150
+  epochs for every run, exceeds five hours, the three N-MNIST runs are trained in full and
+  then N-Caltech101 runs in the order `T = 2` seed 0, `T = 6` seed 0, `T = 2` seed 1,
+  `T = 6` seed 1, `T = 2` seed 2, `T = 6` seed 2. A run starts only if its projected
+  worst-case time fits within five hours of the start of training. What ran is reported
+  exactly.
+- The original nine runs remain the pre-registered results.
+
 ## Does the ceiling bind in published work? Resolved: no, and the reason is informative
 
 The verification pass left one consequential question open. Li, Jones & Furber report
