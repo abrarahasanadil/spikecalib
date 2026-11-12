@@ -1156,7 +1156,9 @@ passage. Locations refer to the versions named in the entries above.
   8(3), e70670, 25 Feb 2026; Banteywalu and Leroux). Only the abstract was reachable (the
   publisher page returned HTTP 403): a Bayesian spiking network on N-MNIST digits 1, 2 and 3,
   with an ECE reported. The abstract states neither the readout nor the number of timesteps, so
-  the paper says exactly that. Found after the literature search, during the checks.
+  the paper says exactly that. It was among the papers of the literature search read only in
+  abstract (entry 3.A.18 of the search record); the article is open access (CC BY 4.0), but the
+  publisher and the Authorea preprint refused automated access (HTTP 403) on 2026-11-12.
 - **katti2024bayesian**. Sec. II says only that "the spike outputs of the networks are accumulated
   and processed (softmax)"; no equation defines the output layer, and the conversion method they
   adopt is also used elsewhere with a non-spiking output layer. The paper now says the cap applies
@@ -1189,6 +1191,25 @@ passage. Locations refer to the versions named in the entries above.
 - **habara2024bayesianspikefusion**: the early prediction comes from an intermediate-layer
   classifier, fused with the final layer under a prior weight scheduled over timesteps.
 - **wei2023logitclip** now cited wherever the bound is attributed to clipped logits.
+- **jurado2023spikemoid**: the public code (github.com/audreydunn/spikemoid, main branch, read
+  2026-11-12) was checked. mnist/train.py trains `SpikeMax(mode="softmax")` with a fixed
+  `alpha = count_scale/300` by default (a softmax over spike counts divided by fixed scales; the
+  README's N-MNIST commands use count_scale 1, 2, 4 and 8) and offers learned-alpha options on
+  firing rates (`--loss_fn spikemax_alpha`). The paper says so and cites it with Meng et al. as
+  earlier learned scales on spiking readouts.
+- **chen2025knowing**, Fig. 1(b): read at the first plotted point, confidence is about 0.27,
+  above the one-step cap of 0.2320 for an unscaled ten-class count softmax, so the plotted curve
+  is not that softmax read at single timesteps; the paper now calls the link to the cap a
+  conjecture.
+- **atarashi2025bounding**: the upper bound on calibration error is for binary classification
+  and the smooth calibration error (Sec. 3, Theorem 3.6); now stated.
+- **cao2024predictive**: Corollary 3.3 (positive correlation with the other modalities' losses)
+  added beside Corollary 3.2.
+- **sun2023mcdropout**, Sec. 3.3: the benefit of the membrane readout is stated in the
+  architecture description, without a reported comparison; the paper now says "state".
+- An embargoed 2026 University of Porto master's dissertation, "Calibration of Spiking Neural
+  Networks for Ordinal Classification" (listed above under the literature check of 2026-10-13),
+  could not be read; the paper's novelty caveat now names it.
 
 ## Still to verify
 
