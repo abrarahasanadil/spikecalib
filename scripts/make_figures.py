@@ -62,7 +62,7 @@ def main() -> int:
         drawn += 1
         names = ", ".join(os.path.basename(p) for p in paths)
         print(f"  {fn.__name__:<26} -> {names}")
-    print(f"\n  wrote {drawn * 2} files to {os.path.relpath(args.out, REPO_ROOT)}")
+    print(f"\n  wrote {drawn * 3} files to {os.path.relpath(args.out, REPO_ROOT)}")
 
     # The paper's figures: vector PDF into paper/figures/, PNG beside the site's figures.
     from spikecalib.paper_figures import PAPER_FIGURES

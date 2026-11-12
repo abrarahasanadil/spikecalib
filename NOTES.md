@@ -2727,6 +2727,18 @@ is supported there too: the citations that could not be opened, Nitzan and Parou
 Chair and Varshney (1986), are each recorded with the verified secondary source they are
 cited through. `tests/test_provenance.py` checks that the paper carries this text verbatim.
 
+**Superseded 2026-11-12, for three authors.** The paper now has three authors. The whole
+Acknowledgements section of `paper/main.tex` is now exactly this, and it supersedes the
+2026-10-14 text above, which is kept as a record:
+
+> AI assistance was used in preparing this work. Every citation was checked against its
+> primary document or, where that was inaccessible, against a verified secondary source, as
+> recorded in SOURCES.md. The first author verified all results; all authors reviewed the
+> manuscript and take responsibility for its content.
+
+The disclosure still names no tool. `tests/test_provenance.py` checks that the paper carries
+the latest superseding text verbatim.
+
 ---
 
 ## Status

@@ -15,8 +15,8 @@ appearance of an energy number -- in an axis label, a caption, a table header, o
 -- describes it as a **design-comparison proxy**. It is never described as measured power,
 and no claim about a physical device is derived from it.
 
-Every figure is emitted as **both SVG and PNG** so a page can prefer the vector and fall
-back. Every figure also has a companion data table on the site, which is not decoration:
+Every figure is emitted as **SVG, PNG and vector PDF** so a page can prefer the vector and
+fall back. Every figure also has a companion data table on the site, which is not decoration:
 one of the categorical hues sits below 3:1 contrast on the light surface, so identity must
 never rest on colour alone. Series are direct-labelled as well as legended.
 
@@ -59,14 +59,15 @@ __all__ = [
     "ALL_FIGURES",
 ]
 
-# Categorical slots, validated all-pairs on the light surface: worst CVD deltaE 9.2,
-# worst normal-vision deltaE 16.3. Aqua sits below 3:1 contrast, which is why every
-# figure ships direct labels and a data table.
+# Categorical slots from the Okabe-Ito colour-blind-safe set, the palette the paper's
+# figures use (spikecalib/paper_figures.py). The slot names are kept from the earlier
+# palette so every figure function below is unchanged; "aqua" is Okabe-Ito's bluish green
+# and "violet" its reddish purple. Every figure still ships direct labels.
 PALETTE = {
-    "blue": "#2a78d6",
-    "orange": "#eb6834",
-    "aqua": "#1baf7a",
-    "violet": "#4a3aa7",
+    "blue": "#0072B2",
+    "orange": "#D55E00",
+    "aqua": "#009E73",
+    "violet": "#CC79A7",
 }
 SURFACE = "#fcfcfb"
 INK = "#0b0b0b"
@@ -158,13 +159,19 @@ def _by_t(rows, arm):
 
 
 def save(fig, out_dir: str, name: str) -> list[str]:
-    """Write SVG and PNG side by side; the page prefers the vector."""
+    """Write SVG, PNG and a vector PDF with embedded TrueType fonts."""
+    import matplotlib
+    import matplotlib.pyplot as plt
+
+    matplotlib.rcParams["pdf.fonttype"] = 42
     os.makedirs(out_dir, exist_ok=True)
     paths = []
-    for ext in ("svg", "png"):
+    for ext in ("svg", "png", "pdf"):
         path = os.path.join(out_dir, f"{name}.{ext}")
-        fig.savefig(path, format=ext, bbox_inches="tight", dpi=160)
+        meta = {"CreationDate": None} if ext == "pdf" else None
+        fig.savefig(path, format=ext, bbox_inches="tight", dpi=160, metadata=meta)
         paths.append(path)
+    plt.close(fig)
     return paths
 
 

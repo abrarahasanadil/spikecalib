@@ -92,9 +92,10 @@ def test_no_withdrawn_reference_is_cited_in_live_files() -> None:
 
 
 def test_the_paper_carries_the_disclosure_notes_prescribes() -> None:
-    """The Acknowledgements are exactly the superseding text recorded in NOTES.md, and only that."""
+    """The Acknowledgements are exactly the latest superseding text recorded in NOTES.md."""
     notes = _read("NOTES.md")
-    block = notes[notes.index("**Superseded 2026-10-14 by the author.**"):]
+    section = notes[notes.index("## AI disclosure, for the paper"):notes.index("## Status")]
+    block = section[section.rindex("**Superseded "):]
     quoted = " ".join(line[2:] for line in block.splitlines() if line.startswith("> "))
     assert quoted.startswith("AI assistance was used in preparing this work.")
     paper = _read("paper", "main.tex")
