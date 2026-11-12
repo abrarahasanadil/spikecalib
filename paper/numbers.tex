@@ -600,3 +600,684 @@
 \newcommand{\predictionsEverything}{25}% NOTES.md, every prediction and part, 1 to 15
 \newcommand{\predictionsEverythingHeld}{13}% verdict blocks and scripts/dashboard_summary.py early_predictions
 \newcommand{\predictionsEverythingFalsified}{12}% verdict blocks and scripts/dashboard_summary.py early_predictions
+\newcommand{\floorNmTwo}{0.5341}% results/ece_floor.json cells, nmnist 32-64 T=2 floor a - p*, seed mean
+\newcommand{\frNmTwoW}{99.17}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio equal_width, mean over seeds, per cent
+\newcommand{\frNmTwoWSd}{0.02}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio equal_width, standard deviation over seeds, percentage points
+\newcommand{\frNmTwoWMin}{99.15}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio equal_width, smallest seed
+\newcommand{\frNmTwoWMax}{99.19}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio equal_width, largest seed
+\newcommand{\frNmTwoWLo}{99.09}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio_ci95 equal_width, lower
+\newcommand{\frNmTwoWHi}{99.22}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio_ci95 equal_width, upper
+\newcommand{\eceNmTwoW}{0.5386}% results/ece_floor.json cells, nmnist 32-64 T=2 ece equal_width, seed mean
+\newcommand{\eceNmTwoWSd}{0.0005}% results/ece_floor.json cells, nmnist 32-64 T=2 ece equal_width, sd over seeds
+\newcommand{\frNmTwoM}{99.17}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio equal_mass, mean over seeds, per cent
+\newcommand{\frNmTwoMSd}{0.02}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio equal_mass, standard deviation over seeds, percentage points
+\newcommand{\frNmTwoMMin}{99.15}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio equal_mass, smallest seed
+\newcommand{\frNmTwoMMax}{99.19}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio equal_mass, largest seed
+\newcommand{\frNmTwoMLo}{99.11}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio_ci95 equal_mass, lower
+\newcommand{\frNmTwoMHi}{99.23}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio_ci95 equal_mass, upper
+\newcommand{\eceNmTwoM}{0.5386}% results/ece_floor.json cells, nmnist 32-64 T=2 ece equal_mass, seed mean
+\newcommand{\eceNmTwoMSd}{0.0005}% results/ece_floor.json cells, nmnist 32-64 T=2 ece equal_mass, sd over seeds
+\newcommand{\frNmTwoD}{99.17}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio distinct, mean over seeds, per cent
+\newcommand{\frNmTwoDSd}{0.03}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio distinct, standard deviation over seeds, percentage points
+\newcommand{\frNmTwoDMin}{99.14}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio distinct, smallest seed
+\newcommand{\frNmTwoDMax}{99.19}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio distinct, largest seed
+\newcommand{\frNmTwoDLo}{99.08}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio_ci95 distinct, lower
+\newcommand{\frNmTwoDHi}{99.21}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio_ci95 distinct, upper
+\newcommand{\eceNmTwoD}{0.5386}% results/ece_floor.json cells, nmnist 32-64 T=2 ece distinct, seed mean
+\newcommand{\eceNmTwoDSd}{0.0005}% results/ece_floor.json cells, nmnist 32-64 T=2 ece distinct, sd over seeds
+\newcommand{\floorNmFour}{0.1302}% results/ece_floor.json cells, nmnist 32-64 T=4 floor a - p*, seed mean
+\newcommand{\frNmFourW}{90.02}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio equal_width, mean over seeds, per cent
+\newcommand{\frNmFourWSd}{1.22}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio equal_width, standard deviation over seeds, percentage points
+\newcommand{\frNmFourWMin}{88.92}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio equal_width, smallest seed
+\newcommand{\frNmFourWMax}{91.34}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio equal_width, largest seed
+\newcommand{\frNmFourWLo}{89.32}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio_ci95 equal_width, lower
+\newcommand{\frNmFourWHi}{90.43}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio_ci95 equal_width, upper
+\newcommand{\eceNmFourW}{0.1447}% results/ece_floor.json cells, nmnist 32-64 T=4 ece equal_width, seed mean
+\newcommand{\eceNmFourWSd}{0.0014}% results/ece_floor.json cells, nmnist 32-64 T=4 ece equal_width, sd over seeds
+\newcommand{\frNmFourM}{90.07}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio equal_mass, mean over seeds, per cent
+\newcommand{\frNmFourMSd}{1.17}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio equal_mass, standard deviation over seeds, percentage points
+\newcommand{\frNmFourMMin}{89.03}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio equal_mass, smallest seed
+\newcommand{\frNmFourMMax}{91.34}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio equal_mass, largest seed
+\newcommand{\frNmFourMLo}{89.57}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio_ci95 equal_mass, lower
+\newcommand{\frNmFourMHi}{90.51}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio_ci95 equal_mass, upper
+\newcommand{\eceNmFourM}{0.1446}% results/ece_floor.json cells, nmnist 32-64 T=4 ece equal_mass, seed mean
+\newcommand{\eceNmFourMSd}{0.0014}% results/ece_floor.json cells, nmnist 32-64 T=4 ece equal_mass, sd over seeds
+\newcommand{\frNmFourD}{89.56}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio distinct, mean over seeds, per cent
+\newcommand{\frNmFourDSd}{1.18}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio distinct, standard deviation over seeds, percentage points
+\newcommand{\frNmFourDMin}{88.71}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio distinct, smallest seed
+\newcommand{\frNmFourDMax}{90.91}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio distinct, largest seed
+\newcommand{\frNmFourDLo}{88.52}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio_ci95 distinct, lower
+\newcommand{\frNmFourDHi}{89.88}% results/ece_floor.json cells, nmnist 32-64 T=4 floor_ratio_ci95 distinct, upper
+\newcommand{\eceNmFourD}{0.1454}% results/ece_floor.json cells, nmnist 32-64 T=4 ece distinct, seed mean
+\newcommand{\eceNmFourDSd}{0.0011}% results/ece_floor.json cells, nmnist 32-64 T=4 ece distinct, sd over seeds
+\newcommand{\floorNmSix}{0.0121}% results/ece_floor.json cells, nmnist 32-64 T=6 floor a - p*, seed mean
+\newcommand{\frNmSixW}{44.29}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio equal_width, mean over seeds, per cent
+\newcommand{\frNmSixWSd}{3.91}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio equal_width, standard deviation over seeds, percentage points
+\newcommand{\frNmSixWMin}{41.96}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio equal_width, smallest seed
+\newcommand{\frNmSixWMax}{48.81}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio equal_width, largest seed
+\newcommand{\frNmSixWLo}{40.33}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio_ci95 equal_width, lower
+\newcommand{\frNmSixWHi}{46.86}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio_ci95 equal_width, upper
+\newcommand{\eceNmSixW}{0.0273}% results/ece_floor.json cells, nmnist 32-64 T=6 ece equal_width, seed mean
+\newcommand{\eceNmSixWSd}{0.0014}% results/ece_floor.json cells, nmnist 32-64 T=6 ece equal_width, sd over seeds
+\newcommand{\frNmSixM}{44.52}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio equal_mass, mean over seeds, per cent
+\newcommand{\frNmSixMSd}{4.08}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio equal_mass, standard deviation over seeds, percentage points
+\newcommand{\frNmSixMMin}{41.96}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio equal_mass, smallest seed
+\newcommand{\frNmSixMMax}{49.23}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio equal_mass, largest seed
+\newcommand{\frNmSixMLo}{41.44}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio_ci95 equal_mass, lower
+\newcommand{\frNmSixMHi}{47.46}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio_ci95 equal_mass, upper
+\newcommand{\eceNmSixM}{0.0272}% results/ece_floor.json cells, nmnist 32-64 T=6 ece equal_mass, seed mean
+\newcommand{\eceNmSixMSd}{0.0014}% results/ece_floor.json cells, nmnist 32-64 T=6 ece equal_mass, sd over seeds
+\newcommand{\frNmSixD}{40.75}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio distinct, mean over seeds, per cent
+\newcommand{\frNmSixDSd}{3.48}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio distinct, standard deviation over seeds, percentage points
+\newcommand{\frNmSixDMin}{38.69}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio distinct, smallest seed
+\newcommand{\frNmSixDMax}{44.78}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio distinct, largest seed
+\newcommand{\frNmSixDLo}{35.30}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio_ci95 distinct, lower
+\newcommand{\frNmSixDHi}{42.37}% results/ece_floor.json cells, nmnist 32-64 T=6 floor_ratio_ci95 distinct, upper
+\newcommand{\eceNmSixD}{0.0297}% results/ece_floor.json cells, nmnist 32-64 T=6 ece distinct, seed mean
+\newcommand{\eceNmSixDSd}{0.0014}% results/ece_floor.json cells, nmnist 32-64 T=6 ece distinct, sd over seeds
+\newcommand{\floorNmDeepTwo}{0.5361}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor a - p*, seed mean
+\newcommand{\frNmDeepTwoW}{99.31}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio equal_width, mean over seeds, per cent
+\newcommand{\frNmDeepTwoWSd}{0.15}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio equal_width, standard deviation over seeds, percentage points
+\newcommand{\frNmDeepTwoWMin}{99.14}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio equal_width, smallest seed
+\newcommand{\frNmDeepTwoWMax}{99.43}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio equal_width, largest seed
+\newcommand{\frNmDeepTwoWLo}{99.25}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio_ci95 equal_width, lower
+\newcommand{\frNmDeepTwoWHi}{99.36}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio_ci95 equal_width, upper
+\newcommand{\eceNmDeepTwoW}{0.5398}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 ece equal_width, seed mean
+\newcommand{\eceNmDeepTwoWSd}{0.0014}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 ece equal_width, sd over seeds
+\newcommand{\frNmDeepTwoM}{99.31}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio equal_mass, mean over seeds, per cent
+\newcommand{\frNmDeepTwoMSd}{0.15}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio equal_mass, standard deviation over seeds, percentage points
+\newcommand{\frNmDeepTwoMMin}{99.14}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio equal_mass, smallest seed
+\newcommand{\frNmDeepTwoMMax}{99.43}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio equal_mass, largest seed
+\newcommand{\frNmDeepTwoMLo}{99.26}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio_ci95 equal_mass, lower
+\newcommand{\frNmDeepTwoMHi}{99.36}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio_ci95 equal_mass, upper
+\newcommand{\eceNmDeepTwoM}{0.5398}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 ece equal_mass, seed mean
+\newcommand{\eceNmDeepTwoMSd}{0.0014}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 ece equal_mass, sd over seeds
+\newcommand{\frNmDeepTwoD}{99.31}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio distinct, mean over seeds, per cent
+\newcommand{\frNmDeepTwoDSd}{0.15}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio distinct, standard deviation over seeds, percentage points
+\newcommand{\frNmDeepTwoDMin}{99.14}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio distinct, smallest seed
+\newcommand{\frNmDeepTwoDMax}{99.43}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio distinct, largest seed
+\newcommand{\frNmDeepTwoDLo}{99.22}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio_ci95 distinct, lower
+\newcommand{\frNmDeepTwoDHi}{99.35}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 floor_ratio_ci95 distinct, upper
+\newcommand{\eceNmDeepTwoD}{0.5398}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 ece distinct, seed mean
+\newcommand{\eceNmDeepTwoDSd}{0.0014}% results/ece_floor.json cells, nmnist 32-64-128-128 T=2 ece distinct, sd over seeds
+\newcommand{\floorNmDeepSix}{0.0105}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor a - p*, seed mean
+\newcommand{\frNmDeepSixW}{41.13}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio equal_width, mean over seeds, per cent
+\newcommand{\frNmDeepSixWSd}{12.14}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio equal_width, standard deviation over seeds, percentage points
+\newcommand{\frNmDeepSixWMin}{27.75}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio equal_width, smallest seed
+\newcommand{\frNmDeepSixWMax}{51.44}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio equal_width, largest seed
+\newcommand{\frNmDeepSixWLo}{35.54}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio_ci95 equal_width, lower
+\newcommand{\frNmDeepSixWHi}{44.03}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio_ci95 equal_width, upper
+\newcommand{\eceNmDeepSixW}{0.0256}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 ece equal_width, seed mean
+\newcommand{\eceNmDeepSixWSd}{0.0003}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 ece equal_width, sd over seeds
+\newcommand{\frNmDeepSixM}{41.69}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio equal_mass, mean over seeds, per cent
+\newcommand{\frNmDeepSixMSd}{12.22}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio equal_mass, standard deviation over seeds, percentage points
+\newcommand{\frNmDeepSixMMin}{27.99}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio equal_mass, smallest seed
+\newcommand{\frNmDeepSixMMax}{51.44}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio equal_mass, largest seed
+\newcommand{\frNmDeepSixMLo}{37.75}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio_ci95 equal_mass, lower
+\newcommand{\frNmDeepSixMHi}{45.14}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio_ci95 equal_mass, upper
+\newcommand{\eceNmDeepSixM}{0.0253}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 ece equal_mass, seed mean
+\newcommand{\eceNmDeepSixMSd}{0.0006}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 ece equal_mass, sd over seeds
+\newcommand{\frNmDeepSixD}{36.53}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio distinct, mean over seeds, per cent
+\newcommand{\frNmDeepSixDSd}{11.35}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio distinct, standard deviation over seeds, percentage points
+\newcommand{\frNmDeepSixDMin}{24.01}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio distinct, smallest seed
+\newcommand{\frNmDeepSixDMax}{46.14}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio distinct, largest seed
+\newcommand{\frNmDeepSixDLo}{30.47}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio_ci95 distinct, lower
+\newcommand{\frNmDeepSixDHi}{38.62}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 floor_ratio_ci95 distinct, upper
+\newcommand{\eceNmDeepSixD}{0.0290}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 ece distinct, seed mean
+\newcommand{\eceNmDeepSixDSd}{0.0009}% results/ece_floor.json cells, nmnist 32-64-128-128 T=6 ece distinct, sd over seeds
+\newcommand{\floorNcTwo}{0.3855}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor a - p*, seed mean
+\newcommand{\frNcTwoW}{97.10}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio equal_width, mean over seeds, per cent
+\newcommand{\frNcTwoWSd}{0.42}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio equal_width, standard deviation over seeds, percentage points
+\newcommand{\frNcTwoWMin}{96.71}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio equal_width, smallest seed
+\newcommand{\frNcTwoWMax}{97.55}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio equal_width, largest seed
+\newcommand{\frNcTwoWLo}{96.95}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio_ci95 equal_width, lower
+\newcommand{\frNcTwoWHi}{97.23}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio_ci95 equal_width, upper
+\newcommand{\eceNcTwoW}{0.3969}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 ece equal_width, seed mean
+\newcommand{\eceNcTwoWSd}{0.0241}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 ece equal_width, sd over seeds
+\newcommand{\frNcTwoM}{97.10}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio equal_mass, mean over seeds, per cent
+\newcommand{\frNcTwoMSd}{0.42}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio equal_mass, standard deviation over seeds, percentage points
+\newcommand{\frNcTwoMMin}{96.71}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio equal_mass, smallest seed
+\newcommand{\frNcTwoMMax}{97.55}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio equal_mass, largest seed
+\newcommand{\frNcTwoMLo}{96.90}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio_ci95 equal_mass, lower
+\newcommand{\frNcTwoMHi}{97.23}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio_ci95 equal_mass, upper
+\newcommand{\eceNcTwoM}{0.3969}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 ece equal_mass, seed mean
+\newcommand{\eceNcTwoMSd}{0.0241}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 ece equal_mass, sd over seeds
+\newcommand{\frNcTwoD}{95.32}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio distinct, mean over seeds, per cent
+\newcommand{\frNcTwoDSd}{0.80}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio distinct, standard deviation over seeds, percentage points
+\newcommand{\frNcTwoDMin}{94.45}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio distinct, smallest seed
+\newcommand{\frNcTwoDMax}{96.02}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio distinct, largest seed
+\newcommand{\frNcTwoDLo}{93.92}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio_ci95 distinct, lower
+\newcommand{\frNcTwoDHi}{94.94}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 floor_ratio_ci95 distinct, upper
+\newcommand{\eceNcTwoD}{0.4043}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 ece distinct, seed mean
+\newcommand{\eceNcTwoDSd}{0.0232}% results/ece_floor.json cells, ncaltech101 32-64-128-128 T=2 ece distinct, sd over seeds
+\newcommand{\floorNcShallowTwo}{0.4203}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor a - p*, seed mean
+\newcommand{\frNcShallowTwoW}{96.79}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio equal_width, mean over seeds, per cent
+\newcommand{\frNcShallowTwoWSd}{0.07}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio equal_width, standard deviation over seeds, percentage points
+\newcommand{\frNcShallowTwoWMin}{96.74}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio equal_width, smallest seed
+\newcommand{\frNcShallowTwoWMax}{96.86}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio equal_width, largest seed
+\newcommand{\frNcShallowTwoWLo}{96.60}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio_ci95 equal_width, lower
+\newcommand{\frNcShallowTwoWHi}{96.94}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio_ci95 equal_width, upper
+\newcommand{\eceNcShallowTwoW}{0.4343}% results/ece_floor.json cells, ncaltech101 32-64 T=2 ece equal_width, seed mean
+\newcommand{\eceNcShallowTwoWSd}{0.0178}% results/ece_floor.json cells, ncaltech101 32-64 T=2 ece equal_width, sd over seeds
+\newcommand{\frNcShallowTwoM}{96.79}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio equal_mass, mean over seeds, per cent
+\newcommand{\frNcShallowTwoMSd}{0.07}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio equal_mass, standard deviation over seeds, percentage points
+\newcommand{\frNcShallowTwoMMin}{96.74}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio equal_mass, smallest seed
+\newcommand{\frNcShallowTwoMMax}{96.86}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio equal_mass, largest seed
+\newcommand{\frNcShallowTwoMLo}{96.42}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio_ci95 equal_mass, lower
+\newcommand{\frNcShallowTwoMHi}{96.93}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio_ci95 equal_mass, upper
+\newcommand{\eceNcShallowTwoM}{0.4343}% results/ece_floor.json cells, ncaltech101 32-64 T=2 ece equal_mass, seed mean
+\newcommand{\eceNcShallowTwoMSd}{0.0178}% results/ece_floor.json cells, ncaltech101 32-64 T=2 ece equal_mass, sd over seeds
+\newcommand{\frNcShallowTwoD}{95.54}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio distinct, mean over seeds, per cent
+\newcommand{\frNcShallowTwoDSd}{0.58}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio distinct, standard deviation over seeds, percentage points
+\newcommand{\frNcShallowTwoDMin}{94.88}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio distinct, smallest seed
+\newcommand{\frNcShallowTwoDMax}{95.96}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio distinct, largest seed
+\newcommand{\frNcShallowTwoDLo}{94.78}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio_ci95 distinct, lower
+\newcommand{\frNcShallowTwoDHi}{95.53}% results/ece_floor.json cells, ncaltech101 32-64 T=2 floor_ratio_ci95 distinct, upper
+\newcommand{\eceNcShallowTwoD}{0.4399}% results/ece_floor.json cells, ncaltech101 32-64 T=2 ece distinct, seed mean
+\newcommand{\eceNcShallowTwoDSd}{0.0152}% results/ece_floor.json cells, ncaltech101 32-64 T=2 ece distinct, sd over seeds
+\newcommand{\overNmTwoMaxBins}{1}% results/ece_floor.json N-MNIST T=2: most overconfident bins in any seed, either binned estimator
+\newcommand{\overNmTwoShare}{0.01}% results/ece_floor.json N-MNIST T=2: largest share of test samples in overconfident bins, per cent
+\newcommand{\overNcTwoDistinctMin}{40}% results/ece_floor.json N-Caltech101 T=2, distinct values: fewest overconfident groups in a seed
+\newcommand{\overNcTwoDistinctMax}{73}% results/ece_floor.json N-Caltech101 T=2, distinct values: most overconfident groups in a seed
+\newcommand{\overNcTwoDistinctShare}{12.7}% results/ece_floor.json N-Caltech101 T=2, distinct values: largest share in overconfident groups, per cent
+\newcommand{\overNcTwoDistinctGap}{0.0649}% results/ece_floor.json N-Caltech101 T=2, distinct values: largest overconfident gap
+\newcommand{\groupsNcTwoMin}{102}% results/ece_floor.json N-Caltech101 T=2: fewest distinct values in a seed
+\newcommand{\groupsNcTwoMax}{154}% results/ece_floor.json N-Caltech101 T=2: most distinct values in a seed
+\newcommand{\emBinsNmTwo}{1}% results/ece_floor.json N-MNIST T=2: effective equal-mass bins, every seed (asserted)
+\newcommand{\emOccNmTwo}{10{,}000}% results/ece_floor.json N-MNIST T=2: the one bin's occupancy
+\newcommand{\emBinsNmFour}{2}% results/ece_floor.json N-MNIST T=4: effective equal-mass bins, every seed (asserted)
+\newcommand{\emOccMinNmFour}{1{,}126}% results/ece_floor.json N-MNIST T=4: smallest equal-mass bin
+\newcommand{\emOccMaxNmFour}{8{,}874}% results/ece_floor.json N-MNIST T=4: largest equal-mass bin
+\newcommand{\emBinsMinNcTwo}{14}% results/ece_floor.json N-Caltech101 T=2: fewest effective equal-mass bins
+\newcommand{\emBinsMaxNcTwo}{14}% results/ece_floor.json N-Caltech101 T=2: most effective equal-mass bins
+\newcommand{\emOccMinNcTwo}{97}% results/ece_floor.json N-Caltech101 T=2: smallest equal-mass bin
+\newcommand{\emOccMaxNcTwo}{220}% results/ece_floor.json N-Caltech101 T=2: largest equal-mass bin
+\newcommand{\emTarget}{15}% results/ece_floor.json n_bins
+\newcommand{\ewBinsNcTwo}{2}% results/ece_floor.json N-Caltech101 T=2: occupied equal-width bins
+\newcommand{\emBinsMin}{1}% results/ece_floor.json runs: fewest effective equal-mass bins over the 36 count test sets
+\newcommand{\countTestSets}{36}% results/ece_floor.json runs
+\newcommand{\bindsRuns}{21}% results/ece_floor.json runs where accuracy exceeds the cap
+\newcommand{\deltaStrict}{0.005}% NOTES.md, Post-review analyses, A3; results/calibration_metrics.json deltas
+\newcommand{\deltaMid}{0.01}% NOTES.md, Post-review analyses, A3; results/calibration_metrics.json deltas
+\newcommand{\deltaWide}{0.02}% NOTES.md, Post-review analyses, A3; results/calibration_metrics.json deltas
+\newcommand{\tostNmRuns}{15}% results/calibration_metrics.json tost_summary, nmnist count, runs
+\newcommand{\tostNmDiffer}{0}% results/calibration_metrics.json tost_summary, nmnist count, differ under the registered rule
+\newcommand{\tostNmWStrict}{15}% results/calibration_metrics.json tost_summary, nmnist count, equivalent at 0.005 under equal_width
+\newcommand{\tostNmMStrict}{12}% results/calibration_metrics.json tost_summary, nmnist count, equivalent at 0.005 under equal_mass
+\newcommand{\tostNmBothStrict}{12}% results/calibration_metrics.json tost_summary, nmnist count, equivalent at 0.005 under both
+\newcommand{\tostNmWMid}{15}% results/calibration_metrics.json tost_summary, nmnist count, equivalent at 0.01 under equal_width
+\newcommand{\tostNmMMid}{15}% results/calibration_metrics.json tost_summary, nmnist count, equivalent at 0.01 under equal_mass
+\newcommand{\tostNmBothMid}{15}% results/calibration_metrics.json tost_summary, nmnist count, equivalent at 0.01 under both
+\newcommand{\tostNmWWide}{15}% results/calibration_metrics.json tost_summary, nmnist count, equivalent at 0.02 under equal_width
+\newcommand{\tostNmMWide}{15}% results/calibration_metrics.json tost_summary, nmnist count, equivalent at 0.02 under equal_mass
+\newcommand{\tostNmBothWide}{15}% results/calibration_metrics.json tost_summary, nmnist count, equivalent at 0.02 under both
+\newcommand{\tostNcCountRuns}{9}% results/calibration_metrics.json tost_summary, ncaltech101 count, runs
+\newcommand{\tostNcCountDiffer}{5}% results/calibration_metrics.json tost_summary, ncaltech101 count, differ under the registered rule
+\newcommand{\tostNcCountWStrict}{0}% results/calibration_metrics.json tost_summary, ncaltech101 count, equivalent at 0.005 under equal_width
+\newcommand{\tostNcCountMStrict}{0}% results/calibration_metrics.json tost_summary, ncaltech101 count, equivalent at 0.005 under equal_mass
+\newcommand{\tostNcCountBothStrict}{0}% results/calibration_metrics.json tost_summary, ncaltech101 count, equivalent at 0.005 under both
+\newcommand{\tostNcCountWMid}{0}% results/calibration_metrics.json tost_summary, ncaltech101 count, equivalent at 0.01 under equal_width
+\newcommand{\tostNcCountMMid}{0}% results/calibration_metrics.json tost_summary, ncaltech101 count, equivalent at 0.01 under equal_mass
+\newcommand{\tostNcCountBothMid}{0}% results/calibration_metrics.json tost_summary, ncaltech101 count, equivalent at 0.01 under both
+\newcommand{\tostNcCountWWide}{2}% results/calibration_metrics.json tost_summary, ncaltech101 count, equivalent at 0.02 under equal_width
+\newcommand{\tostNcCountMWide}{4}% results/calibration_metrics.json tost_summary, ncaltech101 count, equivalent at 0.02 under equal_mass
+\newcommand{\tostNcCountBothWide}{2}% results/calibration_metrics.json tost_summary, ncaltech101 count, equivalent at 0.02 under both
+\newcommand{\tostNcAccumRuns}{9}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, runs
+\newcommand{\tostNcAccumDiffer}{6}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, differ under the registered rule
+\newcommand{\tostNcAccumWStrict}{0}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, equivalent at 0.005 under equal_width
+\newcommand{\tostNcAccumMStrict}{0}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, equivalent at 0.005 under equal_mass
+\newcommand{\tostNcAccumBothStrict}{0}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, equivalent at 0.005 under both
+\newcommand{\tostNcAccumWMid}{0}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, equivalent at 0.01 under equal_width
+\newcommand{\tostNcAccumMMid}{0}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, equivalent at 0.01 under equal_mass
+\newcommand{\tostNcAccumBothMid}{0}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, equivalent at 0.01 under both
+\newcommand{\tostNcAccumWWide}{1}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, equivalent at 0.02 under equal_width
+\newcommand{\tostNcAccumMWide}{1}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, equivalent at 0.02 under equal_mass
+\newcommand{\tostNcAccumBothWide}{1}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, equivalent at 0.02 under both
+\newcommand{\tostNcScaledRuns}{6}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, runs
+\newcommand{\tostNcScaledDiffer}{3}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, differ under the registered rule
+\newcommand{\tostNcScaledWStrict}{0}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, equivalent at 0.005 under equal_width
+\newcommand{\tostNcScaledMStrict}{0}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, equivalent at 0.005 under equal_mass
+\newcommand{\tostNcScaledBothStrict}{0}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, equivalent at 0.005 under both
+\newcommand{\tostNcScaledWMid}{0}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, equivalent at 0.01 under equal_width
+\newcommand{\tostNcScaledMMid}{0}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, equivalent at 0.01 under equal_mass
+\newcommand{\tostNcScaledBothMid}{0}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, equivalent at 0.01 under both
+\newcommand{\tostNcScaledWWide}{2}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, equivalent at 0.02 under equal_width
+\newcommand{\tostNcScaledMWide}{2}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, equivalent at 0.02 under equal_mass
+\newcommand{\tostNcScaledBothWide}{1}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, equivalent at 0.02 under both
+\newcommand{\tostNmWidest}{0.0064}% results/calibration_metrics.json tost, N-MNIST: largest |endpoint| of any 90% interval
+\newcommand{\tostTests}{234}% results/calibration_metrics.json tost entries x margins
+\newcommand{\tostRunsAll}{39}% results/calibration_metrics.json tost runs
+\newcommand{\hdNmTwoUncW}{0.5386}% results/calibration_metrics.json headline.ece, nmnist T=2 uncalibrated equal_width, seed mean
+\newcommand{\hdNmTwoUncWSd}{0.0005}% results/calibration_metrics.json headline.ece, nmnist T=2 uncalibrated equal_width, sd over seeds
+\newcommand{\hdNmTwoUncWLo}{0.5374}% results/calibration_metrics.json headline.ece, nmnist T=2 uncalibrated equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTwoUncWHi}{0.5398}% results/calibration_metrics.json headline.ece, nmnist T=2 uncalibrated equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTwoUncM}{0.5386}% results/calibration_metrics.json headline.ece, nmnist T=2 uncalibrated equal_mass, seed mean
+\newcommand{\hdNmTwoUncMSd}{0.0005}% results/calibration_metrics.json headline.ece, nmnist T=2 uncalibrated equal_mass, sd over seeds
+\newcommand{\hdNmTwoUncMLo}{0.5374}% results/calibration_metrics.json headline.ece, nmnist T=2 uncalibrated equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTwoUncMHi}{0.5397}% results/calibration_metrics.json headline.ece, nmnist T=2 uncalibrated equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTwoTempW}{0.0018}% results/calibration_metrics.json headline.ece, nmnist T=2 temperature equal_width, seed mean
+\newcommand{\hdNmTwoTempWSd}{0.0007}% results/calibration_metrics.json headline.ece, nmnist T=2 temperature equal_width, sd over seeds
+\newcommand{\hdNmTwoTempWLo}{0.0015}% results/calibration_metrics.json headline.ece, nmnist T=2 temperature equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTwoTempWHi}{0.0034}% results/calibration_metrics.json headline.ece, nmnist T=2 temperature equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTwoTempM}{0.0008}% results/calibration_metrics.json headline.ece, nmnist T=2 temperature equal_mass, seed mean
+\newcommand{\hdNmTwoTempMSd}{0.0003}% results/calibration_metrics.json headline.ece, nmnist T=2 temperature equal_mass, sd over seeds
+\newcommand{\hdNmTwoTempMLo}{0.0003}% results/calibration_metrics.json headline.ece, nmnist T=2 temperature equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTwoTempMHi}{0.0020}% results/calibration_metrics.json headline.ece, nmnist T=2 temperature equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTwoIsoW}{0.0042}% results/calibration_metrics.json headline.ece, nmnist T=2 isotonic-top-label equal_width, seed mean
+\newcommand{\hdNmTwoIsoWSd}{0.0006}% results/calibration_metrics.json headline.ece, nmnist T=2 isotonic-top-label equal_width, sd over seeds
+\newcommand{\hdNmTwoIsoWLo}{0.0033}% results/calibration_metrics.json headline.ece, nmnist T=2 isotonic-top-label equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTwoIsoWHi}{0.0055}% results/calibration_metrics.json headline.ece, nmnist T=2 isotonic-top-label equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTwoIsoM}{0.0015}% results/calibration_metrics.json headline.ece, nmnist T=2 isotonic-top-label equal_mass, seed mean
+\newcommand{\hdNmTwoIsoMSd}{0.0014}% results/calibration_metrics.json headline.ece, nmnist T=2 isotonic-top-label equal_mass, sd over seeds
+\newcommand{\hdNmTwoIsoMLo}{0.0008}% results/calibration_metrics.json headline.ece, nmnist T=2 isotonic-top-label equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTwoIsoMHi}{0.0028}% results/calibration_metrics.json headline.ece, nmnist T=2 isotonic-top-label equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmSixUncW}{0.0273}% results/calibration_metrics.json headline.ece, nmnist T=6 uncalibrated equal_width, seed mean
+\newcommand{\hdNmSixUncWSd}{0.0014}% results/calibration_metrics.json headline.ece, nmnist T=6 uncalibrated equal_width, sd over seeds
+\newcommand{\hdNmSixUncWLo}{0.0268}% results/calibration_metrics.json headline.ece, nmnist T=6 uncalibrated equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmSixUncWHi}{0.0285}% results/calibration_metrics.json headline.ece, nmnist T=6 uncalibrated equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmSixUncM}{0.0272}% results/calibration_metrics.json headline.ece, nmnist T=6 uncalibrated equal_mass, seed mean
+\newcommand{\hdNmSixUncMSd}{0.0014}% results/calibration_metrics.json headline.ece, nmnist T=6 uncalibrated equal_mass, sd over seeds
+\newcommand{\hdNmSixUncMLo}{0.0261}% results/calibration_metrics.json headline.ece, nmnist T=6 uncalibrated equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmSixUncMHi}{0.0282}% results/calibration_metrics.json headline.ece, nmnist T=6 uncalibrated equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmSixTempW}{0.0026}% results/calibration_metrics.json headline.ece, nmnist T=6 temperature equal_width, seed mean
+\newcommand{\hdNmSixTempWSd}{0.0006}% results/calibration_metrics.json headline.ece, nmnist T=6 temperature equal_width, sd over seeds
+\newcommand{\hdNmSixTempWLo}{0.0026}% results/calibration_metrics.json headline.ece, nmnist T=6 temperature equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmSixTempWHi}{0.0041}% results/calibration_metrics.json headline.ece, nmnist T=6 temperature equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmSixTempM}{0.0030}% results/calibration_metrics.json headline.ece, nmnist T=6 temperature equal_mass, seed mean
+\newcommand{\hdNmSixTempMSd}{0.0003}% results/calibration_metrics.json headline.ece, nmnist T=6 temperature equal_mass, sd over seeds
+\newcommand{\hdNmSixTempMLo}{0.0023}% results/calibration_metrics.json headline.ece, nmnist T=6 temperature equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmSixTempMHi}{0.0040}% results/calibration_metrics.json headline.ece, nmnist T=6 temperature equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmSixIsoW}{0.0027}% results/calibration_metrics.json headline.ece, nmnist T=6 isotonic-top-label equal_width, seed mean
+\newcommand{\hdNmSixIsoWSd}{0.0017}% results/calibration_metrics.json headline.ece, nmnist T=6 isotonic-top-label equal_width, sd over seeds
+\newcommand{\hdNmSixIsoWLo}{0.0024}% results/calibration_metrics.json headline.ece, nmnist T=6 isotonic-top-label equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmSixIsoWHi}{0.0040}% results/calibration_metrics.json headline.ece, nmnist T=6 isotonic-top-label equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmSixIsoM}{0.0029}% results/calibration_metrics.json headline.ece, nmnist T=6 isotonic-top-label equal_mass, seed mean
+\newcommand{\hdNmSixIsoMSd}{0.0011}% results/calibration_metrics.json headline.ece, nmnist T=6 isotonic-top-label equal_mass, sd over seeds
+\newcommand{\hdNmSixIsoMLo}{0.0021}% results/calibration_metrics.json headline.ece, nmnist T=6 isotonic-top-label equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmSixIsoMHi}{0.0039}% results/calibration_metrics.json headline.ece, nmnist T=6 isotonic-top-label equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTenUncW}{0.0029}% results/calibration_metrics.json headline.ece, nmnist T=10 uncalibrated equal_width, seed mean
+\newcommand{\hdNmTenUncWSd}{0.0006}% results/calibration_metrics.json headline.ece, nmnist T=10 uncalibrated equal_width, sd over seeds
+\newcommand{\hdNmTenUncWLo}{0.0027}% results/calibration_metrics.json headline.ece, nmnist T=10 uncalibrated equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTenUncWHi}{0.0042}% results/calibration_metrics.json headline.ece, nmnist T=10 uncalibrated equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTenUncM}{0.0019}% results/calibration_metrics.json headline.ece, nmnist T=10 uncalibrated equal_mass, seed mean
+\newcommand{\hdNmTenUncMSd}{0.0003}% results/calibration_metrics.json headline.ece, nmnist T=10 uncalibrated equal_mass, sd over seeds
+\newcommand{\hdNmTenUncMLo}{0.0014}% results/calibration_metrics.json headline.ece, nmnist T=10 uncalibrated equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTenUncMHi}{0.0029}% results/calibration_metrics.json headline.ece, nmnist T=10 uncalibrated equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTenTempW}{0.0026}% results/calibration_metrics.json headline.ece, nmnist T=10 temperature equal_width, seed mean
+\newcommand{\hdNmTenTempWSd}{0.0004}% results/calibration_metrics.json headline.ece, nmnist T=10 temperature equal_width, sd over seeds
+\newcommand{\hdNmTenTempWLo}{0.0024}% results/calibration_metrics.json headline.ece, nmnist T=10 temperature equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTenTempWHi}{0.0040}% results/calibration_metrics.json headline.ece, nmnist T=10 temperature equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTenTempM}{0.0018}% results/calibration_metrics.json headline.ece, nmnist T=10 temperature equal_mass, seed mean
+\newcommand{\hdNmTenTempMSd}{0.0008}% results/calibration_metrics.json headline.ece, nmnist T=10 temperature equal_mass, sd over seeds
+\newcommand{\hdNmTenTempMLo}{0.0013}% results/calibration_metrics.json headline.ece, nmnist T=10 temperature equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTenTempMHi}{0.0028}% results/calibration_metrics.json headline.ece, nmnist T=10 temperature equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTenIsoW}{0.0028}% results/calibration_metrics.json headline.ece, nmnist T=10 isotonic-top-label equal_width, seed mean
+\newcommand{\hdNmTenIsoWSd}{0.0009}% results/calibration_metrics.json headline.ece, nmnist T=10 isotonic-top-label equal_width, sd over seeds
+\newcommand{\hdNmTenIsoWLo}{0.0023}% results/calibration_metrics.json headline.ece, nmnist T=10 isotonic-top-label equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTenIsoWHi}{0.0039}% results/calibration_metrics.json headline.ece, nmnist T=10 isotonic-top-label equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTenIsoM}{0.0017}% results/calibration_metrics.json headline.ece, nmnist T=10 isotonic-top-label equal_mass, seed mean
+\newcommand{\hdNmTenIsoMSd}{0.0009}% results/calibration_metrics.json headline.ece, nmnist T=10 isotonic-top-label equal_mass, sd over seeds
+\newcommand{\hdNmTenIsoMLo}{0.0012}% results/calibration_metrics.json headline.ece, nmnist T=10 isotonic-top-label equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNmTenIsoMHi}{0.0027}% results/calibration_metrics.json headline.ece, nmnist T=10 isotonic-top-label equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTwoUncW}{0.3969}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 uncalibrated equal_width, seed mean
+\newcommand{\hdNcTwoUncWSd}{0.0241}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 uncalibrated equal_width, sd over seeds
+\newcommand{\hdNcTwoUncWLo}{0.3833}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 uncalibrated equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTwoUncWHi}{0.4098}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 uncalibrated equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTwoUncM}{0.3969}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 uncalibrated equal_mass, seed mean
+\newcommand{\hdNcTwoUncMSd}{0.0241}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 uncalibrated equal_mass, sd over seeds
+\newcommand{\hdNcTwoUncMLo}{0.3833}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 uncalibrated equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTwoUncMHi}{0.4100}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 uncalibrated equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTwoTempW}{0.1449}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 temperature equal_width, seed mean
+\newcommand{\hdNcTwoTempWSd}{0.0107}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 temperature equal_width, sd over seeds
+\newcommand{\hdNcTwoTempWLo}{0.1412}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 temperature equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTwoTempWHi}{0.1593}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 temperature equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTwoTempM}{0.1523}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 temperature equal_mass, seed mean
+\newcommand{\hdNcTwoTempMSd}{0.0083}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 temperature equal_mass, sd over seeds
+\newcommand{\hdNcTwoTempMLo}{0.1518}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 temperature equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTwoTempMHi}{0.1702}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 temperature equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTwoIsoW}{0.0320}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 isotonic-top-label equal_width, seed mean
+\newcommand{\hdNcTwoIsoWSd}{0.0096}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 isotonic-top-label equal_width, sd over seeds
+\newcommand{\hdNcTwoIsoWLo}{0.0286}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 isotonic-top-label equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTwoIsoWHi}{0.0454}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 isotonic-top-label equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTwoIsoM}{0.0349}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 isotonic-top-label equal_mass, seed mean
+\newcommand{\hdNcTwoIsoMSd}{0.0126}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 isotonic-top-label equal_mass, sd over seeds
+\newcommand{\hdNcTwoIsoMLo}{0.0330}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 isotonic-top-label equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTwoIsoMHi}{0.0494}% results/calibration_metrics.json headline.ece, ncaltech101 T=2 isotonic-top-label equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcSixUncW}{0.1539}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 uncalibrated equal_width, seed mean
+\newcommand{\hdNcSixUncWSd}{0.0052}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 uncalibrated equal_width, sd over seeds
+\newcommand{\hdNcSixUncWLo}{0.1468}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 uncalibrated equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcSixUncWHi}{0.1653}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 uncalibrated equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcSixUncM}{0.1534}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 uncalibrated equal_mass, seed mean
+\newcommand{\hdNcSixUncMSd}{0.0056}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 uncalibrated equal_mass, sd over seeds
+\newcommand{\hdNcSixUncMLo}{0.1461}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 uncalibrated equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcSixUncMHi}{0.1649}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 uncalibrated equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcSixTempW}{0.0579}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 temperature equal_width, seed mean
+\newcommand{\hdNcSixTempWSd}{0.0062}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 temperature equal_width, sd over seeds
+\newcommand{\hdNcSixTempWLo}{0.0579}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 temperature equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcSixTempWHi}{0.0729}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 temperature equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcSixTempM}{0.0532}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 temperature equal_mass, seed mean
+\newcommand{\hdNcSixTempMSd}{0.0093}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 temperature equal_mass, sd over seeds
+\newcommand{\hdNcSixTempMLo}{0.0556}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 temperature equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcSixTempMHi}{0.0704}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 temperature equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcSixIsoW}{0.0375}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 isotonic-top-label equal_width, seed mean
+\newcommand{\hdNcSixIsoWSd}{0.0168}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 isotonic-top-label equal_width, sd over seeds
+\newcommand{\hdNcSixIsoWLo}{0.0376}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 isotonic-top-label equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcSixIsoWHi}{0.0537}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 isotonic-top-label equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcSixIsoM}{0.0379}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 isotonic-top-label equal_mass, seed mean
+\newcommand{\hdNcSixIsoMSd}{0.0174}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 isotonic-top-label equal_mass, sd over seeds
+\newcommand{\hdNcSixIsoMLo}{0.0384}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 isotonic-top-label equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcSixIsoMHi}{0.0543}% results/calibration_metrics.json headline.ece, ncaltech101 T=6 isotonic-top-label equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTenUncW}{0.0442}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 uncalibrated equal_width, seed mean
+\newcommand{\hdNcTenUncWSd}{0.0020}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 uncalibrated equal_width, sd over seeds
+\newcommand{\hdNcTenUncWLo}{0.0408}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 uncalibrated equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTenUncWHi}{0.0580}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 uncalibrated equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTenUncM}{0.0462}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 uncalibrated equal_mass, seed mean
+\newcommand{\hdNcTenUncMSd}{0.0031}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 uncalibrated equal_mass, sd over seeds
+\newcommand{\hdNcTenUncMLo}{0.0409}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 uncalibrated equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTenUncMHi}{0.0583}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 uncalibrated equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTenTempW}{0.0324}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 temperature equal_width, seed mean
+\newcommand{\hdNcTenTempWSd}{0.0044}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 temperature equal_width, sd over seeds
+\newcommand{\hdNcTenTempWLo}{0.0352}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 temperature equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTenTempWHi}{0.0502}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 temperature equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTenTempM}{0.0261}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 temperature equal_mass, seed mean
+\newcommand{\hdNcTenTempMSd}{0.0030}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 temperature equal_mass, sd over seeds
+\newcommand{\hdNcTenTempMLo}{0.0317}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 temperature equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTenTempMHi}{0.0459}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 temperature equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTenIsoW}{0.0300}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 isotonic-top-label equal_width, seed mean
+\newcommand{\hdNcTenIsoWSd}{0.0072}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 isotonic-top-label equal_width, sd over seeds
+\newcommand{\hdNcTenIsoWLo}{0.0271}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 isotonic-top-label equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTenIsoWHi}{0.0429}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 isotonic-top-label equal_width, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTenIsoM}{0.0311}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 isotonic-top-label equal_mass, seed mean
+\newcommand{\hdNcTenIsoMSd}{0.0044}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 isotonic-top-label equal_mass, sd over seeds
+\newcommand{\hdNcTenIsoMLo}{0.0282}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 isotonic-top-label equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdNcTenIsoMHi}{0.0442}% results/calibration_metrics.json headline.ece, ncaltech101 T=10 isotonic-top-label equal_mass, 95% bootstrap interval of the seed mean
+\newcommand{\hdAurocCount}{0.9204}% results/calibration_metrics.json headline.auroc.count, seed mean
+\newcommand{\hdAurocCountSd}{0.0052}% results/calibration_metrics.json headline.auroc.count, sd over seeds
+\newcommand{\hdAurocCountLo}{0.9042}% results/calibration_metrics.json headline.auroc.count, 95% interval
+\newcommand{\hdAurocCountHi}{0.9349}% results/calibration_metrics.json headline.auroc.count, 95% interval
+\newcommand{\hdAurocAccum}{0.9698}% results/calibration_metrics.json headline.auroc.accumulator, seed mean
+\newcommand{\hdAurocAccumSd}{0.0080}% results/calibration_metrics.json headline.auroc.accumulator, sd over seeds
+\newcommand{\hdAurocAccumLo}{0.9611}% results/calibration_metrics.json headline.auroc.accumulator, 95% interval
+\newcommand{\hdAurocAccumHi}{0.9770}% results/calibration_metrics.json headline.auroc.accumulator, 95% interval
+\newcommand{\hdAurocDiff}{$-$0.0494}% results/calibration_metrics.json headline.auroc.count_minus_accumulator, seed mean
+\newcommand{\hdAurocDiffSd}{0.0122}% results/calibration_metrics.json headline.auroc.count_minus_accumulator, sd over seeds
+\newcommand{\hdAurocDiffLo}{$-$0.0647}% results/calibration_metrics.json headline.auroc.count_minus_accumulator, 95% interval
+\newcommand{\hdAurocDiffHi}{$-$0.0348}% results/calibration_metrics.json headline.auroc.count_minus_accumulator, 95% interval
+\newcommand{\clipTop}{126{,}956}% results/calibration_metrics.json clipped.top_label
+\newcommand{\clipTopTotal}{1{,}358{,}136}% results/calibration_metrics.json clipped.scores_computed_top_label
+\newcommand{\clipMulti}{0}% results/calibration_metrics.json clipped.multiclass
+\newcommand{\refitRuns}{75}% results/calibration_metrics.json rows, runs refitted
+\newcommand{\rlNmCountTwoTwoZeroA}{0.9852 & 0.5387 & 0.5387 & 0.0026 & 0.0008 & 0.0046 & 0.0014}% results/calibration_metrics.json rows, nmnist 2 blocks count T=2 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountTwoTwoZeroB}{0.3023 & 0.0112 & 0.0107 & 0.7985 & 0.0474 & 0.0434 & 0.9202 & 0.8212 & 0.0618 & 0.3471 & 0.0236}% results/calibration_metrics.json rows, nmnist 2 blocks count T=2 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountTwoTwoOneA}{0.9843 & 0.5380 & 0.5380 & 0.0012 & 0.0011 & 0.0046 & 0.0002}% results/calibration_metrics.json rows, nmnist 2 blocks count T=2 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountTwoTwoOneB}{0.3018 & 0.0106 & 0.0102 & 0.7974 & 0.0454 & 0.0403 & 0.9256 & 0.8214 & 0.0607 & 0.3471 & 0.0230}% results/calibration_metrics.json rows, nmnist 2 blocks count T=2 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountTwoTwoTwoA}{0.9854 & 0.5390 & 0.5390 & 0.0017 & 0.0005 & 0.0035 & 0.0029}% results/calibration_metrics.json rows, nmnist 2 blocks count T=2 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountTwoTwoTwoB}{0.3025 & 0.0112 & 0.0103 & 0.7991 & 0.0478 & 0.0406 & 0.9153 & 0.8208 & 0.0603 & 0.3471 & 0.0231}% results/calibration_metrics.json rows, nmnist 2 blocks count T=2 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountTwoFourZeroA}{0.9886 & 0.1463 & 0.1461 & 0.0024 & 0.0048 & 0.0020 & 0.0017}% results/calibration_metrics.json rows, nmnist 2 blocks count T=4 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountTwoFourZeroB}{0.0299 & 0.0084 & 0.0087 & 0.1778 & 0.0321 & 0.0419 & 0.9737 & 0.1891 & 0.0390 & 0.0412 & 0.0172}% results/calibration_metrics.json rows, nmnist 2 blocks count T=4 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountTwoFourOneA}{0.9899 & 0.1439 & 0.1439 & 0.0024 & 0.0058 & 0.0022 & 0.0014}% results/calibration_metrics.json rows, nmnist 2 blocks count T=4 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountTwoFourOneB}{0.0288 & 0.0080 & 0.0083 & 0.1748 & 0.0326 & 0.0409 & 0.9703 & 0.1844 & 0.0381 & 0.0392 & 0.0163}% results/calibration_metrics.json rows, nmnist 2 blocks count T=4 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountTwoFourTwoA}{0.9876 & 0.1438 & 0.1437 & 0.0044 & 0.0070 & 0.0046 & 0.0009}% results/calibration_metrics.json rows, nmnist 2 blocks count T=4 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountTwoFourTwoB}{0.0293 & 0.0089 & 0.0089 & 0.1763 & 0.0341 & 0.0398 & 0.9765 & 0.1887 & 0.0419 & 0.0415 & 0.0189}% results/calibration_metrics.json rows, nmnist 2 blocks count T=4 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountTwoSixZeroA}{0.9902 & 0.0285 & 0.0284 & 0.0020 & 0.0027 & 0.0007 & 0.0017}% results/calibration_metrics.json rows, nmnist 2 blocks count T=6 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountTwoSixZeroB}{0.0082 & 0.0072 & 0.0071 & 0.0485 & 0.0259 & 0.0254 & 0.9856 & 0.0552 & 0.0306 & 0.0161 & 0.0151}% results/calibration_metrics.json rows, nmnist 2 blocks count T=6 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountTwoSixOneA}{0.9897 & 0.0275 & 0.0275 & 0.0033 & 0.0034 & 0.0040 & 0.0038}% results/calibration_metrics.json rows, nmnist 2 blocks count T=6 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountTwoSixOneB}{0.0085 & 0.0076 & 0.0079 & 0.0493 & 0.0283 & 0.0353 & 0.9830 & 0.0580 & 0.0358 & 0.0171 & 0.0161}% results/calibration_metrics.json rows, nmnist 2 blocks count T=6 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountTwoSixTwoA}{0.9908 & 0.0259 & 0.0256 & 0.0026 & 0.0030 & 0.0033 & 0.0031}% results/calibration_metrics.json rows, nmnist 2 blocks count T=6 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountTwoSixTwoB}{0.0075 & 0.0067 & 0.0068 & 0.0457 & 0.0257 & 0.0244 & 0.9840 & 0.0530 & 0.0317 & 0.0150 & 0.0142}% results/calibration_metrics.json rows, nmnist 2 blocks count T=6 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountTwoEightZeroA}{0.9894 & 0.0071 & 0.0051 & 0.0023 & 0.0029 & 0.0024 & 0.0020}% results/calibration_metrics.json rows, nmnist 2 blocks count T=8 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountTwoEightZeroB}{0.0068 & 0.0067 & 0.0067 & 0.0279 & 0.0250 & 0.0296 & 0.9840 & 0.0355 & 0.0320 & 0.0148 & 0.0148}% results/calibration_metrics.json rows, nmnist 2 blocks count T=8 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountTwoEightOneA}{0.9912 & 0.0069 & 0.0069 & 0.0029 & 0.0017 & 0.0026 & 0.0025}% results/calibration_metrics.json rows, nmnist 2 blocks count T=8 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountTwoEightOneB}{0.0070 & 0.0069 & 0.0069 & 0.0283 & 0.0253 & 0.0303 & 0.9819 & 0.0350 & 0.0318 & 0.0144 & 0.0143}% results/calibration_metrics.json rows, nmnist 2 blocks count T=8 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountTwoEightTwoA}{0.9889 & 0.0078 & 0.0077 & 0.0033 & 0.0018 & 0.0043 & 0.0019}% results/calibration_metrics.json rows, nmnist 2 blocks count T=8 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountTwoEightTwoB}{0.0081 & 0.0080 & 0.0083 & 0.0321 & 0.0280 & 0.0290 & 0.9852 & 0.0387 & 0.0336 & 0.0167 & 0.0166}% results/calibration_metrics.json rows, nmnist 2 blocks count T=8 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountTwoTenZeroA}{0.9899 & 0.0028 & 0.0021 & 0.0025 & 0.0027 & 0.0032 & 0.0027}% results/calibration_metrics.json rows, nmnist 2 blocks count T=10 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountTwoTenZeroB}{0.0074 & 0.0075 & 0.0076 & 0.0256 & 0.0253 & 0.0260 & 0.9874 & 0.0313 & 0.0307 & 0.0155 & 0.0156}% results/calibration_metrics.json rows, nmnist 2 blocks count T=10 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountTwoTenOneA}{0.9911 & 0.0035 & 0.0020 & 0.0031 & 0.0011 & 0.0034 & 0.0014}% results/calibration_metrics.json rows, nmnist 2 blocks count T=10 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountTwoTenOneB}{0.0066 & 0.0066 & 0.0071 & 0.0232 & 0.0229 & 0.0347 & 0.9870 & 0.0294 & 0.0290 & 0.0139 & 0.0139}% results/calibration_metrics.json rows, nmnist 2 blocks count T=10 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountTwoTenTwoA}{0.9913 & 0.0023 & 0.0016 & 0.0023 & 0.0017 & 0.0017 & 0.0010}% results/calibration_metrics.json rows, nmnist 2 blocks count T=10 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountTwoTenTwoB}{0.0065 & 0.0065 & 0.0067 & 0.0237 & 0.0237 & 0.0268 & 0.9846 & 0.0288 & 0.0287 & 0.0137 & 0.0137}% results/calibration_metrics.json rows, nmnist 2 blocks count T=10 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountFourTwoZeroA}{0.9877 & 0.5403 & 0.5403 & 0.0021 & 0.0005 & 0.0040 & 0.0023}% results/calibration_metrics.json rows, nmnist 4 blocks count T=2 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountFourTwoZeroB}{0.3023 & 0.0102 & 0.0099 & 0.7985 & 0.0448 & 0.0471 & 0.8903 & 0.8178 & 0.0584 & 0.3455 & 0.0212}% results/calibration_metrics.json rows, nmnist 4 blocks count T=2 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountFourTwoOneA}{0.9887 & 0.5409 & 0.5409 & 0.0030 & 0.0028 & 0.0045 & 0.0045}% results/calibration_metrics.json rows, nmnist 4 blocks count T=2 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountFourTwoOneB}{0.3022 & 0.0093 & 0.0093 & 0.7982 & 0.0439 & 0.0405 & 0.8474 & 0.8164 & 0.0559 & 0.3447 & 0.0191}% results/calibration_metrics.json rows, nmnist 4 blocks count T=2 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountFourTwoTwoA}{0.9844 & 0.5382 & 0.5382 & 0.0008 & 0.0004 & 0.0028 & 0.0017}% results/calibration_metrics.json rows, nmnist 4 blocks count T=2 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountFourTwoTwoB}{0.3020 & 0.0111 & 0.0104 & 0.7978 & 0.0475 & 0.0431 & 0.9242 & 0.8228 & 0.0653 & 0.3476 & 0.0236}% results/calibration_metrics.json rows, nmnist 4 blocks count T=2 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountFourSixZeroA}{0.9913 & 0.0255 & 0.0255 & 0.0025 & 0.0026 & 0.0033 & 0.0001}% results/calibration_metrics.json rows, nmnist 4 blocks count T=6 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountFourSixZeroB}{0.0071 & 0.0064 & 0.0068 & 0.0444 & 0.0242 & 0.0343 & 0.9855 & 0.0511 & 0.0299 & 0.0142 & 0.0135}% results/calibration_metrics.json rows, nmnist 4 blocks count T=6 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountFourSixOneA}{0.9854 & 0.0260 & 0.0258 & 0.0043 & 0.0053 & 0.0048 & 0.0025}% results/calibration_metrics.json rows, nmnist 4 blocks count T=6 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountFourSixOneB}{0.0111 & 0.0107 & 0.0109 & 0.0570 & 0.0382 & 0.0378 & 0.9785 & 0.0677 & 0.0464 & 0.0224 & 0.0222}% results/calibration_metrics.json rows, nmnist 4 blocks count T=6 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmCountFourSixTwoA}{0.9894 & 0.0254 & 0.0246 & 0.0041 & 0.0043 & 0.0021 & 0.0013}% results/calibration_metrics.json rows, nmnist 4 blocks count T=6 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmCountFourSixTwoB}{0.0080 & 0.0074 & 0.0076 & 0.0479 & 0.0288 & 0.0285 & 0.9751 & 0.0561 & 0.0359 & 0.0164 & 0.0158}% results/calibration_metrics.json rows, nmnist 4 blocks count T=6 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmAccumTwoTwoZeroA}{0.9864 & 0.0032 & 0.0015 & 0.0024 & 0.0016 & 0.0016 & 0.0008}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=2 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmAccumTwoTwoZeroB}{0.0100 & 0.0100 & 0.0101 & 0.0359 & 0.0356 & 0.0386 & 0.9763 & 0.0450 & 0.0445 & 0.0212 & 0.0212}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=2 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmAccumTwoTwoOneA}{0.9876 & 0.0028 & 0.0006 & 0.0027 & 0.0024 & 0.0024 & 0.0017}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=2 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmAccumTwoTwoOneB}{0.0094 & 0.0094 & 0.0096 & 0.0350 & 0.0353 & 0.0517 & 0.9609 & 0.0431 & 0.0435 & 0.0196 & 0.0197}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=2 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmAccumTwoTwoTwoA}{0.9844 & 0.0033 & 0.0027 & 0.0037 & 0.0023 & 0.0044 & 0.0021}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=2 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmAccumTwoTwoTwoB}{0.0108 & 0.0108 & 0.0114 & 0.0386 & 0.0389 & 0.0557 & 0.9721 & 0.0477 & 0.0481 & 0.0229 & 0.0229}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=2 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmAccumTwoSixZeroA}{0.9885 & 0.0034 & 0.0024 & 0.0017 & 0.0005 & 0.0022 & 0.0015}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=6 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmAccumTwoSixZeroB}{0.0083 & 0.0083 & 0.0086 & 0.0300 & 0.0294 & 0.0341 & 0.9808 & 0.0352 & 0.0348 & 0.0175 & 0.0174}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=6 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmAccumTwoSixOneA}{0.9885 & 0.0042 & 0.0029 & 0.0029 & 0.0022 & 0.0031 & 0.0015}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=6 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmAccumTwoSixOneB}{0.0089 & 0.0089 & 0.0092 & 0.0342 & 0.0327 & 0.0466 & 0.9716 & 0.0422 & 0.0406 & 0.0189 & 0.0188}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=6 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmAccumTwoSixTwoA}{0.9895 & 0.0050 & 0.0046 & 0.0026 & 0.0015 & 0.0024 & 0.0010}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=6 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmAccumTwoSixTwoB}{0.0082 & 0.0079 & 0.0081 & 0.0313 & 0.0282 & 0.0342 & 0.9817 & 0.0402 & 0.0362 & 0.0173 & 0.0168}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=6 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmAccumTwoTenZeroA}{0.9866 & 0.0052 & 0.0048 & 0.0027 & 0.0019 & 0.0022 & 0.0016}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=10 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmAccumTwoTenZeroB}{0.0091 & 0.0089 & 0.0089 & 0.0322 & 0.0306 & 0.0312 & 0.9842 & 0.0412 & 0.0390 & 0.0195 & 0.0191}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=10 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmAccumTwoTenOneA}{0.9886 & 0.0045 & 0.0042 & 0.0032 & 0.0024 & 0.0032 & 0.0028}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=10 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmAccumTwoTenOneB}{0.0083 & 0.0081 & 0.0083 & 0.0303 & 0.0286 & 0.0289 & 0.9842 & 0.0380 & 0.0357 & 0.0177 & 0.0173}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=10 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmAccumTwoTenTwoA}{0.9884 & 0.0054 & 0.0051 & 0.0026 & 0.0020 & 0.0038 & 0.0022}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=10 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmAccumTwoTenTwoB}{0.0087 & 0.0085 & 0.0089 & 0.0333 & 0.0306 & 0.0343 & 0.9801 & 0.0382 & 0.0356 & 0.0180 & 0.0175}% results/calibration_metrics.json rows, nmnist 2 blocks accumulator T=10 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmAccumFourTwoZeroA}{0.9862 & 0.0041 & 0.0038 & 0.0024 & 0.0022 & 0.0026 & 0.0008}% results/calibration_metrics.json rows, nmnist 4 blocks accumulator T=2 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmAccumFourTwoZeroB}{0.0100 & 0.0099 & 0.0105 & 0.0365 & 0.0359 & 0.0644 & 0.9770 & 0.0445 & 0.0443 & 0.0211 & 0.0209}% results/calibration_metrics.json rows, nmnist 4 blocks accumulator T=2 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmAccumFourTwoOneA}{0.9863 & 0.0052 & 0.0036 & 0.0029 & 0.0017 & 0.0035 & 0.0016}% results/calibration_metrics.json rows, nmnist 4 blocks accumulator T=2 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmAccumFourTwoOneB}{0.0108 & 0.0106 & 0.0108 & 0.0405 & 0.0395 & 0.0444 & 0.9620 & 0.0494 & 0.0489 & 0.0223 & 0.0221}% results/calibration_metrics.json rows, nmnist 4 blocks accumulator T=2 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmAccumFourTwoTwoA}{0.9853 & 0.0050 & 0.0047 & 0.0041 & 0.0021 & 0.0032 & 0.0036}% results/calibration_metrics.json rows, nmnist 4 blocks accumulator T=2 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmAccumFourTwoTwoB}{0.0108 & 0.0105 & 0.0106 & 0.0403 & 0.0389 & 0.0407 & 0.9685 & 0.0517 & 0.0511 & 0.0232 & 0.0228}% results/calibration_metrics.json rows, nmnist 4 blocks accumulator T=2 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmAccumFourSixZeroA}{0.9867 & 0.0017 & 0.0018 & 0.0017 & 0.0003 & 0.0024 & 0.0019}% results/calibration_metrics.json rows, nmnist 4 blocks accumulator T=6 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmAccumFourSixZeroB}{0.0088 & 0.0088 & 0.0089 & 0.0304 & 0.0304 & 0.0346 & 0.9839 & 0.0376 & 0.0377 & 0.0189 & 0.0189}% results/calibration_metrics.json rows, nmnist 4 blocks accumulator T=6 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmAccumFourSixOneA}{0.9873 & 0.0034 & 0.0026 & 0.0022 & 0.0012 & 0.0016 & 0.0023}% results/calibration_metrics.json rows, nmnist 4 blocks accumulator T=6 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmAccumFourSixOneB}{0.0094 & 0.0094 & 0.0094 & 0.0341 & 0.0333 & 0.0371 & 0.9757 & 0.0402 & 0.0397 & 0.0197 & 0.0196}% results/calibration_metrics.json rows, nmnist 4 blocks accumulator T=6 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmAccumFourSixTwoA}{0.9876 & 0.0036 & 0.0032 & 0.0027 & 0.0009 & 0.0038 & 0.0007}% results/calibration_metrics.json rows, nmnist 4 blocks accumulator T=6 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmAccumFourSixTwoB}{0.0090 & 0.0088 & 0.0091 & 0.0326 & 0.0315 & 0.0377 & 0.9788 & 0.0401 & 0.0393 & 0.0191 & 0.0189}% results/calibration_metrics.json rows, nmnist 4 blocks accumulator T=6 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmScaledTwoTwoZeroA}{0.9788 & 0.0048 & 0.0026 & 0.0034 & 0.0021 & 0.0017 & 0.0006}% results/calibration_metrics.json rows, nmnist 2 blocks scaled-count T=2 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmScaledTwoTwoZeroB}{0.0132 & 0.0132 & 0.0131 & 0.0516 & 0.0507 & 0.0490 & 0.9451 & 0.0674 & 0.0664 & 0.0285 & 0.0284}% results/calibration_metrics.json rows, nmnist 2 blocks scaled-count T=2 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmScaledTwoTwoOneA}{0.9803 & 0.0067 & 0.0060 & 0.0020 & 0.0050 & 0.0014 & 0.0011}% results/calibration_metrics.json rows, nmnist 2 blocks scaled-count T=2 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmScaledTwoTwoOneB}{0.0128 & 0.0126 & 0.0125 & 0.0536 & 0.0491 & 0.0464 & 0.9518 & 0.0687 & 0.0640 & 0.0274 & 0.0271}% results/calibration_metrics.json rows, nmnist 2 blocks scaled-count T=2 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNmScaledTwoTwoTwoA}{0.9829 & 0.0046 & 0.0046 & 0.0020 & 0.0028 & 0.0042 & 0.0026}% results/calibration_metrics.json rows, nmnist 2 blocks scaled-count T=2 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNmScaledTwoTwoTwoB}{0.0102 & 0.0102 & 0.0104 & 0.0445 & 0.0412 & 0.0409 & 0.9467 & 0.0591 & 0.0556 & 0.0226 & 0.0225}% results/calibration_metrics.json rows, nmnist 2 blocks scaled-count T=2 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcCountTwoTwoZeroA}{0.4696 & 0.4138 & 0.4138 & 0.1526 & 0.1563 & 0.0425 & 0.0462}% results/calibration_metrics.json rows, ncaltech101 2 blocks count T=2 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcCountTwoTwoZeroB}{0.4129 & 0.1908 & 0.1328 & 1.3213 & 0.5571 & 0.4421 & 0.8878 & 3.4491 & 2.4958 & 0.9305 & 0.6908}% results/calibration_metrics.json rows, ncaltech101 2 blocks count T=2 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcCountTwoTwoOneA}{0.4971 & 0.4427 & 0.4427 & 0.1501 & 0.1541 & 0.0396 & 0.0385}% results/calibration_metrics.json rows, ncaltech101 2 blocks count T=2 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcCountTwoTwoOneB}{0.4367 & 0.1855 & 0.1333 & 1.3947 & 0.5457 & 0.4706 & 0.8910 & 3.4705 & 2.4706 & 0.9304 & 0.6660}% results/calibration_metrics.json rows, ncaltech101 2 blocks count T=2 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcCountTwoTwoTwoA}{0.5006 & 0.4463 & 0.4463 & 0.1791 & 0.1769 & 0.0781 & 0.0785}% results/calibration_metrics.json rows, ncaltech101 2 blocks count T=2 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcCountTwoTwoTwoB}{0.4399 & 0.2006 & 0.1449 & 1.4097 & 0.5825 & 0.4565 & 0.8849 & 3.4987 & 2.5327 & 0.9312 & 0.6779}% results/calibration_metrics.json rows, ncaltech101 2 blocks count T=2 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcCountTwoSixZeroA}{0.5511 & 0.1105 & 0.1058 & 0.0626 & 0.0616 & 0.0310 & 0.0285}% results/calibration_metrics.json rows, ncaltech101 2 blocks count T=6 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcCountTwoSixZeroB}{0.1420 & 0.1288 & 0.1253 & 0.4565 & 0.4119 & 0.4369 & 0.8988 & 2.0721 & 2.0083 & 0.5683 & 0.5540}% results/calibration_metrics.json rows, ncaltech101 2 blocks count T=6 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcCountTwoSixOneA}{0.5677 & 0.1201 & 0.1233 & 0.0495 & 0.0603 & 0.0274 & 0.0295}% results/calibration_metrics.json rows, ncaltech101 2 blocks count T=6 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcCountTwoSixOneB}{0.1378 & 0.1214 & 0.1191 & 0.4448 & 0.3931 & 0.3944 & 0.9107 & 2.0534 & 1.9846 & 0.5504 & 0.5329}% results/calibration_metrics.json rows, ncaltech101 2 blocks count T=6 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcCountTwoSixTwoA}{0.5666 & 0.1263 & 0.1229 & 0.0601 & 0.0628 & 0.0450 & 0.0484}% results/calibration_metrics.json rows, ncaltech101 2 blocks count T=6 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcCountTwoSixTwoB}{0.1400 & 0.1235 & 0.1220 & 0.4518 & 0.4010 & 0.3755 & 0.9077 & 2.0974 & 2.0369 & 0.5553 & 0.5382}% results/calibration_metrics.json rows, ncaltech101 2 blocks count T=6 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcCountFourTwoZeroA}{0.4323 & 0.3758 & 0.3758 & 0.1448 & 0.1509 & 0.0226 & 0.0226}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=2 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcCountFourTwoZeroB}{0.3818 & 0.1908 & 0.1343 & 1.2337 & 0.5632 & 0.4117 & 0.8625 & 3.2967 & 2.2828 & 0.9255 & 0.6993}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=2 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcCountFourTwoOneA}{0.4816 & 0.4232 & 0.4232 & 0.1343 & 0.1448 & 0.0318 & 0.0344}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=2 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcCountFourTwoOneB}{0.4238 & 0.1883 & 0.1448 & 1.3575 & 0.5603 & 0.4773 & 0.8640 & 3.2689 & 2.1193 & 0.9218 & 0.6485}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=2 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcCountFourTwoTwoA}{0.4489 & 0.3916 & 0.3916 & 0.1558 & 0.1611 & 0.0418 & 0.0478}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=2 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcCountFourTwoTwoB}{0.3963 & 0.1988 & 0.1421 & 1.2799 & 0.5846 & 0.5754 & 0.8513 & 3.3017 & 2.2859 & 0.9248 & 0.6934}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=2 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcCountFourSixZeroA}{0.6372 & 0.1597 & 0.1597 & 0.0576 & 0.0553 & 0.0547 & 0.0554}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=6 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcCountFourSixZeroB}{0.1684 & 0.1424 & 0.1441 & 0.5182 & 0.4432 & 0.4235 & 0.8760 & 1.6975 & 1.6070 & 0.5069 & 0.4803}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=6 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcCountFourSixOneA}{0.6349 & 0.1496 & 0.1491 & 0.0519 & 0.0430 & 0.0211 & 0.0207}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=6 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcCountFourSixOneB}{0.1528 & 0.1265 & 0.1246 & 0.4824 & 0.4000 & 0.3932 & 0.8991 & 1.6917 & 1.5845 & 0.4934 & 0.4653}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=6 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcCountFourSixTwoA}{0.6561 & 0.1524 & 0.1513 & 0.0642 & 0.0613 & 0.0368 & 0.0378}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=6 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcCountFourSixTwoB}{0.1500 & 0.1245 & 0.1237 & 0.4775 & 0.3969 & 0.3820 & 0.9008 & 1.6421 & 1.5416 & 0.4716 & 0.4449}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=6 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcCountFourTenZeroA}{0.6561 & 0.0433 & 0.0458 & 0.0281 & 0.0230 & 0.0339 & 0.0295}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=10 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcCountFourTenZeroB}{0.1281 & 0.1256 & 0.1268 & 0.3868 & 0.3848 & 0.3819 & 0.8932 & 1.5424 & 1.5417 & 0.4552 & 0.4519}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=10 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcCountFourTenOneA}{0.6470 & 0.0465 & 0.0496 & 0.0368 & 0.0290 & 0.0344 & 0.0361}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=10 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcCountFourTenOneB}{0.1240 & 0.1222 & 0.1232 & 0.3802 & 0.3784 & 0.4028 & 0.9023 & 1.4994 & 1.5012 & 0.4515 & 0.4494}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=10 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcCountFourTenTwoA}{0.6274 & 0.0429 & 0.0433 & 0.0321 & 0.0264 & 0.0218 & 0.0278}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=10 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcCountFourTenTwoB}{0.1208 & 0.1194 & 0.1205 & 0.3713 & 0.3720 & 0.4210 & 0.9069 & 1.6228 & 1.6223 & 0.4722 & 0.4705}% results/calibration_metrics.json rows, ncaltech101 4 blocks count T=10 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcAccumTwoTwoZeroA}{0.5178 & 0.0530 & 0.0502 & 0.0705 & 0.0754 & 0.0439 & 0.0442}% results/calibration_metrics.json rows, ncaltech101 2 blocks accumulator T=2 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcAccumTwoTwoZeroB}{0.1187 & 0.1244 & 0.1206 & 0.3700 & 0.3948 & 0.3746 & 0.9108 & 2.3202 & 2.2993 & 0.5882 & 0.5928}% results/calibration_metrics.json rows, ncaltech101 2 blocks accumulator T=2 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcAccumTwoTwoOneA}{0.5109 & 0.1066 & 0.1072 & 0.0901 & 0.0901 & 0.0627 & 0.0655}% results/calibration_metrics.json rows, ncaltech101 2 blocks accumulator T=2 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcAccumTwoTwoOneB}{0.1420 & 0.1381 & 0.1320 & 0.4408 & 0.4382 & 0.4594 & 0.8956 & 2.3979 & 2.3295 & 0.6154 & 0.6101}% results/calibration_metrics.json rows, ncaltech101 2 blocks accumulator T=2 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcAccumTwoTwoTwoA}{0.5310 & 0.0804 & 0.0804 & 0.1008 & 0.1047 & 0.0650 & 0.0659}% results/calibration_metrics.json rows, ncaltech101 2 blocks accumulator T=2 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcAccumTwoTwoTwoB}{0.1359 & 0.1470 & 0.1367 & 0.4280 & 0.4560 & 0.4660 & 0.8961 & 2.3350 & 2.2947 & 0.5909 & 0.6009}% results/calibration_metrics.json rows, ncaltech101 2 blocks accumulator T=2 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcAccumTwoSixZeroA}{0.5419 & 0.2182 & 0.2182 & 0.0943 & 0.0943 & 0.0440 & 0.0438}% results/calibration_metrics.json rows, ncaltech101 2 blocks accumulator T=6 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcAccumTwoSixZeroB}{0.1986 & 0.1390 & 0.1265 & 0.6134 & 0.4361 & 0.5128 & 0.8967 & 2.6944 & 2.1163 & 0.6437 & 0.5793}% results/calibration_metrics.json rows, ncaltech101 2 blocks accumulator T=6 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcAccumTwoSixOneA}{0.5413 & 0.1931 & 0.1932 & 0.1016 & 0.1016 & 0.0374 & 0.0369}% results/calibration_metrics.json rows, ncaltech101 2 blocks accumulator T=6 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcAccumTwoSixOneB}{0.1876 & 0.1504 & 0.1353 & 0.5808 & 0.4646 & 0.4851 & 0.8850 & 2.6657 & 2.1584 & 0.6363 & 0.5920}% results/calibration_metrics.json rows, ncaltech101 2 blocks accumulator T=6 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcAccumTwoSixTwoA}{0.5350 & 0.2114 & 0.2115 & 0.1092 & 0.1102 & 0.0445 & 0.0423}% results/calibration_metrics.json rows, ncaltech101 2 blocks accumulator T=6 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcAccumTwoSixTwoB}{0.1837 & 0.1376 & 0.1215 & 0.5781 & 0.4311 & 0.3784 & 0.9122 & 2.7295 & 2.1788 & 0.6372 & 0.5851}% results/calibration_metrics.json rows, ncaltech101 2 blocks accumulator T=6 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcAccumFourTwoZeroA}{0.5838 & 0.0650 & 0.0651 & 0.0588 & 0.0515 & 0.0441 & 0.0391}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=2 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcAccumFourTwoZeroB}{0.1379 & 0.1348 & 0.1352 & 0.4102 & 0.4146 & 0.4512 & 0.8875 & 1.8591 & 1.8340 & 0.5324 & 0.5287}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=2 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcAccumFourTwoOneA}{0.5775 & 0.0815 & 0.0813 & 0.0501 & 0.0521 & 0.0478 & 0.0477}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=2 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcAccumFourTwoOneB}{0.1501 & 0.1437 & 0.1429 & 0.4500 & 0.4400 & 0.4608 & 0.8739 & 1.9282 & 1.8847 & 0.5512 & 0.5436}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=2 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcAccumFourTwoTwoA}{0.5861 & 0.1012 & 0.1022 & 0.0495 & 0.0477 & 0.0276 & 0.0304}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=2 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcAccumFourTwoTwoB}{0.1376 & 0.1260 & 0.1236 & 0.4194 & 0.3948 & 0.3963 & 0.9041 & 1.9296 & 1.8445 & 0.5338 & 0.5204}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=2 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcAccumFourSixZeroA}{0.5614 & 0.1903 & 0.1899 & 0.0540 & 0.0624 & 0.0336 & 0.0368}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=6 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcAccumFourSixZeroB}{0.1886 & 0.1401 & 0.1359 & 0.5663 & 0.4354 & 0.4566 & 0.8833 & 2.2605 & 1.8764 & 0.6089 & 0.5539}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=6 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcAccumFourSixOneA}{0.6142 & 0.1889 & 0.1889 & 0.0543 & 0.0600 & 0.0317 & 0.0298}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=6 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcAccumFourSixOneB}{0.1854 & 0.1335 & 0.1315 & 0.5832 & 0.4129 & 0.3991 & 0.8923 & 2.1768 & 1.6891 & 0.5591 & 0.4991}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=6 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcAccumFourSixTwoA}{0.6171 & 0.1742 & 0.1742 & 0.0740 & 0.0772 & 0.0521 & 0.0468}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=6 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcAccumFourSixTwoB}{0.1745 & 0.1328 & 0.1293 & 0.5320 & 0.4134 & 0.4078 & 0.8964 & 2.1069 & 1.7148 & 0.5430 & 0.4966}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=6 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcAccumFourTenZeroA}{0.6343 & 0.2118 & 0.2118 & 0.0545 & 0.0574 & 0.0407 & 0.0447}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=10 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcAccumFourTenZeroB}{0.1984 & 0.1306 & 0.1321 & 0.6853 & 0.4003 & 0.4405 & 0.8917 & 2.3888 & 1.5998 & 0.5467 & 0.4745}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=10 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcAccumFourTenOneA}{0.5941 & 0.2297 & 0.2297 & 0.0824 & 0.0892 & 0.0434 & 0.0458}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=10 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcAccumFourTenOneB}{0.2098 & 0.1389 & 0.1357 & 0.6872 & 0.4334 & 0.4290 & 0.8918 & 2.4498 & 1.7186 & 0.5931 & 0.5187}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=10 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcAccumFourTenTwoA}{0.5930 & 0.2347 & 0.2347 & 0.0962 & 0.1025 & 0.0806 & 0.0829}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=10 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcAccumFourTenTwoB}{0.2200 & 0.1564 & 0.1523 & 0.7494 & 0.4740 & 0.5122 & 0.8726 & 2.7782 & 1.8316 & 0.6124 & 0.5428}% results/calibration_metrics.json rows, ncaltech101 4 blocks accumulator T=10 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcScaledFourTwoZeroA}{0.5023 & 0.1231 & 0.1228 & 0.0977 & 0.0977 & 0.1046 & 0.1051}% results/calibration_metrics.json rows, ncaltech101 4 blocks scaled-count T=2 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcScaledFourTwoZeroB}{0.1629 & 0.1606 & 0.1619 & 0.6299 & 0.5017 & 0.5029 & 0.8439 & 2.6582 & 2.2609 & 0.6411 & 0.6266}% results/calibration_metrics.json rows, ncaltech101 4 blocks scaled-count T=2 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcScaledFourTwoOneA}{0.4902 & 0.1474 & 0.1454 & 0.0668 & 0.0770 & 0.0915 & 0.0977}% results/calibration_metrics.json rows, ncaltech101 4 blocks scaled-count T=2 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcScaledFourTwoOneB}{0.1601 & 0.1478 & 0.1533 & 0.6009 & 0.4655 & 0.4767 & 0.8590 & 2.5777 & 2.2644 & 0.6407 & 0.6211}% results/calibration_metrics.json rows, ncaltech101 4 blocks scaled-count T=2 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcScaledFourTwoTwoA}{0.4983 & 0.1125 & 0.1135 & 0.0993 & 0.0998 & 0.0696 & 0.0696}% results/calibration_metrics.json rows, ncaltech101 4 blocks scaled-count T=2 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcScaledFourTwoTwoB}{0.1601 & 0.1496 & 0.1400 & 0.5128 & 0.4707 & 0.4369 & 0.8914 & 2.3788 & 2.2479 & 0.6350 & 0.6206}% results/calibration_metrics.json rows, ncaltech101 4 blocks scaled-count T=2 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcScaledFourSixZeroA}{0.5390 & 0.1022 & 0.0930 & 0.0518 & 0.0464 & 0.0406 & 0.0427}% results/calibration_metrics.json rows, ncaltech101 4 blocks scaled-count T=6 seed 0: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcScaledFourSixZeroB}{0.1547 & 0.1424 & 0.1423 & 0.4613 & 0.4361 & 0.4624 & 0.8757 & 1.9864 & 1.9389 & 0.5855 & 0.5713}% results/calibration_metrics.json rows, ncaltech101 4 blocks scaled-count T=6 seed 0: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcScaledFourSixOneA}{0.5850 & 0.2098 & 0.2098 & 0.0288 & 0.0297 & 0.0301 & 0.0253}% results/calibration_metrics.json rows, ncaltech101 4 blocks scaled-count T=6 seed 1: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcScaledFourSixOneB}{0.2037 & 0.1268 & 0.1304 & 0.6899 & 0.3908 & 0.5086 & 0.8968 & 2.3177 & 1.7895 & 0.6058 & 0.5170}% results/calibration_metrics.json rows, ncaltech101 4 blocks scaled-count T=6 seed 1: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlNcScaledFourSixTwoA}{0.6005 & 0.1951 & 0.1951 & 0.0422 & 0.0460 & 0.0874 & 0.0872}% results/calibration_metrics.json rows, ncaltech101 4 blocks scaled-count T=6 seed 2: accuracy; ECE w, m for uncalibrated, temperature, isotonic
+\newcommand{\rlNcScaledFourSixTwoB}{0.2030 & 0.1349 & 0.1459 & 0.6920 & 0.4151 & 0.4639 & 0.8819 & 2.2955 & 1.7739 & 0.5913 & 0.5101}% results/calibration_metrics.json rows, ncaltech101 4 blocks scaled-count T=6 seed 2: top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier
+\newcommand{\rlRows}{75}% results/calibration_metrics.json rows / 3 arms
+\newcommand{\satNmTwo}{95.1}% results/spiking_activity.json output_patterns_T2, nmnist 2 blocks saturated (top class fires at both steps, every other class silent), per cent, seed mean
+\newcommand{\satNmTwoSd}{0.2}% results/spiking_activity.json output_patterns_T2, nmnist 2 blocks saturated, sd over seeds, percentage points
+\newcommand{\tieNmTwo}{1.3}% results/spiking_activity.json output_patterns_T2, nmnist 2 blocks tie for the top count, per cent, seed mean
+\newcommand{\tieNmTwoSd}{0.0}% results/spiking_activity.json output_patterns_T2, nmnist 2 blocks tie for the top count, sd over seeds
+\newcommand{\topEveryNmTwo}{99.1}% results/spiking_activity.json output_patterns_T2, nmnist 2 blocks top count equals T, per cent, seed mean
+\newcommand{\satNmDeepTwo}{95.6}% results/spiking_activity.json output_patterns_T2, nmnist 4 blocks saturated (top class fires at both steps, every other class silent), per cent, seed mean
+\newcommand{\satNmDeepTwoSd}{0.6}% results/spiking_activity.json output_patterns_T2, nmnist 4 blocks saturated, sd over seeds, percentage points
+\newcommand{\tieNmDeepTwo}{1.1}% results/spiking_activity.json output_patterns_T2, nmnist 4 blocks tie for the top count, per cent, seed mean
+\newcommand{\tieNmDeepTwoSd}{0.2}% results/spiking_activity.json output_patterns_T2, nmnist 4 blocks tie for the top count, sd over seeds
+\newcommand{\topEveryNmDeepTwo}{99.4}% results/spiking_activity.json output_patterns_T2, nmnist 4 blocks top count equals T, per cent, seed mean
+\newcommand{\satNcShallowTwo}{13.3}% results/spiking_activity.json output_patterns_T2, ncaltech101 2 blocks saturated (top class fires at both steps, every other class silent), per cent, seed mean
+\newcommand{\satNcShallowTwoSd}{0.9}% results/spiking_activity.json output_patterns_T2, ncaltech101 2 blocks saturated, sd over seeds, percentage points
+\newcommand{\tieNcShallowTwo}{40.1}% results/spiking_activity.json output_patterns_T2, ncaltech101 2 blocks tie for the top count, per cent, seed mean
+\newcommand{\tieNcShallowTwoSd}{2.3}% results/spiking_activity.json output_patterns_T2, ncaltech101 2 blocks tie for the top count, sd over seeds
+\newcommand{\topEveryNcShallowTwo}{79.3}% results/spiking_activity.json output_patterns_T2, ncaltech101 2 blocks top count equals T, per cent, seed mean
+\newcommand{\satNcTwo}{10.6}% results/spiking_activity.json output_patterns_T2, ncaltech101 4 blocks saturated (top class fires at both steps, every other class silent), per cent, seed mean
+\newcommand{\satNcTwoSd}{1.8}% results/spiking_activity.json output_patterns_T2, ncaltech101 4 blocks saturated, sd over seeds, percentage points
+\newcommand{\tieNcTwo}{58.0}% results/spiking_activity.json output_patterns_T2, ncaltech101 4 blocks tie for the top count, per cent, seed mean
+\newcommand{\tieNcTwoSd}{6.6}% results/spiking_activity.json output_patterns_T2, ncaltech101 4 blocks tie for the top count, sd over seeds
+\newcommand{\topEveryNcTwo}{96.1}% results/spiking_activity.json output_patterns_T2, ncaltech101 4 blocks top count equals T, per cent, seed mean
+\newcommand{\silentOutMax}{1}% results/spiking_activity.json output_patterns_T2_runs: most test samples with every output silent at T=2, any run
+\newcommand{\silentOutRuns}{1}% results/spiking_activity.json output_patterns_T2_runs: runs with any such sample
+\newcommand{\actNmTwoTwoConvOne}{36{,}992 & 0.032 & 0.004 & 33.1 & 1.9}% results/spiking_activity.json cells, nmnist 2 blocks T=2 conv1: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoTwoConvTwo}{18{,}496 & 0.020 & 0.001 & 14.0 & 3.1}% results/spiking_activity.json cells, nmnist 2 blocks T=2 conv2: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoTwoHidden}{256 & 0.077 & 0.003 & 0.0 & 0.0}% results/spiking_activity.json cells, nmnist 2 blocks T=2 hidden: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoTwoOutput}{10 & 0.102 & 0.000 & 0.0 & 0.0}% results/spiking_activity.json cells, nmnist 2 blocks T=2 output: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoFourConvOne}{36{,}992 & 0.039 & 0.004 & 16.1 & 3.7}% results/spiking_activity.json cells, nmnist 2 blocks T=4 conv1: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoFourConvTwo}{18{,}496 & 0.023 & 0.002 & 2.4 & 0.7}% results/spiking_activity.json cells, nmnist 2 blocks T=4 conv2: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoFourHidden}{256 & 0.115 & 0.004 & 0.0 & 0.0}% results/spiking_activity.json cells, nmnist 2 blocks T=4 hidden: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoFourOutput}{10 & 0.104 & 0.001 & 0.0 & 0.0}% results/spiking_activity.json cells, nmnist 2 blocks T=4 output: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoSixConvOne}{36{,}992 & 0.029 & 0.008 & 15.2 & 3.1}% results/spiking_activity.json cells, nmnist 2 blocks T=6 conv1: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoSixConvTwo}{18{,}496 & 0.019 & 0.002 & 1.2 & 0.6}% results/spiking_activity.json cells, nmnist 2 blocks T=6 conv2: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoSixHidden}{256 & 0.117 & 0.005 & 0.0 & 0.0}% results/spiking_activity.json cells, nmnist 2 blocks T=6 hidden: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoSixOutput}{10 & 0.108 & 0.001 & 0.0 & 0.0}% results/spiking_activity.json cells, nmnist 2 blocks T=6 output: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoEightConvOne}{36{,}992 & 0.028 & 0.009 & 14.8 & 5.8}% results/spiking_activity.json cells, nmnist 2 blocks T=8 conv1: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoEightConvTwo}{18{,}496 & 0.018 & 0.002 & 2.3 & 2.6}% results/spiking_activity.json cells, nmnist 2 blocks T=8 conv2: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoEightHidden}{256 & 0.099 & 0.006 & 0.0 & 0.0}% results/spiking_activity.json cells, nmnist 2 blocks T=8 hidden: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoEightOutput}{10 & 0.114 & 0.003 & 0.0 & 0.0}% results/spiking_activity.json cells, nmnist 2 blocks T=8 output: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoTenConvOne}{36{,}992 & 0.017 & 0.005 & 13.8 & 2.7}% results/spiking_activity.json cells, nmnist 2 blocks T=10 conv1: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoTenConvTwo}{18{,}496 & 0.015 & 0.001 & 1.8 & 0.9}% results/spiking_activity.json cells, nmnist 2 blocks T=10 conv2: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoTenHidden}{256 & 0.094 & 0.001 & 0.0 & 0.0}% results/spiking_activity.json cells, nmnist 2 blocks T=10 hidden: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmTwoTenOutput}{10 & 0.116 & 0.004 & 0.0 & 0.0}% results/spiking_activity.json cells, nmnist 2 blocks T=10 output: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmFourTwoConvOne}{36{,}992 & 0.035 & 0.006 & 29.8 & 3.7}% results/spiking_activity.json cells, nmnist 4 blocks T=2 conv1: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmFourTwoConvTwo}{18{,}496 & 0.020 & 0.002 & 13.5 & 3.5}% results/spiking_activity.json cells, nmnist 4 blocks T=2 conv2: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmFourTwoConvThree}{8{,}192 & 0.038 & 0.002 & 2.8 & 1.1}% results/spiking_activity.json cells, nmnist 4 blocks T=2 conv3: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmFourTwoConvFour}{2{,}048 & 0.060 & 0.001 & 1.5 & 0.4}% results/spiking_activity.json cells, nmnist 4 blocks T=2 conv4: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmFourTwoHidden}{256 & 0.159 & 0.011 & 0.0 & 0.0}% results/spiking_activity.json cells, nmnist 4 blocks T=2 hidden: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmFourTwoOutput}{10 & 0.102 & 0.000 & 0.0 & 0.0}% results/spiking_activity.json cells, nmnist 4 blocks T=2 output: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmFourSixConvOne}{36{,}992 & 0.020 & 0.006 & 19.0 & 4.5}% results/spiking_activity.json cells, nmnist 4 blocks T=6 conv1: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmFourSixConvTwo}{18{,}496 & 0.018 & 0.003 & 5.0 & 6.8}% results/spiking_activity.json cells, nmnist 4 blocks T=6 conv2: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmFourSixConvThree}{8{,}192 & 0.038 & 0.002 & 0.7 & 1.1}% results/spiking_activity.json cells, nmnist 4 blocks T=6 conv3: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmFourSixConvFour}{2{,}048 & 0.066 & 0.005 & 0.3 & 0.3}% results/spiking_activity.json cells, nmnist 4 blocks T=6 conv4: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmFourSixHidden}{256 & 0.162 & 0.031 & 0.0 & 0.0}% results/spiking_activity.json cells, nmnist 4 blocks T=6 hidden: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNmFourSixOutput}{10 & 0.108 & 0.001 & 0.0 & 0.0}% results/spiking_activity.json cells, nmnist 4 blocks T=6 output: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourTwoConvOne}{86{,}400 & 0.025 & 0.004 & 8.4 & 2.9}% results/spiking_activity.json cells, ncaltech101 4 blocks T=2 conv1: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourTwoConvTwo}{42{,}240 & 0.027 & 0.007 & 2.2 & 1.1}% results/spiking_activity.json cells, ncaltech101 4 blocks T=2 conv2: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourTwoConvThree}{21{,}120 & 0.041 & 0.003 & 0.9 & 0.3}% results/spiking_activity.json cells, ncaltech101 4 blocks T=2 conv3: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourTwoConvFour}{4{,}480 & 0.062 & 0.003 & 0.1 & 0.1}% results/spiking_activity.json cells, ncaltech101 4 blocks T=2 conv4: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourTwoHidden}{256 & 0.131 & 0.017 & 0.0 & 0.0}% results/spiking_activity.json cells, ncaltech101 4 blocks T=2 hidden: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourTwoOutput}{101 & 0.057 & 0.009 & 0.0 & 0.0}% results/spiking_activity.json cells, ncaltech101 4 blocks T=2 output: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourSixConvOne}{86{,}400 & 0.021 & 0.005 & 3.0 & 0.7}% results/spiking_activity.json cells, ncaltech101 4 blocks T=6 conv1: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourSixConvTwo}{42{,}240 & 0.046 & 0.014 & 0.1 & 0.1}% results/spiking_activity.json cells, ncaltech101 4 blocks T=6 conv2: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourSixConvThree}{21{,}120 & 0.050 & 0.006 & 0.0 & 0.0}% results/spiking_activity.json cells, ncaltech101 4 blocks T=6 conv3: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourSixConvFour}{4{,}480 & 0.068 & 0.003 & 0.0 & 0.0}% results/spiking_activity.json cells, ncaltech101 4 blocks T=6 conv4: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourSixHidden}{256 & 0.144 & 0.025 & 0.0 & 0.0}% results/spiking_activity.json cells, ncaltech101 4 blocks T=6 hidden: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourSixOutput}{101 & 0.048 & 0.007 & 0.0 & 0.0}% results/spiking_activity.json cells, ncaltech101 4 blocks T=6 output: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourTenConvOne}{86{,}400 & 0.019 & 0.003 & 2.3 & 0.4}% results/spiking_activity.json cells, ncaltech101 4 blocks T=10 conv1: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourTenConvTwo}{42{,}240 & 0.031 & 0.004 & 0.2 & 0.1}% results/spiking_activity.json cells, ncaltech101 4 blocks T=10 conv2: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourTenConvThree}{21{,}120 & 0.043 & 0.004 & 0.0 & 0.0}% results/spiking_activity.json cells, ncaltech101 4 blocks T=10 conv3: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourTenConvFour}{4{,}480 & 0.057 & 0.001 & 0.0 & 0.0}% results/spiking_activity.json cells, ncaltech101 4 blocks T=10 conv4: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourTenHidden}{256 & 0.105 & 0.009 & 0.0 & 0.0}% results/spiking_activity.json cells, ncaltech101 4 blocks T=10 hidden: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcFourTenOutput}{101 & 0.048 & 0.002 & 0.0 & 0.0}% results/spiking_activity.json cells, ncaltech101 4 blocks T=10 output: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcTwoTwoConvOne}{86{,}400 & 0.027 & 0.001 & 8.9 & 1.0}% results/spiking_activity.json cells, ncaltech101 2 blocks T=2 conv1: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcTwoTwoConvTwo}{42{,}240 & 0.023 & 0.003 & 1.0 & 0.7}% results/spiking_activity.json cells, ncaltech101 2 blocks T=2 conv2: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcTwoTwoHidden}{256 & 0.100 & 0.015 & 0.0 & 0.0}% results/spiking_activity.json cells, ncaltech101 2 blocks T=2 hidden: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcTwoTwoOutput}{101 & 0.039 & 0.007 & 0.0 & 0.0}% results/spiking_activity.json cells, ncaltech101 2 blocks T=2 output: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcTwoSixConvOne}{86{,}400 & 0.025 & 0.002 & 3.4 & 0.3}% results/spiking_activity.json cells, ncaltech101 2 blocks T=6 conv1: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcTwoSixConvTwo}{42{,}240 & 0.033 & 0.002 & 0.1 & 0.1}% results/spiking_activity.json cells, ncaltech101 2 blocks T=6 conv2: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcTwoSixHidden}{256 & 0.099 & 0.004 & 0.0 & 0.0}% results/spiking_activity.json cells, ncaltech101 2 blocks T=6 hidden: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actNcTwoSixOutput}{101 & 0.040 & 0.001 & 0.0 & 0.0}% results/spiking_activity.json cells, ncaltech101 2 blocks T=6 output: neurons; rate mean, sd; silent share mean, sd (per cent)
+\newcommand{\actRows}{58}% results/spiking_activity.json cells x layers
+\newcommand{\rateConvMin}{0.015}% results/spiking_activity.json cells: smallest convolutional-layer rate, seed mean
+\newcommand{\rateConvMax}{0.068}% results/spiking_activity.json cells: largest convolutional-layer rate, seed mean
+\newcommand{\rateHiddenMin}{0.077}% results/spiking_activity.json cells: smallest hidden-layer rate
+\newcommand{\rateHiddenMax}{0.162}% results/spiking_activity.json cells: largest hidden-layer rate
+\newcommand{\silentFirstMin}{2}% results/spiking_activity.json cells: smallest share of first-layer neurons never firing, per cent
+\newcommand{\silentFirstMax}{33}% results/spiking_activity.json cells: largest share of first-layer neurons never firing, per cent
+\newcommand{\silentHiddenMax}{0.0}% results/spiking_activity.json cells: largest share of hidden neurons never firing, any seed, per cent
+\newcommand{\rasterNeurons}{32}% NOTES.md A5; results/spiking_activity.json rasters
+\newcommand{\swNmTwoTwo}{0.9850 & $-$0.5386 & 0.5386 & 0.0018 & 0.9868 & $+$0.0097 & 0.0099 & 0.0034 & 0.9865 & $-$0.0101 & 0.0114 & 0.0028 & 0.9861}% results/same_weights_readouts.json rows, nmnist 2 blocks T=2, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
+\newcommand{\swNmTwoFour}{0.9887 & $-$0.1446 & 0.1447 & 0.0031 & 0.9896 & $+$0.0079 & 0.0083 & 0.0026 & 0.9866 & $-$0.0250 & 0.0251 & 0.0032 & --}% results/same_weights_readouts.json rows, nmnist 2 blocks T=4, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
+\newcommand{\swNmTwoSix}{0.9902 & $-$0.0272 & 0.0273 & 0.0026 & 0.9910 & $+$0.0069 & 0.0072 & 0.0029 & 0.9850 & $-$0.0763 & 0.0763 & 0.0029 & 0.9888}% results/same_weights_readouts.json rows, nmnist 2 blocks T=6, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
+\newcommand{\swNmTwoEight}{0.9898 & $-$0.0065 & 0.0072 & 0.0028 & 0.9915 & $+$0.0063 & 0.0066 & 0.0026 & 0.9793 & $-$0.1917 & 0.1918 & 0.0040 & --}% results/same_weights_readouts.json rows, nmnist 2 blocks T=8, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
+\newcommand{\swNmTwoTen}{0.9908 & $-$0.0008 & 0.0029 & 0.0026 & 0.9917 & $+$0.0062 & 0.0065 & 0.0021 & 0.9765 & $-$0.2587 & 0.2587 & 0.0034 & 0.9879}% results/same_weights_readouts.json rows, nmnist 2 blocks T=10, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
+\newcommand{\swNmFourTwo}{0.9869 & $-$0.5398 & 0.5398 & 0.0019 & 0.9878 & $+$0.0099 & 0.0102 & 0.0031 & 0.9869 & $-$0.0055 & 0.0127 & 0.0036 & 0.9859}% results/same_weights_readouts.json rows, nmnist 4 blocks T=2, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
+\newcommand{\swNmFourSix}{0.9887 & $-$0.0253 & 0.0256 & 0.0036 & 0.9893 & $+$0.0088 & 0.0089 & 0.0022 & 0.9813 & $-$0.0856 & 0.0856 & 0.0026 & 0.9872}% results/same_weights_readouts.json rows, nmnist 4 blocks T=6, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
+\newcommand{\swNcFourTwo}{0.4543 & $-$0.3969 & 0.3969 & 0.1449 & 0.5744 & $+$0.1826 & 0.1827 & 0.0405 & 0.5666 & $-$0.2435 & 0.2435 & 0.0384 & 0.5825}% results/same_weights_readouts.json rows, ncaltech101 4 blocks T=2, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
+\newcommand{\swNcFourSix}{0.6427 & $-$0.1534 & 0.1539 & 0.0579 & 0.6739 & $+$0.2396 & 0.2396 & 0.0312 & 0.6343 & $-$0.2685 & 0.2685 & 0.0341 & 0.5976}% results/same_weights_readouts.json rows, ncaltech101 4 blocks T=6, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
+\newcommand{\swNcFourTen}{0.6435 & $+$0.0344 & 0.0442 & 0.0324 & 0.6605 & $+$0.2520 & 0.2520 & 0.0314 & 0.5894 & $-$0.4301 & 0.4301 & 0.0681 & 0.6072}% results/same_weights_readouts.json rows, ncaltech101 4 blocks T=10, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
+\newcommand{\swNcTwoTwo}{0.4891 & $-$0.4343 & 0.4343 & 0.1606 & 0.5343 & $+$0.1354 & 0.1357 & 0.0399 & 0.5262 & $-$0.3016 & 0.3016 & 0.0561 & 0.5199}% results/same_weights_readouts.json rows, ncaltech101 2 blocks T=2, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
+\newcommand{\swNcTwoSix}{0.5618 & $-$0.1159 & 0.1190 & 0.0574 & 0.5830 & $+$0.2785 & 0.2794 & 0.0381 & 0.5467 & $-$0.3385 & 0.3385 & 0.0609 & 0.5394}% results/same_weights_readouts.json rows, ncaltech101 2 blocks T=6, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
+\newcommand{\swRows}{12}% results/same_weights_readouts.json cells
+\newcommand{\swNcTwoCountAcc}{0.4543}% results/same_weights_readouts.json N-Caltech101 T=2 count accuracy
+\newcommand{\swNcTwoAccumAcc}{0.5744}% results/same_weights_readouts.json N-Caltech101 T=2 accumulator on count weights, accuracy
+\newcommand{\swNcTwoMemAcc}{0.5666}% results/same_weights_readouts.json N-Caltech101 T=2 membrane on count weights, accuracy
+\newcommand{\swNcTwoTrainedAcc}{0.5825}% results/caltech_experiment.json accumulator T=2, test_accuracy, seed mean
+\newcommand{\swNcTwoShare}{94}% [DERIVED] arithmetic in paper/make_numbers.py: (same-weights accumulator - count) / (trained accumulator - count), N-Caltech101 T=2, per cent
+\newcommand{\swNcSixCountAcc}{0.6427}% results/same_weights_readouts.json N-Caltech101 T=6 count accuracy
+\newcommand{\swNcSixAccumAcc}{0.6739}% results/same_weights_readouts.json N-Caltech101 T=6 accumulator on count weights
+\newcommand{\swNcSixTrainedAcc}{0.5976}% results/caltech_experiment.json accumulator T=6, test_accuracy, seed mean
+\newcommand{\swNcTwoAccumGap}{$+$0.1826}% results/same_weights_readouts.json N-Caltech101 T=2 accumulator on count weights, conf-acc
+\newcommand{\swNcSixAccumGap}{$+$0.2396}% results/same_weights_readouts.json N-Caltech101 T=6 accumulator on count weights, conf-acc
+\newcommand{\swNcTwoMemGap}{$-$0.2435}% results/same_weights_readouts.json N-Caltech101 T=2 membrane on count weights, conf-acc
+\newcommand{\swNmMaxDiff}{0.18}% results/same_weights_readouts.json N-MNIST cells: largest |same-weights accumulator - count| accuracy, points
+\newcommand{\swNcAccumOverAll}{5}% results/same_weights_readouts.json N-Caltech101 cells, all with the same-weights accumulator overconfident (asserted)
+\newcommand{\bestNmTwoCount}{12.7}% results/nmnist_T2_seed*_record.json best_epoch + 1, mean over seeds
+\newcommand{\bestNmTwoWeightedCount}{11.0}% results/nmnist_T2_seed*_weighted-count_record.json best_epoch + 1, mean over seeds
+\newcommand{\bestNmTwoMembrane}{7.7}% results/nmnist_T2_seed*_membrane_record.json best_epoch + 1, mean over seeds
+\newcommand{\bestNmTwoAccumulator}{9.0}% results/nmnist_T2_seed*_accumulator_record.json best_epoch + 1, mean over seeds
+\newcommand{\bestNmTwoScaledCount}{14.3}% results/nmnist_T2_seed*_scaled-count_record.json best_epoch + 1, mean over seeds
+\newcommand{\bestNcTwoCount}{15.3}% results/ncaltech101_T2_seed*_record.json best_epoch + 1, mean over seeds
+\newcommand{\bestNcTwoAccumulator}{15.0}% results/ncaltech101_T2_seed*_accumulator_record.json best_epoch + 1, mean over seeds
+\newcommand{\bestNcTwoScaledCount}{19.3}% results/ncaltech101_T2_seed*_scaled-count_record.json best_epoch + 1, mean over seeds

@@ -734,6 +734,282 @@ put("predictionsEverything", str(len(early) + len(held)), "NOTES.md, every predi
 put("predictionsEverythingHeld", str(eh + sum(held)), "verdict blocks and " + SRC_EP)
 put("predictionsEverythingFalsified", str(len(early) - eh + len(held) - sum(held)), "verdict blocks and " + SRC_EP)
 
+
+# ================================================================== post-review analyses
+# Added after review, not pre-registered. Thresholds fixed in NOTES.md, "Post-review
+# analyses, thresholds fixed 2026-11-12 before computation", before any of these was computed.
+WORD = {0: "Zero", 1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six", 8: "Eight", 10: "Ten"}
+
+
+def pct(x: float, d: int = 2) -> str:
+    return f"{100 * x:.{d}f}"
+
+
+# ------------------------------------------------------------------ A1, A2: the floor on ECE
+fl = load("ece_floor.json")
+SRC_FL = "results/ece_floor.json"
+FL_CELLS = {"NmTwo": ("nmnist", "32-64", 2), "NmFour": ("nmnist", "32-64", 4), "NmSix": ("nmnist", "32-64", 6),
+            "NmDeepTwo": ("nmnist", "32-64-128-128", 2), "NmDeepSix": ("nmnist", "32-64-128-128", 6),
+            "NcTwo": ("ncaltech101", "32-64-128-128", 2), "NcShallowTwo": ("ncaltech101", "32-64", 2)}
+EST = {"W": "equal_width", "M": "equal_mass", "D": "distinct"}
+
+
+def fl_cell(ds, ch, T):
+    c = [c for c in fl["cells"] if c["dataset"] == ds and c["channels"] == ch and c["timesteps"] == T]
+    assert len(c) == 1 and c[0]["binds_in"] == 3, (ds, ch, T)
+    return c[0]
+
+
+for key, (ds, ch, T) in FL_CELLS.items():
+    c = fl_cell(ds, ch, T)
+    src = SRC_FL + f" cells, {ds} {ch} T={T}"
+    put("floor" + key, f(c["floor"]["mean"]), src + " floor a - p*, seed mean")
+    for e, est in EST.items():
+        fr = c["schemes"][est]["floor_ratio"]
+        lo, hi = c["schemes"][est]["floor_ratio_ci95"]
+        assert fr["max"] <= 1.0 + 1e-12  # the floor never exceeds the ECE
+        put(f"fr{key}{e}", pct(fr["mean"]), src + f" floor_ratio {est}, mean over seeds, per cent")
+        put(f"fr{key}{e}Sd", pct(fr["sd"]), src + f" floor_ratio {est}, standard deviation over seeds, percentage points")
+        put(f"fr{key}{e}Min", pct(fr["min"]), src + f" floor_ratio {est}, smallest seed")
+        put(f"fr{key}{e}Max", pct(fr["max"]), src + f" floor_ratio {est}, largest seed")
+        put(f"fr{key}{e}Lo", pct(lo), src + f" floor_ratio_ci95 {est}, lower")
+        put(f"fr{key}{e}Hi", pct(hi), src + f" floor_ratio_ci95 {est}, upper")
+        put(f"ece{key}{e}", f(c["schemes"][est]["ece"]["mean"]), src + f" ece {est}, seed mean")
+        put(f"ece{key}{e}Sd", f(c["schemes"][est]["ece"]["sd"]), src + f" ece {est}, sd over seeds")
+# overconfident bins where the cap binds hardest
+nm2, nc2 = fl_cell("nmnist", "32-64", 2), fl_cell("ncaltech101", "32-64-128-128", 2)
+for est in ("equal_width", "equal_mass"):
+    assert max(nc2["schemes"][est]["n_overconfident_bins"]) == 0
+put("overNmTwoMaxBins", str(max(nm2["schemes"]["equal_width"]["n_overconfident_bins"]
+                                + nm2["schemes"]["equal_mass"]["n_overconfident_bins"])),
+    SRC_FL + " N-MNIST T=2: most overconfident bins in any seed, either binned estimator")
+put("overNmTwoShare", pct(max(nm2["schemes"]["equal_width"]["share_in_overconfident_bins"]["max"],
+                              nm2["schemes"]["equal_mass"]["share_in_overconfident_bins"]["max"])),
+    SRC_FL + " N-MNIST T=2: largest share of test samples in overconfident bins, per cent")
+dn = nc2["schemes"]["distinct"]
+put("overNcTwoDistinctMin", str(min(dn["n_overconfident_bins"])), SRC_FL + " N-Caltech101 T=2, distinct values: fewest overconfident groups in a seed")
+put("overNcTwoDistinctMax", str(max(dn["n_overconfident_bins"])), SRC_FL + " N-Caltech101 T=2, distinct values: most overconfident groups in a seed")
+put("overNcTwoDistinctShare", pct(dn["share_in_overconfident_bins"]["max"], 1), SRC_FL + " N-Caltech101 T=2, distinct values: largest share in overconfident groups, per cent")
+put("overNcTwoDistinctGap", f(dn["largest_overconfident_gap"]), SRC_FL + " N-Caltech101 T=2, distinct values: largest overconfident gap")
+put("groupsNcTwoMin", str(min(dn["occupied_bins"]["values"])), SRC_FL + " N-Caltech101 T=2: fewest distinct values in a seed")
+put("groupsNcTwoMax", str(max(dn["occupied_bins"]["values"])), SRC_FL + " N-Caltech101 T=2: most distinct values in a seed")
+# A2: equal-mass occupancy
+assert nm2["schemes"]["equal_mass"]["occupied_bins"]["values"] == [1, 1, 1]
+put("emBinsNmTwo", "1", SRC_FL + " N-MNIST T=2: effective equal-mass bins, every seed (asserted)")
+put("emOccNmTwo", thousands(nm2["schemes"]["equal_mass"]["max_occupancy"]), SRC_FL + " N-MNIST T=2: the one bin's occupancy")
+nm4 = fl_cell("nmnist", "32-64", 4)
+assert set(nm4["schemes"]["equal_mass"]["occupied_bins"]["values"]) == {2}
+put("emBinsNmFour", "2", SRC_FL + " N-MNIST T=4: effective equal-mass bins, every seed (asserted)")
+put("emOccMinNmFour", thousands(nm4["schemes"]["equal_mass"]["min_occupancy"]), SRC_FL + " N-MNIST T=4: smallest equal-mass bin")
+put("emOccMaxNmFour", thousands(nm4["schemes"]["equal_mass"]["max_occupancy"]), SRC_FL + " N-MNIST T=4: largest equal-mass bin")
+put("emBinsMinNcTwo", str(int(min(nc2["schemes"]["equal_mass"]["occupied_bins"]["values"]))), SRC_FL + " N-Caltech101 T=2: fewest effective equal-mass bins")
+put("emBinsMaxNcTwo", str(int(max(nc2["schemes"]["equal_mass"]["occupied_bins"]["values"]))), SRC_FL + " N-Caltech101 T=2: most effective equal-mass bins")
+put("emOccMinNcTwo", str(nc2["schemes"]["equal_mass"]["min_occupancy"]), SRC_FL + " N-Caltech101 T=2: smallest equal-mass bin")
+put("emOccMaxNcTwo", str(nc2["schemes"]["equal_mass"]["max_occupancy"]), SRC_FL + " N-Caltech101 T=2: largest equal-mass bin")
+put("emTarget", "15", "results/ece_floor.json n_bins")
+put("ewBinsNcTwo", str(int(max(nc2["schemes"]["equal_width"]["occupied_bins"]["values"]))), SRC_FL + " N-Caltech101 T=2: occupied equal-width bins")
+all_em = [r["schemes"]["equal_mass"]["occupied_bins"] for r in fl["runs"]]
+put("emBinsMin", str(min(all_em)), SRC_FL + " runs: fewest effective equal-mass bins over the 36 count test sets")
+put("countTestSets", str(len(fl["runs"])), SRC_FL + " runs")
+put("bindsRuns", str(sum(r["binds"] for r in fl["runs"])), SRC_FL + " runs where accuracy exceeds the cap")
+
+# ------------------------------------------------------------------ A3: equivalence tests
+cm_ = load("calibration_metrics.json")
+SRC_CM = "results/calibration_metrics.json"
+DELTA = {"Strict": 0.005, "Mid": 0.01, "Wide": 0.02}
+assert cm_["deltas"] == list(DELTA.values())
+for name, d in DELTA.items():
+    put("delta" + name, f"{d:g}", "NOTES.md, Post-review analyses, A3; " + SRC_CM + " deltas")
+GROUPS = {"Nm": "nmnist count", "NcCount": "ncaltech101 count", "NcAccum": "ncaltech101 accumulator",
+          "NcScaled": "ncaltech101 scaled-count"}
+for g, label in GROUPS.items():
+    srow = next(x for x in cm_["tost_summary"] if x["group"] == label)
+    put(f"tost{g}Runs", str(srow["runs"]), SRC_CM + f" tost_summary, {label}, runs")
+    put(f"tost{g}Differ", str(srow["differ_registered_rule"]), SRC_CM + f" tost_summary, {label}, differ under the registered rule")
+    for name, d in DELTA.items():
+        for e, est in (("W", "equal_width"), ("M", "equal_mass"), ("Both", "both")):
+            put(f"tost{g}{e}{name}", str(srow[f"equivalent_{est}_{d}"]),
+                SRC_CM + f" tost_summary, {label}, equivalent at {d} under {est}")
+tn = [t for t in cm_["tost"] if t["dataset"] == "nmnist"]
+put("tostNmWidest", f(max(max(abs(t["ci90"][0]), abs(t["ci90"][1])) for t in tn)),
+    SRC_CM + " tost, N-MNIST: largest |endpoint| of any 90% interval")
+put("tostTests", str(len(cm_["tost"]) * len(DELTA)), SRC_CM + " tost entries x margins")
+put("tostRunsAll", str(len({t["name"] for t in cm_["tost"]})), SRC_CM + " tost runs")
+# the published paired verdicts are reproduced (asserted in scripts/calibration_metrics.py)
+srow = next(x for x in cm_["tost_summary"] if x["group"] == "ncaltech101 count")
+assert srow["differ_registered_rule"] == 5
+
+# ------------------------------------------------------------------ A4: headline intervals and scores
+hd = cm_["headline"]
+ARMK = {"uncalibrated": "Unc", "temperature": "Temp", "isotonic-top-label": "Iso"}
+DSK = {"nmnist": "Nm", "ncaltech101": "Nc"}
+for e in hd["ece"]:
+    if e["timesteps"] not in (2, 6, 10):
+        continue
+    k = f"hd{DSK[e['dataset']]}{WORD[e['timesteps']]}{ARMK[e['arm']]}{'W' if e['estimator'] == 'equal_width' else 'M'}"
+    src = SRC_CM + f" headline.ece, {e['dataset']} T={e['timesteps']} {e['arm']} {e['estimator']}"
+    put(k, f(e["mean"]), src + ", seed mean")
+    put(k + "Sd", f(e["sd"]), src + ", sd over seeds")
+    put(k + "Lo", f(e["ci95_seed_mean"][0]), src + ", 95% bootstrap interval of the seed mean")
+    put(k + "Hi", f(e["ci95_seed_mean"][1]), src + ", 95% bootstrap interval of the seed mean")
+au = hd["auroc"]
+for k, name in (("Count", "count"), ("Accum", "accumulator"), ("Diff", "count_minus_accumulator")):
+    a = au[name]
+    sgn = name == "count_minus_accumulator"
+    put(f"hdAuroc{k}", f(a["mean"], sign=sgn), SRC_CM + f" headline.auroc.{name}, seed mean")
+    put(f"hdAuroc{k}Sd", f(a["sd"]), SRC_CM + f" headline.auroc.{name}, sd over seeds")
+    put(f"hdAuroc{k}Lo", f(a["ci95_seed_mean"][0], sign=sgn), SRC_CM + f" headline.auroc.{name}, 95% interval")
+    put(f"hdAuroc{k}Hi", f(a["ci95_seed_mean"][1], sign=sgn), SRC_CM + f" headline.auroc.{name}, 95% interval")
+assert abs(au["count"]["mean"] - float(dict((m[0], m[1]) for m in macros)["aurocCountNmTwo"])) < 5e-5
+put("clipTop", thousands(cm_["clipped"]["top_label"]), SRC_CM + " clipped.top_label")
+put("clipTopTotal", thousands(cm_["clipped"]["scores_computed_top_label"]), SRC_CM + " clipped.scores_computed_top_label")
+put("clipMulti", str(cm_["clipped"]["multiclass"]), SRC_CM + " clipped.multiclass")
+put("refitRuns", str(len({r["name"] for r in cm_["rows"]})), SRC_CM + " rows, runs refitted")
+
+# run-level table rows (appendix): one macro per row, generated, never typed
+RDK = {"count": "Count", "accumulator": "Accum", "scaled-count": "Scaled"}
+CFG_ORDER = []
+for r in cm_["rows"]:
+    cfg = (r["dataset"], r["n_blocks"], r["readout"], r["timesteps"])
+    if cfg not in CFG_ORDER:
+        CFG_ORDER.append(cfg)
+CFG_ORDER.sort(key=lambda c: (c[0] != "nmnist", c[2] != "count", c[2] != "accumulator", c[1], c[3]))
+by = {(r["dataset"], r["n_blocks"], r["readout"], r["timesteps"], r["seed"], r["arm"]): r for r in cm_["rows"]}
+rl_names = []
+for (ds, b, ro, T) in CFG_ORDER:
+    for seed in (0, 1, 2):
+        u, t_, i_ = (by[(ds, b, ro, T, seed, a)] for a in ("uncalibrated", "temperature", "isotonic-top-label"))
+        key = f"rl{DSK[ds]}{RDK[ro]}{WORD[b]}{WORD[T]}{WORD[seed]}"
+        src = SRC_CM + f" rows, {ds} {b} blocks {ro} T={T} seed {seed}"
+        cells_a = [f(u["accuracy"])] + [f(x[k_]) for x in (u, t_, i_) for k_ in ("ece_equal_width", "ece_equal_mass")]
+        put(key + "A", " & ".join(cells_a), src + ": accuracy; ECE w, m for uncalibrated, temperature, isotonic")
+        cells_b = ([f(x["brier_top_label"]) for x in (u, t_, i_)] + [f(x["log_loss_top_label"]) for x in (u, t_, i_)]
+                   + [f(u["auroc"])] + [f(u["nll_multiclass"]), f(t_["nll_multiclass"]),
+                                        f(u["brier_multiclass"]), f(t_["brier_multiclass"])])
+        put(key + "B", " & ".join(cells_b), src + ": top-label Brier and log loss per arm; AUROC; multiclass NLL and Brier")
+        rl_names.append((ds, b, ro, T, seed, key))
+put("rlRows", str(len(rl_names)), SRC_CM + " rows / 3 arms")
+
+
+# ------------------------------------------------------------------ A5: spiking activity
+act = load("spiking_activity.json")
+SRC_ACT = "results/spiking_activity.json"
+assert act["device"] == "mps"
+for p_ in act["output_patterns_T2"]:
+    k = DSK[p_["dataset"]] + ("Deep" if (p_["dataset"] == "nmnist" and p_["n_blocks"] == 4) else
+                              "Shallow" if (p_["dataset"] == "ncaltech101" and p_["n_blocks"] == 2) else "")
+    src = SRC_ACT + f" output_patterns_T2, {p_['dataset']} {p_['n_blocks']} blocks"
+    put(f"sat{k}Two", pct(p_["saturated"]["mean"], 1), src + " saturated (top class fires at both steps, every other class silent), per cent, seed mean")
+    put(f"sat{k}TwoSd", pct(p_["saturated"]["sd"], 1), src + " saturated, sd over seeds, percentage points")
+    put(f"tie{k}Two", pct(p_["tie_at_top"]["mean"], 1), src + " tie for the top count, per cent, seed mean")
+    put(f"tie{k}TwoSd", pct(p_["tie_at_top"]["sd"], 1), src + " tie for the top count, sd over seeds")
+    put(f"topEvery{k}Two", pct(p_["top_fires_every_step"]["mean"], 1), src + " top count equals T, per cent, seed mean")
+n_silent_out = [round(r["all_silent"] * (10000 if r["dataset"] == "nmnist" else 1742))
+                for r in act["output_patterns_T2_runs"]]
+put("silentOutMax", str(max(n_silent_out)), SRC_ACT + " output_patterns_T2_runs: most test samples with every output silent at T=2, any run")
+put("silentOutRuns", str(sum(n > 0 for n in n_silent_out)), SRC_ACT + " output_patterns_T2_runs: runs with any such sample")
+LAYER_ORDER = ["conv1", "conv2", "conv3", "conv4", "hidden", "output"]
+act_rows = 0
+for c in act["cells"]:
+    for lname in LAYER_ORDER:
+        if lname not in c["layers"]:
+            continue
+        L = c["layers"][lname]
+        key = f"act{DSK[c['dataset']]}{WORD[c['n_blocks']]}{WORD[c['timesteps']]}{lname.capitalize().replace('1','One').replace('2','Two').replace('3','Three').replace('4','Four')}"
+        put(key, f"{thousands(L['n_neurons'])} & {f(L['rate']['mean'], 3)} & {f(L['rate']['sd'], 3)} & "
+                 f"{pct(L['silent_share']['mean'], 1)} & {pct(L['silent_share']['sd'], 1)}",
+            SRC_ACT + f" cells, {c['dataset']} {c['n_blocks']} blocks T={c['timesteps']} {lname}: neurons; rate mean, sd; silent share mean, sd (per cent)")
+        act_rows += 1
+put("actRows", str(act_rows), SRC_ACT + " cells x layers")
+hid_rates = [c["layers"]["hidden"]["rate"]["mean"] for c in act["cells"]]
+conv_rates = [c["layers"][n]["rate"]["mean"] for c in act["cells"] for n in ("conv1", "conv2", "conv3", "conv4") if n in c["layers"]]
+put("rateConvMin", f(min(conv_rates), 3), SRC_ACT + " cells: smallest convolutional-layer rate, seed mean")
+put("rateConvMax", f(max(conv_rates), 3), SRC_ACT + " cells: largest convolutional-layer rate, seed mean")
+put("rateHiddenMin", f(min(hid_rates), 3), SRC_ACT + " cells: smallest hidden-layer rate")
+put("rateHiddenMax", f(max(hid_rates), 3), SRC_ACT + " cells: largest hidden-layer rate")
+silent_first = [c["layers"]["conv1"]["silent_share"]["mean"] for c in act["cells"]]
+put("silentFirstMin", pct(min(silent_first), 0), SRC_ACT + " cells: smallest share of first-layer neurons never firing, per cent")
+put("silentFirstMax", pct(max(silent_first), 0), SRC_ACT + " cells: largest share of first-layer neurons never firing, per cent")
+put("silentHiddenMax", pct(max(c["layers"]["hidden"]["silent_share"]["max"] for c in act["cells"]), 1),
+    SRC_ACT + " cells: largest share of hidden neurons never firing, any seed, per cent")
+put("rasterNeurons", "32", "NOTES.md A5; " + SRC_ACT + " rasters")
+
+# ------------------------------------------------------------------ A6: the same weights, read differently
+sw = load("same_weights_readouts.json")["rows"]
+SRC_SW = "results/same_weights_readouts.json"
+TRAINED_ACC = {}
+for r in load("readout_experiment.json")["rows"]:
+    if r["readout"] == "accumulator":
+        TRAINED_ACC.setdefault(("nmnist", 2, r["timesteps"]), []).append(r["test_accuracy"])
+for r in load("caltech_experiment.json")["rows"]:
+    if r["readout"] == "accumulator":
+        TRAINED_ACC.setdefault(("ncaltech101", 4, r["timesteps"]), []).append(r["test_accuracy"])
+for r in load("arch_matched.json")["rows"]:
+    if r["readout"] == "accumulator":
+        k_ = (r["dataset"], r["n_blocks"], r["timesteps"])
+        if k_ not in (("nmnist", 2, 2), ("nmnist", 2, 6), ("ncaltech101", 4, 2), ("ncaltech101", 4, 6)):
+            TRAINED_ACC.setdefault(k_, []).append(r["test_accuracy"])
+SW_ORDER = sorted({(r["dataset"], r["n_blocks"], r["timesteps"]) for r in sw},
+                  key=lambda c: (c[0] != "nmnist", c[1] != (2 if c[0] == "nmnist" else 4), c[2]))
+sw_cell = {}
+for c in SW_ORDER:
+    rs = [r for r in sw if (r["dataset"], r["n_blocks"], r["timesteps"]) == c]
+    assert len(rs) == 3
+    m_ = lambda path: st.mean(eval("r" + path, {"r": r}) for r in rs)  # noqa: E731
+    vals = {}
+    for ro in ("count", "accumulator_same_weights", "membrane_same_weights"):
+        vals[ro] = {"acc": st.mean(r[ro]["uncalibrated"]["accuracy"] for r in rs),
+                    "gap": st.mean(r[ro]["uncalibrated"]["mean_conf_minus_acc"] for r in rs),
+                    "eceW": st.mean(r[ro]["uncalibrated"]["ece_equal_width"] for r in rs),
+                    "eceM": st.mean(r[ro]["uncalibrated"]["ece_equal_mass"] for r in rs),
+                    "tW": st.mean(r[ro]["temperature"]["ece_equal_width"] for r in rs),
+                    "tM": st.mean(r[ro]["temperature"]["ece_equal_mass"] for r in rs)}
+    sw_cell[c] = vals
+    trained = TRAINED_ACC.get(c)
+    tr = f(st.mean(trained)) if trained and len(trained) == 3 else "--"
+    key = f"sw{DSK[c[0]]}{WORD[c[1]]}{WORD[c[2]]}"
+    cells_ = []
+    for ro in ("count", "accumulator_same_weights", "membrane_same_weights"):
+        v = vals[ro]
+        cells_ += [f(v["acc"]), f(v["gap"], sign=True), f(v["eceW"]), f(v["tW"])]
+    put(key, " & ".join(cells_ + [tr]), SRC_SW + f" rows, {c[0]} {c[1]} blocks T={c[2]}, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment")
+put("swRows", str(len(SW_ORDER)), SRC_SW + " cells")
+nc2s = sw_cell[("ncaltech101", 4, 2)]
+nc6s = sw_cell[("ncaltech101", 4, 6)]
+tr2 = st.mean(TRAINED_ACC[("ncaltech101", 4, 2)])
+tr6 = st.mean(TRAINED_ACC[("ncaltech101", 4, 6)])
+put("swNcTwoCountAcc", f(nc2s["count"]["acc"]), SRC_SW + " N-Caltech101 T=2 count accuracy")
+put("swNcTwoAccumAcc", f(nc2s["accumulator_same_weights"]["acc"]), SRC_SW + " N-Caltech101 T=2 accumulator on count weights, accuracy")
+put("swNcTwoMemAcc", f(nc2s["membrane_same_weights"]["acc"]), SRC_SW + " N-Caltech101 T=2 membrane on count weights, accuracy")
+put("swNcTwoTrainedAcc", f(tr2), "results/caltech_experiment.json accumulator T=2, test_accuracy, seed mean")
+put("swNcTwoShare", f"{100 * (nc2s['accumulator_same_weights']['acc'] - nc2s['count']['acc']) / (tr2 - nc2s['count']['acc']):.0f}",
+    DERIVED + ": (same-weights accumulator - count) / (trained accumulator - count), N-Caltech101 T=2, per cent")
+put("swNcSixCountAcc", f(nc6s["count"]["acc"]), SRC_SW + " N-Caltech101 T=6 count accuracy")
+put("swNcSixAccumAcc", f(nc6s["accumulator_same_weights"]["acc"]), SRC_SW + " N-Caltech101 T=6 accumulator on count weights")
+put("swNcSixTrainedAcc", f(tr6), "results/caltech_experiment.json accumulator T=6, test_accuracy, seed mean")
+put("swNcTwoAccumGap", f(nc2s["accumulator_same_weights"]["gap"], sign=True), SRC_SW + " N-Caltech101 T=2 accumulator on count weights, conf-acc")
+put("swNcSixAccumGap", f(nc6s["accumulator_same_weights"]["gap"], sign=True), SRC_SW + " N-Caltech101 T=6 accumulator on count weights, conf-acc")
+put("swNcTwoMemGap", f(nc2s["membrane_same_weights"]["gap"], sign=True), SRC_SW + " N-Caltech101 T=2 membrane on count weights, conf-acc")
+nm_diffs = [abs(v["accumulator_same_weights"]["acc"] - v["count"]["acc"]) for c, v in sw_cell.items() if c[0] == "nmnist"]
+put("swNmMaxDiff", f(100 * max(nm_diffs), 2), SRC_SW + " N-MNIST cells: largest |same-weights accumulator - count| accuracy, points")
+assert all(v["accumulator_same_weights"]["gap"] > 0 for c, v in sw_cell.items() if c[0] == "ncaltech101")
+put("swNcAccumOverAll", str(sum(1 for c, v in sw_cell.items() if c[0] == "ncaltech101")), SRC_SW + " N-Caltech101 cells, all with the same-weights accumulator overconfident (asserted)")
+
+# training length per readout, from the run records
+def best_epochs(ds, T, readout, blocks_suffix=""):
+    out = []
+    for seed in (0, 1, 2):
+        suffix = "" if readout == "count" else f"_{readout}"
+        with open(os.path.join(R, f"{ds}_T{T}_seed{seed}{suffix}{blocks_suffix}_record.json")) as fh:
+            out.append(json.load(fh)["best_epoch"] + 1)
+    return out
+for ds, T, readouts in (("nmnist", 2, ("count", "weighted-count", "membrane", "accumulator", "scaled-count")),
+                        ("ncaltech101", 2, ("count", "accumulator", "scaled-count"))):
+    for ro in readouts:
+        b = best_epochs(ds, T, ro)
+        k = f"best{DSK[ds]}Two{''.join(w.capitalize() for w in ro.split('-'))}"
+        put(k, f"{st.mean(b):.1f}", f"results/{ds}_T{T}_seed*{'' if ro == 'count' else '_' + ro}_record.json best_epoch + 1, mean over seeds")
+
 # ------------------------------------------------------------------ write
 with open(OUT, "w") as fh:
     fh.write("% Generated by paper/make_numbers.py from results/ -- do not edit by hand.\n")
