@@ -546,7 +546,8 @@ score the confidence as a probability that the prediction is right, which every 
 provides. Where the output is a full distribution, before calibration and after temperature
 scaling, the multiclass negative log-likelihood and Brier score are also given. Probabilities are
 clipped at $10^{-12}$ before a logarithm; \clipTop{} of \clipTopTotal{} top-label scores were % src: results/calibration_metrics.json clipped
-clipped, all of them confidences of exactly zero or one, and no multiclass score was. The area
+clipped, all of them isotonic-regression outputs of exactly zero or one, and no multiclass score
+was. The area
 under the ROC curve (AUROC) of confidence as a score for correctness measures ranking. Reliability
 diagrams plot accuracy against confidence: for a count readout, at each distinct confidence value
 with a marker whose area is proportional to its share of samples and a Wilson 95\% interval; for
