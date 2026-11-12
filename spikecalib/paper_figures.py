@@ -191,7 +191,7 @@ def figure_architecture(results, pdf_dir, png_dir):
                     arrowprops=dict(arrowstyle="-|>", lw=0.7, color=OKABE_ITO["black"], mutation_scale=7))
 
     y0, h = 14, 15
-    box(0.3, y0, 12.4, h, "event frames", "$T$ frames\n2 polarities\n34×34 or 45×60\nevent counts", "#F2F2F2")
+    box(0.3, y0, 12.4, h, "event frames", "$T$ frames\n2 polarities\n34×34 counts or\n45×60 block means", "#F2F2F2")
     arrow(13.0, 14.0, y0 + h / 2)
     box(14.3, y0, 16.7, h, "block × $K$", "conv 3×3, pad 1\nbatch norm\nLIF\nmax-pool 2×2", "#DCEBF5")
     ax.text(22.5, y0 - 1.0, "$K=2$: 32, 64 channels\n$K=4$: 32, 64, 128, 128", ha="center", va="top", fontsize=7)
@@ -367,7 +367,11 @@ def figure_rasters(results, pdf_dir, png_dir):
             ax.scatter(ts_ + 1, y + ns_, marker="|", s=9 if n > 40 else 16, color=col, lw=0.8)
             if name == "output":
                 lab = r["label"]
-                ax.axhspan(y + lab - 0.5, y + lab + 0.5, color=OKABE_ITO["yellow"], alpha=0.5, lw=0, zorder=0)
+                band = 0.5 if n <= 20 else 1.5   # wider band where there are many output rows
+                ax.axhspan(y + lab - band, y + lab + band, color=OKABE_ITO["yellow"], alpha=0.6, lw=0, zorder=0)
+                ax.annotate("true class", xy=(T + 0.55, y + lab), xytext=(T + 0.55, y + lab),
+                            fontsize=7, color=OKABE_ITO["black"], va="center", ha="left",
+                            annotation_clip=False)
             yt.append(y + n / 2)
             yl.append(f"{name}, {n} of {L['n_neurons']:,}" if name != "output" else f"output, all {n}")
             y += n + 6
