@@ -14,3 +14,7 @@ results/*_audit.json
 paper/*.pdf
 paper/*.log
 paper/*.blg
+
+# private review material, never published
+paper/review/
+
