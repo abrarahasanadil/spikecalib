@@ -680,8 +680,10 @@ def ece_equal_mass(
 ) -> float:
     """Expected calibration error with equal-mass bins that respect ties.
 
-    Bins carry roughly the same number of samples, so resolution follows the data instead
-    of the interval. See :func:`_equal_mass_bins` for why the edges are built by packing
+    Bins aim at ``n / n_bins`` samples each, so resolution follows the data instead of the
+    interval, but they are equal in mass only when no confidence value is shared by many
+    samples: a value is never split, so one value holding most of the data makes one bin
+    hold most of the data, and the effective bin count can fall to one. See :func:`_equal_mass_bins` for why the edges are built by packing
     unique values rather than by quantile interpolation.
 
     The degenerate limit is real at low ``T``: the attainable confidence set can collapse
