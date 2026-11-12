@@ -8,6 +8,8 @@ __pycache__/
 .pytest_cache/
 results/*.npz
 results/*_audit.json
+# the release asset, if downloaded into the repository root (see README)
+/spikecalib-results-*.tar.gz
 # paper build products: main.tex, refs.bib and the generated numbers.tex are tracked;
 # the PDF is rebuilt with pdflatex and BibTeX (see README); paper/main.pdf is tracked so the
 # README can link to it, and the logs and auxiliary files are not

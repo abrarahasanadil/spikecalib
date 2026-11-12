@@ -1147,6 +1147,49 @@ Recommendation: cite the 1902.05705 paper (suggested key wu2019spikecount) for "
 - **jurado2023spikemoid**: the full text could not be reached (IEEE, closed access); only the abstract is relied on. The paper is not cited for anything beyond its abstract, and no claim of novelty is made for the rate cap of Equation (3), which it may state.
 - **li2023dynamic**, corrected 2026-11-12: the networks run at 4 to 6 (QFFS) and 27 to 128 (QCFS) timesteps, with Dynamic Confidence averages from 2.52 to 81.81 (Table 1); temperature scaling is applied to the source ANN before conversion (Sec. 5.1), and the SNN's accumulated logits are divided by a separate fixed scalar (Sec. 5.2). The earlier wording, 'between about 2.5 and 14 timesteps' and 'which they describe as temperature scaling', is withdrawn.
 
+## Citations revised 2026-11-12, after independent checks of the revised draft
+
+Each change below was made after a second reader compared the citing sentence with the cited
+passage. Locations refer to the versions named in the entries above.
+
+- **banteywalu2026trustworthy** (added). Crossref record 10.1002/eng2.70670 (Engineering Reports
+  8(3), e70670, 25 Feb 2026; Banteywalu and Leroux). Only the abstract was reachable (the
+  publisher page returned HTTP 403): a Bayesian spiking network on N-MNIST digits 1, 2 and 3,
+  with an ECE reported. The abstract states neither the readout nor the number of timesteps, so
+  the paper says exactly that. Found after the literature search, during the checks.
+- **katti2024bayesian**. Sec. II says only that "the spike outputs of the networks are accumulated
+  and processed (softmax)"; no equation defines the output layer, and the conversion method they
+  adopt is also used elsewhere with a non-spiking output layer. The paper now says the cap applies
+  to the readout as described, and that the Fig. 5 values require the counts to be scaled or
+  summed across samples, or an output layer that does not spike. Averaging counts across samples
+  would leave the cap unchanged.
+- **jang2022multisample**. The networks run 80 timesteps (Sec. V); the cap on the vote-count
+  softmax comes from the two voting samples (K_I = 2), not from few timesteps. Moved out of the
+  few-timestep grouping.
+- **li2023dynamic**, Sec. 5.2 now credited: they attribute the growth of softmax confidence over
+  time, for accumulated-spike and accumulated-current outputs alike, to logits that grow with t.
+- **sun2023mcdropout**, Sec. 3.3 now credited: they replace a coarse summed-rate readout with
+  readout integrators and report better uncertainty estimation at similar accuracy.
+- **yan2025temporal**: calibration is reported at 1 to 10 timesteps (Tables 1 to 3, including
+  N-Caltech101 at T = 10); T = 16 appears only in an accuracy table. Table 1 of the paper corrected.
+- **atarashi2025bounding**: Sec. 1 and Sec. 4.1 (logit bounding, Proposition 4.1, an upper bound
+  on calibration error) now described.
+- **kumar2019verified**: Proposition 3.3 ("binning underestimates error") is now cited for the
+  first inequality of the paper's Proposition 1; the O(B/eps^2) statement is described as stated
+  with a citation, not shown.
+- **dimitriadis2021stable**: the reduction to Murphy's decomposition holds for discrete forecasts
+  with non-decreasing conditional event probabilities (their Theorem 2); the condition is now stated.
+- **wang2018cosface**, **ranjan2017l2**: their scale bounds are closely related to, not the same
+  as, the paper's minimum width (CosFace Eq. (6) has a factor (C-1)/C; Ranjan et al. Eq. (9) has
+  C-2 in place of C-1).
+- **chen2024agreeing**: the overconfidence is stated with a citation of Guo et al. and of Fig. 1
+  of chen2025knowing, not measured; the paper now says "state". **chen2025knowing**: the reading
+  that the cap forces the start of their underconfident phase depends on their figure's time
+  unit, which is not explicit; the paper now says so.
+- **habara2024bayesianspikefusion**: the early prediction comes from an intermediate-layer
+  classifier, fused with the final layer under a prior weight scheduled over timesteps.
+- **wei2023logitclip** now cited wherever the bound is attributed to clipped logits.
+
 ## Still to verify
 
 1. **Amir et al. CVPR 2017 — full author list** for DVS-Gesture. Only "Amir et al." and the

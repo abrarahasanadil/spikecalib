@@ -2890,3 +2890,18 @@ above was edited. Outcomes, every one generated into `paper/numbers.tex`:
   recover 72% of the gap from the count readout to the accumulator, against 28% at the
   original rule's checkpoint of the same runs. The pre-registered runs remain the results of
   predictions 6a to 8. `results/scale_convergence.json`.
+- A8, sensitivity checks fixed after the independent checks of the revised draft. The
+  overconfident distinct-value groups on N-Caltech101 at `T = 2` are sampling noise: none is
+  significant (smallest one-sided binomial p-value 0.54), and every seed has fewer of them (40 to
+  73) than the 74 to 118 expected under calibration; the paper no longer reads them as real
+  overconfidence. With basic instead of percentile bootstrap intervals, 2 N-MNIST runs would
+  differ under the registered rule (one each way) and 11 rather than 12 would be equivalent
+  within 0.005; equivalence within 0.01 and the 5 N-Caltech101 count verdicts are unchanged.
+  159 top-label log-loss terms are certain and wrong, all from isotonic regression. 95.1% to
+  96.0% of the N-MNIST `T = 2` accumulator's confidences fall in the top equal-width bin, so
+  binned resolution cannot separate it from the count readout. With the weights held fixed, the
+  accumulator reading of the count-trained N-MNIST `T = 2` networks has AUROC 0.9781 against the
+  count readout's 0.9204 (difference -0.0577, 95% interval -0.0729 to -0.0441): the ranking
+  deficit belongs to the readout and comes from ties (14.1% of correct-wrong pairs tied; 0.9%
+  ordered wrongly, against 2.2% for the accumulator reading). `results/ece_floor.json`,
+  `results/calibration_metrics.json`, `results/same_weights_ranking.json`.

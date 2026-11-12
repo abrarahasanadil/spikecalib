@@ -47,14 +47,17 @@ experiments that tested them, 13 <!-- n:predictionsEverythingHeld --> held and
 - Reading a spike count as a bounded logit turns a known softmax bound into a floor on ECE under
   any binning. At *T* = 2 that floor is nearly all of the observed error on both datasets.
 - Temperature scaling, which lifts the cap without retraining, removes the underconfidence on
-  N-MNIST and most of it on N-Caltech101. Lifting the cap far above accuracy, by an unbounded
+  N-MNIST and most of it on N-Caltech101. Lifting the cap far above accuracy, by an accumulating
   readout or a learned scale, makes N-Caltech101 overconfident.
 - Most of the accuracy a count readout gives up on N-Caltech101 at *T* = 2 is lost at the readout
   at inference, to coarse and tied counts, and is present with identical weights.
-- Temperature scaling and isotonic regression are statistically equivalent on N-MNIST; isotonic
-  regression is better where the cap binds on N-Caltech101 (nine runs of one architecture).
+- Temperature scaling and isotonic regression are equivalent in ECE on N-MNIST within a margin
+  above both calibrated errors; on N-Caltech101, where the count readout is underconfident,
+  isotonic regression is better in most runs and never resolved as worse (nine runs of one
+  architecture).
 - A count readout emits at most binom(*T*+*C*−1, *C*−1) distinct confidences at any scale; on
-  N-MNIST it ranks errors worse than an unbounded readout at the same accuracy.
+  N-MNIST at *T* = 2 its ties lower its AUROC below that of an accumulator reading the same
+  weights.
 - An exploratory fusion pilot, with synthetic degradation of a single sensor, shows two saturated
   count readouts that the product rule cannot weight; it is not evidence about real multimodal
   fusion.
@@ -75,25 +78,32 @@ give the comparison.
 ## Reproduce
 
 Hardware: training ran on Apple silicon through PyTorch's MPS backend; the post-review analyses
-ran on an Apple M1 Max with 32 GB of memory. The recorded training time of all 105
-<!-- n:modelsTotal --> models is 9.7 <!-- n:trainHoursAll --> hours. Everything except training
-and inference runs on the CPU and is deterministic.
+ran on an Apple M1 Max with 32 GB of memory. The recorded training time of the 105
+<!-- n:modelsTotal --> models of the main study is 9.7 <!-- n:trainHoursAll --> hours; the
+post-review retraining of the learned scale is recorded separately in
+`results/scale_convergence.json`. Everything except training and inference runs on the CPU and
+is deterministic.
 
 **Environment.** Python 3.13.1; every version, transitive dependencies included, is pinned in
-`requirements.txt`.
+`requirements.txt`. The pins were resolved on that version and CI runs on it, so create the
+environment with the same minor version, as in the first command below: a newer default `python3` may lack
+wheels for the pinned versions.
 
 ```sh
-python3 -m venv .venv && source .venv/bin/activate
+python3.13 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python -m pytest tests/ -q
 python scripts/check_env.py        # a real forward pass through a SpikingJelly LIF layer
 ```
 
 **Without retraining.** The release v1.0.0 carries the trained weights and the stored model
-outputs as an asset, `spikecalib-results-v1.0.0.tar.gz` (SHA-256 below). Unpacked into
-`results/`, it regenerates every table and figure without the event data or a GPU:
+outputs as an asset, `spikecalib-results-v1.0.0.tar.gz` (about half a gigabyte; SHA-256 below),
+downloadable from the release page or with the GitHub CLI. Unpacked into `results/`, it
+regenerates every table and figure without the event data or a GPU:
 
 ```sh
+gh release download v1.0.0 -R abrarahasanadil/spikecalib -p 'spikecalib-results-*.tar.gz'
+shasum -a 256 spikecalib-results-v1.0.0.tar.gz     # compare with the value below
 tar -xzf spikecalib-results-v1.0.0.tar.gz -C results/
 python scripts/ece_floor.py               # the floor on ECE
 python scripts/calibration_metrics.py     # equivalence tests and run-level metrics
@@ -133,6 +143,7 @@ python scripts/fusion_experiment.py                      # the fusion pilot
 python scripts/ece_floor.py                              # added after review: the floor on ECE
 python scripts/calibration_metrics.py                    # added after review: equivalence and scoring rules
 python scripts/count_network_probe.py                    # added after review: activity and same-weights control (MPS)
+python scripts/same_weights_ranking.py                   # added after review: AUROC with the weights held fixed (MPS)
 python scripts/scale_convergence.py                      # added after review: the learned scale to convergence
 python scripts/extract_readout_stats.py
 python scripts/make_figures.py
