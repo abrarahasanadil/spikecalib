@@ -2815,3 +2815,31 @@ The Calibration Cost of a Known Softmax Bound in Low-Timestep Spiking Networks".
 moved to an appendix with nothing deleted: the N-Caltech101 calibrator table, the fusion
 table's rows for `T ≥ 4`, and the paragraph on probabilistic population codes. It is 19 pages:
 17 of main text, references, and a one-page appendix.
+
+**Added 2026-11-12, after review.** A review received on 2026-11-12 asked for further analyses.
+Their thresholds were fixed in "Post-review analyses, thresholds fixed 2026-11-12 before
+computation" and committed before any was run. None is a pre-registered prediction, and nothing
+above was edited. Outcomes, every one generated into `paper/numbers.tex`:
+
+- A1. Where accuracy exceeds the cap, ECE is at least `a - p*` under any binning (triangle
+  inequality). At `T = 2` the floor is 99.17% of the equal-width ECE on N-MNIST and 97.10% on
+  N-Caltech101 (seed means; equal-mass gives the same). No binned N-Caltech101 bin is
+  overconfident at `T = 2`, but grouped by distinct value 40 to 73 small groups are, so accuracy
+  above the cap does not make every group underconfident. `results/ece_floor.json`.
+- A2. Equal-mass bins never split a tie, so they are not equal in mass: one bin of 10,000 at
+  N-MNIST `T = 2`, two very unequal bins at `T = 4`. The paper's method text said otherwise and
+  was corrected.
+- A3. Two one-sided tests: on N-MNIST the calibrators are equivalent within 0.01 ECE in all 15
+  runs under both estimators (12 of 15 within 0.005); on N-Caltech101 no count run is within
+  0.01 and 2 of 9 are within 0.02. `results/calibration_metrics.json`.
+- A4. Every published ECE was reproduced from the stored outputs to within 1e-9 before use.
+  AUROC at N-MNIST `T = 2`: count 0.9204, accumulator 0.9698, paired difference interval
+  -0.0647 to -0.0348.
+- A5. The stored count outputs were reproduced bit for bit on MPS for all 36 count networks.
+  At `T = 2` the top class fires at both steps with all others silent on 95.1% of N-MNIST test
+  samples; on N-Caltech101 58.0% of samples tie for the top count. `results/spiking_activity.json`.
+- A6. Read without retraining through the accumulator, the count-trained N-Caltech101 networks
+  reach 0.5744 at `T = 2` against 0.4543 through their spikes: 94% of the gap to a separately
+  trained accumulator is present with identical weights, so it is lost at the readout and not
+  in training. The same-weights accumulator is overconfident on N-Caltech101 in every cell.
+  `results/same_weights_readouts.json`.
