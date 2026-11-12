@@ -58,6 +58,7 @@ def mean(rows, key):
 # ------------------------------------------------------------------ the bound [DERIVED]
 put("ceilTenTwo", f(ceiling(2, 10)), DERIVED)
 put("ceilHundredOneTwo", f(ceiling(2, 101)), DERIVED)
+put("ceilThreeTwoShort", f(ceiling(2, 3), 2), DERIVED + ": e^2/(e^2+2), the cap of a softmax over two votes and three classes")
 put("floorTenTwo", f(-math.log(ceiling(2, 10))), DERIVED)
 put("floorTenSix", f(-math.log(ceiling(6, 10))), DERIVED)
 put("floorTenTen", f(-math.log(ceiling(10, 10))), DERIVED)
@@ -1117,6 +1118,21 @@ if a7.get("training_finished_at"):
             put(f"aSeven{key}{wk}EceM", f(st.mean(e["ece_equal_mass"] for e in ev)), src + f" {which}.ece_equal_mass, mean")
             put(f"aSeven{key}{wk}Floor", f(st.mean(e["floor"] for e in ev)), src + f" {which}.floor, mean")
             put(f"aSeven{key}{wk}AboveSmin", str(sum(e["logit_scale"] > e["s_min"] for e in ev)), src + f" {which}: runs with s above s_min")
+
+
+# ------------------------------------------------------------------ the literature search (added after review)
+ls_ = load("literature_search.json")
+SRC_LS = "results/literature_search.json"
+assert ls_["papers_read"] == ls_["papers_read_full_text"] + ls_["papers_read_abstract_only"]
+put("lsQueries", str(len(ls_["required_queries"])), SRC_LS + " required_queries")
+put("lsQueryRows", str(ls_["query_rows"]), SRC_LS + " query_rows")
+put("lsScreenings", thousands(ls_["record_screenings"]), SRC_LS + " record_screenings")
+put("lsRead", str(ls_["papers_read"]), SRC_LS + " papers_read")
+put("lsReadFull", str(ls_["papers_read_full_text"]), SRC_LS + " papers_read_full_text")
+put("lsReadAbstract", str(ls_["papers_read_abstract_only"]), SRC_LS + " papers_read_abstract_only")
+put("lsLow", str(ls_["low_relevance_records"]), SRC_LS + " low_relevance_records")
+put("lsSeeds", str(len(ls_["forward_citation_seeds"])), SRC_LS + " forward_citation_seeds")
+put("lsSourcesDirect", str(len(ls_["sources_queried_directly"])), SRC_LS + " sources_queried_directly")
 
 # ------------------------------------------------------------------ write
 with open(OUT, "w") as fh:

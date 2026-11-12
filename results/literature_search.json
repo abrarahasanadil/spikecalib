@@ -1,0 +1,28 @@
+{
+  "analysis": "Literature search added after review, run on 2026-11-12; the full record (every query with its exact string, filters and reported hit count, and a reading form for every paper read) is kept by the authors",
+  "date_run": "2026-11-12",
+  "period": ["2017-01-01", "2026-11-12"],
+  "sources_queried_directly": ["arXiv API", "Semantic Scholar Graph API", "OpenAlex API", "OpenReview API", "IEEE Xplore REST search", "Crossref API"],
+  "sources_by_web_search": ["Google Scholar (bot check blocked direct queries)", "ACM Digital Library (HTTP 403 blocked direct queries)"],
+  "required_queries": [
+    "spiking neural network calibration", "spike count softmax underconfidence",
+    "SNN expected calibration error temperature scaling", "spiking neural network uncertainty estimation",
+    "bounded logits softmax ceiling calibration", "normalised logits scale confidence bound",
+    "spiking early exit confidence", "event camera neuromorphic calibration",
+    "conformal prediction spiking neural network", "Bayesian spiking neural network calibration",
+    "isotonic regression temperature scaling comparison small calibration set",
+    "spiking neural network overconfidence", "spiking neural network reliability diagram",
+    "low timestep spiking neural network confidence", "spiking neural network logit scale softmax",
+    "spiking neural network dynamic timestep confidence threshold",
+    "firing rate softmax saturation spiking output", "calibration of neuromorphic classifiers N-MNIST"
+  ],
+  "forward_citation_seeds": ["chen2025knowing", "chen2024agreeing", "skatchkovsky2022bayesian", "li2023dynamic",
+                             "meng2022dsr", "fan2024sfod", "atarashi2025bounding", "zhang2019adacos",
+                             "wang2017normface", "SEENN (arXiv 2304.01230)"],
+  "query_rows": 481,
+  "record_screenings": 17234,
+  "papers_read": 99,
+  "papers_read_full_text": 84,
+  "papers_read_abstract_only": 15,
+  "low_relevance_records": 136
+}

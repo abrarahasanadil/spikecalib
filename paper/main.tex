@@ -77,8 +77,10 @@ calibrated.
 
 Spiking neural networks suit event-driven sensors and low-power hardware because they compute
 with sparse binary events spread over time. Every timestep costs latency and energy, so the
-pressure in practice is to use as few as possible. Few timesteps are also where a spike-count
-readout has been reported to be miscalibrated: read after only part of its run, a network's
+pressure in practice is to use as few as possible. Early-exit networks stop as soon as the softmax
+confidence of the accumulated output passes a threshold, often after one or two
+timesteps~\citep{li2023seenn}, so at that point the confidence must be trustworthy. Few timesteps % [LIT] li2023seenn, Sec. 3.3, Eq. (5) and Table 1
+are also where a spike-count readout has been reported to be miscalibrated: read after only part of its run, a network's
 decisions are first under-confident and then over-confident~\citep{chen2025knowing}. % [LIT] chen2025knowing, Section I and Figure 1(b)
 
 This paper studies the most common readout, the softmax over output spike counts. A count
@@ -86,8 +88,9 @@ over $T$ timesteps is a whole number between $0$ and $T$, so the logits lie in a
 width $T$ and the softmax has a hard maximum, $p^{*}$. The inequality is not new: it is the bound
 that face-recognition and out-of-distribution work derived for normalised and clipped
 logits~\citep{wang2017normface,zhang2019adacos,wei2022logitnorm}, with the number of timesteps % [LIT] wang2017normface, Section 3.2; zhang2019adacos, Eq. (5); wei2022logitnorm, Proposition 3.3
-in the place of the logit scale. What it does to spiking networks at the timestep counts used in
-practice had not been measured. Figure~\ref{fig:ceiling} shows the problem: at few timesteps the
+in the place of the logit scale. The calibration of spiking networks at few timesteps has been
+measured~\citep{sun2023mcdropout,yan2025temporal}, but we found no work that attributes any of % [LIT] sun2023mcdropout, Table 3; yan2025temporal, Table 1
+that error to the cap. Figure~\ref{fig:ceiling} shows the problem: at few timesteps the
 cap sits far below the accuracy the networks reach, and the readout can emit only a handful of
 confidence values.
 
@@ -138,7 +141,25 @@ The contributions are these.
   \predictionsEverythingFalsified{} failed (Table~\ref{tab:predcompact}). % src: NOTES.md; verdict blocks; scripts/dashboard_summary.py
 \end{enumerate}
 
-%%NOVELTY%%
+\paragraph{What was known, and what is new.}
+The bound is known for normalised and clipped logits~\citep{wang2017normface,zhang2019adacos,wei2022logitnorm}, % [LIT] see Section 2
+and the softmax over spike counts is a standard readout~\citep{wu2019spikecount,shrestha2022spikemax}. % [LIT] wu2019spikecount, Sec. II.B.1, Eq. (8); shrestha2022spikemax, Sec. III-B, Eq. (13)
+Chen, Park and Simeone observed that this readout is under-confident early in a
+run~\citep{chen2025knowing}. Li, Jones and Furber reported saturating confidence from an unbounded % [LIT] chen2025knowing, Section I and Figure 1(b)
+accumulating readout of converted networks~\citep{li2023dynamic}. Skatchkovsky, Jang and Simeone % [LIT] li2023dynamic, Sec. 5.2
+measured the calibration of directly trained spiking networks at 50 to 150
+timesteps~\citep{skatchkovsky2022bayesian}, and the calibration of spiking networks at few % [LIT] skatchkovsky2022bayesian, Sections 4.1, 4.3 and 5
+timesteps has been measured for other readouts~\citep{sun2023mcdropout,katti2024bayesian,yan2025temporal}. % [LIT] see Section 2
+In conventional networks, temperature scaling is known to be the more data-efficient calibrator
+and isotonic regression the more expressive~\citep{zhang2020mixnmatch}. Within a search of the % [LIT] zhang2020mixnmatch, Figure 1 caption and Section 2.1
+literature from 2017 to November 2026 (Appendix~\ref{app:search}), we found no prior work that
+states the cap for a softmax over spike counts or turns it into a floor on ECE, that measures how
+much of the observed error the floor makes up, or that compares the readouts of one spiking
+network with its weights held fixed; one related paper could be read only in
+abstract~\citep{jurado2023spikemoid}. Nor did we find a comparison of temperature scaling with
+isotonic regression on spiking networks, or a bound on the number of distinct confidences a count
+readout can emit. The comparison of calibrators here is tested against predictions recorded in
+advance, the ones that failed are reported, and every number is published with its provenance.
 
 Code, configurations, run records, result files and figure scripts are available at
 \url{https://github.com/abrarahasanadil/spikecalib}, release v1.0.0
@@ -165,7 +186,8 @@ remark that it is about 0.7966 at ten classes and unit norm~\citep{wei2022logitn
 for clipped logits they bound the loss by the range $z_{\max}-z_{\min}$~\citep{wei2023logitclip}. % [LIT] wei2023logitclip, Eq. (2) and Proposition 2.1
 The two numbers quoted are the ceiling and the loss floor of this study at $T=2$ and $C=10$,
 because a spike count over two timesteps and a cosine logit both span an interval of width two.
-None of these works treats a spike count, and none relates the bound to calibration error.
+None of these works treats a spike count, and none relates the bound to the calibration error it
+forces.
 
 \paragraph{Scales and readouts in spiking networks.}
 Meng et al.\ train directly, take the threshold-weighted firing rate of a spiking output layer
@@ -173,9 +195,10 @@ as the network output under a cross-entropy loss, and make the thresholds traina
 rate is not confined to ``a small range''~\citep{meng2022dsr}. This is a learned scale on a rate % [LIT] meng2022dsr, Section 4.2
 readout, given without a bound. Li, Jones and Furber convert trained artificial networks and
 keep the output layer at full precision, so the output neurons accumulate input current instead
-of spiking, at between about 2.5 and 14 timesteps~\citep{li2023dynamic}. % [LIT] li2023dynamic, as recorded in SOURCES.md
-They report confidence that saturates towards 100\% as time passes, and damp it by dividing the
-logits by a scalar, which they describe as temperature scaling. Their readout is the unbounded % [LIT] li2023dynamic, Section 5.2
+of spiking; their networks run at 4 to 128 timesteps~\citep{li2023dynamic}. They report % [LIT] li2023dynamic, Sec. 6.1 and Table 1
+confidence that saturates towards 100\% as time passes. They calibrate the source network by
+temperature scaling before conversion and divide the spiking network's accumulated logits by a
+fixed scalar. Their readout is the unbounded % [LIT] li2023dynamic, Sections 5.1 and 5.2
 half of the taxonomy in Section~\ref{sec:readouts}, studied independently. Fan et al.\ observe,
 with a two-class example, that a rate-decoded output passed through a softmax cannot approach its
 label, and train with squared error instead~\citep{fan2024sfod}; their example is an instance of % [LIT] fan2024sfod, Section 3.3
@@ -207,7 +230,63 @@ Dimitriadis et al.\ build reliability diagrams and a score decomposition on isot
 regression, with no binning parameter~\citep{dimitriadis2021stable}; the decomposition used % [LIT] dimitriadis2021stable
 here is Murphy's~\citep{murphy1973partition}, to which theirs reduces for discrete forecasts. % [LIT] murphy1973partition; dimitriadis2021stable
 
-%%RELATEDTABLE%%
+\paragraph{Spike counts as logits.}
+The softmax over output spike counts is a standard readout~\citep{wu2019spikecount,shrestha2022spikemax,chen2025knowing}. % [LIT] wu2019spikecount, Eq. (8); shrestha2022spikemax, Eq. (13); chen2025knowing, Eq. (3)
+Wu et al.\ note that output counts are bounded by the number of timesteps and observe no loss of
+accuracy from it~\citep{wu2019spikecount}, without relating the bound to confidence. Jurado et % [LIT] wu2019spikecount, Sec. II.A
+al.\ replace counts by scaled firing rates, which their abstract reports gives less coarse
+probability outputs~\citep{jurado2023spikemoid}. % [LIT] jurado2023spikemoid, abstract only (full text not reached)
+
+\paragraph{Calibration of spiking networks at few timesteps.}
+The calibration of spiking networks at few timesteps has been measured for readouts other than a
+plain count. Sun, Yin and Boht\'e report ECE, Brier score and negative log-likelihood at 1 to 10
+timesteps for networks read through the membrane potential of readout integrators, with
+temperature scaling as a baseline~\citep{sun2023mcdropout}. Katti et al.\ report ECE at 1 to 16 % [LIT] sun2023mcdropout, Sec. 3.3, Table 3 and Sec. 4.3
+timesteps for a Bayesian network read through a softmax over accumulated output
+spikes~\citep{katti2024bayesian}, and Yan et al.\ report ECE per timestep for networks read % [LIT] katti2024bayesian, Sec. II and Fig. 5
+through time-averaged real-valued logits~\citep{yan2025temporal}. Jang and Simeone report ECE for % [LIT] yan2025temporal, Sec. 3.2 and Table 1
+a softmax over vote counts between 0 and 2 across three classes~\citep{jang2022multisample}. By % [LIT] jang2022multisample, Sec. V-C and Fig. 6
+Equation~\eqref{eq:lemma} that confidence cannot exceed \ceilThreeTwoShort, which, by our reading % [DERIVED] paper/make_numbers.py
+of their figure, lies below the accuracy they report; the cap is not noted there. Sajid et al.\
+find a spiking classifier underconfident, with a fitted temperature below one, and attribute it to
+label smoothing and class balancing~\citep{sajid2026convsnn}. Table~\ref{tab:related} compares % [LIT] sajid2026convsnn, Results, calibration via temperature scaling
+the closest of these works with this study.
+
+\paragraph{Calibrators by regime.}
+Guo et al.\ proposed temperature scaling as a calibrator and compared it with histogram binning and
+isotonic regression on conventional networks~\citep{guo2017calibration}. Zhang et al.\ show that % [LIT] guo2017calibration, Sections 4 and 5
+temperature scaling is data-efficient but not expressive, and isotonic regression expressive but
+data-inefficient, so the better choice depends on the size of the calibration
+set~\citep{zhang2020mixnmatch}. Kull et al.\ compare both with other calibrators across many % [LIT] zhang2020mixnmatch, Figure 1 caption and Section 2.1
+datasets~\citep{kull2019beyond}, and Kumar et al.\ show that the number of samples a binning % [LIT] kull2019beyond, Section 4.1
+calibrator needs grows with the number of distinct probabilities a model can % [LIT] kumar2019verified, abstract and Section 1
+output~\citep{kumar2019verified}. Section~\ref{sec:calibrators} tests whether the known pattern
+carries over to the discrete confidences of a count readout.
+
+\begin{table}[t]
+\centering
+\caption{The closest prior work on the confidence of spiking-network readouts, against this
+study. ``Bound stated'' asks whether the work states a cap on the softmax confidence of its
+readout; ``in advance'' whether predictions were recorded before the experiments. Each cell rests
+on the cited paper (SOURCES.md gives the location).}
+\label{tab:related}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.15\linewidth}l>{\raggedright\arraybackslash}p{0.09\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.18\linewidth}l}
+\toprule
+work & readout & $T$ & bound stated & calibration measured & calibrators & in advance \\
+\midrule
+Chen et al.~\citep{chen2025knowing} & spike counts & 80 & no & confidence against accuracy & conformal prediction & no \\ % [LIT] chen2025knowing, Sec. II-A, Sec. VI, Fig. 1(b)
+Li et al.~\citep{li2023dynamic} & accumulator & 4 to 128 & no & confidence against accuracy & temperature scaling of the source network & no \\ % [LIT] li2023dynamic, Sec. 5, Table 1
+Skatchkovsky et al.~\citep{skatchkovsky2022bayesian} & averaged per-step softmax & 50 to 150 & no & ECE, reliability diagrams & none post hoc & no \\ % [LIT] skatchkovsky2022bayesian, Sec. III
+Jang and Simeone~\citep{jang2022multisample} & vote counts & 80 & no & ECE & none post hoc & no \\ % [LIT] jang2022multisample, Sec. V-C, Fig. 6
+Sun et al.~\citep{sun2023mcdropout} & membrane integrators & 1 to 10 & no & ECE, Brier, NLL & temperature scaling as a baseline & no \\ % [LIT] sun2023mcdropout, Sec. 3.3, 4.3, Table 3
+Katti et al.~\citep{katti2024bayesian} & accumulated spikes & 1 to 16 & no & ECE & none post hoc & no \\ % [LIT] katti2024bayesian, Sec. II, Fig. 5
+Yan et al.~\citep{yan2025temporal} & time-averaged logits & 1 to 16 & no & ECE, adaptive ECE & none post hoc & no \\ % [LIT] yan2025temporal, Sec. 3.2, Tables 1 and 2
+this study & five readouts & 2 to 10 & yes, as known; floor on ECE & ECE, NLL, Brier, resolution, AUROC & temperature scaling against isotonic regression & yes \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 % =========================================================================================
 \section{The bound, read for spike counts}
@@ -581,8 +660,9 @@ near the threshold flip. Every number in this paper is generated from a stored a
 \subsection{Predictions recorded in advance}
 \label{sec:prereg}
 
-Before each experiment, the predictions it would test and the condition under which each would
-fail were written into the repository's research notebook, NOTES.md, and committed, so that
+Pre-registration has been proposed for predictive modelling~\citep{hofman2023preregistration}. % [LIT] hofman2023preregistration, abstract and Section 4
+Here, before each experiment, the predictions it would test and the condition under which each
+would fail were written into the repository's research notebook, NOTES.md, and committed, so that
 their order relative to the results can be checked in the version history. Outcomes were then
 recorded against those conditions without editing the predictions.
 Table~\ref{tab:predcompact} lists all \predictionsEverything{} predictions and prediction parts; % src: NOTES.md; scripts/dashboard_summary.py
@@ -1649,6 +1729,41 @@ $T$ & accuracy & w & m & w & m & w & m & differ \\
 
 \input{fusion_appendix}
 
-%%SEARCHAPP%%
+\section{The literature search behind the novelty statements}
+\label{app:search}
+
+Added after review. Every statement in this paper of the form ``we found no prior work'' is
+limited to the following search, run on 2026-11-12 and covering 1 January 2017 to 12 November % src: results/literature_search.json date_run, period
+2026. Keyword queries were sent directly to \lsSourcesDirect{} sources: the arXiv API, the % src: results/literature_search.json sources_queried_directly
+Semantic Scholar Graph API, the OpenAlex API, the OpenReview API, IEEE Xplore and the Crossref API.
+Google Scholar and the ACM Digital Library refused automated queries, so the same strings were run
+through general web search restricted, for the ACM library, to its domain. The \lsQueries{} % src: results/literature_search.json required_queries
+required strings were: spiking neural network calibration; spike count softmax underconfidence;
+SNN expected calibration error temperature scaling; spiking neural network uncertainty
+estimation; bounded logits softmax ceiling calibration; normalised logits scale confidence bound;
+spiking early exit confidence; event camera neuromorphic calibration; conformal prediction
+spiking neural network; Bayesian spiking neural network calibration; isotonic regression
+temperature scaling comparison small calibration set; spiking neural network overconfidence;
+spiking neural network reliability diagram; low timestep spiking neural network confidence;
+spiking neural network logit scale softmax; spiking neural network dynamic timestep confidence
+threshold; firing rate softmax saturation spiking output; and calibration of neuromorphic
+classifiers N-MNIST. Supplementary queries targeted each contribution, and citations were followed
+forward from \lsSeeds{} seed papers: those of Chen, Park and Simeone (two), Skatchkovsky, Jang and % src: results/literature_search.json forward_citation_seeds
+Simeone, Li, Jones and Furber, Meng et al., Fan et al., Atarashi et al., AdaCos, NormFace, and the
+SEENN early-exit network~\citep{li2023seenn}.
+
+In all, \lsQueryRows{} queries were logged and their results screened by title and abstract, % src: results/literature_search.json query_rows
+\lsScreenings{} record screenings with heavy overlap between queries. Candidates that could bear on % src: results/literature_search.json record_screenings
+a contribution were read on a fixed form: what the paper does, its readout, its range of $T$, its
+datasets, whether it states the cap, whether it measures calibration, which calibrators it uses,
+whether anything was recorded in advance, and a rating of its overlap with each contribution, with
+the passage that supports it. \lsRead{} papers were read in this way, \lsReadFull{} in full text % src: results/literature_search.json papers_read, papers_read_full_text
+and \lsReadAbstract{} from the abstract only where no full text could be reached; \lsLow{} further % src: results/literature_search.json papers_read_abstract_only, low_relevance_records
+records were judged peripheral at screening. The search would miss papers that report a
+spiking network's calibration, a count cap or temperature scaling only in their body text and
+are not reached through the forward citations, as well as theses and work not indexed by these
+sources. A failed search is not proof of absence. The full record, with every query string,
+filter and reported hit count, and the reading form of every paper, is available from the authors.
+
 
 \end{document}

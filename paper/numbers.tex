@@ -2,6 +2,7 @@
 % Each definition names the artifact it was read from.
 \newcommand{\ceilTenTwo}{0.4509}% [DERIVED] arithmetic in paper/make_numbers.py
 \newcommand{\ceilHundredOneTwo}{0.0688}% [DERIVED] arithmetic in paper/make_numbers.py
+\newcommand{\ceilThreeTwoShort}{0.79}% [DERIVED] arithmetic in paper/make_numbers.py: e^2/(e^2+2), the cap of a softmax over two votes and three classes
 \newcommand{\floorTenTwo}{0.7966}% [DERIVED] arithmetic in paper/make_numbers.py
 \newcommand{\floorTenSix}{0.0221}% [DERIVED] arithmetic in paper/make_numbers.py
 \newcommand{\floorTenTen}{0.0004}% [DERIVED] arithmetic in paper/make_numbers.py
@@ -1343,3 +1344,12 @@
 \newcommand{\gapCalNcTenIso}{$-$0.0181}% results/calibration_metrics.json rows, ncaltech101 count T=10 isotonic-top-label: mean confidence minus accuracy, seed mean
 \newcommand{\swNcTwoAccumGapTemp}{$-$0.0112}% results/same_weights_readouts.json N-Caltech101 T=2 accumulator on count weights after temperature scaling, conf-acc
 \newcommand{\tempRemovesNcTwo}{69}% [DERIVED] arithmetic in paper/make_numbers.py: share of the N-Caltech101 T=2 underconfidence removed by temperature scaling, per cent
+\newcommand{\lsQueries}{18}% results/literature_search.json required_queries
+\newcommand{\lsQueryRows}{481}% results/literature_search.json query_rows
+\newcommand{\lsScreenings}{17{,}234}% results/literature_search.json record_screenings
+\newcommand{\lsRead}{99}% results/literature_search.json papers_read
+\newcommand{\lsReadFull}{84}% results/literature_search.json papers_read_full_text
+\newcommand{\lsReadAbstract}{15}% results/literature_search.json papers_read_abstract_only
+\newcommand{\lsLow}{136}% results/literature_search.json low_relevance_records
+\newcommand{\lsSeeds}{10}% results/literature_search.json forward_citation_seeds
+\newcommand{\lsSourcesDirect}{6}% results/literature_search.json sources_queried_directly
