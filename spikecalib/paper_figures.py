@@ -340,8 +340,8 @@ def figure_rasters(results, pdf_dir, png_dir):
     plt = _plt()
     act = _load(results, "spiking_activity.json")
     rasters = sorted(act["rasters"], key=lambda r: (r["dataset"] != "nmnist", r["timesteps"]))
-    fig, axes = plt.subplots(1, 4, figsize=(TEXT_WIDTH, 4.6), layout="constrained")
-    for ax, r in zip(axes, rasters):
+    fig, axes = plt.subplots(2, 2, figsize=(TEXT_WIDTH, 6.4), layout="constrained")
+    for ax, r in zip(axes.flat, rasters):
         T = r["timesteps"]
         names = list(r["layers"])
         y = 0
@@ -357,7 +357,7 @@ def figure_rasters(results, pdf_dir, png_dir):
                 lab = r["label"]
                 ax.axhspan(y + lab - 0.5, y + lab + 0.5, color=OKABE_ITO["yellow"], alpha=0.5, lw=0, zorder=0)
             yt.append(y + n / 2)
-            yl.append(f"{name}\n({n} of {L['n_neurons']:,})" if name != "output" else f"output\n({n})")
+            yl.append(f"{name}, {n} of {L['n_neurons']:,}" if name != "output" else f"output, all {n}")
             y += n + 6
             ax.axhline(y - 3, color=LIGHT, lw=0.5)
         ax.set_ylim(y - 3, -2)
@@ -367,8 +367,8 @@ def figure_rasters(results, pdf_dir, png_dir):
         ax.set_yticklabels(yl, fontsize=7)
         ax.tick_params(axis="y", length=0)
         ax.set_xlabel("timestep")
-        ax.set_title(f"{DATASET_LABEL[r['dataset']]}, $T={T}$\nlabel {r['label']}, top count "
-                     f"{max(r['counts']):.0f}", fontsize=8)
+        ax.set_title(f"{DATASET_LABEL[r['dataset']]}, $T={T}$ (class {r['label']}; top count "
+                     f"{max(r['counts']):.0f})", fontsize=8, loc="left")
     return _save(fig, "fig-rasters", pdf_dir, png_dir)
 
 
