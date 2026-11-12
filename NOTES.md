@@ -2211,6 +2211,32 @@ seed, MPS device and zero loader workers. Each model is initialised after
   exactly.
 - The original nine runs remain the pre-registered results.
 
+### A8. Sensitivity checks, fixed 2026-11-12 after the independent checks, before computation
+
+Added after review, not pre-registered. Independent checks of the revised draft questioned
+four inferences. These settings are fixed before any of them is computed; every result is
+reported, whichever way it falls.
+
+- **Overconfident groups.** For every count-readout test set of A1, for each group of one
+  distinct confidence value `c` with `n` samples, `k` of them correct, and a negative gap
+  (`k/n < c`): the exact one-sided binomial p-value `P(X <= k)`, `X ~ Bin(n, c)`. Reported:
+  the smallest such p-value and the number of groups below 0.05, uncorrected. Beside them,
+  the number of negative-gap groups expected if every group's accuracy equalled its
+  confidence: the sum over all groups of `P(X < n c)`.
+- **Bootstrap construction.** From the same 1,000 resampled differences as A3, the basic
+  (reverse-percentile) interval `[2d - q(1 - a/2), 2d - q(a/2)]`, where `d` is the point
+  difference: at 95% for the registered rule, at 90% for the two one-sided tests at the
+  three margins of A3. Also the bootstrap bias, the mean of the resampled differences minus
+  `d`. The percentile results of A3 and the registered rule remain the primary results.
+- **Log-loss penalties.** Per run and arm, the number of top-label scores that the clip at
+  `1e-12` turns into a penalty of `-ln(1e-12)`: confidence exactly 1 on a wrong prediction,
+  or exactly 0 on a right one.
+- **The top bin.** Per run and arm, the share of test confidences in the top equal-width
+  bin `(14/15, 1]`.
+- **Spread over seeds.** For the AUROC difference between the count readout and the
+  accumulator on N-MNIST at `T = 2`, a t-interval over the three seeds (`t(0.975, 2)`),
+  beside the test-set bootstrap interval of A4.
+
 ## Does the ceiling bind in published work? Resolved: no, and the reason is informative
 
 The verification pass left one consequential question open. Li, Jones & Furber report
