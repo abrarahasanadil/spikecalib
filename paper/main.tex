@@ -788,9 +788,9 @@ count-trained network was also read through the accumulator and the membrane wit
 (Table~\ref{tab:sameweights} in Appendix~\ref{app:sameweights}). The direction of miscalibration
 survives. On N-Caltech101 the accumulator applied to the count-trained weights is overconfident in
 every cell, by \swNcTwoAccumGap{} at $T=2$ and \swNcSixAccumGap{} at $T=6$, while the same % src: results/same_weights_readouts.json
-network read through its spikes is underconfident. After temperature scaling the accumulator % src: results/same_weights_readouts.json
-reading of these weights is within \swNcTwoAccumGapTemp{} of calibrated at $T=2$, against % src: results/same_weights_readouts.json
-\gapCalNcTwoTemp{} for the count readout of the same network. % src: results/calibration_metrics.json rows
+network read through its spikes is underconfident. After temperature scaling at $T=2$, mean % src: results/same_weights_readouts.json
+confidence minus accuracy is \swNcTwoAccumGapTemp{} for the accumulator reading of these weights, % src: results/same_weights_readouts.json
+against \gapCalNcTwoTemp{} for their count readout. % src: results/calibration_metrics.json rows
 
 \paragraph{Accuracy, and what the readout costs.} The control also locates where accuracy is
 lost. On N-Caltech101 at $T=2$ the count readout reaches \swNcTwoCountAcc{} and the accumulator % src: results/same_weights_readouts.json
