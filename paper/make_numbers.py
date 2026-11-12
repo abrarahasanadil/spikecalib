@@ -22,7 +22,7 @@ import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 R = os.path.join(ROOT, "results")
-OUT = os.path.join(ROOT, "paper", "numbers.tex")
+OUT = os.environ.get("SPIKECALIB_NUMBERS_OUT", os.path.join(ROOT, "paper", "numbers.tex"))   # tests write elsewhere
 DERIVED = "[DERIVED] arithmetic in paper/make_numbers.py"
 
 macros: list[tuple[str, str, str]] = []
@@ -400,6 +400,7 @@ put("scRunsAboveSmin", str(sum(r["scale_exceeds_s_min"] for r in sc_rows)), SRC_
 put("scRunsPositiveGapNc", str(sum(r["mean_conf_minus_acc"] > 0 for r in c2 + c6)), SRC_SC + " N-Caltech101 runs with a positive gap")
 put("scRunsNc", str(len(c2 + c6)), SRC_SC)
 assert all(r["mean_conf_minus_acc"] > 0 for r in c2 + c6)   # "positive in all ... runs"
+assert all(r["test_accuracy"] < r["count_test_accuracy"] for r in c6)   # "less accurate than the count readout in every seed" at T = 6
 # The scale was still climbing when early stopping ended each run: last epoch against best epoch.
 rising = sum(r["logit_scale_last_epoch"] > r["logit_scale"] for r in sc_rows)
 put("scRunsStillRising", str(rising), SRC_SC + " logit_scale_last_epoch > logit_scale")
@@ -842,6 +843,8 @@ nm4 = fl_cell("nmnist", "32-64", 4)
 assert set(nm4["schemes"]["equal_mass"]["occupied_bins"]["values"]) == {2}
 put("emBinsNmFour", "2", SRC_FL + " N-MNIST T=4: effective equal-mass bins, every seed (asserted)")
 put("emOccMinNmFour", thousands(nm4["schemes"]["equal_mass"]["min_occupancy"]), SRC_FL + " N-MNIST T=4: smallest equal-mass bin")
+_nm4_runs = [r for r in fl["runs"] if r["dataset"] == "nmnist" and r["channels"] == "32-64" and r["timesteps"] == 4]
+put("emOccMinMaxNmFour", thousands(max(r["schemes"]["equal_mass"]["min_occupancy"] for r in _nm4_runs)), SRC_FL + " runs, N-MNIST T=4: largest smaller-bin size over seeds")
 put("emOccMaxNmFour", thousands(nm4["schemes"]["equal_mass"]["max_occupancy"]), SRC_FL + " N-MNIST T=4: largest equal-mass bin")
 put("emBinsMinNcTwo", str(int(min(nc2["schemes"]["equal_mass"]["occupied_bins"]["values"]))), SRC_FL + " N-Caltech101 T=2: fewest effective equal-mass bins")
 put("emBinsMaxNcTwo", str(int(max(nc2["schemes"]["equal_mass"]["occupied_bins"]["values"]))), SRC_FL + " N-Caltech101 T=2: most effective equal-mass bins")
@@ -883,6 +886,15 @@ for g, label in GROUPS.items():
 tn = [t for t in cm_["tost"] if t["dataset"] == "nmnist"]
 put("tostNmWidest", f(max(max(abs(t["ci90"][0]), abs(t["ci90"][1])) for t in tn)),
     SRC_CM + " tost, N-MNIST: largest |endpoint| of any 90% interval")
+put("tostNmWidestBasic", f(max(max(abs(t["ci90_basic"][0]), abs(t["ci90_basic"][1])) for t in tn)),
+    SRC_CM + " tost, N-MNIST: largest |endpoint| of any basic 90% interval (A8)")
+_em4 = [t["difference"] for t in tn if t["estimator"] == "equal_mass" and t["timesteps"] == 4]
+assert len(_em4) == 3 and all(d < 0 for d in _em4)   # isotonic ahead in all three seeds
+put("emFourIsoMin", f(min(abs(d) for d in _em4)), SRC_CM + " tost, N-MNIST T=4 equal-mass: smallest isotonic advantage")
+put("emFourIsoMax", f(max(abs(d) for d in _em4)), SRC_CM + " tost, N-MNIST T=4 equal-mass: largest isotonic advantage")
+_fail_strict = sorted((t["timesteps"], t["seed"]) for t in tn if t["estimator"] == "equal_mass" and not t["equivalent_0.005"])
+assert _fail_strict == [(4, 0), (4, 1), (4, 2)], _fail_strict   # the runs not equivalent within 0.005 are the T = 4 equal-mass runs
+
 put("tostTests", str(len(cm_["tost"]) * len(DELTA)), SRC_CM + " tost entries x margins")
 put("tostRunsAll", str(len({t["name"] for t in cm_["tost"]})), SRC_CM + " tost runs")
 # the published paired verdicts are reproduced (asserted in scripts/calibration_metrics.py)
@@ -919,6 +931,8 @@ put("ewExclNm", str(len(_ex["equal_width"])), SRC_CM + " tost, N-MNIST: equal-wi
 put("emExclNm", str(len(_ex["equal_mass"])), SRC_CM + " tost, N-MNIST: equal-mass 95% intervals excluding zero")
 assert all(t["difference"] < 0 for t in _ex["equal_mass"])   # "all favour isotonic regression"
 put("cmRows", str(len(cm_["rows"])), SRC_CM + " rows (run and arm)")
+assert all(r["equal_mass_bins"] == 1 for r in cm_["rows"] if r["dataset"] == "nmnist" and r["n_blocks"] == 2
+           and r["readout"] == "count" and r["timesteps"] == 2)   # main.tex: one equal-mass bin for every arm at N-MNIST T = 2
 _all_records = [p_ for p_ in glob.glob(os.path.join(R, "*_record.json")) if "_converged_" not in p_]
 _missing = len(_all_records) - len({r["name"] for r in cm_["rows"]})
 assert _missing == len([p_ for p_ in _all_records if "_membrane_" in p_ or "_weighted-count_" in p_])
@@ -940,8 +954,14 @@ for key, ds in (("Nm", "nmnist"), ("Nc", "ncaltech101")):
     put(f"brier{key}TwoIso", f(st.mean(ib)), SRC_CM + f" rows, {ds} T=2 count, isotonic: top-label Brier, seed mean")
     put(f"ll{key}TwoTemp", f(st.mean(tl)), SRC_CM + f" rows, {ds} T=2 count, temperature: top-label log loss, seed mean")
     put(f"ll{key}TwoIso", f(st.mean(il)), SRC_CM + f" rows, {ds} T=2 count, isotonic: top-label log loss, seed mean")
-    # main.tex: isotonic regression has the lower Brier score and log loss in every seed at T = 2
-    assert all(i < t for i, t in zip(ib, tb)) and all(i < t for i, t in zip(il, tl)), key
+    # main.tex: isotonic regression has the lower Brier score in every seed at T = 2 (log loss is not used to rank)
+    assert all(i < t for i, t in zip(ib, tb)), key
+# N-MNIST at T = 4 to 10: how often the top-label Brier score favours temperature scaling
+_bd = [_arm(f"nmnist_T{T}_seed{sd}", "isotonic-top-label")["brier_top_label"] - _arm(f"nmnist_T{T}_seed{sd}", "temperature")["brier_top_label"]
+       for T in (4, 6, 8, 10) for sd in (0, 1, 2)]
+put("brierTempBetterNmHigh", str(sum(d > 0 for d in _bd)), SRC_CM + " rows, nmnist two blocks count, T=4 to 10: runs where temperature scaling has the lower top-label Brier score")
+put("brierRunsNmHigh", str(len(_bd)), SRC_CM + " rows, nmnist two blocks count, T=4 to 10: runs compared")
+put("brierDiffNmHighMax", f(max(abs(d) for d in _bd)), SRC_CM + " rows, nmnist two blocks count, T=4 to 10: largest |isotonic - temperature| top-label Brier")
 put("emSmallBinRows", str(sum(r["equal_mass_min_occupancy"] < 30 for r in cm_["rows"])), SRC_CM + " rows with an equal-mass bin of fewer than 30 samples")
 put("emOneSampleRows", str(sum(r["equal_mass_min_occupancy"] == 1 for r in cm_["rows"])), SRC_CM + " rows with an equal-mass bin of one sample")
 assert all(r["n_penalised_top_label"] == 0 for r in cm_["rows"] if r["arm"] != "isotonic-top-label")
@@ -956,6 +976,15 @@ _above = [next(r for r in cm_["rows"] if r["name"] == f"nmnist_T{T}_seed{sd}" an
           for T in (6, 10) for sd in (0, 1, 2)]
 put("aurocCountAboveSixTen", str(sum(_above)), SRC_CM + " rows, nmnist T=6 and 10: seeds where the count readout's AUROC exceeds the accumulator's")
 put("aurocSeedsSixTen", str(len(_above)), SRC_CM + " rows, nmnist T=6 and 10: seeds compared")
+from scipy.stats import t as _tdist
+for T, w in ((6, "Six"), (10, "Ten")):
+    _dT = [next(r for r in cm_["rows"] if r["name"] == f"nmnist_T{T}_seed{sd}" and r["arm"] == "uncalibrated")["auroc"]
+           - next(r for r in cm_["rows"] if r["name"] == f"nmnist_T{T}_seed{sd}_accumulator" and r["arm"] == "uncalibrated")["auroc"]
+           for sd in (0, 1, 2)]
+    _hw = _tdist.ppf(0.975, 2) * st.stdev(_dT) / 3 ** 0.5
+    put(f"aurocDiff{w}", f(st.mean(_dT), sign=True), SRC_CM + f" rows, nmnist two blocks T={T}: count minus accumulator AUROC, seed mean")
+    put(f"aurocDiff{w}TLo", f(st.mean(_dT) - _hw, sign=True), SRC_CM + f" rows, nmnist two blocks T={T}: t-interval over 3 seeds, lower")
+    put(f"aurocDiff{w}THi", f(st.mean(_dT) + _hw, sign=True), SRC_CM + f" rows, nmnist two blocks T={T}: t-interval over 3 seeds, upper")
 assert all(_above)   # main.tex: "the higher in all ... seeds"
 
 # ------------------------------------------------------------------ A4: headline intervals and scores

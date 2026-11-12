@@ -23,7 +23,7 @@ for sources whose confidences cannot be trusted is to calibrate each one and the
 combine~\citep{brummer2007fusion,kumar2022calibrated}. % [LIT] brummer2007fusion, Section IV; kumar2022calibrated, Proposition 4.1
 
 Call a count readout \emph{saturated} on an input when its winning class fired at all $T$
-steps and no other class fired. Its output is then the one vector that attains the ceiling of
+steps and no other class fired. Its output is then the one vector that attains the cap of
 Equation~\eqref{eq:ceiling}, the same for every saturated input and every network, up to which
 class wins. Let $S$ be the event that both inputs saturate, and $a_{k,S}$ the accuracy of
 input $k$ on $S$.
@@ -36,7 +36,7 @@ input $k$ on $S$.
   confidences have all saturated towards one, where averaging ``is identical to the majority
   vote''~\citep{ju2018relative}. % [LIT] ju2018relative, Section 4.4.4
 \item[(b)] Against a rule that sides with input A on every disagreement in $S$, such a rule
-  loses the amount in Equation~\eqref{eq:fusioncost}. This is an identity: where the two agree
+  loses the amount in Equation~\eqref{eq:fusioncost}, as an identity, because where the two agree
   they are right or wrong together, so the difference in their accuracies on $S$ is carried by
   the disagreements, and the coin gives up half of it.
 \item[(c)] A scale $s_k$ on input $k$'s counts with
@@ -63,7 +63,7 @@ predictions were recorded before the run (Table~\ref{tab:predictions}).
 \label{app:fusionresults}
 
 At $T=2$ calibrating each input first gives $\delta$ of \fuTwoDeltaMin{} to \fuTwoDeltaMax{} % src: results/fusion_experiment.json delta
-across seeds, with the lower end of every interval at or above \fuTwoCiLowMin. The gain is % src: results/fusion_experiment.json delta_ci
+across seeds, with the lower ends of the intervals from \fuTwoCiLowMin{} to \fuTwoCiLowMax. The gain is % src: results/fusion_experiment.json delta_ci
 small in absolute terms because both inputs are accurate on N-MNIST and the raw product rule
 already beats either alone; in relative terms it takes the fused error from \fuTwoErrZero\% to % src: results/fusion_experiment.json acc_r0, acc_r1
 \fuTwoErrOne\%. The saturated pairs contribute \fuCountTwoDeltaOnS{} of $\delta$, % src: results/fusion_experiment.json delta_on_s
@@ -135,11 +135,12 @@ accumulator & 10 & \fuAccumTenAccA & \fuAccumTenAccB & \fuAccumTenRZero & \fuAcc
 Two readings follow, and neither is a measurement. First, a fusion weight computed from an
 input's own output is a function of that output, so on $S$ it takes one value. Zhang et al.\
 and Cao et al.\ bound the generalisation error of dynamic fusion, and the bound improves on
-static fusion's when each modality's weight is negatively correlated with its
-loss~\citep{zhang2023provable,cao2024predictive}; % [LIT] zhang2023provable, Theorem 2; cao2024predictive, Theorem 3.1 and Corollary 3.2
+static fusion's when each modality's weight is negatively correlated with its own loss (and, for
+Cao et al., positively correlated with the other modalities'
+losses)~\citep{zhang2023provable,cao2024predictive}; % [LIT] zhang2023provable, Theorem 2; cao2024predictive, Theorem 3.1, Corollaries 3.2 and 3.3
 Zhang et al.\ note that a constant weight has zero covariance with every loss. Restricted to
 $S$, an output-derived weight is such a constant. On $S$ its covariance with each loss is
-therefore zero, so the negative correlation their bound rewards is absent, and whatever advantage
+therefore zero, so the correlations their bounds reward are absent, and whatever advantage
 remains must come from pairs outside $S$. Their theorems are not contradicted, and methods that predict weights
 from features instead of outputs are not affected.
 
@@ -147,7 +148,7 @@ Second, Ma et al.\ argue that a
 nonlinearity which saturates at high firing rates costs little, since uncertainty is small
 there and ``there is little to be gained from exact inference''~\citep{ma2006bayesian}; Beck et % [LIT] ma2006bayesian, Discussion, p. 1436
 al.\ propose inhibition to avoid saturation and give no cost for it~\citep{beck2008probabilistic}. % [LIT] beck2008probabilistic
-Their setting is a population code for a continuous variable, not this readout. For a count
+Their setting is a population code for a continuous variable. For a count
 readout Equation~\eqref{eq:fusioncost} names the case in which saturation is not cheap: when
 two saturated sources of unequal reliability disagree. Nothing is claimed here about
 perception or behaviour.
@@ -155,4 +156,4 @@ perception or behaviour.
 Calibrating each input restores the weighting between them and no more. Every saturated
 input still reports one confidence, whatever its true posterior, which is the grouping loss
 that Perez-Lebel et al.\ show calibration does not remove~\citep{perezlebel2023beyond}. % [LIT] perezlebel2023beyond
-Part (c) yields the best rule that knows two accuracies, not the Bayes rule.
+Part (c) yields the best rule that knows only the two accuracies.

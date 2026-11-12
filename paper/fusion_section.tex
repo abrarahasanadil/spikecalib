@@ -8,7 +8,7 @@
 This section is an exploratory pilot with synthetic degradation of a single sensor, and it is not
 evidence about real multimodal fusion. It uses one dataset, N-MNIST. Its second input is a
 different test sample of the same class, read by the same network after each event is removed
-with probability \fuRate. That is a degraded copy from the same sensor, not a second modality. No % src: results/fusion_dropout_rate.json
+with probability \fuRate. That is a degraded copy from the same sensor. No % src: results/fusion_dropout_rate.json
 fusion network is trained, there is no transformation between the two inputs' reference frames,
 and the fused decision is only scored.
 
@@ -28,7 +28,7 @@ with input A, the clean sample, over input B, the degraded one, on every disagre
 \end{equation}
 in accuracy, $a_{k,S}$ being input $k$'s accuracy on $S$, and a scale with
 $s_kT=\ln\big((C-1)a_k/(1-a_k)\big)$ on each input's counts restores the weighting. This is a
-corollary of known theory, not a new result; Appendix~\ref{app:fusion} derives it.
+corollary of known theory, which Appendix~\ref{app:fusion} derives.
 
 \paragraph{Setup and result.}
 R0 is the product rule on the raw softmax outputs, R1 the product rule after temperature scaling
@@ -77,7 +77,7 @@ Eq.~\eqref{eq:fusioncost} & \fuCountTwoPredicted & n/a \\ % src: results/fusion_
 \end{tabular}
 \end{table}
 
-\begin{figure}[t]
+\begin{figure}[!htb]
 \centering
 \includegraphics{figures/fig-fusion.pdf} % drawn by spikecalib/paper_figures.py figure_fusion from results/fusion_experiment.json
 \caption{The exploratory pilot: $\delta$, the fused accuracy gained by calibrating each input

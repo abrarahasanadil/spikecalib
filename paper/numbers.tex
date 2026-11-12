@@ -802,6 +802,7 @@
 \newcommand{\emOccNmTwo}{10{,}000}% results/ece_floor.json N-MNIST T=2: the one bin's occupancy
 \newcommand{\emBinsNmFour}{2}% results/ece_floor.json N-MNIST T=4: effective equal-mass bins, every seed (asserted)
 \newcommand{\emOccMinNmFour}{1{,}126}% results/ece_floor.json N-MNIST T=4: smallest equal-mass bin
+\newcommand{\emOccMinMaxNmFour}{1{,}461}% results/ece_floor.json runs, N-MNIST T=4: largest smaller-bin size over seeds
 \newcommand{\emOccMaxNmFour}{8{,}874}% results/ece_floor.json N-MNIST T=4: largest equal-mass bin
 \newcommand{\emBinsMinNcTwo}{14}% results/ece_floor.json N-Caltech101 T=2: fewest effective equal-mass bins
 \newcommand{\emBinsMaxNcTwo}{14}% results/ece_floor.json N-Caltech101 T=2: most effective equal-mass bins
@@ -862,6 +863,9 @@
 \newcommand{\tostNcScaledMWide}{2}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, equivalent at 0.02 under equal_mass
 \newcommand{\tostNcScaledBothWide}{1}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, equivalent at 0.02 under both
 \newcommand{\tostNmWidest}{0.0064}% results/calibration_metrics.json tost, N-MNIST: largest |endpoint| of any 90% interval
+\newcommand{\tostNmWidestBasic}{0.0088}% results/calibration_metrics.json tost, N-MNIST: largest |endpoint| of any basic 90% interval (A8)
+\newcommand{\emFourIsoMin}{0.0031}% results/calibration_metrics.json tost, N-MNIST T=4 equal-mass: smallest isotonic advantage
+\newcommand{\emFourIsoMax}{0.0061}% results/calibration_metrics.json tost, N-MNIST T=4 equal-mass: largest isotonic advantage
 \newcommand{\tostTests}{234}% results/calibration_metrics.json tost entries x margins
 \newcommand{\tostRunsAll}{39}% results/calibration_metrics.json tost runs
 \newcommand{\tostNmDifferBasic}{2}% results/calibration_metrics.json tost_summary, nmnist count, differ under the registered rule with basic intervals (A8)
@@ -908,12 +912,21 @@
 \newcommand{\brierNcTwoIso}{0.1404}% results/calibration_metrics.json rows, ncaltech101 T=2 count, isotonic: top-label Brier, seed mean
 \newcommand{\llNcTwoTemp}{0.5693}% results/calibration_metrics.json rows, ncaltech101 T=2 count, temperature: top-label log loss, seed mean
 \newcommand{\llNcTwoIso}{0.4882}% results/calibration_metrics.json rows, ncaltech101 T=2 count, isotonic: top-label log loss, seed mean
+\newcommand{\brierTempBetterNmHigh}{10}% results/calibration_metrics.json rows, nmnist two blocks count, T=4 to 10: runs where temperature scaling has the lower top-label Brier score
+\newcommand{\brierRunsNmHigh}{12}% results/calibration_metrics.json rows, nmnist two blocks count, T=4 to 10: runs compared
+\newcommand{\brierDiffNmHighMax}{0.0006}% results/calibration_metrics.json rows, nmnist two blocks count, T=4 to 10: largest |isotonic - temperature| top-label Brier
 \newcommand{\emSmallBinRows}{46}% results/calibration_metrics.json rows with an equal-mass bin of fewer than 30 samples
 \newcommand{\emOneSampleRows}{41}% results/calibration_metrics.json rows with an equal-mass bin of one sample
 \newcommand{\topBinAccNmTwoMin}{95.1}% results/calibration_metrics.json rows, nmnist T=2 accumulator uncalibrated: share_top_equal_width_bin, smallest seed, per cent (A8)
 \newcommand{\topBinAccNmTwoMax}{96.0}% results/calibration_metrics.json rows, nmnist T=2 accumulator uncalibrated: share_top_equal_width_bin, largest seed, per cent (A8)
 \newcommand{\aurocCountAboveSixTen}{6}% results/calibration_metrics.json rows, nmnist T=6 and 10: seeds where the count readout's AUROC exceeds the accumulator's
 \newcommand{\aurocSeedsSixTen}{6}% results/calibration_metrics.json rows, nmnist T=6 and 10: seeds compared
+\newcommand{\aurocDiffSix}{$+$0.0061}% results/calibration_metrics.json rows, nmnist two blocks T=6: count minus accumulator AUROC, seed mean
+\newcommand{\aurocDiffSixTLo}{$-$0.0056}% results/calibration_metrics.json rows, nmnist two blocks T=6: t-interval over 3 seeds, lower
+\newcommand{\aurocDiffSixTHi}{$+$0.0179}% results/calibration_metrics.json rows, nmnist two blocks T=6: t-interval over 3 seeds, upper
+\newcommand{\aurocDiffTen}{$+$0.0035}% results/calibration_metrics.json rows, nmnist two blocks T=10: count minus accumulator AUROC, seed mean
+\newcommand{\aurocDiffTenTLo}{$+$0.0012}% results/calibration_metrics.json rows, nmnist two blocks T=10: t-interval over 3 seeds, lower
+\newcommand{\aurocDiffTenTHi}{$+$0.0057}% results/calibration_metrics.json rows, nmnist two blocks T=10: t-interval over 3 seeds, upper
 \newcommand{\hdNmTwoUncW}{0.5386}% results/calibration_metrics.json headline.ece, nmnist T=2 uncalibrated equal_width, seed mean
 \newcommand{\hdNmTwoUncWSd}{0.0005}% results/calibration_metrics.json headline.ece, nmnist T=2 uncalibrated equal_width, sd over seeds
 \newcommand{\hdNmTwoUncWLo}{0.5374}% results/calibration_metrics.json headline.ece, nmnist T=2 uncalibrated equal_width, 95% bootstrap interval of the seed mean
@@ -1370,32 +1383,32 @@
 \newcommand{\archNmTwoBTwo}{$64\times8\times8$; 18{,}560}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNmTwoBThree}{n/a}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNmTwoBFour}{n/a}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
-\newcommand{\archNmTwoHid}{4{,}096 to 256; 1{,}049{,}088}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
-\newcommand{\archNmTwoOut}{256 to 10; 2{,}580}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
+\newcommand{\archNmTwoHid}{4{,}096 $\to$ 256; 1{,}049{,}088}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
+\newcommand{\archNmTwoOut}{256 $\to$ 10; 2{,}580}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNmTwoTotal}{1{,}070{,}868}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNmFourIn}{$2\times34\times34$}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNmFourBOne}{$32\times17\times17$; 640}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNmFourBTwo}{$64\times8\times8$; 18{,}560}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNmFourBThree}{$128\times4\times4$; 73{,}984}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNmFourBFour}{$128\times2\times2$; 147{,}712}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
-\newcommand{\archNmFourHid}{512 to 256; 131{,}584}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
-\newcommand{\archNmFourOut}{256 to 10; 2{,}580}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
+\newcommand{\archNmFourHid}{512 $\to$ 256; 131{,}584}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
+\newcommand{\archNmFourOut}{256 $\to$ 10; 2{,}580}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNmFourTotal}{375{,}060}% [DERIVED] arithmetic in paper/make_numbers.py: nmnist, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNcTwoIn}{$2\times45\times60$}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNcTwoBOne}{$32\times22\times30$; 640}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNcTwoBTwo}{$64\times11\times15$; 18{,}560}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNcTwoBThree}{n/a}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNcTwoBFour}{n/a}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
-\newcommand{\archNcTwoHid}{10{,}560 to 256; 2{,}703{,}872}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
-\newcommand{\archNcTwoOut}{256 to 101; 26{,}058}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
+\newcommand{\archNcTwoHid}{10{,}560 $\to$ 256; 2{,}703{,}872}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
+\newcommand{\archNcTwoOut}{256 $\to$ 101; 26{,}058}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNcTwoTotal}{2{,}749{,}130}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 2 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNcFourIn}{$2\times45\times60$}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNcFourBOne}{$32\times22\times30$; 640}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNcFourBTwo}{$64\times11\times15$; 18{,}560}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNcFourBThree}{$128\times5\times7$; 73{,}984}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNcFourBFour}{$128\times2\times3$; 147{,}712}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
-\newcommand{\archNcFourHid}{768 to 256; 197{,}120}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
-\newcommand{\archNcFourOut}{256 to 101; 26{,}058}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
+\newcommand{\archNcFourHid}{768 $\to$ 256; 197{,}120}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
+\newcommand{\archNcFourOut}{256 $\to$ 101; 26{,}058}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\archNcFourTotal}{464{,}074}% [DERIVED] arithmetic in paper/make_numbers.py: ncaltech101, 4 blocks; total asserted equal to results/arch_matched.json n_parameters
 \newcommand{\gapCalNmTwoUnc}{$-$0.5386}% results/calibration_metrics.json rows, nmnist count T=2 uncalibrated: mean confidence minus accuracy, seed mean
 \newcommand{\gapCalNmTwoTemp}{$+$0.0005}% results/calibration_metrics.json rows, nmnist count T=2 temperature: mean confidence minus accuracy, seed mean
