@@ -2,7 +2,7 @@
 % in one page; this holds its theory, derivation, setup and remaining results. Every measured
 % value is a macro from numbers.tex, read from results/fusion_experiment.json.
 % =========================================================================================
-\section{The fusion pilot in full}
+\section{The exploratory fusion pilot in full}
 \label{app:fusion}
 
 \subsection{The theory applied, and the corollary}
@@ -108,7 +108,7 @@ pairings. A and B are the single-input accuracies; R0, R1 and R2 the fused accur
 three rules; $P(S)$ the share of pairs on which both inputs saturate; ``on $S$'' the part of
 $\delta$ from those pairs and ``Eq.~\eqref{eq:fusioncost}'' its predicted value; ``excl.'' the
 seeds whose interval on $\delta$ excludes zero. An accumulator has no counts, so nothing
-saturates. The rows for $T=2$ repeat Table~\ref{tab:fusion}.}
+saturates and those columns do not apply (n/a). The rows for $T=2$ repeat Table~\ref{tab:fusion}.}
 \label{tab:fusionhigh}
 \small
 \setlength{\tabcolsep}{4pt}
@@ -122,9 +122,9 @@ count & 6  & \fuCountSixAccA   & \fuCountSixAccB   & \fuCountSixRZero   & \fuCou
 count & 8  & \fuCountEightAccA & \fuCountEightAccB & \fuCountEightRZero & \fuCountEightROne & \fuCountEightRTwo & \fuCountEightPS & \fuCountEightDelta & \fuCountEightDeltaOnS & \fuCountEightPredicted & \fuCountEightExcl \\ % src: results/fusion_experiment.json
 count & 10 & \fuCountTenAccA   & \fuCountTenAccB   & \fuCountTenRZero   & \fuCountTenROne   & \fuCountTenRTwo   & \fuCountTenPS   & \fuCountTenDelta   & \fuCountTenDeltaOnS   & \fuCountTenPredicted   & \fuCountTenExcl   \\ % src: results/fusion_experiment.json
 \midrule
-accumulator & 2  & \fuAccumTwoAccA & \fuAccumTwoAccB & \fuAccumTwoRZero & \fuAccumTwoROne & \fuAccumTwoRTwo & -- & \fuAccumTwoDelta & -- & -- & \fuAccumTwoExcl \\ % src: results/fusion_experiment.json
-accumulator & 6  & \fuAccumSixAccA & \fuAccumSixAccB & \fuAccumSixRZero & \fuAccumSixROne & \fuAccumSixRTwo & -- & \fuAccumSixDelta & -- & -- & \fuAccumSixExcl \\ % src: results/fusion_experiment.json
-accumulator & 10 & \fuAccumTenAccA & \fuAccumTenAccB & \fuAccumTenRZero & \fuAccumTenROne & \fuAccumTenRTwo & -- & \fuAccumTenDelta & -- & -- & \fuAccumTenExcl \\ % src: results/fusion_experiment.json
+accumulator & 2  & \fuAccumTwoAccA & \fuAccumTwoAccB & \fuAccumTwoRZero & \fuAccumTwoROne & \fuAccumTwoRTwo & n/a & \fuAccumTwoDelta & n/a & n/a & \fuAccumTwoExcl \\ % src: results/fusion_experiment.json
+accumulator & 6  & \fuAccumSixAccA & \fuAccumSixAccB & \fuAccumSixRZero & \fuAccumSixROne & \fuAccumSixRTwo & n/a & \fuAccumSixDelta & n/a & n/a & \fuAccumSixExcl \\ % src: results/fusion_experiment.json
+accumulator & 10 & \fuAccumTenAccA & \fuAccumTenAccB & \fuAccumTenRZero & \fuAccumTenROne & \fuAccumTenRTwo & n/a & \fuAccumTenDelta & n/a & n/a & \fuAccumTenExcl \\ % src: results/fusion_experiment.json
 \bottomrule
 \end{tabular}
 \end{table}

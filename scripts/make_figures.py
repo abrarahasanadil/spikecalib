@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regenerate every figure for the site, as SVG and PNG.
+"""Regenerate every figure: the paper's, as vector PDF, and the site's, as SVG and PNG.
 
 Reads only cached artifacts -- ``results/sweep_nmnist.csv``, ``results/readout_stats.json``
 and, for two figures, their own caches -- so redrawing a plot never re-runs a model. Each
@@ -63,6 +63,17 @@ def main() -> int:
         names = ", ".join(os.path.basename(p) for p in paths)
         print(f"  {fn.__name__:<26} -> {names}")
     print(f"\n  wrote {drawn * 2} files to {os.path.relpath(args.out, REPO_ROOT)}")
+
+    # The paper's figures: vector PDF into paper/figures/, PNG beside the site's figures.
+    from spikecalib.paper_figures import PAPER_FIGURES
+    pdf_dir = os.path.join(REPO_ROOT, "paper", "figures")
+    for fn in PAPER_FIGURES:
+        try:
+            paths = fn(os.path.join(REPO_ROOT, "results"), pdf_dir, args.out)
+        except FileNotFoundError as exc:
+            print(f"  {fn.__name__:<26} -> skipped ({exc.filename} missing)")
+            continue
+        print(f"  {fn.__name__:<26} -> " + ", ".join(os.path.relpath(p, REPO_ROOT) for p in paths))
     return 0
 
 
