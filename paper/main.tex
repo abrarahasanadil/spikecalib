@@ -22,9 +22,10 @@
 
 \title{Counting Spikes Caps Confidence:\\
 The Calibration Cost of a Known Softmax Bound in Low-Timestep Spiking Networks}
-\author{Mohammed Abrar Ahasan Chowdhury\\[2pt]
-  \small ORCID \href{https://orcid.org/0009-0006-9273-6593}{0009-0006-9273-6593}\\
-  \small Independent researcher, Liverpool, United Kingdom\quad \texttt{abrarahasanadil@gmail.com}}
+\author{Mohammed Abrar Ahasan Chowdhury\textsuperscript{1}, Md Mahmudul Hasan\textsuperscript{2} and Pedro Machado\textsuperscript{3}\\[4pt]
+  \small \textsuperscript{1}Independent researcher, Liverpool, United Kingdom; ORCID \href{https://orcid.org/0009-0006-9273-6593}{0009-0006-9273-6593}; \texttt{abrarahasanadil@gmail.com}\\
+  \small \textsuperscript{2}ORCID \href{https://orcid.org/0000-0003-2543-3112}{0000-0003-2543-3112}; \texttt{mahmudul.05@gmail.com}\\
+  \small \textsuperscript{3}Nottingham Trent University, United Kingdom; ORCID \href{https://orcid.org/0000-0003-1760-3871}{0000-0003-1760-3871}; \texttt{pedro.machado@ntu.ac.uk}}
 \date{}
 
 \begin{document}
@@ -95,7 +96,7 @@ The contributions are six.
   underconfidence, and lifted far above accuracy, by an unbounded readout or by a learned
   scale, it leaves overconfidence on the harder dataset (Section~\ref{sec:readouts}).
 \item A comparison of temperature scaling with isotonic regression on spiking networks, to the
-  author's knowledge the first, with its predictions recorded in advance. The two tie on
+  authors' knowledge the first, with its predictions recorded in advance. The two tie on
   N-MNIST, isotonic regression is better on N-Caltech101 where the cap binds, and scarce
   calibration data leans towards temperature scaling (Section~\ref{sec:calibrators}).
 \item Resolution. A count readout emits at most $\binom{T+C-1}{C-1}$ distinct confidence values
@@ -318,7 +319,7 @@ Models are trained with Adam at learning rate $\learningRate$, with batch size \
 N-MNIST and \batchSizeNc{} on N-Caltech101, % src: results/ncaltech101_T2_seed0_record.json batch_size
 for at most \epochCap{} epochs, with early stopping after \patienceEpochs{} epochs without % src: results/sweep_nmnist.csv epochs_requested; results/*_record.json
 improvement in validation accuracy. All \recordsAll{} training records stopped early, after % src: results/*_record.json early_stopped, epochs_run
-\epochsAllMin{} to \epochsAllMax{} epochs, and the calibration sweep's runs took \epochsMin--\epochsMax{} % src: results/*_record.json epochs_run; results/sweep_nmnist.csv epochs_run
+\epochsAllMin{} to \epochsAllMax{} epochs, and the calibration sweep's runs took \epochsMin{} to \epochsMax{} % src: results/*_record.json epochs_run; results/sweep_nmnist.csv epochs_run
 epochs. Runs made before the sweep, to explore settings and to test the training harness, reached
 their epoch caps without stopping; none was kept, and no result uses them. Each configuration is trained at \nSeeds{} seeds, \modelsTotal{} % src: results/sweep_nmnist.csv; results/*_weights.pt
 models in all: \modelsNm{} on N-MNIST and \modelsNc{} on N-Caltech101. % src: results/*_weights.pt
@@ -369,7 +370,7 @@ and a multiply-accumulate $E_{\mathrm{MAC}}=4.6$\,pJ, which is not a figure from
 but the convention of adding its 3.7\,pJ multiplication to the addition. The source calls its % [LIT] horowitz2014energy, Figure 1.1.9
 costs rough, so this is a proxy for comparing designs, not a measurement of power. The first
 layer receives real-valued frames and performs multiply-accumulates; in the N-MNIST sweep it
-accounts for \encoderMin--\encoderMax\% of the modelled energy. % src: results/sweep_nmnist.csv encoder_energy_fraction
+accounts for \encoderMin\% to \encoderMax\% of the modelled energy. % src: results/sweep_nmnist.csv encoder_energy_fraction
 
 % =========================================================================================
 \section{Results}
@@ -845,8 +846,8 @@ from those artifacts by \texttt{paper/make\_numbers.py}. The seed-0 N-MNIST spli
 fingerprint \texttt{\splitFingerprint}. % src: results/sweep_nmnist.csv split_fingerprint
 
 \section*{Acknowledgements}
-AI assistance was used in preparing this work. The author verified all results and takes full
-responsibility for the content. Every citation was checked against its primary document or,
+AI assistance was used in preparing this work. The first author verified all results, and the
+authors take full responsibility for the content. Every citation was checked against its primary document or,
 where that was inaccessible, against a verified secondary source, as recorded in SOURCES.md.
 
 \bibliographystyle{plainnat}
