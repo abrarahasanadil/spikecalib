@@ -67,18 +67,17 @@ across seeds, with the lower end of every interval at or above \fuTwoCiLowMin. T
 small in absolute terms because both inputs are accurate on N-MNIST and the raw product rule
 already beats either alone; in relative terms it takes the fused error from \fuTwoErrZero\% to % src: results/fusion_experiment.json acc_r0, acc_r1
 \fuTwoErrOne\%. The saturated pairs contribute \fuCountTwoDeltaOnS{} of $\delta$, % src: results/fusion_experiment.json delta_on_s
-\fuTwoShareOnS\% of it, and Equation~\eqref{eq:fusioncost} gives \fuCountTwoPredicted{} from $P(S)$ % src: results/fusion_experiment.json predicted_on_s
-and the two accuracies on $S$, \fuTwoAccAOnS{} and \fuTwoAccBOnS. The identity describes R1 % src: results/fusion_experiment.json accuracy_a_on_s, accuracy_b_on_s
+\fuTwoShareOnS\% of it. Equation~\eqref{eq:fusioncost} gives \fuCountTwoPredicted{} from $P(S)$ % src: results/fusion_experiment.json predicted_on_s
+and the two accuracies on $S$ (\fuTwoAccAOnS{} and \fuTwoAccBOnS). The identity describes R1 % src: results/fusion_experiment.json accuracy_a_on_s, accuracy_b_on_s
 only where temperature scaling gives the clean input the larger scale, which it did in all
 \fuTwoScaleOrderRuns{} runs at $T=2$ (temperatures \fuTwoTempA{} against \fuTwoTempB). The rest % src: results/fusion_experiment.json r1_gives_a_the_larger_scale, temperature_a, temperature_b
 of $\delta$, \fuTwoDeltaOffS, comes from pairs outside $S$, which the corollary does not % src: results/fusion_experiment.json delta_off_s
 describe. The fused confidence of the raw product rule has an ECE of \fuTwoEceRZeroW{} with
-equal-width and \fuTwoEceRZeroM{} with equal-mass bins, and after per-input calibration % src: results/fusion_experiment.json ece_r0_ew, ece_r0_em
-\fuTwoEceROneW{} and \fuTwoEceROneM. % src: results/fusion_experiment.json ece_r1_ew, ece_r1_em
+equal-width and \fuTwoEceRZeroM{} with equal-mass bins. After per-input calibration these fall % src: results/fusion_experiment.json ece_r0_ew, ece_r0_em
+to \fuTwoEceROneW{} and \fuTwoEceROneM. % src: results/fusion_experiment.json ece_r1_ew, ece_r1_em
 
-From $T=4$ the mean of $\delta$ is \fuCountFourDeltaFine, \fuCountSixDeltaFine, % src: results/fusion_experiment.json predictions.14 mean_delta_by_t
-\fuCountEightDeltaFine{} and \fuCountTenDeltaFine{} at $T=4$, 6, 8 and 10, and the interval % src: results/fusion_experiment.json predictions.14 mean_delta_by_t
-includes zero in all \fuHighRuns{} of those runs (Table~\ref{tab:fusionhigh}). Saturation is % src: results/fusion_experiment.json delta_ci
+From $T=4$ the means of $\delta$ are indistinguishable from zero (Table~\ref{tab:fusionhigh}), % src: results/fusion_experiment.json predictions.14 mean_delta_by_t
+and the interval includes zero in all \fuHighRuns{} of those runs. % src: results/fusion_experiment.json delta_ci Saturation is % src: results/fusion_experiment.json delta_ci
 still common at $T=4$, where $P(S)$ is \fuCountFourPS, but two saturated inputs almost never % src: results/fusion_experiment.json p_s
 disagree there: the joint probability falls from \fuTwoPSDisagree{} at $T=2$ to % src: results/fusion_experiment.json p_s_and_disagree
 \fuFourPSDisagree. Prediction 14 required the mean to fall strictly through $T=2$, 4 and 6 and % src: results/fusion_experiment.json p_s_and_disagree
@@ -86,9 +85,9 @@ to be lower still at $T=8$ and 10. The means at $T=6$ and $T=10$ are equal, so i
 \verdictFourteen; its other clause, intervals including zero at $T=8$ and 10, was met. The % src: results/fusion_experiment.json predictions.14
 prediction asked for an ordering among values that are indistinguishable from zero. For the
 accumulator, which has no cap, $\delta$ lies between \fuAccumDeltaMin{} and \fuAccumDeltaMax{} % src: results/fusion_experiment.json delta, accumulator
-in every run, but in \fuAccumExcl{} of \fuAccumRuns{} runs its interval excludes zero, at % src: results/fusion_experiment.json predictions.15
-$T=\fuAccumExclT$ with $\delta$ of \fuAccumExclDelta{} (\fuAccumExclLo{} to \fuAccumExclHi): % src: results/fusion_experiment.json delta_ci, accumulator
-temperature scaling made that fusion slightly worse. Prediction 15 allowed none, and is
+in every run. Its interval excludes zero in \fuAccumExcl{} of \fuAccumRuns{} runs, at % src: results/fusion_experiment.json predictions.15
+$T=\fuAccumExclT$. There $\delta$ is \fuAccumExclDelta, with an interval of \fuAccumExclLo{} to % src: results/fusion_experiment.json delta_ci, accumulator
+\fuAccumExclHi, so temperature scaling made that fusion slightly worse. Prediction 15 allowed none, and is
 \verdictFifteen. % src: results/fusion_experiment.json predictions.15
 
 Two further observations qualify the picture. The reliability-weighted vote, R2, is not the

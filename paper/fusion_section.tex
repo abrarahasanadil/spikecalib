@@ -10,7 +10,7 @@ evidence about real multimodal fusion. It uses one dataset, N-MNIST. Its second 
 different test sample of the same class, read by the same network after each event is removed
 with probability \fuRate. That is a degraded copy from the same sensor, not a second modality. No % src: results/fusion_dropout_rate.json
 fusion network is trained, there is no transformation between the two inputs' reference frames,
-and the fused decision is scored, not acted on.
+and the fused decision is only scored.
 
 \paragraph{What it tests.}
 A source known only by its accuracy $a$ is weighted by $\ln\big((C-1)a/(1-a)\big)$ in
