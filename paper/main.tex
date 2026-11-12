@@ -6,6 +6,8 @@
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{longtable}
+\usepackage{placeins}
+\setlength{\LTcapwidth}{\textwidth}
 \usepackage{graphicx}
 \usepackage[numbers,sort&compress]{natbib}
 \setlength{\bibsep}{2pt}
@@ -829,7 +831,7 @@ A scale cannot change a prediction, since it multiplies every logit by the same 
 so any accuracy it gains comes through training. At $T=2$ on N-Caltech101 the scaled count
 lies between the count readout and the accumulator in accuracy (Table~\ref{tab:scaled}), recovering % src: results/scaled_count_experiment.json
 \shareRecovered\% of the gap between them. Prediction 7 asked for at least % src: results/scaled_count_experiment.json predictions.7
-half and \verdictSeven. Since most of that gap is lost at the readout at inference % src: results/scaled_count_experiment.json predictions.7
+half; it is \verdictSeven. Since most of that gap is lost at the readout at inference % src: results/scaled_count_experiment.json predictions.7
 (Section~\ref{sec:readouts}), a scale could not have closed it.
 
 \begin{table}[t]
@@ -906,7 +908,7 @@ of \csDrawsTotal{} draws and isotonic regression in \csIsoWinsHundred. Mean equa
 100 samples is \csTempWHundred{} for temperature scaling against \csIsoWHundred{} for isotonic % src: results/calibration_size_experiment.json rows
 regression. The direction is the one expected of a method with one parameter. The prediction
 asked for more, temperature scaling better in at least half the draws for two of three seeds; no
-seed reaches half, the largest being \csTempWinsMaxHundred{} of \csDraws, so it \verdictEleven. % src: results/calibration_size_experiment.json prediction_11
+seed reaches half, the largest being \csTempWinsMaxHundred{} of \csDraws, so the prediction is \verdictEleven. % src: results/calibration_size_experiment.json prediction_11
 
 \begin{figure}[t]
 \centering
@@ -942,7 +944,7 @@ $T$ & accuracy & w & m & w & m & w & m \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[t]
+\begin{figure}[p]
 \centering
 \includegraphics{figures/fig-reliability.pdf} % drawn by spikecalib/paper_figures.py figure_reliability from results/reliability_diagrams.json
 \caption{Reliability diagrams of the count readout (seed 0) before calibration, after temperature
@@ -968,7 +970,7 @@ they emit between \levelsObsMinNmTwo{} and \levelsObsMaxNmTwo{} values, of a pos
 was that on N-MNIST at $T=2$, where the count readout and the accumulator have the same accuracy,
 the count readout's resolution term would be below the accumulator's in all twelve comparisons
 across estimators, scales and calibrators. It is below in \nineBelow{} of \nineTotal{}, and the % src: results/resolution_experiment.json prediction_9
-prediction \verdictNine. Under equal-width binning the two resolutions are \resCountW{} and % src: results/resolution_experiment.json
+prediction is \verdictNine. Under equal-width binning the two resolutions are \resCountW{} and % src: results/resolution_experiment.json
 \resAccumW. Under equal-mass binning the count readout's confidences fall into a single bin, so its % src: results/resolution_experiment.json
 resolution there is zero by construction; \nineBelowDegenerate{} of the comparisons that go the % src: results/resolution_experiment.json
 predicted way are of this kind. Between \levelsObsMinNmTwo{} and \levelsObsMaxNmTwo{} confidence % src: results/resolution_experiment.json check rows
@@ -1002,6 +1004,7 @@ classifiers~\citep{fawcett2006roc}, at the price of a decision that is no longer
 input alone.
 
 \input{fusion_section}
+\FloatBarrier
 
 % =========================================================================================
 \section{Discussion}
@@ -1179,7 +1182,7 @@ underconfident as count, as the more interesting failure; it was a stated altern
 prediction, and is not listed. Of the \predictionsEarly{} early predictions and parts, % src: scripts/dashboard_summary.py early_predictions
 \predictionsEarlyHeld{} held and \predictionsEarlyFalsified{} failed. % src: scripts/dashboard_summary.py early_predictions
 
-\begin{table}[!ht]
+\begin{table}[!tp]
 \centering
 \caption{Earlier pre-registered predictions and their parts, with the condition each had to
 meet, what was measured, and the outcome recorded. ECE is equal-width unless stated. Means are
@@ -1208,7 +1211,7 @@ over three seeds.}
 \end{tabular}
 \end{table}
 
-\begin{table}[!ht]
+\begin{table}[!tp]
 \centering
 \caption{Predictions 6a to 15, recorded before the corresponding runs, with the condition each had
 to meet and what was measured. Gaps are mean confidence minus accuracy; ``not resolved'' and
@@ -1459,7 +1462,7 @@ events rarely reach; no more than \silentHiddenMax\% of hidden-layer neurons are
 seed. At $T=2$ on N-MNIST, \silentOutMax{} test sample in one run leaves every output neuron % src: results/spiking_activity.json output_patterns_T2_runs
 silent, which gives it the uniform confidence $1/C$.
 
-\begin{figure}[ht]
+\begin{figure}[!htbp]
 \centering
 \includegraphics{figures/fig-rasters.pdf} % drawn by spikecalib/paper_figures.py figure_rasters from results/spiking_activity.json
 \caption{Spike rasters of one test sample per setting (test index 0 of the seed-0 split, seed-0
@@ -1469,6 +1472,7 @@ with the true class shaded. At $T=2$ on N-Caltech101 several output neurons fire
 steps as the true class, which produces the tied counts of Section~\ref{sec:holds}.}
 \label{fig:rasters}
 \end{figure}
+\FloatBarrier
 
 \footnotesize
 \setlength{\tabcolsep}{4pt}
@@ -1612,6 +1616,7 @@ N-Caltech101. The curves of the real-valued readouts were computed from rounded 
 stopping.}
 \label{fig:valcurves}
 \end{figure}
+\FloatBarrier
 
 \section{Calibrators on N-Caltech101}
 \label{app:caltechcal}
