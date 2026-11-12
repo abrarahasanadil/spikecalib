@@ -91,6 +91,31 @@ def table(g: dict) -> list:
             for n, c, a, d in zip(g["n"], g["mean_confidence"], g["accuracy"], g["gap"])]
 
 
+def overconfident_group_tests(g: dict) -> dict:
+    """A8: are the overconfident distinct-value groups more than sampling noise?
+
+    Every group holds one confidence value ``c``. For each group with a negative gap, the exact
+    one-sided binomial p-value ``P(X <= k)``, ``X ~ Bin(n, c)``; and, over all groups, the
+    number of negative-gap groups expected if every group's accuracy equalled its confidence,
+    ``sum P(X < n c)``.
+    """
+    from scipy.stats import binom
+
+    n = np.asarray(g["n"], dtype=np.int64)
+    c = np.asarray(g["mean_confidence"], dtype=np.float64)
+    k = np.rint(np.asarray(g["accuracy"]) * n).astype(np.int64)
+    assert np.allclose(k / n, g["accuracy"], atol=1e-12)
+    over = np.asarray(g["gap"]) < 0
+    p = binom.cdf(k[over], n[over], c[over])
+    # P(X < n c) = P(X <= ceil(n c) - 1)
+    expected = float(np.sum(binom.cdf(np.ceil(n * c - 1e-12) - 1, n, c)))
+    return {"overconfident_min_p": float(p.min()) if p.size else None,
+            "overconfident_significant_005": int(np.sum(p < 0.05)),
+            "overconfident_median_size": float(np.median(n[over])) if over.any() else None,
+            "overconfident_with_no_correct": int(np.sum(k[over] == 0)),
+            "expected_negative_gap_groups_if_calibrated": expected}
+
+
 def describe(values: list) -> dict:
     return {"mean": st.mean(values), "sd": st.stdev(values) if len(values) > 1 else 0.0,
             "min": min(values), "max": max(values), "values": values}
@@ -131,6 +156,8 @@ def main() -> int:
                 index, n_slots = bin_assignment(conf, scheme, N_BINS)
                 occ = np.bincount(index, minlength=n_slots)
                 occ = occ[occ > 0]
+                if scheme == "distinct":
+                    s.update(overconfident_group_tests(g))   # A8, added after the independent checks
                 row["schemes"][scheme] = {
                     "ece": e, "occupied_bins": int(occ.size),
                     "min_occupancy": int(occ.min()), "max_occupancy": int(occ.max()),
@@ -180,6 +207,14 @@ def main() -> int:
                 "largest_overconfident_gap": max(
                     r["schemes"][scheme]["largest_overconfident_gap"] for r in cell_runs),
             }
+            if scheme == "distinct":
+                sc["overconfident_min_p"] = min((r["schemes"][scheme]["overconfident_min_p"] for r in cell_runs
+                                                 if r["schemes"][scheme]["overconfident_min_p"] is not None),
+                                                default=None)
+                sc["overconfident_significant_005"] = [r["schemes"][scheme]["overconfident_significant_005"]
+                                                       for r in cell_runs]
+                sc["expected_negative_gap_groups_if_calibrated"] = [
+                    r["schemes"][scheme]["expected_negative_gap_groups_if_calibrated"] for r in cell_runs]
             if cell["binds_in"] == len(cell_runs):
                 sc["floor_ratio"] = describe([r["schemes"][scheme]["floor_ratio"] for r in cell_runs])
                 mean_boot = np.mean(np.vstack(boot[scheme]), axis=0)

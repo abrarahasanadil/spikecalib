@@ -1,0 +1,302 @@
+{
+ "analysis": "Ranking with the weights held fixed; added after review, not pre-registered",
+ "thresholds": "NOTES.md, A8, Ranking with the weights held fixed (descriptive)",
+ "dataset": "nmnist",
+ "timesteps": 2,
+ "channels": [
+  32,
+  64
+ ],
+ "n_bootstrap": 1000,
+ "rows": [
+  {
+   "name": "nmnist_T2_seed0",
+   "seed": 0,
+   "n_test": 10000,
+   "accuracy": {
+    "count": 0.9852,
+    "accumulator_same_weights": 0.9874,
+    "membrane_same_weights": 0.9867,
+    "accumulator_trained": 0.9864
+   },
+   "auroc": {
+    "count": 0.9201894113967806,
+    "accumulator_same_weights": 0.9782356903331179,
+    "membrane_same_weights": 0.9769970685302495,
+    "accumulator_trained": 0.9762818448547302
+   },
+   "pairs": {
+    "count": {
+     "ordered": 0.8497616069175143,
+     "tied": 0.14085560895853222,
+     "reversed": 0.009382784123953436,
+     "auroc_from_pairs": 0.9201894113967805,
+     "n_pairs": 1458096
+    },
+    "accumulator_trained": {
+     "ordered": 0.9762818448547302,
+     "tied": 0.0,
+     "reversed": 0.02371815514526976,
+     "auroc_from_pairs": 0.9762818448547302,
+     "n_pairs": 1341504
+    },
+    "accumulator_same_weights": {
+     "ordered": 0.9782352884439172,
+     "tied": 8.037784015098173e-07,
+     "reversed": 0.021763907777681328,
+     "auroc_from_pairs": 0.978235690333118,
+     "n_pairs": 1244124
+    }
+   },
+   "count_minus_accumulator_same_weights": {
+    "difference": -0.05804627893633729
+   }
+  },
+  {
+   "name": "nmnist_T2_seed1",
+   "seed": 1,
+   "n_test": 10000,
+   "accuracy": {
+    "count": 0.9843,
+    "accumulator_same_weights": 0.9862,
+    "membrane_same_weights": 0.9864,
+    "accumulator_trained": 0.9876
+   },
+   "auroc": {
+    "count": 0.9255910145979781,
+    "accumulator_same_weights": 0.9775492374477942,
+    "membrane_same_weights": 0.9754514336148083,
+    "accumulator_trained": 0.9608965690693634
+   },
+   "pairs": {
+    "count": {
+     "ordered": 0.8592850426860953,
+     "tied": 0.1326119438237656,
+     "reversed": 0.008103013490139116,
+     "auroc_from_pairs": 0.9255910145979781,
+     "n_pairs": 1545351
+    },
+    "accumulator_trained": {
+     "ordered": 0.9608965690693634,
+     "tied": 0.0,
+     "reversed": 0.03910343093063662,
+     "auroc_from_pairs": 0.9608965690693634,
+     "n_pairs": 1224624
+    },
+    "accumulator_same_weights": {
+     "ordered": 0.9775481352813757,
+     "tied": 2.2043328366236673e-06,
+     "reversed": 0.022449660385787634,
+     "auroc_from_pairs": 0.9775492374477941,
+     "n_pairs": 1360956
+    }
+   },
+   "count_minus_accumulator_same_weights": {
+    "difference": -0.051958222849816105
+   }
+  },
+  {
+   "name": "nmnist_T2_seed2",
+   "seed": 2,
+   "n_test": 10000,
+   "accuracy": {
+    "count": 0.9854,
+    "accumulator_same_weights": 0.9867,
+    "membrane_same_weights": 0.9864,
+    "accumulator_trained": 0.9844
+   },
+   "auroc": {
+    "count": 0.915288902914052,
+    "accumulator_same_weights": 0.9784441340505414,
+    "membrane_same_weights": 0.9746016411430752,
+    "accumulator_trained": 0.9721189010095957
+   },
+   "pairs": {
+    "count": {
+     "ordered": 0.8408003425352614,
+     "tied": 0.14897712075758124,
+     "reversed": 0.010222536707157392,
+     "auroc_from_pairs": 0.915288902914052,
+     "n_pairs": 1438684
+    },
+    "accumulator_trained": {
+     "ordered": 0.9721189010095959,
+     "tied": 0.0,
+     "reversed": 0.02788109899040414,
+     "auroc_from_pairs": 0.9721189010095959,
+     "n_pairs": 1535664
+    },
+    "accumulator_same_weights": {
+     "ordered": 0.9784441340505414,
+     "tied": 0.0,
+     "reversed": 0.021555865949458575,
+     "auroc_from_pairs": 0.9784441340505414,
+     "n_pairs": 1312311
+    }
+   },
+   "count_minus_accumulator_same_weights": {
+    "difference": -0.06315523113648946
+   }
+  }
+ ],
+ "summary": {
+  "count": {
+   "mean": 0.9203564429696035,
+   "sd": 0.005153086545630848,
+   "min": 0.915288902914052,
+   "max": 0.9255910145979781,
+   "values": [
+    0.9201894113967806,
+    0.9255910145979781,
+    0.915288902914052
+   ]
+  },
+  "accumulator_same_weights": {
+   "mean": 0.9780763539438179,
+   "sd": 0.00046824250780819356,
+   "min": 0.9775492374477942,
+   "max": 0.9784441340505414,
+   "values": [
+    0.9782356903331179,
+    0.9775492374477942,
+    0.9784441340505414
+   ]
+  },
+  "membrane_same_weights": {
+   "mean": 0.9756833810960444,
+   "sd": 0.0012144413601919608,
+   "min": 0.9746016411430752,
+   "max": 0.9769970685302495,
+   "values": [
+    0.9769970685302495,
+    0.9754514336148083,
+    0.9746016411430752
+   ]
+  },
+  "accumulator_trained": {
+   "mean": 0.9697657716445631,
+   "sd": 0.007957989136985743,
+   "min": 0.9608965690693634,
+   "max": 0.9762818448547302,
+   "values": [
+    0.9762818448547302,
+    0.9608965690693634,
+    0.9721189010095957
+   ]
+  },
+  "count_minus_accumulator_same_weights": {
+   "mean": -0.057719910974214285,
+   "sd": 0.005605634279721003,
+   "min": -0.06315523113648946,
+   "max": -0.051958222849816105,
+   "values": [
+    -0.05804627893633729,
+    -0.051958222849816105,
+    -0.06315523113648946
+   ],
+   "ci95_seed_mean": [
+    -0.07287886855630767,
+    -0.04414527832357137
+   ]
+  },
+  "pairs_count_ordered": {
+   "mean": 0.8499489973796237,
+   "sd": 0.009243774732517395,
+   "min": 0.8408003425352614,
+   "max": 0.8592850426860953,
+   "values": [
+    0.8497616069175143,
+    0.8592850426860953,
+    0.8408003425352614
+   ]
+  },
+  "pairs_count_tied": {
+   "mean": 0.14081489117995968,
+   "sd": 0.008182664448203397,
+   "min": 0.1326119438237656,
+   "max": 0.14897712075758124,
+   "values": [
+    0.14085560895853222,
+    0.1326119438237656,
+    0.14897712075758124
+   ]
+  },
+  "pairs_count_reversed": {
+   "mean": 0.009236111440416648,
+   "sd": 0.0010673468620564675,
+   "min": 0.008103013490139116,
+   "max": 0.010222536707157392,
+   "values": [
+    0.009382784123953436,
+    0.008103013490139116,
+    0.010222536707157392
+   ]
+  },
+  "pairs_accumulator_trained_ordered": {
+   "mean": 0.9697657716445631,
+   "sd": 0.007957989136985758,
+   "min": 0.9608965690693634,
+   "max": 0.9762818448547302,
+   "values": [
+    0.9762818448547302,
+    0.9608965690693634,
+    0.9721189010095959
+   ]
+  },
+  "pairs_accumulator_trained_tied": {
+   "mean": 0.0,
+   "sd": 0.0,
+   "min": 0.0,
+   "max": 0.0,
+   "values": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "pairs_accumulator_trained_reversed": {
+   "mean": 0.030234228355436838,
+   "sd": 0.007957989136985758,
+   "min": 0.02371815514526976,
+   "max": 0.03910343093063662,
+   "values": [
+    0.02371815514526976,
+    0.03910343093063662,
+    0.02788109899040414
+   ]
+  },
+  "pairs_accumulator_same_weights_ordered": {
+   "mean": 0.9780758525919447,
+   "sd": 0.00046879450909457734,
+   "min": 0.9775481352813757,
+   "max": 0.9784441340505414,
+   "values": [
+    0.9782352884439172,
+    0.9775481352813757,
+    0.9784441340505414
+   ]
+  },
+  "pairs_accumulator_same_weights_tied": {
+   "mean": 1.0027037460444948e-06,
+   "sd": 1.115548870815625e-06,
+   "min": 0.0,
+   "max": 2.2043328366236673e-06,
+   "values": [
+    8.037784015098173e-07,
+    2.2043328366236673e-06,
+    0.0
+   ]
+  },
+  "pairs_accumulator_same_weights_reversed": {
+   "mean": 0.02192314470430918,
+   "sd": 0.0004676905202210197,
+   "min": 0.021555865949458575,
+   "max": 0.022449660385787634,
+   "values": [
+    0.021763907777681328,
+    0.022449660385787634,
+    0.021555865949458575
+   ]
+  }
+ }
+}

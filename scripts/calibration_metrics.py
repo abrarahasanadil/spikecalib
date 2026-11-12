@@ -44,7 +44,8 @@ from spikecalib.calibration import (  # noqa: E402
 )
 from spikecalib.floor import bin_assignment, ece_distinct, signed_bin_gaps  # noqa: E402
 from spikecalib.scoring import (  # noqa: E402
-    multiclass_scores, paired_difference_draws, top_label_scores, tost_equivalent, wilson_interval,
+    basic_interval, multiclass_scores, paired_difference_draws, top_label_scores, tost_equivalent,
+    wilson_interval,
 )
 
 R = os.path.join(REPO_ROOT, "results")
@@ -195,6 +196,9 @@ def main() -> int:
                 "n_distinct": int(np.unique(quantise_confidence(conf)).size),
                 "equal_mass_bins": int(n_eff), "equal_mass_min_occupancy": int(occ.min()),
                 "equal_mass_max_occupancy": int(occ.max()),
+                # A8: share of confidences in the top equal-width bin (14/15, 1]
+                "share_top_equal_width_bin": float(np.mean(bin_assignment(conf, "equal_width", N_BINS)[0]
+                                                           == N_BINS - 1)),
                 "auroc": discrimination(conf, correct)["auroc"],
                 **top_label_scores(conf, correct), "published_check": checked,
             })
@@ -226,6 +230,13 @@ def main() -> int:
                     ok, (lo90, hi90) = tost_equivalent(draws, d)
                     entry["ci90"] = [lo90, hi90]
                     entry[f"equivalent_{d}"] = ok
+                # A8: the basic interval from the same draws, and the bootstrap bias.
+                b95, b90 = basic_interval(point, draws, 0.95), basic_interval(point, draws, 0.90)
+                entry.update({"bootstrap_bias": float(draws.mean() - point),
+                              "ci95_basic": list(b95), "ci90_basic": list(b90),
+                              "excludes_zero_95_basic": bool(b95[0] > 0 or b95[1] < 0)})
+                for d in DELTAS:
+                    entry[f"equivalent_basic_{d}"] = bool(-d <= b90[0] and b90[1] <= d)
                 tost.append(entry)
         print(f"{run['name']:<48} ok  ({checked})", flush=True)
 
@@ -249,6 +260,20 @@ def main() -> int:
             by_run[n]["equal_width"]["excludes_zero_95"] and by_run[n]["equal_mass"]["excludes_zero_95"]
             and np.sign(by_run[n]["equal_width"]["difference"]) == np.sign(by_run[n]["equal_mass"]["difference"])
             for n in names))
+        # A8: the same summaries with basic intervals.
+        s["differ_registered_rule_basic"] = int(sum(
+            by_run[n]["equal_width"]["excludes_zero_95_basic"] and by_run[n]["equal_mass"]["excludes_zero_95_basic"]
+            and np.sign(by_run[n]["equal_width"]["difference"]) == np.sign(by_run[n]["equal_mass"]["difference"])
+            for n in names))
+        s["resolve_either_basic"] = int(sum(by_run[n]["equal_width"]["excludes_zero_95_basic"]
+                                            or by_run[n]["equal_mass"]["excludes_zero_95_basic"] for n in names))
+        s["resolve_either"] = int(sum(by_run[n]["equal_width"]["excludes_zero_95"]
+                                      or by_run[n]["equal_mass"]["excludes_zero_95"] for n in names))
+        for d in DELTAS:
+            s[f"equivalent_both_basic_{d}"] = sum(by_run[n]["equal_width"][f"equivalent_basic_{d}"]
+                                                  and by_run[n]["equal_mass"][f"equivalent_basic_{d}"] for n in names)
+        s["largest_abs_bootstrap_bias"] = max(abs(by_run[n][e]["bootstrap_bias"]) for n in names
+                                              for e in ("equal_width", "equal_mass"))
         tost_summary.append(s)
 
     # Headline intervals: seed means of ECE per calibrator, count readout, main depths.
@@ -289,6 +314,7 @@ def main() -> int:
     }
 
     clip = {"top_label": sum(r["n_clipped_top_label"] for r in rows),
+            "penalised_top_label": sum(r["n_penalised_top_label"] for r in rows),
             "multiclass": sum(r.get("n_clipped_multiclass", 0) for r in rows),
             "scores_computed_top_label": sum(r["n_test"] for r in rows),
             "scores_computed_multiclass": sum(r["n_test"] for r in rows if "nll_multiclass" in r)}

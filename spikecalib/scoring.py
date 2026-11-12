@@ -17,6 +17,7 @@ __all__ = [
     "top_label_scores",
     "multiclass_scores",
     "paired_difference_draws",
+    "basic_interval",
     "tost_equivalent",
     "wilson_interval",
 ]
@@ -35,10 +36,13 @@ def top_label_scores(conf: np.ndarray, correct: np.ndarray) -> dict:
     clipped = np.clip(conf, CLIP, 1.0 - CLIP)
     n_clipped = int(np.sum(clipped != conf))
     n_clipped_exact = int(np.sum((clipped != conf) & ((conf == 0.0) | (conf == 1.0))))
+    # Scores the clip turns into a penalty of -ln(CLIP): certain and wrong (A8).
+    n_penalised = int(np.sum(((conf == 1.0) & (correct == 0.0)) | ((conf == 0.0) & (correct == 1.0))))
     log_loss = -float(np.mean(correct * np.log(clipped) + (1.0 - correct) * np.log(1.0 - clipped)))
     brier = float(np.mean((conf - correct) ** 2))
     return {"brier_top_label": brier, "log_loss_top_label": log_loss, "n_clipped_top_label": n_clipped,
-            "n_clipped_top_label_exact_zero_or_one": n_clipped_exact}
+            "n_clipped_top_label_exact_zero_or_one": n_clipped_exact,
+            "n_penalised_top_label": n_penalised}
 
 
 def multiclass_scores(probs: np.ndarray, labels: np.ndarray) -> dict:
@@ -86,6 +90,13 @@ def paired_difference_draws(conf_a: np.ndarray, conf_b: np.ndarray, correct: np.
         yy = y[idx]
         draws[i] = ece(conf_a[idx], yy, n_bins) - ece(conf_b[idx], yy, n_bins)
     return float(point), draws
+
+
+def basic_interval(point: float, draws: np.ndarray, level: float) -> tuple[float, float]:
+    """Basic (reverse-percentile) bootstrap interval ``[2d - q(1 - a/2), 2d - q(a/2)]`` (A8)."""
+    a = 100.0 * (1.0 - level) / 2.0
+    lo_q, hi_q = (float(v) for v in np.percentile(draws, [a, 100.0 - a]))
+    return 2.0 * point - hi_q, 2.0 * point - lo_q
 
 
 def tost_equivalent(draws: np.ndarray, delta: float) -> tuple[bool, tuple[float, float]]:
