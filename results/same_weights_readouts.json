@@ -1,0 +1,1878 @@
+{
+ "analysis": "A6, added after review, not pre-registered; exploratory",
+ "method": "count-trained weights; output LIF bypassed; the final BatchNorm1d output aggregated as the accumulator (sum) and the leaky membrane (tau = 2); temperature scaling fitted on the calibration split",
+ "rows": [
+  {
+   "name": "nmnist_T2_seed0",
+   "dataset": "nmnist",
+   "n_blocks": 2,
+   "timesteps": 2,
+   "seed": 0,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9852,
+     "mean_conf_minus_acc": -0.5387147921901718,
+     "ece_equal_width": 0.5387347921901718,
+     "ece_equal_mass": 0.5387147921901718
+    },
+    "temperature": {
+     "accuracy": 0.9852,
+     "mean_conf_minus_acc": 0.0007618491863413679,
+     "ece_equal_width": 0.0025991210866152,
+     "ece_equal_mass": 0.0007618491863413679
+    },
+    "fitted_temperature": 0.2732763860696254
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9874,
+     "mean_conf_minus_acc": 0.009753338144409929,
+     "ece_equal_width": 0.010250160717820148,
+     "ece_equal_mass": 0.009753340448507201
+    },
+    "temperature": {
+     "accuracy": 0.9874,
+     "mean_conf_minus_acc": 9.444208419107092e-05,
+     "ece_equal_width": 0.003013141126589181,
+     "ece_equal_mass": 0.0023416409511813905
+    },
+    "fitted_temperature": 2.6069687924257123
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9867,
+     "mean_conf_minus_acc": -0.001289553490660178,
+     "ece_equal_width": 0.0031872735409592414,
+     "ece_equal_mass": 0.0014467588039941068
+    },
+    "temperature": {
+     "accuracy": 0.9867,
+     "mean_conf_minus_acc": -0.0005036047921512798,
+     "ece_equal_width": 0.002751187474775268,
+     "ece_equal_mass": 0.0016239900262388003
+    },
+    "fitted_temperature": 0.9785217640104836
+   }
+  },
+  {
+   "name": "nmnist_T2_seed1",
+   "dataset": "nmnist",
+   "n_blocks": 2,
+   "timesteps": 2,
+   "seed": 1,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9843,
+     "mean_conf_minus_acc": -0.538020395544136,
+     "ece_equal_width": 0.538020395544136,
+     "ece_equal_mass": 0.538020395544136
+    },
+    "temperature": {
+     "accuracy": 0.9843,
+     "mean_conf_minus_acc": 0.001071682576950117,
+     "ece_equal_width": 0.0011650146434285511,
+     "ece_equal_mass": 0.001071682576950117
+    },
+    "fitted_temperature": 0.27557395586699324
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9862,
+     "mean_conf_minus_acc": 0.010286381945751266,
+     "ece_equal_width": 0.010344558741995365,
+     "ece_equal_mass": 0.010286391792531614
+    },
+    "temperature": {
+     "accuracy": 0.9862,
+     "mean_conf_minus_acc": 0.00033796501758986963,
+     "ece_equal_width": 0.0035795647319823726,
+     "ece_equal_mass": 0.0028551859063324016
+    },
+    "fitted_temperature": 2.5380751637141765
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9864,
+     "mean_conf_minus_acc": -0.002922982278800612,
+     "ece_equal_width": 0.004998506591169101,
+     "ece_equal_mass": 0.002922982278800604
+    },
+    "temperature": {
+     "accuracy": 0.9864,
+     "mean_conf_minus_acc": -0.0005044382822813054,
+     "ece_equal_width": 0.0033425706190710514,
+     "ece_equal_mass": 0.0019665611740804743
+    },
+    "fitted_temperature": 0.9429893638697877
+   }
+  },
+  {
+   "name": "nmnist_T2_seed2",
+   "dataset": "nmnist",
+   "n_blocks": 2,
+   "timesteps": 2,
+   "seed": 2,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9854,
+     "mean_conf_minus_acc": -0.5389837986423476,
+     "ece_equal_width": 0.5389837986423476,
+     "ece_equal_mass": 0.5389837986423476
+    },
+    "temperature": {
+     "accuracy": 0.9854,
+     "mean_conf_minus_acc": -0.00047562483168883674,
+     "ece_equal_width": 0.0017016814116821615,
+     "ece_equal_mass": 0.00047562483168883674
+    },
+    "fitted_temperature": 0.2801165575729986
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9867,
+     "mean_conf_minus_acc": 0.008999066553507129,
+     "ece_equal_width": 0.009240927943231298,
+     "ece_equal_mass": 0.008999743071121101
+    },
+    "temperature": {
+     "accuracy": 0.9867,
+     "mean_conf_minus_acc": -0.00033427367215033144,
+     "ece_equal_width": 0.003501211806061033,
+     "ece_equal_mass": 0.0024195601313857108
+    },
+    "fitted_temperature": 1.9739332312572773
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9864,
+     "mean_conf_minus_acc": -0.026057888340365487,
+     "ece_equal_width": 0.026057888340365296,
+     "ece_equal_mass": 0.02605788834036545
+    },
+    "temperature": {
+     "accuracy": 0.9864,
+     "mean_conf_minus_acc": -0.0007047351255252687,
+     "ece_equal_width": 0.0024348457220600586,
+     "ece_equal_mass": 0.0022530417877533963
+    },
+    "fitted_temperature": 0.7263255398136239
+   }
+  },
+  {
+   "name": "nmnist_T4_seed0",
+   "dataset": "nmnist",
+   "n_blocks": 2,
+   "timesteps": 4,
+   "seed": 0,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9886,
+     "mean_conf_minus_acc": -0.14614784252171686,
+     "ece_equal_width": 0.14632591474635576,
+     "ece_equal_mass": 0.14614784252171675
+    },
+    "temperature": {
+     "accuracy": 0.9886,
+     "mean_conf_minus_acc": 0.001410082573256255,
+     "ece_equal_width": 0.002442952577566328,
+     "ece_equal_mass": 0.004794833376768442
+    },
+    "fitted_temperature": 0.48152235100848906
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9895,
+     "mean_conf_minus_acc": 0.007502495488084349,
+     "ece_equal_width": 0.007941363954468497,
+     "ece_equal_mass": 0.007502496752398832
+    },
+    "temperature": {
+     "accuracy": 0.9895,
+     "mean_conf_minus_acc": 0.0004086078013249006,
+     "ece_equal_width": 0.0023286864869140745,
+     "ece_equal_mass": 0.0012080351295850281
+    },
+    "fitted_temperature": 2.4170830641654555
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9861,
+     "mean_conf_minus_acc": -0.049953163127235634,
+     "ece_equal_width": 0.0499818332656351,
+     "ece_equal_mass": 0.0499531631272357
+    },
+    "temperature": {
+     "accuracy": 0.9861,
+     "mean_conf_minus_acc": 0.0009262887391380259,
+     "ece_equal_width": 0.0029710909376743696,
+     "ece_equal_mass": 0.001990609643912999
+    },
+    "fitted_temperature": 0.5675163195346516
+   }
+  },
+  {
+   "name": "nmnist_T4_seed1",
+   "dataset": "nmnist",
+   "n_blocks": 2,
+   "timesteps": 4,
+   "seed": 1,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9899,
+     "mean_conf_minus_acc": -0.14387559236518832,
+     "ece_equal_width": 0.14387559236518815,
+     "ece_equal_mass": 0.14387559236518815
+    },
+    "temperature": {
+     "accuracy": 0.9899,
+     "mean_conf_minus_acc": 0.001242393688681065,
+     "ece_equal_width": 0.0024151092049793923,
+     "ece_equal_mass": 0.005801864596260664
+    },
+    "fitted_temperature": 0.4953824019746202
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9906,
+     "mean_conf_minus_acc": 0.0077410231395834694,
+     "ece_equal_width": 0.008026826559393529,
+     "ece_equal_mass": 0.007741023139583318
+    },
+    "temperature": {
+     "accuracy": 0.9906,
+     "mean_conf_minus_acc": 0.0002983959467420805,
+     "ece_equal_width": 0.002227990202348285,
+     "ece_equal_mass": 0.0007504611262034603
+    },
+    "fitted_temperature": 3.590581363530137
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.988,
+     "mean_conf_minus_acc": -0.005366313530312583,
+     "ece_equal_width": 0.005639754665671768,
+     "ece_equal_mass": 0.005366313530312701
+    },
+    "temperature": {
+     "accuracy": 0.988,
+     "mean_conf_minus_acc": 0.0008831816055384634,
+     "ece_equal_width": 0.0024662888274713224,
+     "ece_equal_mass": 0.0013575867727455722
+    },
+    "fitted_temperature": 0.8235170060425123
+   }
+  },
+  {
+   "name": "nmnist_T4_seed2",
+   "dataset": "nmnist",
+   "n_blocks": 2,
+   "timesteps": 4,
+   "seed": 2,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9876,
+     "mean_conf_minus_acc": -0.14368947298518076,
+     "ece_equal_width": 0.14376499312170737,
+     "ece_equal_mass": 0.1436894729851807
+    },
+    "temperature": {
+     "accuracy": 0.9876,
+     "mean_conf_minus_acc": 0.001742806534089647,
+     "ece_equal_width": 0.004365534675882609,
+     "ece_equal_mass": 0.006992546395784148
+    },
+    "fitted_temperature": 0.5046779495586269
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9887,
+     "mean_conf_minus_acc": 0.00860415532735459,
+     "ece_equal_width": 0.008878429483195147,
+     "ece_equal_mass": 0.008604155408989907
+    },
+    "temperature": {
+     "accuracy": 0.9887,
+     "mean_conf_minus_acc": -0.0003742390437543319,
+     "ece_equal_width": 0.0033568285924844487,
+     "ece_equal_mass": 0.001532146633063984
+    },
+    "fitted_temperature": 3.086398913521144
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9858,
+     "mean_conf_minus_acc": -0.01978865405708563,
+     "ece_equal_width": 0.019788654057085898,
+     "ece_equal_mass": 0.019788654057085794
+    },
+    "temperature": {
+     "accuracy": 0.9858,
+     "mean_conf_minus_acc": 0.0005636330225333719,
+     "ece_equal_width": 0.0041725952034732,
+     "ece_equal_mass": 0.0025507948511689377
+    },
+    "fitted_temperature": 0.7075840373772573
+   }
+  },
+  {
+   "name": "nmnist_T6_seed0",
+   "dataset": "nmnist",
+   "n_blocks": 2,
+   "timesteps": 6,
+   "seed": 0,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9902,
+     "mean_conf_minus_acc": -0.02836449590755996,
+     "ece_equal_width": 0.02854857586436571,
+     "ece_equal_mass": 0.02836449590755991
+    },
+    "temperature": {
+     "accuracy": 0.9902,
+     "mean_conf_minus_acc": 0.00043203301700889263,
+     "ece_equal_width": 0.0020233463072373207,
+     "ece_equal_mass": 0.002720161032569651
+    },
+    "fitted_temperature": 0.6630035235297217
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9909,
+     "mean_conf_minus_acc": 0.006223083651460515,
+     "ece_equal_width": 0.0064772236065390575,
+     "ece_equal_mass": 0.006223084241613806
+    },
+    "temperature": {
+     "accuracy": 0.9909,
+     "mean_conf_minus_acc": -0.0006304214791736928,
+     "ece_equal_width": 0.00265327462914555,
+     "ece_equal_mass": 0.0006304214791736381
+    },
+    "fitted_temperature": 2.698425217784099
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9838,
+     "mean_conf_minus_acc": -0.10156937118165921,
+     "ece_equal_width": 0.10156937118165921,
+     "ece_equal_mass": 0.1015693711816592
+    },
+    "temperature": {
+     "accuracy": 0.9838,
+     "mean_conf_minus_acc": 0.002241238491876185,
+     "ece_equal_width": 0.003218080419022434,
+     "ece_equal_mass": 0.002441659232459605
+    },
+    "fitted_temperature": 0.4320240542701004
+   }
+  },
+  {
+   "name": "nmnist_T6_seed1",
+   "dataset": "nmnist",
+   "n_blocks": 2,
+   "timesteps": 6,
+   "seed": 1,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9897,
+     "mean_conf_minus_acc": -0.027459798928652135,
+     "ece_equal_width": 0.02745979892865225,
+     "ece_equal_mass": 0.02745979892865217
+    },
+    "temperature": {
+     "accuracy": 0.9897,
+     "mean_conf_minus_acc": -0.001014834870612158,
+     "ece_equal_width": 0.003257164370386932,
+     "ece_equal_mass": 0.00337904894225988
+    },
+    "fitted_temperature": 0.7221416894812265
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9903,
+     "mean_conf_minus_acc": 0.007587874459970112,
+     "ece_equal_width": 0.007684668778266674,
+     "ece_equal_mass": 0.007587874900894382
+    },
+    "temperature": {
+     "accuracy": 0.9903,
+     "mean_conf_minus_acc": -0.0013711751641587444,
+     "ece_equal_width": 0.003328452543017778,
+     "ece_equal_mass": 0.0013711751641586783
+    },
+    "fitted_temperature": 3.0477686250528806
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9838,
+     "mean_conf_minus_acc": -0.09330902134893371,
+     "ece_equal_width": 0.09330902134893372,
+     "ece_equal_mass": 0.09330902134893368
+    },
+    "temperature": {
+     "accuracy": 0.9838,
+     "mean_conf_minus_acc": -0.00037282988186870814,
+     "ece_equal_width": 0.0036303819037190508,
+     "ece_equal_mass": 0.0010841107523695724
+    },
+    "fitted_temperature": 0.4960208319289503
+   }
+  },
+  {
+   "name": "nmnist_T6_seed2",
+   "dataset": "nmnist",
+   "n_blocks": 2,
+   "timesteps": 6,
+   "seed": 2,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9908,
+     "mean_conf_minus_acc": -0.025638233401009125,
+     "ece_equal_width": 0.025861427256674462,
+     "ece_equal_mass": 0.025638233401009156
+    },
+    "temperature": {
+     "accuracy": 0.9908,
+     "mean_conf_minus_acc": -0.0003518676895714057,
+     "ece_equal_width": 0.002616290837810486,
+     "ece_equal_mass": 0.002960365787094915
+    },
+    "fitted_temperature": 0.7192677459348802
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9918,
+     "mean_conf_minus_acc": 0.006748891219813591,
+     "ece_equal_width": 0.007584259321944863,
+     "ece_equal_mass": 0.006748891220020474
+    },
+    "temperature": {
+     "accuracy": 0.9918,
+     "mean_conf_minus_acc": -0.0017094255571115102,
+     "ece_equal_width": 0.0026848595075080533,
+     "ece_equal_mass": 0.001709425557111505
+    },
+    "fitted_temperature": 3.9536376547824927
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9874,
+     "mean_conf_minus_acc": -0.033894033385105105,
+     "ece_equal_width": 0.03389403338510522,
+     "ece_equal_mass": 0.03389403338510522
+    },
+    "temperature": {
+     "accuracy": 0.9874,
+     "mean_conf_minus_acc": -0.0009453176382695494,
+     "ece_equal_width": 0.0018620470066312987,
+     "ece_equal_mass": 0.0009453176382694793
+    },
+    "fitted_temperature": 0.6130703868771016
+   }
+  },
+  {
+   "name": "nmnist_T8_seed0",
+   "dataset": "nmnist",
+   "n_blocks": 2,
+   "timesteps": 8,
+   "seed": 0,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9894,
+     "mean_conf_minus_acc": -0.005077585198461687,
+     "ece_equal_width": 0.007066869688576316,
+     "ece_equal_mass": 0.005077585198461783
+    },
+    "temperature": {
+     "accuracy": 0.9894,
+     "mean_conf_minus_acc": 0.001993383703566387,
+     "ece_equal_width": 0.002290855729818745,
+     "ece_equal_mass": 0.0028790931391574136
+    },
+    "fitted_temperature": 0.7958875065418596
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.992,
+     "mean_conf_minus_acc": 0.005993483389225229,
+     "ece_equal_width": 0.0062844967792208516,
+     "ece_equal_mass": 0.005993483474766916
+    },
+    "temperature": {
+     "accuracy": 0.992,
+     "mean_conf_minus_acc": -0.0006418448135827592,
+     "ece_equal_width": 0.0017620550075671195,
+     "ece_equal_mass": 0.0006460735981000939
+    },
+    "fitted_temperature": 3.037745578679554
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.98,
+     "mean_conf_minus_acc": -0.16675679779517505,
+     "ece_equal_width": 0.1668323045860503,
+     "ece_equal_mass": 0.1667567977951751
+    },
+    "temperature": {
+     "accuracy": 0.98,
+     "mean_conf_minus_acc": 0.00020381338853170394,
+     "ece_equal_width": 0.003645935388402222,
+     "ece_equal_mass": 0.002260424150577448
+    },
+    "fitted_temperature": 0.386757005367603
+   }
+  },
+  {
+   "name": "nmnist_T8_seed1",
+   "dataset": "nmnist",
+   "n_blocks": 2,
+   "timesteps": 8,
+   "seed": 1,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9912,
+     "mean_conf_minus_acc": -0.006905869290351085,
+     "ece_equal_width": 0.006924067413462029,
+     "ece_equal_mass": 0.006905869290351108
+    },
+    "temperature": {
+     "accuracy": 0.9912,
+     "mean_conf_minus_acc": -0.0017272849737848261,
+     "ece_equal_width": 0.002911383824106403,
+     "ece_equal_mass": 0.0017272849737846262
+    },
+    "fitted_temperature": 0.870339240060082
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9918,
+     "mean_conf_minus_acc": 0.006248391886374827,
+     "ece_equal_width": 0.006494914699649361,
+     "ece_equal_mass": 0.006248391889459999
+    },
+    "temperature": {
+     "accuracy": 0.9918,
+     "mean_conf_minus_acc": -0.002484016352452101,
+     "ece_equal_width": 0.003929036657212514,
+     "ece_equal_mass": 0.0024840163524520974
+    },
+    "fitted_temperature": 3.463868383527365
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9783,
+     "mean_conf_minus_acc": -0.15680159478822653,
+     "ece_equal_width": 0.15687836431455515,
+     "ece_equal_mass": 0.15680159478822656
+    },
+    "temperature": {
+     "accuracy": 0.9783,
+     "mean_conf_minus_acc": -0.0011769496745275276,
+     "ece_equal_width": 0.004320958953629171,
+     "ece_equal_mass": 0.002741403977652637
+    },
+    "fitted_temperature": 0.42602677439690656
+   }
+  },
+  {
+   "name": "nmnist_T8_seed2",
+   "dataset": "nmnist",
+   "n_blocks": 2,
+   "timesteps": 8,
+   "seed": 2,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9889,
+     "mean_conf_minus_acc": -0.0076602102553945395,
+     "ece_equal_width": 0.007752996881200606,
+     "ece_equal_mass": 0.00766021025539455
+    },
+    "temperature": {
+     "accuracy": 0.9889,
+     "mean_conf_minus_acc": -0.00019760438639937483,
+     "ece_equal_width": 0.003305393491766925,
+     "ece_equal_mass": 0.001823526095811606
+    },
+    "fitted_temperature": 0.8306714056368186
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9908,
+     "mean_conf_minus_acc": 0.00656636293535795,
+     "ece_equal_width": 0.0068752088730864875,
+     "ece_equal_mass": 0.006566364579448095
+    },
+    "temperature": {
+     "accuracy": 0.9908,
+     "mean_conf_minus_acc": -0.001137528019739542,
+     "ece_equal_width": 0.00207409560161167,
+     "ece_equal_mass": 0.0011375280197395068
+    },
+    "fitted_temperature": 2.5411025128191835
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9795,
+     "mean_conf_minus_acc": -0.25168165669563747,
+     "ece_equal_width": 0.2516816566956374,
+     "ece_equal_mass": 0.2516816566956374
+    },
+    "temperature": {
+     "accuracy": 0.9795,
+     "mean_conf_minus_acc": 0.0002642801684709095,
+     "ece_equal_width": 0.004120015115201079,
+     "ece_equal_mass": 0.0015229190311341874
+    },
+    "fitted_temperature": 0.3171629044777644
+   }
+  },
+  {
+   "name": "nmnist_T10_seed0",
+   "dataset": "nmnist",
+   "n_blocks": 2,
+   "timesteps": 10,
+   "seed": 0,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9899,
+     "mean_conf_minus_acc": -0.0007237714043112353,
+     "ece_equal_width": 0.0027815105524621126,
+     "ece_equal_mass": 0.002117743471276291
+    },
+    "temperature": {
+     "accuracy": 0.9899,
+     "mean_conf_minus_acc": 0.0013935495944235043,
+     "ece_equal_width": 0.0024753763169566706,
+     "ece_equal_mass": 0.0026666859303313257
+    },
+    "fitted_temperature": 0.909399221150683
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9915,
+     "mean_conf_minus_acc": 0.0061143853111621516,
+     "ece_equal_width": 0.006555871515401097,
+     "ece_equal_mass": 0.006114385535205833
+    },
+    "temperature": {
+     "accuracy": 0.9915,
+     "mean_conf_minus_acc": -0.00046972247199483785,
+     "ece_equal_width": 0.0019868725469358206,
+     "ece_equal_mass": 0.00046972247199488323
+    },
+    "fitted_temperature": 2.96878144709728
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9725,
+     "mean_conf_minus_acc": -0.2805298375909806,
+     "ece_equal_width": 0.28052983759098066,
+     "ece_equal_mass": 0.2805298375909806
+    },
+    "temperature": {
+     "accuracy": 0.9725,
+     "mean_conf_minus_acc": 0.0009655253535431063,
+     "ece_equal_width": 0.004751821224798922,
+     "ece_equal_mass": 0.002347009407907083
+    },
+    "fitted_temperature": 0.3069567553402032
+   }
+  },
+  {
+   "name": "nmnist_T10_seed1",
+   "dataset": "nmnist",
+   "n_blocks": 2,
+   "timesteps": 10,
+   "seed": 1,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9911,
+     "mean_conf_minus_acc": -0.0019630728697176414,
+     "ece_equal_width": 0.003519427868367111,
+     "ece_equal_mass": 0.001963072869717738
+    },
+    "temperature": {
+     "accuracy": 0.9911,
+     "mean_conf_minus_acc": -0.0010940568776298676,
+     "ece_equal_width": 0.003060468479979384,
+     "ece_equal_mass": 0.001094056877629985
+    },
+    "fitted_temperature": 0.9634746357086695
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9918,
+     "mean_conf_minus_acc": 0.005946852349697274,
+     "ece_equal_width": 0.006180651610434916,
+     "ece_equal_mass": 0.005946852467764999
+    },
+    "temperature": {
+     "accuracy": 0.9918,
+     "mean_conf_minus_acc": -0.001424819595956861,
+     "ece_equal_width": 0.0027566024357013196,
+     "ece_equal_mass": 0.0014248195959568942
+    },
+    "fitted_temperature": 3.1621503698431077
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9779,
+     "mean_conf_minus_acc": -0.2790836947758687,
+     "ece_equal_width": 0.27908369477586875,
+     "ece_equal_mass": 0.27908369477586875
+    },
+    "temperature": {
+     "accuracy": 0.9779,
+     "mean_conf_minus_acc": -0.0007237417403571644,
+     "ece_equal_width": 0.003275549575495233,
+     "ece_equal_mass": 0.001434444887017782
+    },
+    "fitted_temperature": 0.30486285894451787
+   }
+  },
+  {
+   "name": "nmnist_T10_seed2",
+   "dataset": "nmnist",
+   "n_blocks": 2,
+   "timesteps": 10,
+   "seed": 2,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9913,
+     "mean_conf_minus_acc": 0.000173332789843883,
+     "ece_equal_width": 0.0022745245670419585,
+     "ece_equal_mass": 0.001588641497034979
+    },
+    "temperature": {
+     "accuracy": 0.9913,
+     "mean_conf_minus_acc": 0.00045006601008523717,
+     "ece_equal_width": 0.002258556504685701,
+     "ece_equal_mass": 0.0017124013549982403
+    },
+    "fitted_temperature": 0.9871286852566435
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9917,
+     "mean_conf_minus_acc": 0.006501465207189527,
+     "ece_equal_width": 0.006720566218295664,
+     "ece_equal_mass": 0.006501465215150032
+    },
+    "temperature": {
+     "accuracy": 0.9917,
+     "mean_conf_minus_acc": -0.000828312671183884,
+     "ece_equal_width": 0.0014340663058524203,
+     "ece_equal_mass": 0.0008283126711836652
+    },
+    "fitted_temperature": 3.5748502214643136
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.979,
+     "mean_conf_minus_acc": -0.21659643422198027,
+     "ece_equal_width": 0.2165964342219803,
+     "ece_equal_mass": 0.21659643422198024
+    },
+    "temperature": {
+     "accuracy": 0.979,
+     "mean_conf_minus_acc": -0.0016125998092998417,
+     "ece_equal_width": 0.0020364481143618374,
+     "ece_equal_mass": 0.0030728460189677277
+    },
+    "fitted_temperature": 0.3580656861699584
+   }
+  },
+  {
+   "name": "nmnist_T2_seed0_arch32-64-128-128",
+   "dataset": "nmnist",
+   "n_blocks": 4,
+   "timesteps": 2,
+   "seed": 0,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9877,
+     "mean_conf_minus_acc": -0.5402520114004488,
+     "ece_equal_width": 0.5402520114004488,
+     "ece_equal_mass": 0.5402520114004488
+    },
+    "temperature": {
+     "accuracy": 0.9877,
+     "mean_conf_minus_acc": -0.0004841954446958008,
+     "ece_equal_width": 0.0020653699123386413,
+     "ece_equal_mass": 0.0004841954446958008
+    },
+    "fitted_temperature": 0.27640525669525584
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9871,
+     "mean_conf_minus_acc": 0.010783184425992354,
+     "ece_equal_width": 0.010900694125535964,
+     "ece_equal_mass": 0.010783184904589198
+    },
+    "temperature": {
+     "accuracy": 0.9871,
+     "mean_conf_minus_acc": 0.0023335335682932445,
+     "ece_equal_width": 0.003220189782956172,
+     "ece_equal_mass": 0.005031756727695368
+    },
+    "fitted_temperature": 2.893853347239675
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9868,
+     "mean_conf_minus_acc": 0.0041056045750920145,
+     "ece_equal_width": 0.00434218700493632,
+     "ece_equal_mass": 0.005746427588012326
+    },
+    "temperature": {
+     "accuracy": 0.9868,
+     "mean_conf_minus_acc": 0.0023930993310700144,
+     "ece_equal_width": 0.003739525816195431,
+     "ece_equal_mass": 0.005166051468324835
+    },
+    "fitted_temperature": 1.0584593246244458
+   }
+  },
+  {
+   "name": "nmnist_T2_seed1_arch32-64-128-128",
+   "dataset": "nmnist",
+   "n_blocks": 4,
+   "timesteps": 2,
+   "seed": 1,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9887,
+     "mean_conf_minus_acc": -0.5409211125431541,
+     "ece_equal_width": 0.540921112543154,
+     "ece_equal_mass": 0.5409211125431541
+    },
+    "temperature": {
+     "accuracy": 0.9887,
+     "mean_conf_minus_acc": -0.0027859635705328456,
+     "ece_equal_width": 0.002950469297552369,
+     "ece_equal_mass": 0.0027859635705328456
+    },
+    "fitted_temperature": 0.2867662928701809
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9892,
+     "mean_conf_minus_acc": 0.009378986834835512,
+     "ece_equal_width": 0.00996531051992421,
+     "ece_equal_mass": 0.009378986839613537
+    },
+    "temperature": {
+     "accuracy": 0.9892,
+     "mean_conf_minus_acc": -0.00098925193037247,
+     "ece_equal_width": 0.002848324232678405,
+     "ece_equal_mass": 0.004565311459237986
+    },
+    "fitted_temperature": 3.683507886304823
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9884,
+     "mean_conf_minus_acc": 0.006375331585625532,
+     "ece_equal_width": 0.00670082612637574,
+     "ece_equal_mass": 0.006656855125995199
+    },
+    "temperature": {
+     "accuracy": 0.9884,
+     "mean_conf_minus_acc": -0.00013050769741340673,
+     "ece_equal_width": 0.0031137160074996848,
+     "ece_equal_mass": 0.0047071370798200795
+    },
+    "fitted_temperature": 1.3375460592334583
+   }
+  },
+  {
+   "name": "nmnist_T2_seed2_arch32-64-128-128",
+   "dataset": "nmnist",
+   "n_blocks": 4,
+   "timesteps": 2,
+   "seed": 2,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9844,
+     "mean_conf_minus_acc": -0.5381698857388768,
+     "ece_equal_width": 0.5381698857388769,
+     "ece_equal_mass": 0.5381698857388768
+    },
+    "temperature": {
+     "accuracy": 0.9844,
+     "mean_conf_minus_acc": 0.0004288162087320302,
+     "ece_equal_width": 0.0007730715411697574,
+     "ece_equal_mass": 0.0004288162087320302
+    },
+    "fitted_temperature": 0.2795524843494292
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9871,
+     "mean_conf_minus_acc": 0.009477718773226673,
+     "ece_equal_width": 0.009616866713763706,
+     "ece_equal_mass": 0.009478161521565704
+    },
+    "temperature": {
+     "accuracy": 0.9871,
+     "mean_conf_minus_acc": -0.00020082879762806094,
+     "ece_equal_width": 0.003218243895507712,
+     "ece_equal_mass": 0.004436111826615883
+    },
+    "fitted_temperature": 2.011678175930353
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9855,
+     "mean_conf_minus_acc": -0.026943806849284768,
+     "ece_equal_width": 0.027152642231892784,
+     "ece_equal_mass": 0.02694380684928466
+    },
+    "temperature": {
+     "accuracy": 0.9855,
+     "mean_conf_minus_acc": 0.0006433025040972762,
+     "ece_equal_width": 0.004038192741710693,
+     "ece_equal_mass": 0.005127387187130891
+    },
+    "fitted_temperature": 0.7460258691390524
+   }
+  },
+  {
+   "name": "nmnist_T6_seed0_arch32-64-128-128",
+   "dataset": "nmnist",
+   "n_blocks": 4,
+   "timesteps": 6,
+   "seed": 0,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9913,
+     "mean_conf_minus_acc": -0.02550789796341757,
+     "ece_equal_width": 0.025507897963417694,
+     "ece_equal_mass": 0.025507897963417698
+    },
+    "temperature": {
+     "accuracy": 0.9913,
+     "mean_conf_minus_acc": -3.255390720913187e-05,
+     "ece_equal_width": 0.0024507511946345534,
+     "ece_equal_mass": 0.002618635580243234
+    },
+    "fitted_temperature": 0.7041847450056248
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9914,
+     "mean_conf_minus_acc": 0.00697810494480311,
+     "ece_equal_width": 0.007155959460959848,
+     "ece_equal_mass": 0.006978104988984118
+    },
+    "temperature": {
+     "accuracy": 0.9914,
+     "mean_conf_minus_acc": -4.2240341484367505e-05,
+     "ece_equal_width": 0.001428649875378317,
+     "ece_equal_mass": 0.0013113303971688138
+    },
+    "fitted_temperature": 3.673303523964624
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9834,
+     "mean_conf_minus_acc": -0.04596335763357151,
+     "ece_equal_width": 0.04596335763357165,
+     "ece_equal_mass": 0.04596335763357161
+    },
+    "temperature": {
+     "accuracy": 0.9834,
+     "mean_conf_minus_acc": 0.0020024741024391446,
+     "ece_equal_width": 0.0034791533170261484,
+     "ece_equal_mass": 0.0030783241847603007
+    },
+    "fitted_temperature": 0.6049636628452919
+   }
+  },
+  {
+   "name": "nmnist_T6_seed1_arch32-64-128-128",
+   "dataset": "nmnist",
+   "n_blocks": 4,
+   "timesteps": 6,
+   "seed": 1,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9854,
+     "mean_conf_minus_acc": -0.025804760398748683,
+     "ece_equal_width": 0.02602563138142434,
+     "ece_equal_mass": 0.025804760398748697
+    },
+    "temperature": {
+     "accuracy": 0.9854,
+     "mean_conf_minus_acc": 0.00323248715779767,
+     "ece_equal_width": 0.0043057082562831025,
+     "ece_equal_mass": 0.005279345244121399
+    },
+    "fitted_temperature": 0.6902550971533941
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9861,
+     "mean_conf_minus_acc": 0.011214363719052045,
+     "ece_equal_width": 0.01121436371905213,
+     "ece_equal_mass": 0.011214366472208389
+    },
+    "temperature": {
+     "accuracy": 0.9861,
+     "mean_conf_minus_acc": 0.0022027826945913986,
+     "ece_equal_width": 0.003105457123166872,
+     "ece_equal_mass": 0.003311697763054292
+    },
+    "fitted_temperature": 2.588982362245252
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9779,
+     "mean_conf_minus_acc": -0.17342811021032856,
+     "ece_equal_width": 0.17342811021032858,
+     "ece_equal_mass": 0.17342811021032856
+    },
+    "temperature": {
+     "accuracy": 0.9779,
+     "mean_conf_minus_acc": 0.000886703285578605,
+     "ece_equal_width": 0.002444491147425296,
+     "ece_equal_mass": 0.0018397353376088566
+    },
+    "fitted_temperature": 0.42906283677157964
+   }
+  },
+  {
+   "name": "nmnist_T6_seed2_arch32-64-128-128",
+   "dataset": "nmnist",
+   "n_blocks": 4,
+   "timesteps": 6,
+   "seed": 2,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.9894,
+     "mean_conf_minus_acc": -0.024587465003377273,
+     "ece_equal_width": 0.02539532084676912,
+     "ece_equal_mass": 0.02458746500337732
+    },
+    "temperature": {
+     "accuracy": 0.9894,
+     "mean_conf_minus_acc": 0.0007750833201500829,
+     "ece_equal_width": 0.004069598682257739,
+     "ece_equal_mass": 0.004314583071610405
+    },
+    "fitted_temperature": 0.7249374883795761
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9905,
+     "mean_conf_minus_acc": 0.008167126556079984,
+     "ece_equal_width": 0.00838026933563409,
+     "ece_equal_mass": 0.00816712655608016
+    },
+    "temperature": {
+     "accuracy": 0.9905,
+     "mean_conf_minus_acc": -0.00022099527505459182,
+     "ece_equal_width": 0.0021709173089126312,
+     "ece_equal_mass": 0.0013136903292634034
+    },
+    "fitted_temperature": 4.02127267502594
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.9826,
+     "mean_conf_minus_acc": -0.037523749864187605,
+     "ece_equal_width": 0.03752374986418742,
+     "ece_equal_mass": 0.03752374986418753
+    },
+    "temperature": {
+     "accuracy": 0.9826,
+     "mean_conf_minus_acc": 0.0010623401533484955,
+     "ece_equal_width": 0.0017391963713612353,
+     "ece_equal_mass": 0.002237556360603183
+    },
+    "fitted_temperature": 0.6533283231592857
+   }
+  },
+  {
+   "name": "ncaltech101_T2_seed0",
+   "dataset": "ncaltech101",
+   "n_blocks": 4,
+   "timesteps": 2,
+   "seed": 0,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.4322617680826636,
+     "mean_conf_minus_acc": -0.37582934479973307,
+     "ece_equal_width": 0.37582934479973307,
+     "ece_equal_mass": 0.37582934479973307
+    },
+    "temperature": {
+     "accuracy": 0.4322617680826636,
+     "mean_conf_minus_acc": -0.12925956427347818,
+     "ece_equal_width": 0.1447998765202118,
+     "ece_equal_mass": 0.15091277065612574
+    },
+    "fitted_temperature": 0.4176451503999569
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5665901262916189,
+     "mean_conf_minus_acc": 0.1622240363113162,
+     "ece_equal_width": 0.16222403631131632,
+     "ece_equal_mass": 0.16224044375006144
+    },
+    "temperature": {
+     "accuracy": 0.5665901262916189,
+     "mean_conf_minus_acc": -0.018262958842910515,
+     "ece_equal_width": 0.04269330382494025,
+     "ece_equal_mass": 0.03485280523294832
+    },
+    "fitted_temperature": 1.6061142871002703
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5683122847301951,
+     "mean_conf_minus_acc": -0.3051101946636951,
+     "ece_equal_width": 0.30511019466369516,
+     "ece_equal_mass": 0.3051101946636952
+    },
+    "temperature": {
+     "accuracy": 0.5683122847301951,
+     "mean_conf_minus_acc": -0.03508511076814114,
+     "ece_equal_width": 0.044576485678124014,
+     "ece_equal_mass": 0.03990393628208612
+    },
+    "fitted_temperature": 0.6197245259575661
+   }
+  },
+  {
+   "name": "ncaltech101_T2_seed1",
+   "dataset": "ncaltech101",
+   "n_blocks": 4,
+   "timesteps": 2,
+   "seed": 1,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.48163030998851897,
+     "mean_conf_minus_acc": -0.42318257662690645,
+     "ece_equal_width": 0.42318257662690645,
+     "ece_equal_mass": 0.4231825766269064
+    },
+    "temperature": {
+     "accuracy": 0.48163030998851897,
+     "mean_conf_minus_acc": -0.10560947147681282,
+     "ece_equal_width": 0.1342792209610712,
+     "ece_equal_mass": 0.1447619822925029
+    },
+    "fitted_temperature": 0.39885602121073793
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5849598163030999,
+     "mean_conf_minus_acc": 0.21657296744817567,
+     "ece_equal_width": 0.21677687266336054,
+     "ece_equal_mass": 0.21657300376932026
+    },
+    "temperature": {
+     "accuracy": 0.5849598163030999,
+     "mean_conf_minus_acc": 0.00923525071030773,
+     "ece_equal_width": 0.04434142166197588,
+     "ece_equal_mass": 0.04858221504620436
+    },
+    "fitted_temperature": 1.8908467674648712
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5734787600459242,
+     "mean_conf_minus_acc": -0.1484814030329265,
+     "ece_equal_width": 0.1484814030329265,
+     "ece_equal_mass": 0.14848140303292656
+    },
+    "temperature": {
+     "accuracy": 0.5734787600459242,
+     "mean_conf_minus_acc": 0.010391573269751375,
+     "ece_equal_width": 0.03281504249716248,
+     "ece_equal_mass": 0.03309554622927955
+    },
+    "fitted_temperature": 0.7215221073988578
+   }
+  },
+  {
+   "name": "ncaltech101_T2_seed2",
+   "dataset": "ncaltech101",
+   "n_blocks": 4,
+   "timesteps": 2,
+   "seed": 2,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.4489092996555683,
+     "mean_conf_minus_acc": -0.39164050405922846,
+     "ece_equal_width": 0.39164050405922846,
+     "ece_equal_mass": 0.39164050405922846
+    },
+    "temperature": {
+     "accuracy": 0.4489092996555683,
+     "mean_conf_minus_acc": -0.1377847612113398,
+     "ece_equal_width": 0.1557528119482629,
+     "ece_equal_mass": 0.16113047361290012
+    },
+    "fitted_temperature": 0.4214238326783877
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5717566016073479,
+     "mean_conf_minus_acc": 0.1691522697855563,
+     "ece_equal_width": 0.16915226978555625,
+     "ece_equal_mass": 0.1691888044949122
+    },
+    "temperature": {
+     "accuracy": 0.5717566016073479,
+     "mean_conf_minus_acc": -0.024587052937146914,
+     "ece_equal_width": 0.03438811082813318,
+     "ece_equal_mass": 0.03248601065870376
+    },
+    "fitted_temperature": 1.659072907587324
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5579793340987371,
+     "mean_conf_minus_acc": -0.2767934345668605,
+     "ece_equal_width": 0.27679343456686045,
+     "ece_equal_mass": 0.27679343456686056
+    },
+    "temperature": {
+     "accuracy": 0.5579793340987371,
+     "mean_conf_minus_acc": -0.03133847420404312,
+     "ece_equal_width": 0.03790087872642302,
+     "ece_equal_mass": 0.04022914923944719
+    },
+    "fitted_temperature": 0.6421966525352021
+   }
+  },
+  {
+   "name": "ncaltech101_T6_seed0",
+   "dataset": "ncaltech101",
+   "n_blocks": 4,
+   "timesteps": 6,
+   "seed": 0,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.6371986222732492,
+     "mean_conf_minus_acc": -0.15974373971773542,
+     "ece_equal_width": 0.15974373971773537,
+     "ece_equal_mass": 0.15974373971773534
+    },
+    "temperature": {
+     "accuracy": 0.6371986222732492,
+     "mean_conf_minus_acc": -0.05517665223183876,
+     "ece_equal_width": 0.05757148310400975,
+     "ece_equal_mass": 0.05532303182968026
+    },
+    "fitted_temperature": 0.8573201506226503
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.6659012629161883,
+     "mean_conf_minus_acc": 0.2352186409917021,
+     "ece_equal_width": 0.235218640991702,
+     "ece_equal_mass": 0.23521864150686514
+    },
+    "temperature": {
+     "accuracy": 0.6659012629161883,
+     "mean_conf_minus_acc": -0.029415609276663757,
+     "ece_equal_width": 0.03485276179582548,
+     "ece_equal_mass": 0.03204694638668772
+    },
+    "fitted_temperature": 3.1663864161951314
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.6222732491389208,
+     "mean_conf_minus_acc": -0.3277856495047262,
+     "ece_equal_width": 0.32778564950472616,
+     "ece_equal_mass": 0.3277856495047261
+    },
+    "temperature": {
+     "accuracy": 0.6222732491389208,
+     "mean_conf_minus_acc": -0.029538549466602837,
+     "ece_equal_width": 0.038491613216363935,
+     "ece_equal_mass": 0.03204513348438233
+    },
+    "fitted_temperature": 0.576336382335304
+   }
+  },
+  {
+   "name": "ncaltech101_T6_seed1",
+   "dataset": "ncaltech101",
+   "n_blocks": 4,
+   "timesteps": 6,
+   "seed": 1,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.634902411021814,
+     "mean_conf_minus_acc": -0.14910911505590357,
+     "ece_equal_width": 0.1496286436081171,
+     "ece_equal_mass": 0.14910911505590355
+    },
+    "temperature": {
+     "accuracy": 0.634902411021814,
+     "mean_conf_minus_acc": -0.01333284310993621,
+     "ece_equal_width": 0.05191584539142652,
+     "ece_equal_mass": 0.04296514778776406
+    },
+    "fitted_temperature": 0.815756932061185
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.6716417910447762,
+     "mean_conf_minus_acc": 0.23655220410595168,
+     "ece_equal_width": 0.23655220410595174,
+     "ece_equal_mass": 0.23655220411617334
+    },
+    "temperature": {
+     "accuracy": 0.6716417910447762,
+     "mean_conf_minus_acc": -0.01040201813363717,
+     "ece_equal_width": 0.022816400699101028,
+     "ece_equal_mass": 0.023913435770012637
+    },
+    "fitted_temperature": 3.2563432957477936
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.6366245694603904,
+     "mean_conf_minus_acc": -0.28749457273169576,
+     "ece_equal_width": 0.2874945727316957,
+     "ece_equal_mass": 0.2874945727316958
+    },
+    "temperature": {
+     "accuracy": 0.6366245694603904,
+     "mean_conf_minus_acc": -0.028442752613998312,
+     "ece_equal_width": 0.03396427113870086,
+     "ece_equal_mass": 0.03173904905059646
+    },
+    "fitted_temperature": 0.6008771613491389
+   }
+  },
+  {
+   "name": "ncaltech101_T6_seed2",
+   "dataset": "ncaltech101",
+   "n_blocks": 4,
+   "timesteps": 6,
+   "seed": 2,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.6561423650975889,
+     "mean_conf_minus_acc": -0.1513243298789736,
+     "ece_equal_width": 0.15242321405483922,
+     "ece_equal_mass": 0.1513243298789736
+    },
+    "temperature": {
+     "accuracy": 0.6561423650975889,
+     "mean_conf_minus_acc": -0.027817274158447813,
+     "ece_equal_width": 0.06420377867988408,
+     "ece_equal_mass": 0.0612825134520861
+    },
+    "fitted_temperature": 0.8393208463773418
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.6842709529276694,
+     "mean_conf_minus_acc": 0.2469779076609111,
+     "ece_equal_width": 0.246977907660911,
+     "ece_equal_mass": 0.24697790766091102
+    },
+    "temperature": {
+     "accuracy": 0.6842709529276694,
+     "mean_conf_minus_acc": -0.02104899812441452,
+     "ece_equal_width": 0.03597689838396092,
+     "ece_equal_mass": 0.024366198251657863
+    },
+    "fitted_temperature": 3.9343882905205785
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.6440872560275546,
+     "mean_conf_minus_acc": -0.19016322046454825,
+     "ece_equal_width": 0.19016322046454823,
+     "ece_equal_mass": 0.1901632204645482
+    },
+    "temperature": {
+     "accuracy": 0.6440872560275546,
+     "mean_conf_minus_acc": -0.023344316379881103,
+     "ece_equal_width": 0.029703808707649205,
+     "ece_equal_mass": 0.027626470541097053
+    },
+    "fitted_temperature": 0.7071079248955002
+   }
+  },
+  {
+   "name": "ncaltech101_T10_seed0",
+   "dataset": "ncaltech101",
+   "n_blocks": 4,
+   "timesteps": 10,
+   "seed": 0,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.6561423650975889,
+     "mean_conf_minus_acc": 0.03050520412218205,
+     "ece_equal_width": 0.04326401464196719,
+     "ece_equal_mass": 0.045798019335423074
+    },
+    "temperature": {
+     "accuracy": 0.6561423650975889,
+     "mean_conf_minus_acc": -0.011155791440351948,
+     "ece_equal_width": 0.028098301067586116,
+     "ece_equal_mass": 0.02301404763345409
+    },
+    "fitted_temperature": 1.099758010278007
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.6590126291618829,
+     "mean_conf_minus_acc": 0.25445199991950296,
+     "ece_equal_width": 0.25445199991950285,
+     "ece_equal_mass": 0.25445200069766244
+    },
+    "temperature": {
+     "accuracy": 0.6590126291618829,
+     "mean_conf_minus_acc": -0.025111719487764583,
+     "ece_equal_width": 0.026997251201459245,
+     "ece_equal_mass": 0.025746475771810585
+    },
+    "fitted_temperature": 3.9681751707585686
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5843857634902411,
+     "mean_conf_minus_acc": -0.41900050303596725,
+     "ece_equal_width": 0.41900050303596725,
+     "ece_equal_mass": 0.4190005030359673
+    },
+    "temperature": {
+     "accuracy": 0.5843857634902411,
+     "mean_conf_minus_acc": -0.05036508995271405,
+     "ece_equal_width": 0.06045784072407461,
+     "ece_equal_mass": 0.057001138741810564
+    },
+    "fitted_temperature": 0.48994493068893713
+   }
+  },
+  {
+   "name": "ncaltech101_T10_seed1",
+   "dataset": "ncaltech101",
+   "n_blocks": 4,
+   "timesteps": 10,
+   "seed": 1,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.6469575200918485,
+     "mean_conf_minus_acc": 0.04248832782545331,
+     "ece_equal_width": 0.04649073733529387,
+     "ece_equal_mass": 0.04955569469591273
+    },
+    "temperature": {
+     "accuracy": 0.6469575200918485,
+     "mean_conf_minus_acc": -0.007838806859532865,
+     "ece_equal_width": 0.03683127351991389,
+     "ece_equal_mass": 0.028971582572886293
+    },
+    "fitted_temperature": 1.121212884130115
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.6768082663605052,
+     "mean_conf_minus_acc": 0.24472599093422154,
+     "ece_equal_width": 0.24472599093422154,
+     "ece_equal_mass": 0.24472599098419975
+    },
+    "temperature": {
+     "accuracy": 0.6768082663605052,
+     "mean_conf_minus_acc": -0.030476146162170425,
+     "ece_equal_width": 0.03411657303135764,
+     "ece_equal_mass": 0.03156949472584559
+    },
+    "fitted_temperature": 3.9999647372921396
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.6067738231917337,
+     "mean_conf_minus_acc": -0.44120847645774464,
+     "ece_equal_width": 0.44120847645774464,
+     "ece_equal_mass": 0.4412084764577445
+    },
+    "temperature": {
+     "accuracy": 0.6067738231917337,
+     "mean_conf_minus_acc": -0.07206346508182149,
+     "ece_equal_width": 0.07612761109364696,
+     "ece_equal_mass": 0.07867120026829334
+    },
+    "fitted_temperature": 0.49649011547166766
+   }
+  },
+  {
+   "name": "ncaltech101_T10_seed2",
+   "dataset": "ncaltech101",
+   "n_blocks": 4,
+   "timesteps": 10,
+   "seed": 2,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.6274397244546498,
+     "mean_conf_minus_acc": 0.030248350743780295,
+     "ece_equal_width": 0.04293197080726464,
+     "ece_equal_mass": 0.043346201712233655
+    },
+    "temperature": {
+     "accuracy": 0.6274397244546498,
+     "mean_conf_minus_acc": -0.008259860404784658,
+     "ece_equal_width": 0.032122505976760585,
+     "ece_equal_mass": 0.02643557969957006
+    },
+    "fitted_temperature": 1.0916564648319513
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.6458094144661309,
+     "mean_conf_minus_acc": 0.25691178985712615,
+     "ece_equal_width": 0.25691178985712637,
+     "ece_equal_mass": 0.25691180664942015
+    },
+    "temperature": {
+     "accuracy": 0.6458094144661309,
+     "mean_conf_minus_acc": -0.026936288890070048,
+     "ece_equal_width": 0.033189808945176764,
+     "ece_equal_mass": 0.030238412007755445
+    },
+    "fitted_temperature": 3.7197381630040858
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5769230769230769,
+     "mean_conf_minus_acc": -0.4300417791668748,
+     "ece_equal_width": 0.4300417791668748,
+     "ece_equal_mass": 0.4300417791668748
+    },
+    "temperature": {
+     "accuracy": 0.5769230769230769,
+     "mean_conf_minus_acc": -0.05505506371830937,
+     "ece_equal_width": 0.06781777867676636,
+     "ece_equal_mass": 0.06203993283925204
+    },
+    "fitted_temperature": 0.46559333079783755
+   }
+  },
+  {
+   "name": "ncaltech101_T2_seed0_arch32-64",
+   "dataset": "ncaltech101",
+   "n_blocks": 2,
+   "timesteps": 2,
+   "seed": 0,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.4695752009184845,
+     "mean_conf_minus_acc": -0.4137614462471418,
+     "ece_equal_width": 0.41376144624714184,
+     "ece_equal_mass": 0.4137614462471418
+    },
+    "temperature": {
+     "accuracy": 0.4695752009184845,
+     "mean_conf_minus_acc": -0.13105609057080486,
+     "ece_equal_width": 0.15263984848237083,
+     "ece_equal_mass": 0.15625027150795642
+    },
+    "fitted_temperature": 0.419569933487328
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.534443168771527,
+     "mean_conf_minus_acc": 0.10069540188993964,
+     "ece_equal_width": 0.10069540188993971,
+     "ece_equal_mass": 0.10075782206321869
+    },
+    "temperature": {
+     "accuracy": 0.534443168771527,
+     "mean_conf_minus_acc": -0.04426804191818773,
+     "ece_equal_width": 0.04636863910209472,
+     "ece_equal_mass": 0.045462175696992534
+    },
+    "fitted_temperature": 1.4183485028082496
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5258323765786452,
+     "mean_conf_minus_acc": -0.35174333303091565,
+     "ece_equal_width": 0.3517433330309156,
+     "ece_equal_mass": 0.35174333303091565
+    },
+    "temperature": {
+     "accuracy": 0.5258323765786452,
+     "mean_conf_minus_acc": -0.06144682152686454,
+     "ece_equal_width": 0.06592886467427209,
+     "ece_equal_mass": 0.06917095255181402
+    },
+    "fitted_temperature": 0.557402433440201
+   }
+  },
+  {
+   "name": "ncaltech101_T2_seed1_arch32-64",
+   "dataset": "ncaltech101",
+   "n_blocks": 2,
+   "timesteps": 2,
+   "seed": 1,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.4971297359357061,
+     "mean_conf_minus_acc": -0.4426827126749047,
+     "ece_equal_width": 0.44268271267490467,
+     "ece_equal_mass": 0.4426827126749047
+    },
+    "temperature": {
+     "accuracy": 0.4971297359357061,
+     "mean_conf_minus_acc": -0.13785923780962855,
+     "ece_equal_width": 0.15010197278979734,
+     "ece_equal_mass": 0.1541392995178869
+    },
+    "fitted_temperature": 0.40933648494885333
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.534443168771527,
+     "mean_conf_minus_acc": 0.13145609633062627,
+     "ece_equal_width": 0.1324014407798054,
+     "ece_equal_mass": 0.13154657369166187
+    },
+    "temperature": {
+     "accuracy": 0.534443168771527,
+     "mean_conf_minus_acc": -0.013563311344223838,
+     "ece_equal_width": 0.02446145384675661,
+     "ece_equal_mass": 0.02805333419472789
+    },
+    "fitted_temperature": 1.4676504157137287
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5275545350172216,
+     "mean_conf_minus_acc": -0.31383209207481344,
+     "ece_equal_width": 0.31383209207481333,
+     "ece_equal_mass": 0.3138320920748134
+    },
+    "temperature": {
+     "accuracy": 0.5275545350172216,
+     "mean_conf_minus_acc": -0.031355749737482175,
+     "ece_equal_width": 0.040806545929707234,
+     "ece_equal_mass": 0.040505966493104444
+    },
+    "fitted_temperature": 0.57555314221438
+   }
+  },
+  {
+   "name": "ncaltech101_T2_seed2_arch32-64",
+   "dataset": "ncaltech101",
+   "n_blocks": 2,
+   "timesteps": 2,
+   "seed": 2,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.5005740528128588,
+     "mean_conf_minus_acc": -0.4463173960967601,
+     "ece_equal_width": 0.44631739609676013,
+     "ece_equal_mass": 0.44631739609676
+    },
+    "temperature": {
+     "accuracy": 0.5005740528128588,
+     "mean_conf_minus_acc": -0.16319871149794557,
+     "ece_equal_width": 0.17912560587567333,
+     "ece_equal_mass": 0.17694753236681915
+    },
+    "fitted_temperature": 0.42584990826948854
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5338691159586682,
+     "mean_conf_minus_acc": 0.17394732247754952,
+     "ece_equal_width": 0.1739473224775494,
+     "ece_equal_mass": 0.17396637336939783
+    },
+    "temperature": {
+     "accuracy": 0.5338691159586682,
+     "mean_conf_minus_acc": -0.04530072253114459,
+     "ece_equal_width": 0.04875754920789091,
+     "ece_equal_mass": 0.04530072253114466
+    },
+    "fitted_temperature": 1.808664748702211
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5252583237657864,
+     "mean_conf_minus_acc": -0.2393268358559862,
+     "ece_equal_width": 0.2393268358559862,
+     "ece_equal_mass": 0.23932683585598624
+    },
+    "temperature": {
+     "accuracy": 0.5252583237657864,
+     "mean_conf_minus_acc": -0.061084246188134295,
+     "ece_equal_width": 0.06144557949351435,
+     "ece_equal_mass": 0.06108424618813432
+    },
+    "fitted_temperature": 0.7062551940138713
+   }
+  },
+  {
+   "name": "ncaltech101_T6_seed0_arch32-64",
+   "dataset": "ncaltech101",
+   "n_blocks": 2,
+   "timesteps": 6,
+   "seed": 0,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.5510907003444316,
+     "mean_conf_minus_acc": -0.10544985888928698,
+     "ece_equal_width": 0.11052983009007465,
+     "ece_equal_mass": 0.1057745098368829
+    },
+    "temperature": {
+     "accuracy": 0.5510907003444316,
+     "mean_conf_minus_acc": -0.021765383613525757,
+     "ece_equal_width": 0.06259462723183237,
+     "ece_equal_mass": 0.061619858653274386
+    },
+    "fitted_temperature": 0.8812119358262169
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5803673938002296,
+     "mean_conf_minus_acc": 0.2828548407156545,
+     "ece_equal_width": 0.2850978987920124,
+     "ece_equal_mass": 0.28285488138235826
+    },
+    "temperature": {
+     "accuracy": 0.5803673938002296,
+     "mean_conf_minus_acc": -0.027849097945076395,
+     "ece_equal_width": 0.04255526582759648,
+     "ece_equal_mass": 0.03936603034014754
+    },
+    "fitted_temperature": 3.0123898182536397
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5413318025258324,
+     "mean_conf_minus_acc": -0.3562163340442359,
+     "ece_equal_width": 0.35621633404423597,
+     "ece_equal_mass": 0.3562163340442359
+    },
+    "temperature": {
+     "accuracy": 0.5413318025258324,
+     "mean_conf_minus_acc": -0.04683311719744321,
+     "ece_equal_width": 0.05799375029120893,
+     "ece_equal_mass": 0.05718848571283925
+    },
+    "fitted_temperature": 0.5453429570708201
+   }
+  },
+  {
+   "name": "ncaltech101_T6_seed1_arch32-64",
+   "dataset": "ncaltech101",
+   "n_blocks": 2,
+   "timesteps": 6,
+   "seed": 1,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.5677382319173364,
+     "mean_conf_minus_acc": -0.11936892594902065,
+     "ece_equal_width": 0.12007874720478878,
+     "ece_equal_mass": 0.12326759686275314
+    },
+    "temperature": {
+     "accuracy": 0.5677382319173364,
+     "mean_conf_minus_acc": -0.03484033681025145,
+     "ece_equal_width": 0.04954897052162571,
+     "ece_equal_mass": 0.06029416135018947
+    },
+    "fitted_temperature": 0.8789638467253397
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5878300803673938,
+     "mean_conf_minus_acc": 0.27716013984628984,
+     "ece_equal_width": 0.2777364194550616,
+     "ece_equal_mass": 0.27716014324806837
+    },
+    "temperature": {
+     "accuracy": 0.5878300803673938,
+     "mean_conf_minus_acc": -0.024605905465923117,
+     "ece_equal_width": 0.03318424459111249,
+     "ece_equal_mass": 0.029744376425415598
+    },
+    "fitted_temperature": 3.1059768456383607
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5574052812858783,
+     "mean_conf_minus_acc": -0.33913626965754423,
+     "ece_equal_width": 0.33913626965754423,
+     "ece_equal_mass": 0.33913626965754423
+    },
+    "temperature": {
+     "accuracy": 0.5574052812858783,
+     "mean_conf_minus_acc": -0.05674921459073712,
+     "ece_equal_width": 0.058078108786420245,
+     "ece_equal_mass": 0.059859812933623434
+    },
+    "fitted_temperature": 0.5740982121933308
+   }
+  },
+  {
+   "name": "ncaltech101_T6_seed2_arch32-64",
+   "dataset": "ncaltech101",
+   "n_blocks": 2,
+   "timesteps": 6,
+   "seed": 2,
+   "count": {
+    "uncalibrated": {
+     "accuracy": 0.5665901262916189,
+     "mean_conf_minus_acc": -0.12288566825899772,
+     "ece_equal_width": 0.12625558048979219,
+     "ece_equal_mass": 0.12288566825899769
+    },
+    "temperature": {
+     "accuracy": 0.5665901262916189,
+     "mean_conf_minus_acc": -0.04665623970248678,
+     "ece_equal_width": 0.06008114181601839,
+     "ece_equal_mass": 0.06276131852734784
+    },
+    "fitted_temperature": 0.8900065755693645
+   },
+   "accumulator_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5809414466130884,
+     "mean_conf_minus_acc": 0.2754293717829862,
+     "ece_equal_width": 0.2754293717829862,
+     "ece_equal_mass": 0.275429374322279
+    },
+    "temperature": {
+     "accuracy": 0.5809414466130884,
+     "mean_conf_minus_acc": -0.03671094614818082,
+     "ece_equal_width": 0.038460799603129155,
+     "ece_equal_mass": 0.03672715615029336
+    },
+    "fitted_temperature": 3.182865229294816
+   },
+   "membrane_same_weights": {
+    "uncalibrated": {
+     "accuracy": 0.5413318025258324,
+     "mean_conf_minus_acc": -0.3202583669046148,
+     "ece_equal_width": 0.32025836690461473,
+     "ece_equal_mass": 0.3202583669046148
+    },
+    "temperature": {
+     "accuracy": 0.5413318025258324,
+     "mean_conf_minus_acc": -0.06366074881860334,
+     "ece_equal_width": 0.06676969416005685,
+     "ece_equal_mass": 0.06862145897140585
+    },
+    "fitted_temperature": 0.6001348694039008
+   }
+  }
+ ]
+}
