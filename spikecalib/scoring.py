@@ -34,9 +34,11 @@ def top_label_scores(conf: np.ndarray, correct: np.ndarray) -> dict:
     conf, correct = _validate(conf, correct)
     clipped = np.clip(conf, CLIP, 1.0 - CLIP)
     n_clipped = int(np.sum(clipped != conf))
+    n_clipped_exact = int(np.sum((clipped != conf) & ((conf == 0.0) | (conf == 1.0))))
     log_loss = -float(np.mean(correct * np.log(clipped) + (1.0 - correct) * np.log(1.0 - clipped)))
     brier = float(np.mean((conf - correct) ** 2))
-    return {"brier_top_label": brier, "log_loss_top_label": log_loss, "n_clipped_top_label": n_clipped}
+    return {"brier_top_label": brier, "log_loss_top_label": log_loss, "n_clipped_top_label": n_clipped,
+            "n_clipped_top_label_exact_zero_or_one": n_clipped_exact}
 
 
 def multiclass_scores(probs: np.ndarray, labels: np.ndarray) -> dict:

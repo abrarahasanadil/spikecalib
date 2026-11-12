@@ -865,6 +865,8 @@ for k, name in (("Count", "count"), ("Accum", "accumulator"), ("Diff", "count_mi
     put(f"hdAuroc{k}Hi", f(a["ci95_seed_mean"][1], sign=sgn), SRC_CM + f" headline.auroc.{name}, 95% interval")
 assert abs(au["count"]["mean"] - float(dict((m[0], m[1]) for m in macros)["aurocCountNmTwo"])) < 5e-5
 put("clipTop", thousands(cm_["clipped"]["top_label"]), SRC_CM + " clipped.top_label")
+assert all(r["n_clipped_top_label"] == 0 for r in cm_["rows"] if r["arm"] != "isotonic-top-label")
+assert all(r["n_clipped_top_label"] == r["n_clipped_top_label_exact_zero_or_one"] for r in cm_["rows"])
 put("clipTopTotal", thousands(cm_["clipped"]["scores_computed_top_label"]), SRC_CM + " clipped.scores_computed_top_label")
 put("clipMulti", str(cm_["clipped"]["multiclass"]), SRC_CM + " clipped.multiclass")
 put("refitRuns", str(len({r["name"] for r in cm_["rows"]})), SRC_CM + " rows, runs refitted")

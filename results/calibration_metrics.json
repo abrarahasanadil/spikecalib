@@ -40,6 +40,7 @@
    "brier_top_label": 0.19835986138883402,
    "log_loss_top_label": 0.6853144159787442,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 2.388769198854298,
    "brier_multiclass": 0.5466610543992872,
@@ -69,6 +70,7 @@
    "brier_top_label": 0.13063156331984124,
    "log_loss_top_label": 0.4002977867382197,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.5997889456947418,
    "brier_multiclass": 0.4744914109193906,
@@ -98,6 +100,7 @@
    "brier_top_label": 0.13205955208846099,
    "log_loss_top_label": 0.44047737182595925,
    "n_clipped_top_label": 223,
+   "n_clipped_top_label_exact_zero_or_one": 223,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -124,6 +127,7 @@
    "brier_top_label": 0.12812975961941697,
    "log_loss_top_label": 0.38680183942113094,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.5423744789738376,
    "brier_multiclass": 0.45521321949803994,
@@ -153,6 +157,7 @@
    "brier_top_label": 0.12562431913654493,
    "log_loss_top_label": 0.38480756296702756,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.5417345553274289,
    "brier_multiclass": 0.45194047886451816,
@@ -182,6 +187,7 @@
    "brier_top_label": 0.12677857869745235,
    "log_loss_top_label": 0.38189969172698063,
    "n_clipped_top_label": 197,
+   "n_clipped_top_label_exact_zero_or_one": 197,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -208,6 +214,7 @@
    "brier_top_label": 0.20976847874141494,
    "log_loss_top_label": 0.6871831711655434,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 2.449758039799117,
    "brier_multiclass": 0.5931393629097121,
@@ -237,6 +244,7 @@
    "brier_top_label": 0.13886520539042602,
    "log_loss_top_label": 0.43335034886692525,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.718603196433309,
    "brier_multiclass": 0.518702279098027,
@@ -266,6 +274,7 @@
    "brier_top_label": 0.13565095360572285,
    "log_loss_top_label": 0.42903340245015986,
    "n_clipped_top_label": 154,
+   "n_clipped_top_label_exact_zero_or_one": 154,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -292,6 +301,7 @@
    "brier_top_label": 0.12400432008971587,
    "log_loss_top_label": 0.3802301427261292,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.499408729819241,
    "brier_multiclass": 0.4514599653314722,
@@ -321,6 +331,7 @@
    "brier_top_label": 0.12215715419667916,
    "log_loss_top_label": 0.37840938723560913,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.501241153296157,
    "brier_multiclass": 0.4494026899211793,
@@ -350,6 +361,7 @@
    "brier_top_label": 0.1232394265817645,
    "log_loss_top_label": 0.4028181382398425,
    "n_clipped_top_label": 235,
+   "n_clipped_top_label_exact_zero_or_one": 235,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -376,6 +388,7 @@
    "brier_top_label": 0.22002900962079877,
    "log_loss_top_label": 0.7493849141670548,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 2.7782292546705563,
    "brier_multiclass": 0.6124044683513119,
@@ -405,6 +418,7 @@
    "brier_top_label": 0.15636068141097506,
    "log_loss_top_label": 0.4739820733581091,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.8316024728456721,
    "brier_multiclass": 0.5428125040699808,
@@ -434,6 +448,7 @@
    "brier_top_label": 0.15226972010641576,
    "log_loss_top_label": 0.512203751108656,
    "n_clipped_top_label": 55,
+   "n_clipped_top_label_exact_zero_or_one": 55,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -460,6 +475,7 @@
    "brier_top_label": 0.12082965001603957,
    "log_loss_top_label": 0.37127089151679593,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.622792381098759,
    "brier_multiclass": 0.4721798709079322,
@@ -489,6 +505,7 @@
    "brier_top_label": 0.11935981110575555,
    "log_loss_top_label": 0.3719786995012393,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.622252109644882,
    "brier_multiclass": 0.47047557923783734,
@@ -518,6 +535,7 @@
    "brier_top_label": 0.12047810814087472,
    "log_loss_top_label": 0.42097859878474886,
    "n_clipped_top_label": 535,
+   "n_clipped_top_label_exact_zero_or_one": 535,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -544,6 +562,7 @@
    "brier_top_label": 0.1186625560965067,
    "log_loss_top_label": 0.3700211257105378,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.320249925285925,
    "brier_multiclass": 0.588212354660863,
@@ -573,6 +592,7 @@
    "brier_top_label": 0.12441624312219864,
    "log_loss_top_label": 0.3947899799909765,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.2992742047072996,
    "brier_multiclass": 0.5927986834376343,
@@ -602,6 +622,7 @@
    "brier_top_label": 0.1205946820862789,
    "log_loss_top_label": 0.3745610940456355,
    "n_clipped_top_label": 296,
+   "n_clipped_top_label_exact_zero_or_one": 296,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -628,6 +649,7 @@
    "brier_top_label": 0.1379391634793046,
    "log_loss_top_label": 0.4101784831018205,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.8590795443633548,
    "brier_multiclass": 0.5323579863213874,
@@ -657,6 +679,7 @@
    "brier_top_label": 0.13482297221159834,
    "log_loss_top_label": 0.41455740320070156,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.8340131793699426,
    "brier_multiclass": 0.5286567755245746,
@@ -686,6 +709,7 @@
    "brier_top_label": 0.13517083778771774,
    "log_loss_top_label": 0.4511796148091518,
    "n_clipped_top_label": 305,
+   "n_clipped_top_label_exact_zero_or_one": 305,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -712,6 +736,7 @@
    "brier_top_label": 0.412853961556103,
    "log_loss_top_label": 1.3212773594126366,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 3.4490993892713133,
    "brier_multiclass": 0.9304521970781444,
@@ -741,6 +766,7 @@
    "brier_top_label": 0.19083667509433622,
    "log_loss_top_label": 0.557108136393272,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.495779194509449,
    "brier_multiclass": 0.6908381505372779,
@@ -770,6 +796,7 @@
    "brier_top_label": 0.1328440889615117,
    "log_loss_top_label": 0.4421267193999464,
    "n_clipped_top_label": 350,
+   "n_clipped_top_label_exact_zero_or_one": 350,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -796,6 +823,7 @@
    "brier_top_label": 0.3817592932734722,
    "log_loss_top_label": 1.233702684496588,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 3.296735903280248,
    "brier_multiclass": 0.9254561430238429,
@@ -825,6 +853,7 @@
    "brier_top_label": 0.1907673612199119,
    "log_loss_top_label": 0.5631534710988269,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 2.282781849593486,
    "brier_multiclass": 0.6992756022087491,
@@ -854,6 +883,7 @@
    "brier_top_label": 0.13426204150417884,
    "log_loss_top_label": 0.41174999634710824,
    "n_clipped_top_label": 312,
+   "n_clipped_top_label_exact_zero_or_one": 312,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -880,6 +910,7 @@
    "brier_top_label": 0.16288752648165378,
    "log_loss_top_label": 0.6298696032398318,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 2.658178240277448,
    "brier_multiclass": 0.6411306536038243,
@@ -909,6 +940,7 @@
    "brier_top_label": 0.16063791189508952,
    "log_loss_top_label": 0.5016921451146518,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 2.2608694421770736,
    "brier_multiclass": 0.626633890093154,
@@ -938,6 +970,7 @@
    "brier_top_label": 0.161936429767282,
    "log_loss_top_label": 0.5028862673534675,
    "n_clipped_top_label": 13,
+   "n_clipped_top_label_exact_zero_or_one": 13,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -964,6 +997,7 @@
    "brier_top_label": 0.14196996551087696,
    "log_loss_top_label": 0.4408481466724645,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.3978502673066533,
    "brier_multiclass": 0.6154451803982562,
@@ -993,6 +1027,7 @@
    "brier_top_label": 0.13813197430009153,
    "log_loss_top_label": 0.43824941140016865,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.3295360952369335,
    "brier_multiclass": 0.6101043711066368,
@@ -1022,6 +1057,7 @@
    "brier_top_label": 0.13198700288941706,
    "log_loss_top_label": 0.45941620952441037,
    "n_clipped_top_label": 108,
+   "n_clipped_top_label_exact_zero_or_one": 108,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -1048,6 +1084,7 @@
    "brier_top_label": 0.15012371950621733,
    "log_loss_top_label": 0.449997862104723,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.9282013426136722,
    "brier_multiclass": 0.5511742580598504,
@@ -1077,6 +1114,7 @@
    "brier_top_label": 0.14367251440356,
    "log_loss_top_label": 0.43998809524709775,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.884688990772376,
    "brier_multiclass": 0.5435911513899232,
@@ -1106,6 +1144,7 @@
    "brier_top_label": 0.14286569785720896,
    "log_loss_top_label": 0.4608493551579654,
    "n_clipped_top_label": 264,
+   "n_clipped_top_label_exact_zero_or_one": 264,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -1132,6 +1171,7 @@
    "brier_top_label": 0.4366505262272257,
    "log_loss_top_label": 1.3947072342901423,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 3.4705297474578063,
    "brier_multiclass": 0.9304399931672319,
@@ -1161,6 +1201,7 @@
    "brier_top_label": 0.18549488740188436,
    "log_loss_top_label": 0.5456711962899302,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.470574720102051,
    "brier_multiclass": 0.6660207916210743,
@@ -1190,6 +1231,7 @@
    "brier_top_label": 0.13327877510459973,
    "log_loss_top_label": 0.47055102746780736,
    "n_clipped_top_label": 390,
+   "n_clipped_top_label_exact_zero_or_one": 390,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -1216,6 +1258,7 @@
    "brier_top_label": 0.42382252993252706,
    "log_loss_top_label": 1.3575406115103978,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 3.2689140304544355,
    "brier_multiclass": 0.921800368111518,
@@ -1245,6 +1288,7 @@
    "brier_top_label": 0.1883470345178654,
    "log_loss_top_label": 0.5602965421299119,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 2.119333540795102,
    "brier_multiclass": 0.6484505149077884,
@@ -1274,6 +1318,7 @@
    "brier_top_label": 0.14479208877852373,
    "log_loss_top_label": 0.4773403144564217,
    "n_clipped_top_label": 325,
+   "n_clipped_top_label_exact_zero_or_one": 325,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -1300,6 +1345,7 @@
    "brier_top_label": 0.16007556995508374,
    "log_loss_top_label": 0.6009083983201393,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 2.577743398589002,
    "brier_multiclass": 0.6406949505712993,
@@ -1329,6 +1375,7 @@
    "brier_top_label": 0.1478016636085657,
    "log_loss_top_label": 0.46551217143543017,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 2.2644358085236345,
    "brier_multiclass": 0.6210534527025194,
@@ -1358,6 +1405,7 @@
    "brier_top_label": 0.15328159634101837,
    "log_loss_top_label": 0.4767450049074102,
    "n_clipped_top_label": 15,
+   "n_clipped_top_label_exact_zero_or_one": 15,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -1384,6 +1432,7 @@
    "brier_top_label": 0.13589369290790176,
    "log_loss_top_label": 0.42804454075456183,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.335010651064105,
    "brier_multiclass": 0.5908725892413547,
@@ -1413,6 +1462,7 @@
    "brier_top_label": 0.14695745809810906,
    "log_loss_top_label": 0.45600467963414765,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.2946692828562933,
    "brier_multiclass": 0.6009446510355637,
@@ -1442,6 +1492,7 @@
    "brier_top_label": 0.13666660653583257,
    "log_loss_top_label": 0.46595366070960326,
    "n_clipped_top_label": 143,
+   "n_clipped_top_label_exact_zero_or_one": 143,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -1468,6 +1519,7 @@
    "brier_top_label": 0.13756758809232103,
    "log_loss_top_label": 0.4193639962964553,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.9296177367882241,
    "brier_multiclass": 0.5338470209135217,
@@ -1497,6 +1549,7 @@
    "brier_top_label": 0.12602325670467887,
    "log_loss_top_label": 0.3947557940276131,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.844496934398992,
    "brier_multiclass": 0.5203979598418415,
@@ -1526,6 +1579,7 @@
    "brier_top_label": 0.12355213375344681,
    "log_loss_top_label": 0.39625983043420304,
    "n_clipped_top_label": 287,
+   "n_clipped_top_label_exact_zero_or_one": 287,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -1552,6 +1606,7 @@
    "brier_top_label": 0.43992106675215353,
    "log_loss_top_label": 1.409743437032129,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 3.49869475017537,
    "brier_multiclass": 0.9311919643708517,
@@ -1581,6 +1636,7 @@
    "brier_top_label": 0.2005643143882009,
    "log_loss_top_label": 0.5824792055348129,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.5327493871035545,
    "brier_multiclass": 0.6779380572948772,
@@ -1610,6 +1666,7 @@
    "brier_top_label": 0.1449072867818139,
    "log_loss_top_label": 0.4564732593853191,
    "n_clipped_top_label": 274,
+   "n_clipped_top_label_exact_zero_or_one": 274,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -1636,6 +1693,7 @@
    "brier_top_label": 0.3962922926392527,
    "log_loss_top_label": 1.279901863357369,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 3.301692205090967,
    "brier_multiclass": 0.924818175036268,
@@ -1665,6 +1723,7 @@
    "brier_top_label": 0.19884627150000336,
    "log_loss_top_label": 0.584588744922826,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 2.2858606283617613,
    "brier_multiclass": 0.6934310489439033,
@@ -1694,6 +1753,7 @@
    "brier_top_label": 0.14206186563090287,
    "log_loss_top_label": 0.5753756369899774,
    "n_clipped_top_label": 387,
+   "n_clipped_top_label_exact_zero_or_one": 387,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -1720,6 +1780,7 @@
    "brier_top_label": 0.16010810315652652,
    "log_loss_top_label": 0.5128252320419018,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 2.37879525069685,
    "brier_multiclass": 0.6349655984568513,
@@ -1749,6 +1810,7 @@
    "brier_top_label": 0.14961265023513282,
    "log_loss_top_label": 0.47068484631164476,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 2.247924665988356,
    "brier_multiclass": 0.6206166093973245,
@@ -1778,6 +1840,7 @@
    "brier_top_label": 0.14001231279543105,
    "log_loss_top_label": 0.4369345595456947,
    "n_clipped_top_label": 79,
+   "n_clipped_top_label_exact_zero_or_one": 79,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -1804,6 +1867,7 @@
    "brier_top_label": 0.19863944279471818,
    "log_loss_top_label": 0.6134190407427142,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.694445329501039,
    "brier_multiclass": 0.6437476967696484,
@@ -1833,6 +1897,7 @@
    "brier_top_label": 0.1390224701975246,
    "log_loss_top_label": 0.43606127835852804,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.116309536626794,
    "brier_multiclass": 0.5792805925009783,
@@ -1862,6 +1927,7 @@
    "brier_top_label": 0.12651467849918988,
    "log_loss_top_label": 0.5128106232780605,
    "n_clipped_top_label": 477,
+   "n_clipped_top_label_exact_zero_or_one": 477,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -1888,6 +1954,7 @@
    "brier_top_label": 0.18859096702017797,
    "log_loss_top_label": 0.5662801943964793,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 2.260538230855211,
    "brier_multiclass": 0.6088765446731585,
@@ -1917,6 +1984,7 @@
    "brier_top_label": 0.14009675712656636,
    "log_loss_top_label": 0.4353835348643329,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.8763714588809686,
    "brier_multiclass": 0.5538659067274421,
@@ -1946,6 +2014,7 @@
    "brier_top_label": 0.13592650734827386,
    "log_loss_top_label": 0.45658383358956073,
    "n_clipped_top_label": 116,
+   "n_clipped_top_label_exact_zero_or_one": 116,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -1972,6 +2041,7 @@
    "brier_top_label": 0.1420325333550235,
    "log_loss_top_label": 0.45645205954070867,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.0721200884134348,
    "brier_multiclass": 0.5682672480632763,
@@ -2001,6 +2071,7 @@
    "brier_top_label": 0.12878763771119026,
    "log_loss_top_label": 0.4119058022469975,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.008316488556379,
    "brier_multiclass": 0.5540380219502699,
@@ -2030,6 +2101,7 @@
    "brier_top_label": 0.1253223829082378,
    "log_loss_top_label": 0.43689211018748825,
    "n_clipped_top_label": 376,
+   "n_clipped_top_label_exact_zero_or_one": 376,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -2056,6 +2128,7 @@
    "brier_top_label": 0.16835356247188282,
    "log_loss_top_label": 0.5181585628908341,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.6975369675971526,
    "brier_multiclass": 0.5068912005712348,
@@ -2085,6 +2158,7 @@
    "brier_top_label": 0.1423631641751426,
    "log_loss_top_label": 0.4432076796565633,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.6070252550365478,
    "brier_multiclass": 0.48027629640401603,
@@ -2114,6 +2188,7 @@
    "brier_top_label": 0.14414454751459133,
    "log_loss_top_label": 0.4235175052503448,
    "n_clipped_top_label": 406,
+   "n_clipped_top_label_exact_zero_or_one": 406,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -2140,6 +2215,7 @@
    "brier_top_label": 0.15471735016328297,
    "log_loss_top_label": 0.4613197052775764,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.9863863379700517,
    "brier_multiclass": 0.5855388993194908,
@@ -2169,6 +2245,7 @@
    "brier_top_label": 0.14238019270945135,
    "log_loss_top_label": 0.4361040908881294,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.9389368005735512,
    "brier_multiclass": 0.571328109263746,
@@ -2198,6 +2275,7 @@
    "brier_top_label": 0.14225189021954543,
    "log_loss_top_label": 0.46237729435762315,
    "n_clipped_top_label": 217,
+   "n_clipped_top_label_exact_zero_or_one": 217,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -2224,6 +2302,7 @@
    "brier_top_label": 0.1875980813392148,
    "log_loss_top_label": 0.5807577761837989,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.6656629399246734,
    "brier_multiclass": 0.6363245182973479,
@@ -2253,6 +2332,7 @@
    "brier_top_label": 0.15044599166113112,
    "log_loss_top_label": 0.4645568348628903,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.1584034709545303,
    "brier_multiclass": 0.5920181883404226,
@@ -2282,6 +2362,7 @@
    "brier_top_label": 0.13526493144795765,
    "log_loss_top_label": 0.48512899575807156,
    "n_clipped_top_label": 309,
+   "n_clipped_top_label_exact_zero_or_one": 309,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -2308,6 +2389,7 @@
    "brier_top_label": 0.18537217852838514,
    "log_loss_top_label": 0.5832422566676372,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 2.1768344428191253,
    "brier_multiclass": 0.5590951915948089,
@@ -2337,6 +2419,7 @@
    "brier_top_label": 0.13349551001834986,
    "log_loss_top_label": 0.4128779544815791,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.6890978266147196,
    "brier_multiclass": 0.4990836905886399,
@@ -2366,6 +2449,7 @@
    "brier_top_label": 0.1315239961947093,
    "log_loss_top_label": 0.39907100714253346,
    "n_clipped_top_label": 149,
+   "n_clipped_top_label_exact_zero_or_one": 149,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -2392,6 +2476,7 @@
    "brier_top_label": 0.1378289255774008,
    "log_loss_top_label": 0.44481447438739363,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.0533899327853535,
    "brier_multiclass": 0.5504211300537672,
@@ -2421,6 +2506,7 @@
    "brier_top_label": 0.12139275429400315,
    "log_loss_top_label": 0.3930726958952165,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 1.984613324643039,
    "brier_multiclass": 0.532944531493451,
@@ -2450,6 +2536,7 @@
    "brier_top_label": 0.11911112118464169,
    "log_loss_top_label": 0.3943624449430221,
    "n_clipped_top_label": 399,
+   "n_clipped_top_label_exact_zero_or_one": 399,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -2476,6 +2563,7 @@
    "brier_top_label": 0.15280556032292325,
    "log_loss_top_label": 0.4824287349134664,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.6916539971498918,
    "brier_multiclass": 0.49339028227978377,
@@ -2505,6 +2593,7 @@
    "brier_top_label": 0.12648768598805626,
    "log_loss_top_label": 0.4000091808320187,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.5844560519254622,
    "brier_multiclass": 0.4653450813386748,
@@ -2534,6 +2623,7 @@
    "brier_top_label": 0.12464276269510259,
    "log_loss_top_label": 0.3931914502860022,
    "n_clipped_top_label": 468,
+   "n_clipped_top_label_exact_zero_or_one": 468,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -2560,6 +2650,7 @@
    "brier_top_label": 0.20368634700091615,
    "log_loss_top_label": 0.6898647054444038,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 2.317664128060555,
    "brier_multiclass": 0.605790481499457,
@@ -2589,6 +2680,7 @@
    "brier_top_label": 0.12684301198794518,
    "log_loss_top_label": 0.3908263532704323,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.7895305777613568,
    "brier_multiclass": 0.5170345766381544,
@@ -2618,6 +2710,7 @@
    "brier_top_label": 0.13035836641908038,
    "log_loss_top_label": 0.5085618483408421,
    "n_clipped_top_label": 441,
+   "n_clipped_top_label_exact_zero_or_one": 441,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -2644,6 +2737,7 @@
    "brier_top_label": 0.1837404401337022,
    "log_loss_top_label": 0.5780841394212464,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.7294545518372244,
    "brier_multiclass": 0.6371995988473315,
@@ -2673,6 +2767,7 @@
    "brier_top_label": 0.13764308724147864,
    "log_loss_top_label": 0.43111768846331594,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.178764065922071,
    "brier_multiclass": 0.5850719067057114,
@@ -2702,6 +2797,7 @@
    "brier_top_label": 0.12153256200451816,
    "log_loss_top_label": 0.3784367942487881,
    "n_clipped_top_label": 302,
+   "n_clipped_top_label_exact_zero_or_one": 302,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -2728,6 +2824,7 @@
    "brier_top_label": 0.17453317532224832,
    "log_loss_top_label": 0.5320187733314755,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 2.1068914419904803,
    "brier_multiclass": 0.5429762917011793,
@@ -2757,6 +2854,7 @@
    "brier_top_label": 0.13275650690322965,
    "log_loss_top_label": 0.4134292684729789,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.7148152201129376,
    "brier_multiclass": 0.49656413979475145,
@@ -2786,6 +2884,7 @@
    "brier_top_label": 0.12925577267677094,
    "log_loss_top_label": 0.4077758259531469,
    "n_clipped_top_label": 359,
+   "n_clipped_top_label_exact_zero_or_one": 359,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -2812,6 +2911,7 @@
    "brier_top_label": 0.13995268414614978,
    "log_loss_top_label": 0.4518397597191373,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.0974311679300843,
    "brier_multiclass": 0.5553187288829852,
@@ -2841,6 +2941,7 @@
    "brier_top_label": 0.12352090781104227,
    "log_loss_top_label": 0.4010335425925819,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 2.0368636925325045,
    "brier_multiclass": 0.5382413814943542,
@@ -2870,6 +2971,7 @@
    "brier_top_label": 0.12201510883852304,
    "log_loss_top_label": 0.375460972064112,
    "n_clipped_top_label": 429,
+   "n_clipped_top_label_exact_zero_or_one": 429,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -2896,6 +2998,7 @@
    "brier_top_label": 0.14996802034322335,
    "log_loss_top_label": 0.4774782272189342,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.6420823029665925,
    "brier_multiclass": 0.4716021621910814,
@@ -2925,6 +3028,7 @@
    "brier_top_label": 0.12453543624668939,
    "log_loss_top_label": 0.396866415378372,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.5415997026093378,
    "brier_multiclass": 0.4448916690465284,
@@ -2954,6 +3058,7 @@
    "brier_top_label": 0.12365831543934842,
    "log_loss_top_label": 0.3820358979773481,
    "n_clipped_top_label": 62,
+   "n_clipped_top_label_exact_zero_or_one": 62,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -2980,6 +3085,7 @@
    "brier_top_label": 0.20295893131324233,
    "log_loss_top_label": 0.6920198710410671,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 2.2955235719503957,
    "brier_multiclass": 0.5913308350101327,
@@ -3009,6 +3115,7 @@
    "brier_top_label": 0.13486364041881943,
    "log_loss_top_label": 0.41508091005745695,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/caltech_calibrators.json, three arms",
    "nll_multiclass": 1.7739271973458912,
    "brier_multiclass": 0.5101328248327394,
@@ -3038,6 +3145,7 @@
    "brier_top_label": 0.14593224427414672,
    "log_loss_top_label": 0.46391893745324714,
    "n_clipped_top_label": 187,
+   "n_clipped_top_label_exact_zero_or_one": 187,
    "published_check": "results/caltech_calibrators.json, three arms"
   },
   {
@@ -3064,6 +3172,7 @@
    "brier_top_label": 0.009129043887934276,
    "log_loss_top_label": 0.03220972477182017,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.04116341959288263,
    "brier_multiclass": 0.019529425994739925,
@@ -3093,6 +3202,7 @@
    "brier_top_label": 0.008868184039843102,
    "log_loss_top_label": 0.030649954837872487,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.038965810900882816,
    "brier_multiclass": 0.019128064064321035,
@@ -3122,6 +3232,7 @@
    "brier_top_label": 0.008864993020822784,
    "log_loss_top_label": 0.03121200735688544,
    "n_clipped_top_label": 7336,
+   "n_clipped_top_label_exact_zero_or_one": 7336,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -3148,6 +3259,7 @@
    "brier_top_label": 0.007421474907899537,
    "log_loss_top_label": 0.025576301540933787,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.031300639751643926,
    "brier_multiclass": 0.015463120466541313,
@@ -3177,6 +3289,7 @@
    "brier_top_label": 0.007484195419099558,
    "log_loss_top_label": 0.02526494613113469,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.0306968618962333,
    "brier_multiclass": 0.015586730770039275,
@@ -3206,6 +3319,7 @@
    "brier_top_label": 0.007614771418624051,
    "log_loss_top_label": 0.02599504945236912,
    "n_clipped_top_label": 4967,
+   "n_clipped_top_label_exact_zero_or_one": 4967,
    "published_check": "results/sweep_nmnist.csv, three arms"
   },
   {
@@ -3232,6 +3346,7 @@
    "brier_top_label": 0.008327042331897627,
    "log_loss_top_label": 0.03031270107835387,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.03797396297352461,
    "brier_multiclass": 0.01765151055263907,
@@ -3261,6 +3376,7 @@
    "brier_top_label": 0.008115699031421423,
    "log_loss_top_label": 0.028617859001135473,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.035703768095952555,
    "brier_multiclass": 0.017273410607878476,
@@ -3290,6 +3406,7 @@
    "brier_top_label": 0.008335192599468974,
    "log_loss_top_label": 0.02894146452779122,
    "n_clipped_top_label": 4203,
+   "n_clipped_top_label_exact_zero_or_one": 4203,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -3316,6 +3433,7 @@
    "brier_top_label": 0.00659325842157547,
    "log_loss_top_label": 0.02322484320711261,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.029401024432398584,
    "brier_multiclass": 0.013903211252644184,
@@ -3345,6 +3463,7 @@
    "brier_top_label": 0.006581880355282692,
    "log_loss_top_label": 0.022885247408666733,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.02902535580368534,
    "brier_multiclass": 0.013902040893383833,
@@ -3374,6 +3493,7 @@
    "brier_top_label": 0.007143892241287262,
    "log_loss_top_label": 0.034713033697218024,
    "n_clipped_top_label": 7279,
+   "n_clipped_top_label_exact_zero_or_one": 7279,
    "published_check": "results/sweep_nmnist.csv, three arms"
   },
   {
@@ -3400,6 +3520,7 @@
    "brier_top_label": 0.008736467311380221,
    "log_loss_top_label": 0.033304956788156564,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.038239339341895655,
    "brier_multiclass": 0.018023283458353807,
@@ -3429,6 +3550,7 @@
    "brier_top_label": 0.008480682831592748,
    "log_loss_top_label": 0.030570208129302664,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.03561157957051113,
    "brier_multiclass": 0.01754197235769036,
@@ -3458,6 +3580,7 @@
    "brier_top_label": 0.00885910477647343,
    "log_loss_top_label": 0.034336323579667934,
    "n_clipped_top_label": 6465,
+   "n_clipped_top_label_exact_zero_or_one": 6465,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -3484,6 +3607,7 @@
    "brier_top_label": 0.0065059150666771145,
    "log_loss_top_label": 0.023682755404507892,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.028798952037452495,
    "brier_multiclass": 0.013708953657813012,
@@ -3513,6 +3637,7 @@
    "brier_top_label": 0.00651387254084963,
    "log_loss_top_label": 0.02365134757781389,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.02873363041224548,
    "brier_multiclass": 0.013722548181565868,
@@ -3542,6 +3667,7 @@
    "brier_top_label": 0.006716113882073723,
    "log_loss_top_label": 0.026849208079246074,
    "n_clipped_top_label": 7444,
+   "n_clipped_top_label_exact_zero_or_one": 7444,
    "published_check": "results/sweep_nmnist.csv, three arms"
   },
   {
@@ -3568,6 +3694,7 @@
    "brier_top_label": 0.00996311575656796,
    "log_loss_top_label": 0.03648278096058672,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.04449102149824996,
    "brier_multiclass": 0.021075223687431657,
@@ -3597,6 +3724,7 @@
    "brier_top_label": 0.009885171439388201,
    "log_loss_top_label": 0.03594954538320669,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.044343364807165296,
    "brier_multiclass": 0.02093077146939749,
@@ -3626,6 +3754,7 @@
    "brier_top_label": 0.010463439956515578,
    "log_loss_top_label": 0.0644382290578577,
    "n_clipped_top_label": 4683,
+   "n_clipped_top_label_exact_zero_or_one": 4683,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -3652,6 +3781,7 @@
    "brier_top_label": 0.010027833367046525,
    "log_loss_top_label": 0.035878938600264164,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.04499608902857231,
    "brier_multiclass": 0.021160920017754263,
@@ -3681,6 +3811,7 @@
    "brier_top_label": 0.010011302814538416,
    "log_loss_top_label": 0.035580107681030634,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.04447382013381827,
    "brier_multiclass": 0.021161243195600553,
@@ -3710,6 +3841,7 @@
    "brier_top_label": 0.010146791267442808,
    "log_loss_top_label": 0.038624228290178024,
    "n_clipped_top_label": 3001,
+   "n_clipped_top_label_exact_zero_or_one": 3001,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -3736,6 +3868,7 @@
    "brier_top_label": 0.3023275119754481,
    "log_loss_top_label": 0.7984610444102913,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.8177866209139334,
    "brier_multiclass": 0.3455163494485749,
@@ -3765,6 +3898,7 @@
    "brier_top_label": 0.01016185993129914,
    "log_loss_top_label": 0.044810822254735476,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.058394599849607015,
    "brier_multiclass": 0.021199190219484926,
@@ -3794,6 +3928,7 @@
    "brier_top_label": 0.009894500030235242,
    "log_loss_top_label": 0.04711608102287836,
    "n_clipped_top_label": 12,
+   "n_clipped_top_label_exact_zero_or_one": 12,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -3820,6 +3955,7 @@
    "brier_top_label": 0.30228198145250484,
    "log_loss_top_label": 0.7985199487832587,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.8211664807956224,
    "brier_multiclass": 0.34710720688561,
@@ -3849,6 +3985,7 @@
    "brier_top_label": 0.01118019846081468,
    "log_loss_top_label": 0.0473692995617752,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.06179102386920695,
    "brier_multiclass": 0.023622454507187828,
@@ -3878,6 +4015,7 @@
    "brier_top_label": 0.010663297447170567,
    "log_loss_top_label": 0.043429451028966,
    "n_clipped_top_label": 2,
+   "n_clipped_top_label_exact_zero_or_one": 2,
    "published_check": "results/sweep_nmnist.csv, three arms"
   },
   {
@@ -3904,6 +4042,7 @@
    "brier_top_label": 0.013155217860465866,
    "log_loss_top_label": 0.051642424878039585,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.06738675823979888,
    "brier_multiclass": 0.028454577357152004,
@@ -3933,6 +4072,7 @@
    "brier_top_label": 0.01315798239743577,
    "log_loss_top_label": 0.050686666227322305,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.06643940420020007,
    "brier_multiclass": 0.02841559195401926,
@@ -3962,6 +4102,7 @@
    "brier_top_label": 0.013107397786733296,
    "log_loss_top_label": 0.04901020914624884,
    "n_clipped_top_label": 3,
+   "n_clipped_top_label_exact_zero_or_one": 3,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -3988,6 +4129,7 @@
    "brier_top_label": 0.010750022131864191,
    "log_loss_top_label": 0.04053876446744214,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.04936561647194067,
    "brier_multiclass": 0.022311992796275628,
@@ -4017,6 +4159,7 @@
    "brier_top_label": 0.01064385492572918,
    "log_loss_top_label": 0.039525432768132134,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.048901518334482,
    "brier_multiclass": 0.02210788626616544,
@@ -4046,6 +4189,7 @@
    "brier_top_label": 0.010795028346377453,
    "log_loss_top_label": 0.044426104871904466,
    "n_clipped_top_label": 3327,
+   "n_clipped_top_label_exact_zero_or_one": 3327,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -4072,6 +4216,7 @@
    "brier_top_label": 0.009371350931699109,
    "log_loss_top_label": 0.035035633976556554,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.04311510350389722,
    "brier_multiclass": 0.019631812932014926,
@@ -4101,6 +4246,7 @@
    "brier_top_label": 0.009412705231355883,
    "log_loss_top_label": 0.035262567158442996,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.043532880098857876,
    "brier_multiclass": 0.019659032002467977,
@@ -4130,6 +4276,7 @@
    "brier_top_label": 0.009593306706696992,
    "log_loss_top_label": 0.051672151621936814,
    "n_clipped_top_label": 6154,
+   "n_clipped_top_label_exact_zero_or_one": 6154,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -4156,6 +4303,7 @@
    "brier_top_label": 0.30223213853162906,
    "log_loss_top_label": 0.79824890139033,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.8163927486912107,
    "brier_multiclass": 0.34467068800396095,
@@ -4185,6 +4333,7 @@
    "brier_top_label": 0.009337708541074168,
    "log_loss_top_label": 0.04391230100071873,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.055882780029671855,
    "brier_multiclass": 0.019122865385641927,
@@ -4214,6 +4363,7 @@
    "brier_top_label": 0.00925254810317709,
    "log_loss_top_label": 0.040538237200553856,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -4240,6 +4390,7 @@
    "brier_top_label": 0.30181003111602484,
    "log_loss_top_label": 0.7974473565708671,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.821412819770638,
    "brier_multiclass": 0.3471276335171549,
@@ -4269,6 +4420,7 @@
    "brier_top_label": 0.010595712520755838,
    "log_loss_top_label": 0.04540026352282951,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.060694130438002356,
    "brier_multiclass": 0.022958356002625555,
@@ -4298,6 +4450,7 @@
    "brier_top_label": 0.010229741903013555,
    "log_loss_top_label": 0.04028306526088665,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms"
   },
   {
@@ -4324,6 +4477,7 @@
    "brier_top_label": 0.0128099044512214,
    "log_loss_top_label": 0.053559485944084495,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.06869832243766398,
    "brier_multiclass": 0.027350208317257034,
@@ -4353,6 +4507,7 @@
    "brier_top_label": 0.012636350601721026,
    "log_loss_top_label": 0.04907473501358993,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.06402491243948241,
    "brier_multiclass": 0.02706033053475402,
@@ -4382,6 +4537,7 @@
    "brier_top_label": 0.012491450677907861,
    "log_loss_top_label": 0.04640052302691291,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -4408,6 +4564,7 @@
    "brier_top_label": 0.010799341492873774,
    "log_loss_top_label": 0.04026361141984197,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.05173229652031771,
    "brier_multiclass": 0.023157611482776966,
@@ -4437,6 +4594,7 @@
    "brier_top_label": 0.01052942582082809,
    "log_loss_top_label": 0.03892097657635465,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.051081118551839756,
    "brier_multiclass": 0.022762599823599582,
@@ -4466,6 +4624,7 @@
    "brier_top_label": 0.010565073695380175,
    "log_loss_top_label": 0.040734626462639235,
    "n_clipped_top_label": 4507,
+   "n_clipped_top_label_exact_zero_or_one": 4507,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -4492,6 +4651,7 @@
    "brier_top_label": 0.010814016682035393,
    "log_loss_top_label": 0.038632450852995624,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.04766838276315035,
    "brier_multiclass": 0.022924683481194297,
@@ -4521,6 +4681,7 @@
    "brier_top_label": 0.010796590654582208,
    "log_loss_top_label": 0.038871730707270256,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.04813887024753478,
    "brier_multiclass": 0.022876860917688962,
@@ -4550,6 +4711,7 @@
    "brier_top_label": 0.011442985283281831,
    "log_loss_top_label": 0.05569370160848894,
    "n_clipped_top_label": 1830,
+   "n_clipped_top_label_exact_zero_or_one": 1830,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -4576,6 +4738,7 @@
    "brier_top_label": 0.3019697657210808,
    "log_loss_top_label": 0.7977718201294192,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.8228373799467318,
    "brier_multiclass": 0.34760897395140194,
@@ -4605,6 +4768,7 @@
    "brier_top_label": 0.011091391649269634,
    "log_loss_top_label": 0.047468079486252375,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.06527963174297872,
    "brier_multiclass": 0.023611803198763135,
@@ -4634,6 +4798,7 @@
    "brier_top_label": 0.010428584283595521,
    "log_loss_top_label": 0.04308118751004517,
    "n_clipped_top_label": 6,
+   "n_clipped_top_label_exact_zero_or_one": 6,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -4660,6 +4825,7 @@
    "brier_top_label": 0.3025309229032933,
    "log_loss_top_label": 0.7990679302507476,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.8208245015125063,
    "brier_multiclass": 0.34709513762484506,
@@ -4689,6 +4855,7 @@
    "brier_top_label": 0.011211727898029272,
    "log_loss_top_label": 0.04781445661073446,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.060308283290001694,
    "brier_multiclass": 0.02310017741497858,
@@ -4718,6 +4885,7 @@
    "brier_top_label": 0.010286401572268716,
    "log_loss_top_label": 0.04056638234401046,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms"
   },
   {
@@ -4744,6 +4912,7 @@
    "brier_top_label": 0.010232277230175743,
    "log_loss_top_label": 0.04448591400298307,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.059144782582662966,
    "brier_multiclass": 0.022595219419626247,
@@ -4773,6 +4942,7 @@
    "brier_top_label": 0.01015072298761078,
    "log_loss_top_label": 0.041208015190664915,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.05559286785996377,
    "brier_multiclass": 0.02247235844011995,
@@ -4802,6 +4972,7 @@
    "brier_top_label": 0.01037288126547847,
    "log_loss_top_label": 0.04086097665514522,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -4828,6 +4999,7 @@
    "brier_top_label": 0.029898986096556432,
    "log_loss_top_label": 0.1778146736033793,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.18907421397886406,
    "brier_multiclass": 0.04122314101942829,
@@ -4857,6 +5029,7 @@
    "brier_top_label": 0.008382854685019205,
    "log_loss_top_label": 0.03213445901700733,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.03900661490727985,
    "brier_multiclass": 0.017173936496576114,
@@ -4886,6 +5059,7 @@
    "brier_top_label": 0.008679723889550232,
    "log_loss_top_label": 0.041868671919944214,
    "n_clipped_top_label": 7,
+   "n_clipped_top_label_exact_zero_or_one": 7,
    "published_check": "results/sweep_nmnist.csv, three arms"
   },
   {
@@ -4912,6 +5086,7 @@
    "brier_top_label": 0.02881347945921293,
    "log_loss_top_label": 0.17482520127632212,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.18440915380376233,
    "brier_multiclass": 0.03924417409761776,
@@ -4941,6 +5116,7 @@
    "brier_top_label": 0.008008995416778077,
    "log_loss_top_label": 0.03255812643860492,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.03805134908514099,
    "brier_multiclass": 0.016323985227543896,
@@ -4970,6 +5146,7 @@
    "brier_top_label": 0.00831299404463196,
    "log_loss_top_label": 0.04091358567185717,
    "n_clipped_top_label": 8,
+   "n_clipped_top_label_exact_zero_or_one": 8,
    "published_check": "results/sweep_nmnist.csv, three arms"
   },
   {
@@ -4996,6 +5173,7 @@
    "brier_top_label": 0.029332529472415228,
    "log_loss_top_label": 0.17627058660706407,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.188704416801123,
    "brier_multiclass": 0.0414563671579063,
@@ -5025,6 +5203,7 @@
    "brier_top_label": 0.008925936581450264,
    "log_loss_top_label": 0.034090058573996614,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.04188017477780081,
    "brier_multiclass": 0.0189313329399881,
@@ -5054,6 +5233,7 @@
    "brier_top_label": 0.008933220491947856,
    "log_loss_top_label": 0.03978603991939781,
    "n_clipped_top_label": 7,
+   "n_clipped_top_label_exact_zero_or_one": 7,
    "published_check": "results/sweep_nmnist.csv, three arms"
   },
   {
@@ -5080,6 +5260,7 @@
    "brier_top_label": 0.008800765296358742,
    "log_loss_top_label": 0.030360351969819975,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.03758627342325734,
    "brier_multiclass": 0.01894577736768918,
@@ -5109,6 +5290,7 @@
    "brier_top_label": 0.008775190285568963,
    "log_loss_top_label": 0.030380561205046126,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.0376885067829126,
    "brier_multiclass": 0.01890857192385914,
@@ -5138,6 +5320,7 @@
    "brier_top_label": 0.008897028042189174,
    "log_loss_top_label": 0.03457971277035902,
    "n_clipped_top_label": 8437,
+   "n_clipped_top_label_exact_zero_or_one": 8437,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -5164,6 +5347,7 @@
    "brier_top_label": 0.008333253046249255,
    "log_loss_top_label": 0.029969316498205962,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.0352240620802678,
    "brier_multiclass": 0.017474224796526234,
@@ -5193,6 +5377,7 @@
    "brier_top_label": 0.008288351734827256,
    "log_loss_top_label": 0.02935918651754802,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.03484733971216729,
    "brier_multiclass": 0.017381490165302372,
@@ -5222,6 +5407,7 @@
    "brier_top_label": 0.008573290592871893,
    "log_loss_top_label": 0.0340906263736652,
    "n_clipped_top_label": 8401,
+   "n_clipped_top_label_exact_zero_or_one": 8401,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -5248,6 +5434,7 @@
    "brier_top_label": 0.007055825646370654,
    "log_loss_top_label": 0.04437729610701515,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.051129645245810956,
    "brier_multiclass": 0.014171259341375508,
@@ -5277,6 +5464,7 @@
    "brier_top_label": 0.006402458254906727,
    "log_loss_top_label": 0.02422540358384714,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.02990805143149463,
    "brier_multiclass": 0.01353500314160811,
@@ -5306,6 +5494,7 @@
    "brier_top_label": 0.006829727020236246,
    "log_loss_top_label": 0.034286128612976474,
    "n_clipped_top_label": 7408,
+   "n_clipped_top_label_exact_zero_or_one": 7408,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -5332,6 +5521,7 @@
    "brier_top_label": 0.008162217052478703,
    "log_loss_top_label": 0.04853292929242807,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.05522684494528953,
    "brier_multiclass": 0.01612429745277119,
@@ -5361,6 +5551,7 @@
    "brier_top_label": 0.007151989328010779,
    "log_loss_top_label": 0.025927798938018706,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.03057906435528622,
    "brier_multiclass": 0.015052383313054647,
@@ -5390,6 +5581,7 @@
    "brier_top_label": 0.0070617452125013615,
    "log_loss_top_label": 0.025412912803424705,
    "n_clipped_top_label": 4,
+   "n_clipped_top_label_exact_zero_or_one": 4,
    "published_check": "results/sweep_nmnist.csv, three arms"
   },
   {
@@ -5416,6 +5608,7 @@
    "brier_top_label": 0.009439968813695422,
    "log_loss_top_label": 0.03413513323518979,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.04024463519089392,
    "brier_multiclass": 0.019680190020609153,
@@ -5445,6 +5638,7 @@
    "brier_top_label": 0.009374428217016308,
    "log_loss_top_label": 0.03334420538094746,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.03970963971738476,
    "brier_multiclass": 0.01956460780283695,
@@ -5474,6 +5668,7 @@
    "brier_top_label": 0.009437396164162087,
    "log_loss_top_label": 0.037072298766520594,
    "n_clipped_top_label": 4096,
+   "n_clipped_top_label_exact_zero_or_one": 4096,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -5500,6 +5695,7 @@
    "brier_top_label": 0.008933493705762956,
    "log_loss_top_label": 0.03416344927720051,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.04216321326985431,
    "brier_multiclass": 0.018948277009037368,
@@ -5529,6 +5725,7 @@
    "brier_top_label": 0.008873983658394737,
    "log_loss_top_label": 0.032690772649946624,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.04064106237304258,
    "brier_multiclass": 0.0187967522872493,
@@ -5558,6 +5755,7 @@
    "brier_top_label": 0.009232141451746676,
    "log_loss_top_label": 0.04661675701063179,
    "n_clipped_top_label": 4941,
+   "n_clipped_top_label_exact_zero_or_one": 4941,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -5584,6 +5782,7 @@
    "brier_top_label": 0.011087091327623264,
    "log_loss_top_label": 0.05701806709203188,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.06773441565683538,
    "brier_multiclass": 0.022447581488187283,
@@ -5613,6 +5812,7 @@
    "brier_top_label": 0.010653021150924358,
    "log_loss_top_label": 0.03819797965490599,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.046396631268192025,
    "brier_multiclass": 0.02217979056411657,
@@ -5642,6 +5842,7 @@
    "brier_top_label": 0.010937363133544636,
    "log_loss_top_label": 0.037776858204784186,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -5668,6 +5869,7 @@
    "brier_top_label": 0.008506778072583087,
    "log_loss_top_label": 0.04931740313389464,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.05802488965477679,
    "brier_multiclass": 0.017054806988012434,
@@ -5697,6 +5899,7 @@
    "brier_top_label": 0.007594829180467366,
    "log_loss_top_label": 0.0282741527203519,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.03580766528461184,
    "brier_multiclass": 0.01612243268671384,
@@ -5726,6 +5929,7 @@
    "brier_top_label": 0.007889861305079541,
    "log_loss_top_label": 0.035266034457572745,
    "n_clipped_top_label": 6669,
+   "n_clipped_top_label_exact_zero_or_one": 6669,
    "published_check": "results/sweep_nmnist.csv, three arms"
   },
   {
@@ -5752,6 +5956,7 @@
    "brier_top_label": 0.008955626667102444,
    "log_loss_top_label": 0.0326346764673233,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.04008227685923911,
    "brier_multiclass": 0.019107631018528734,
@@ -5781,6 +5986,7 @@
    "brier_top_label": 0.008805537466600535,
    "log_loss_top_label": 0.03154589330728186,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.03927095076112369,
    "brier_multiclass": 0.018907467621786734,
@@ -5810,6 +6016,7 @@
    "brier_top_label": 0.009133439874361564,
    "log_loss_top_label": 0.037656268942283896,
    "n_clipped_top_label": 6525,
+   "n_clipped_top_label_exact_zero_or_one": 6525,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -5836,6 +6043,7 @@
    "brier_top_label": 0.008205365695165579,
    "log_loss_top_label": 0.03130006870123702,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.040220696935732596,
    "brier_multiclass": 0.017262361008220137,
@@ -5865,6 +6073,7 @@
    "brier_top_label": 0.007929792512840575,
    "log_loss_top_label": 0.02821087482472136,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.03621811169261551,
    "brier_multiclass": 0.016811527336955647,
@@ -5894,6 +6103,7 @@
    "brier_top_label": 0.008114455699149363,
    "log_loss_top_label": 0.03418895603292463,
    "n_clipped_top_label": 2928,
+   "n_clipped_top_label_exact_zero_or_one": 2928,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -5920,6 +6130,7 @@
    "brier_top_label": 0.007983755941765933,
    "log_loss_top_label": 0.047904118663913316,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.0561309607332437,
    "brier_multiclass": 0.016357292398266946,
@@ -5949,6 +6160,7 @@
    "brier_top_label": 0.0074232831027110195,
    "log_loss_top_label": 0.028838959680150093,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)",
    "nll_multiclass": 0.03587899762241394,
    "brier_multiclass": 0.015769511376321196,
@@ -5978,6 +6190,7 @@
    "brier_top_label": 0.007607266175668032,
    "log_loss_top_label": 0.02849096624613428,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "uncalibrated only (no calibrated values were published for this run)"
   },
   {
@@ -6004,6 +6217,7 @@
    "brier_top_label": 0.007506725558823658,
    "log_loss_top_label": 0.04570832718940424,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.05295886277053212,
    "brier_multiclass": 0.015043737507113733,
@@ -6033,6 +6247,7 @@
    "brier_top_label": 0.0067336074469444614,
    "log_loss_top_label": 0.02569152716473851,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.031728218640612066,
    "brier_multiclass": 0.014218082342358341,
@@ -6062,6 +6277,7 @@
    "brier_top_label": 0.0067594185962139225,
    "log_loss_top_label": 0.02436791140608236,
    "n_clipped_top_label": 3,
+   "n_clipped_top_label_exact_zero_or_one": 3,
    "published_check": "results/sweep_nmnist.csv, three arms"
   },
   {
@@ -6088,6 +6304,7 @@
    "brier_top_label": 0.006752343531014702,
    "log_loss_top_label": 0.027895122617884124,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.035475312682019214,
    "brier_multiclass": 0.014784293060223164,
@@ -6117,6 +6334,7 @@
    "brier_top_label": 0.0067487995514061505,
    "log_loss_top_label": 0.024953253985881347,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.0320027881377798,
    "brier_multiclass": 0.014797315436409312,
@@ -6146,6 +6364,7 @@
    "brier_top_label": 0.006692146579068353,
    "log_loss_top_label": 0.029554450581116862,
    "n_clipped_top_label": 3382,
+   "n_clipped_top_label_exact_zero_or_one": 3382,
    "published_check": "results/sweep_nmnist.csv, three arms"
   },
   {
@@ -6172,6 +6391,7 @@
    "brier_top_label": 0.006984325492548141,
    "log_loss_top_label": 0.028301387427210885,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.0350452874121822,
    "brier_multiclass": 0.014406250667562083,
@@ -6201,6 +6421,7 @@
    "brier_top_label": 0.006854298992292964,
    "log_loss_top_label": 0.0253250201181997,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.031776998863776225,
    "brier_multiclass": 0.014269376568492182,
@@ -6230,6 +6451,7 @@
    "brier_top_label": 0.006922413459342887,
    "log_loss_top_label": 0.030280495361973726,
    "n_clipped_top_label": 3277,
+   "n_clipped_top_label_exact_zero_or_one": 3277,
    "published_check": "results/sweep_nmnist.csv, three arms"
   },
   {
@@ -6256,6 +6478,7 @@
    "brier_top_label": 0.00812202829970859,
    "log_loss_top_label": 0.03211344443737567,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.03865414875705207,
    "brier_multiclass": 0.016703741319258034,
@@ -6285,6 +6508,7 @@
    "brier_top_label": 0.007962890500307424,
    "log_loss_top_label": 0.02799020628322508,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms",
    "nll_multiclass": 0.033607239562751856,
    "brier_multiclass": 0.016557720496642527,
@@ -6314,6 +6538,7 @@
    "brier_top_label": 0.00829949511574144,
    "log_loss_top_label": 0.028962388442207505,
    "n_clipped_top_label": 0,
+   "n_clipped_top_label_exact_zero_or_one": 0,
    "published_check": "results/sweep_nmnist.csv, three arms"
   }
  ],
