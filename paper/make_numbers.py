@@ -89,7 +89,10 @@ for key, fn in (("nm", "nmnist_T2_seed0_split.npz"), ("nc", "ncaltech101_T2_seed
     if key == "nc":
         put(f"{key}SplitTotal", thousands(sum(sizes.values())), f"results/{fn} (sum)")
 
-weights = glob.glob(os.path.join(R, "*_weights.pt"))
+# The post-review A7 checkpoints (*_converged_*_weights.pt) are not among the study's trained
+# models; they are counted separately in the A7 section.
+weights = [w for w in glob.glob(os.path.join(R, "*_weights.pt")) if "_converged_" not in w]
+assert all(json.load(open(w.replace("_weights.pt", "_record.json"))) for w in weights)
 put("modelsTotal", str(len(weights)), "results/*_weights.pt (file count)")
 put("modelsNm", str(sum("nmnist" in w for w in weights)), "results/nmnist_*_weights.pt (file count)")
 put("modelsNc", str(sum("ncaltech101" in w for w in weights)), "results/ncaltech101_*_weights.pt (file count)")
@@ -184,7 +187,7 @@ for r in arch:
         add_cell("arch", r["dataset"], r["n_blocks"], r, r["n_classes"])
 assert len(cells) == sum(per_artifact.values()) - shared
 # every distinct cell is a count-readout model on disk, and there are no others
-n_count_weights = sum(1 for p in glob.glob(os.path.join(R, "*_weights.pt"))
+n_count_weights = sum(1 for p in glob.glob(os.path.join(R, "*_weights.pt")) if "_converged_" not in p
                       if not any(t in os.path.basename(p)
                                  for t in ("membrane", "weighted-count", "accumulator", "scaled-count")))
 assert n_count_weights in (0, len(cells)), (n_count_weights, len(cells))  # 0: weights absent in a clone
