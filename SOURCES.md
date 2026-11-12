@@ -1135,6 +1135,15 @@ Neither paper states (3). Neither says that the softmax over bounded counts is c
 
 Recommendation: cite the 1902.05705 paper (suggested key wu2019spikecount) for "softmax/cross-entropy over output spike counts bounded by T". Cite wu2021tandem only for tandem learning or the general remark that T bounds the spike count.
 
+- **Figure checks, 2026-11-12.** katti2024bayesian, Fig. 5 (arXiv v1, p. 3, read at 170 dpi): at the labelled
+  T = 2 tick every model's accuracy is about 0.9 and its ECE at most about 0.15. Unscaled per-sample counts
+  would cap confidence at 0.4509 there (C = 10), and Proposition 1 would then force ECE of at least about 0.45,
+  so the counts must be scaled or pooled across Monte Carlo samples; the paper (Sec. II) states neither. The
+  paper is therefore cited as using a capped readout whose cap cannot be read from it, and no claim is made that
+  the cap binds there. jang2022multisample, Fig. 6 (arXiv v2, p. 21): confidence is the softmax of vote counts
+  z_c summed over K_I = 2 samples, three classes (Sec. V-C), so it cannot exceed e^2/(e^2 + 2) = 0.79; test
+  accuracy exceeds that only at some stages of training (it peaks near 0.9 and ends near 0.73), which is all
+  the paper claims ("at several stages of training").
 - **jurado2023spikemoid**: the full text could not be reached (IEEE, closed access); only the abstract is relied on. The paper is not cited for anything beyond its abstract, and no claim of novelty is made for the rate cap of Equation (3), which it may state.
 - **li2023dynamic**, corrected 2026-11-12: the networks run at 4 to 6 (QFFS) and 27 to 128 (QCFS) timesteps, with Dynamic Confidence averages from 2.52 to 81.81 (Table 1); temperature scaling is applied to the source ANN before conversion (Sec. 5.1), and the SNN's accumulated logits are divided by a separate fixed scalar (Sec. 5.2). The earlier wording, 'between about 2.5 and 14 timesteps' and 'which they describe as temperature scaling', is withdrawn.
 
