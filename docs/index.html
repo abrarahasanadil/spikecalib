@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SpikeCalib</title>
-<meta name="description" content="A chart-first summary of the SpikeCalib paper: a spike-count readout caps confidence, and the cap accounts for the calibration error at few timesteps.">
+<meta name="description" content="A chart-first summary of the SpikeCalib paper: a spike-count readout caps confidence, and at few timesteps the cap sets a floor on calibration error.">
 <link rel="stylesheet" href="style.css?v=20261017">
 </head>
 <body>
@@ -35,7 +35,7 @@
   <p class="lede">Read a spiking network by counting its output spikes and its confidence has a ceiling; at few timesteps that ceiling, not training, makes almost all of its calibration error.</p>
   <div class="tiles">
     <div class="tile">
-      <p class="label">Calibration error the cap explains, <i>T</i>&nbsp;=&nbsp;2</p>
+      <p class="label">Share of the confidence gap the cap forces, <i>T</i>&nbsp;=&nbsp;2</p>
       <p class="value"><span data-n="share-c10"></span><span class="sep">·</span><span data-n="share-c101"></span></p>
       <p class="sub"><span data-n="c-small"></span> classes · <span data-n="c-large"></span> classes</p>
     </div>
@@ -138,7 +138,7 @@
       <div><h3>N-Caltech101, equal-mass</h3><div class="chart" id="chart-cal-b-em"></div></div>
     </div>
     <details><summary>The rule, and the table</summary><div class="body">
-      <p>Two calibrators differ on a run only if the paired bootstrap interval excludes zero under both binning estimators, in the same direction; otherwise they tie. Negative values favour isotonic regression. The two datasets have their own horizontal scales.</p>
+      <p>Two calibrators differ on a run only if the paired bootstrap interval excludes zero under both binning estimators, in the same direction; otherwise the difference is not resolved. Negative values favour isotonic regression. The two datasets have their own horizontal scales.</p>
       <div class="scroll"><table id="table-cal"></table></div>
     </div></details>
   </div>
