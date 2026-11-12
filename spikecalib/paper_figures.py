@@ -387,12 +387,12 @@ def figure_scale(results, pdf_dir, png_dir):
         smins = []
         for r in sorted((r for r in sc if r["dataset"] == ds and r["timesteps"] == T), key=lambda r: r["seed"]):
             s = r["logit_scale_by_epoch"]
-            ax.plot(range(1, len(s) + 1), s, color=GREY, lw=1.0, ls=seed_style[r["seed"]])
-            ax.plot([len(s)], [s[-1]], "x", color=GREY, ms=4)
+            ax.plot(range(1, len(s) + 1), s, color=OKABE_ITO["black"], lw=1.3, ls=seed_style[r["seed"]], zorder=4)
+            ax.plot([len(s)], [s[-1]], "x", color=OKABE_ITO["black"], ms=5, mew=1.2, zorder=5)
             smins.append(r["s_min"])
         for r in sorted((r for r in conv if r["dataset"] == ds and r["timesteps"] == T), key=lambda r: r["seed"]):
             s = [h["logit_scale"] for h in r["history"]]
-            ax.plot(range(1, len(s) + 1), s, color=OKABE_ITO["vermillion"], lw=1.0, ls=seed_style[r["seed"]])
+            ax.plot(range(1, len(s) + 1), s, color=OKABE_ITO["vermillion"], lw=0.9, alpha=0.85, ls=seed_style[r["seed"]], zorder=2)
             ax.plot([r["original_best_epoch"] + 1], [s[r["original_best_epoch"]]], "o", mfc="white",
                     mec=OKABE_ITO["vermillion"], ms=3.5)
             smins.append(r["end_point"]["s_min"])
@@ -402,7 +402,7 @@ def figure_scale(results, pdf_dir, png_dir):
     axes[0].set_ylabel("learned scale $s=e^{\\theta}$")
     from matplotlib.lines import Line2D
     from matplotlib.patches import Patch
-    handles = [Line2D([], [], color=GREY, lw=1.0, label="original runs (stopped on validation accuracy)"),
+    handles = [Line2D([], [], color=OKABE_ITO["black"], lw=1.3, label="original runs (stopped on validation accuracy)"),
                Line2D([], [], color=OKABE_ITO["vermillion"], lw=1.0, label="retrained until $\\theta$ settles"),
                Patch(color=OKABE_ITO["sky"], alpha=0.35, label="$s_{\\min}$ range")]
     fig.legend(handles=handles, loc="outside lower center", ncol=3)

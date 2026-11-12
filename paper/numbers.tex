@@ -1344,6 +1344,100 @@
 \newcommand{\gapCalNcTenIso}{$-$0.0181}% results/calibration_metrics.json rows, ncaltech101 count T=10 isotonic-top-label: mean confidence minus accuracy, seed mean
 \newcommand{\swNcTwoAccumGapTemp}{$-$0.0112}% results/same_weights_readouts.json N-Caltech101 T=2 accumulator on count weights after temperature scaling, conf-acc
 \newcommand{\tempRemovesNcTwo}{69}% [DERIVED] arithmetic in paper/make_numbers.py: share of the N-Caltech101 T=2 underconfidence removed by temperature scaling, per cent
+\newcommand{\aSevenRuns}{9}% results/scale_convergence.json rows
+\newcommand{\aSevenSkipped}{0}% results/scale_convergence.json skipped
+\newcommand{\aSevenConverged}{5}% results/scale_convergence.json rows stopped_by convergence
+\newcommand{\aSevenCapped}{4}% results/scale_convergence.json rows stopped_by cap
+\newcommand{\aSevenEpochCap}{150}% results/scale_convergence.json thresholds.max_epochs
+\newcommand{\aSevenHours}{2.1}% results/scale_convergence.json rows seconds, summed, hours
+\newcommand{\aSevenProjected}{4.3}% results/scale_convergence.json projected_worst_case_seconds, hours
+\newcommand{\aSevenNmTwoN}{3}% results/scale_convergence.json rows, nmnist T=2, runs
+\newcommand{\aSevenNmTwoConv}{0}% results/scale_convergence.json rows, nmnist T=2, converged
+\newcommand{\aSevenNmTwoEpMin}{150}% results/scale_convergence.json rows, nmnist T=2, fewest epochs
+\newcommand{\aSevenNmTwoEpMax}{150}% results/scale_convergence.json rows, nmnist T=2, most epochs
+\newcommand{\aSevenNmTwoOrigSMin}{3.49}% results/scale_convergence.json rows, nmnist T=2 original_rule.logit_scale, smallest
+\newcommand{\aSevenNmTwoOrigSMax}{5.55}% results/scale_convergence.json rows, nmnist T=2 original_rule.logit_scale, largest
+\newcommand{\aSevenNmTwoOrigSminMin}{2.96}% results/scale_convergence.json rows, nmnist T=2 original_rule.s_min, smallest
+\newcommand{\aSevenNmTwoOrigSminMax}{3.11}% results/scale_convergence.json rows, nmnist T=2 original_rule.s_min, largest
+\newcommand{\aSevenNmTwoOrigAcc}{0.9800}% results/scale_convergence.json rows, nmnist T=2 original_rule.test_accuracy, mean
+\newcommand{\aSevenNmTwoOrigGap}{$+$0.0017}% results/scale_convergence.json rows, nmnist T=2 original_rule.conf_minus_acc, mean
+\newcommand{\aSevenNmTwoOrigEceW}{0.0061}% results/scale_convergence.json rows, nmnist T=2 original_rule.ece_equal_width, mean
+\newcommand{\aSevenNmTwoOrigEceM}{0.0059}% results/scale_convergence.json rows, nmnist T=2 original_rule.ece_equal_mass, mean
+\newcommand{\aSevenNmTwoOrigFloor}{0.0000}% results/scale_convergence.json rows, nmnist T=2 original_rule.floor, mean
+\newcommand{\aSevenNmTwoOrigAboveSmin}{3}% results/scale_convergence.json rows, nmnist T=2 original_rule: runs with s above s_min
+\newcommand{\aSevenNmTwoEndSMin}{7.51}% results/scale_convergence.json rows, nmnist T=2 end_point.logit_scale, smallest
+\newcommand{\aSevenNmTwoEndSMax}{7.71}% results/scale_convergence.json rows, nmnist T=2 end_point.logit_scale, largest
+\newcommand{\aSevenNmTwoEndSminMin}{3.24}% results/scale_convergence.json rows, nmnist T=2 end_point.s_min, smallest
+\newcommand{\aSevenNmTwoEndSminMax}{3.29}% results/scale_convergence.json rows, nmnist T=2 end_point.s_min, largest
+\newcommand{\aSevenNmTwoEndAcc}{0.9870}% results/scale_convergence.json rows, nmnist T=2 end_point.test_accuracy, mean
+\newcommand{\aSevenNmTwoEndGap}{$+$0.0059}% results/scale_convergence.json rows, nmnist T=2 end_point.conf_minus_acc, mean
+\newcommand{\aSevenNmTwoEndEceW}{0.0065}% results/scale_convergence.json rows, nmnist T=2 end_point.ece_equal_width, mean
+\newcommand{\aSevenNmTwoEndEceM}{0.0059}% results/scale_convergence.json rows, nmnist T=2 end_point.ece_equal_mass, mean
+\newcommand{\aSevenNmTwoEndFloor}{0.0000}% results/scale_convergence.json rows, nmnist T=2 end_point.floor, mean
+\newcommand{\aSevenNmTwoEndAboveSmin}{3}% results/scale_convergence.json rows, nmnist T=2 end_point: runs with s above s_min
+\newcommand{\aSevenNcTwoN}{3}% results/scale_convergence.json rows, ncaltech101 T=2, runs
+\newcommand{\aSevenNcTwoConv}{3}% results/scale_convergence.json rows, ncaltech101 T=2, converged
+\newcommand{\aSevenNcTwoEpMin}{47}% results/scale_convergence.json rows, ncaltech101 T=2, fewest epochs
+\newcommand{\aSevenNcTwoEpMax}{114}% results/scale_convergence.json rows, ncaltech101 T=2, most epochs
+\newcommand{\aSevenNcTwoOrigSMin}{3.85}% results/scale_convergence.json rows, ncaltech101 T=2 original_rule.logit_scale, smallest
+\newcommand{\aSevenNcTwoOrigSMax}{4.44}% results/scale_convergence.json rows, ncaltech101 T=2 original_rule.logit_scale, largest
+\newcommand{\aSevenNcTwoOrigSminMin}{2.26}% results/scale_convergence.json rows, ncaltech101 T=2 original_rule.s_min, smallest
+\newcommand{\aSevenNcTwoOrigSminMax}{2.31}% results/scale_convergence.json rows, ncaltech101 T=2 original_rule.s_min, largest
+\newcommand{\aSevenNcTwoOrigAcc}{0.4897}% results/scale_convergence.json rows, ncaltech101 T=2 original_rule.test_accuracy, mean
+\newcommand{\aSevenNcTwoOrigGap}{$+$0.1177}% results/scale_convergence.json rows, ncaltech101 T=2 original_rule.conf_minus_acc, mean
+\newcommand{\aSevenNcTwoOrigEceW}{0.1236}% results/scale_convergence.json rows, ncaltech101 T=2 original_rule.ece_equal_width, mean
+\newcommand{\aSevenNcTwoOrigEceM}{0.1233}% results/scale_convergence.json rows, ncaltech101 T=2 original_rule.ece_equal_mass, mean
+\newcommand{\aSevenNcTwoOrigFloor}{0.0000}% results/scale_convergence.json rows, ncaltech101 T=2 original_rule.floor, mean
+\newcommand{\aSevenNcTwoOrigAboveSmin}{3}% results/scale_convergence.json rows, ncaltech101 T=2 original_rule: runs with s above s_min
+\newcommand{\aSevenNcTwoEndSMin}{7.04}% results/scale_convergence.json rows, ncaltech101 T=2 end_point.logit_scale, smallest
+\newcommand{\aSevenNcTwoEndSMax}{8.20}% results/scale_convergence.json rows, ncaltech101 T=2 end_point.logit_scale, largest
+\newcommand{\aSevenNcTwoEndSminMin}{2.36}% results/scale_convergence.json rows, ncaltech101 T=2 end_point.s_min, smallest
+\newcommand{\aSevenNcTwoEndSminMax}{2.43}% results/scale_convergence.json rows, ncaltech101 T=2 end_point.s_min, largest
+\newcommand{\aSevenNcTwoEndAcc}{0.5461}% results/scale_convergence.json rows, ncaltech101 T=2 end_point.test_accuracy, mean
+\newcommand{\aSevenNcTwoEndGap}{$+$0.1737}% results/scale_convergence.json rows, ncaltech101 T=2 end_point.conf_minus_acc, mean
+\newcommand{\aSevenNcTwoEndEceW}{0.1751}% results/scale_convergence.json rows, ncaltech101 T=2 end_point.ece_equal_width, mean
+\newcommand{\aSevenNcTwoEndEceM}{0.1756}% results/scale_convergence.json rows, ncaltech101 T=2 end_point.ece_equal_mass, mean
+\newcommand{\aSevenNcTwoEndFloor}{0.0000}% results/scale_convergence.json rows, ncaltech101 T=2 end_point.floor, mean
+\newcommand{\aSevenNcTwoEndAboveSmin}{3}% results/scale_convergence.json rows, ncaltech101 T=2 end_point: runs with s above s_min
+\newcommand{\aSevenNcSixN}{3}% results/scale_convergence.json rows, ncaltech101 T=6, runs
+\newcommand{\aSevenNcSixConv}{2}% results/scale_convergence.json rows, ncaltech101 T=6, converged
+\newcommand{\aSevenNcSixEpMin}{30}% results/scale_convergence.json rows, ncaltech101 T=6, fewest epochs
+\newcommand{\aSevenNcSixEpMax}{150}% results/scale_convergence.json rows, ncaltech101 T=6, most epochs
+\newcommand{\aSevenNcSixOrigSMin}{2.00}% results/scale_convergence.json rows, ncaltech101 T=6 original_rule.logit_scale, smallest
+\newcommand{\aSevenNcSixOrigSMax}{2.79}% results/scale_convergence.json rows, ncaltech101 T=6 original_rule.logit_scale, largest
+\newcommand{\aSevenNcSixOrigSminMin}{0.81}% results/scale_convergence.json rows, ncaltech101 T=6 original_rule.s_min, smallest
+\newcommand{\aSevenNcSixOrigSminMax}{0.82}% results/scale_convergence.json rows, ncaltech101 T=6 original_rule.s_min, largest
+\newcommand{\aSevenNcSixOrigAcc}{0.5695}% results/scale_convergence.json rows, ncaltech101 T=6 original_rule.test_accuracy, mean
+\newcommand{\aSevenNcSixOrigGap}{$+$0.1537}% results/scale_convergence.json rows, ncaltech101 T=6 original_rule.conf_minus_acc, mean
+\newcommand{\aSevenNcSixOrigEceW}{0.1544}% results/scale_convergence.json rows, ncaltech101 T=6 original_rule.ece_equal_width, mean
+\newcommand{\aSevenNcSixOrigEceM}{0.1538}% results/scale_convergence.json rows, ncaltech101 T=6 original_rule.ece_equal_mass, mean
+\newcommand{\aSevenNcSixOrigFloor}{0.0000}% results/scale_convergence.json rows, ncaltech101 T=6 original_rule.floor, mean
+\newcommand{\aSevenNcSixOrigAboveSmin}{3}% results/scale_convergence.json rows, ncaltech101 T=6 original_rule: runs with s above s_min
+\newcommand{\aSevenNcSixEndSMin}{3.41}% results/scale_convergence.json rows, ncaltech101 T=6 end_point.logit_scale, smallest
+\newcommand{\aSevenNcSixEndSMax}{4.11}% results/scale_convergence.json rows, ncaltech101 T=6 end_point.logit_scale, largest
+\newcommand{\aSevenNcSixEndSminMin}{0.82}% results/scale_convergence.json rows, ncaltech101 T=6 end_point.s_min, smallest
+\newcommand{\aSevenNcSixEndSminMax}{0.86}% results/scale_convergence.json rows, ncaltech101 T=6 end_point.s_min, largest
+\newcommand{\aSevenNcSixEndAcc}{0.6096}% results/scale_convergence.json rows, ncaltech101 T=6 end_point.test_accuracy, mean
+\newcommand{\aSevenNcSixEndGap}{$+$0.2135}% results/scale_convergence.json rows, ncaltech101 T=6 end_point.conf_minus_acc, mean
+\newcommand{\aSevenNcSixEndEceW}{0.2139}% results/scale_convergence.json rows, ncaltech101 T=6 end_point.ece_equal_width, mean
+\newcommand{\aSevenNcSixEndEceM}{0.2135}% results/scale_convergence.json rows, ncaltech101 T=6 end_point.ece_equal_mass, mean
+\newcommand{\aSevenNcSixEndFloor}{0.0000}% results/scale_convergence.json rows, ncaltech101 T=6 end_point.floor, mean
+\newcommand{\aSevenNcSixEndAboveSmin}{3}% results/scale_convergence.json rows, ncaltech101 T=6 end_point: runs with s above s_min
+\newcommand{\aSevenNcTwoOrigRecovered}{28}% [DERIVED] arithmetic in paper/make_numbers.py: (original_rule accuracy - count accuracy) / (accumulator - count), N-Caltech101 T=2, per cent
+\newcommand{\aSevenNcTwoEndRecovered}{72}% [DERIVED] arithmetic in paper/make_numbers.py: (end_point accuracy - count accuracy) / (accumulator - count), N-Caltech101 T=2, per cent
+\newcommand{\aSevenNmGapMax}{0.0068}% results/scale_convergence.json N-MNIST end points: largest |conf - acc|
+\newcommand{\aSevenCapSpanMin}{0.021}% results/scale_convergence.json capped runs: smallest span of theta over the last six epochs
+\newcommand{\aSevenCapSpanMax}{0.044}% results/scale_convergence.json capped runs: largest span of theta over the last six epochs
+\newcommand{\aSevenRowNmTwoZero}{150 & cap & 5.55 & 0.9824 & $+$0.0051 & 0.0063 & 7.71 & 3.26 & 0.9869 & $+$0.0061 & 0.0065}% results/scale_convergence.json rows, nmnist T=2 seed 0: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenRowNmTwoOne}{150 & cap & 5.40 & 0.9812 & $+$0.0047 & 0.0062 & 7.54 & 3.29 & 0.9877 & $+$0.0048 & 0.0055}% results/scale_convergence.json rows, nmnist T=2 seed 1: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenRowNmTwoTwo}{150 & cap & 3.49 & 0.9764 & $-$0.0046 & 0.0056 & 7.51 & 3.24 & 0.9865 & $+$0.0068 & 0.0074}% results/scale_convergence.json rows, nmnist T=2 seed 2: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenRowNcTwoZero}{47 & converged & 3.85 & 0.4897 & $+$0.1033 & 0.1168 & 7.04 & 2.36 & 0.5287 & $+$0.1542 & 0.1558}% results/scale_convergence.json rows, ncaltech101 T=2 seed 0: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenRowNcTwoOne}{108 & converged & 4.44 & 0.5023 & $+$0.1088 & 0.1108 & 8.03 & 2.39 & 0.5459 & $+$0.1788 & 0.1814}% results/scale_convergence.json rows, ncaltech101 T=2 seed 1: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenRowNcTwoTwo}{114 & converged & 4.13 & 0.4770 & $+$0.1411 & 0.1433 & 8.20 & 2.43 & 0.5637 & $+$0.1882 & 0.1882}% results/scale_convergence.json rows, ncaltech101 T=2 seed 2: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenRowNcSixZero}{43 & converged & 2.00 & 0.5620 & $+$0.1101 & 0.1101 & 3.53 & 0.85 & 0.6148 & $+$0.2041 & 0.2041}% results/scale_convergence.json rows, ncaltech101 T=6 seed 0: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenRowNcSixOne}{30 & converged & 2.79 & 0.5723 & $+$0.1827 & 0.1827 & 3.41 & 0.82 & 0.5821 & $+$0.2224 & 0.2224}% results/scale_convergence.json rows, ncaltech101 T=6 seed 1: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenRowNcSixTwo}{150 & cap & 2.52 & 0.5741 & $+$0.1684 & 0.1705 & 4.11 & 0.86 & 0.6320 & $+$0.2140 & 0.2153}% results/scale_convergence.json rows, ncaltech101 T=6 seed 2: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenTableRows}{9}% results/scale_convergence.json rows
 \newcommand{\lsQueries}{18}% results/literature_search.json required_queries
 \newcommand{\lsQueryRows}{481}% results/literature_search.json query_rows
 \newcommand{\lsScreenings}{17{,}234}% results/literature_search.json record_screenings

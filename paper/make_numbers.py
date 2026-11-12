@@ -1118,6 +1118,35 @@ if a7.get("training_finished_at"):
             put(f"aSeven{key}{wk}EceM", f(st.mean(e["ece_equal_mass"] for e in ev)), src + f" {which}.ece_equal_mass, mean")
             put(f"aSeven{key}{wk}Floor", f(st.mean(e["floor"] for e in ev)), src + f" {which}.floor, mean")
             put(f"aSeven{key}{wk}AboveSmin", str(sum(e["logit_scale"] > e["s_min"] for e in ev)), src + f" {which}: runs with s above s_min")
+    # the share of the count-to-accumulator accuracy gap recovered, at both checkpoints of the retrained runs
+    sc_rows = load("scaled_count_experiment.json")["rows"]
+    nc2 = [r for r in sc_rows if r["dataset"] == "ncaltech101" and r["timesteps"] == 2]
+    cnt = st.mean(r["count_test_accuracy"] for r in nc2)
+    acc_ = st.mean(r["accumulator_test_accuracy"] for r in nc2)
+    rs7 = [r for r in rows7 if r["dataset"] == "ncaltech101" and r["timesteps"] == 2]
+    for which, wk in (("original_rule", "Orig"), ("end_point", "End")):
+        sc_acc = st.mean(r[which]["test_accuracy"] for r in rs7)
+        put(f"aSevenNcTwo{wk}Recovered", f"{100 * (sc_acc - cnt) / (acc_ - cnt):.0f}",
+            DERIVED + f": ({which} accuracy - count accuracy) / (accumulator - count), N-Caltech101 T=2, per cent")
+    put("aSevenNmGapMax", f(max(abs(r["end_point"]["conf_minus_acc"]) for r in rows7 if r["dataset"] == "nmnist")),
+        SRC_A7 + " N-MNIST end points: largest |conf - acc|")
+    th_span = []
+    for r in rows7:
+        if r["stopped_by"] == "cap":
+            th = [h["theta"] for h in r["history"]]
+            th_span.append(max(th[-6:]) - min(th[-6:]))
+    put("aSevenCapSpanMin", f(min(th_span), 3), SRC_A7 + " capped runs: smallest span of theta over the last six epochs")
+    put("aSevenCapSpanMax", f(max(th_span), 3), SRC_A7 + " capped runs: largest span of theta over the last six epochs")
+    a7rows = 0
+    for r in sorted(rows7, key=lambda r: (r["dataset"] != "nmnist", r["timesteps"], r["seed"])):
+        k_ = f"aSevenRow{DSK[r['dataset']]}{WORD[r['timesteps']]}{WORD[r['seed']]}"
+        o, e = r["original_rule"], r["end_point"]
+        put(k_, " & ".join([str(r["epochs_run"]), r["stopped_by"].replace("convergence", "converged"),
+                            f(o["logit_scale"], 2), f(o["test_accuracy"]), f(o["conf_minus_acc"], sign=True), f(o["ece_equal_width"]),
+                            f(e["logit_scale"], 2), f(e["s_min"], 2), f(e["test_accuracy"]), f(e["conf_minus_acc"], sign=True), f(e["ece_equal_width"])]),
+            SRC_A7 + f" rows, {r['dataset']} T={r['timesteps']} seed {r['seed']}: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w")
+        a7rows += 1
+    put("aSevenTableRows", str(a7rows), SRC_A7 + " rows")
 
 
 # ------------------------------------------------------------------ the literature search (added after review)

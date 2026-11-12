@@ -2843,3 +2843,14 @@ above was edited. Outcomes, every one generated into `paper/numbers.tex`:
   trained accumulator is present with identical weights, so it is lost at the readout and not
   in training. The same-weights accumulator is overconfident on N-Caltech101 in every cell.
   `results/same_weights_readouts.json`.
+- A7. The nine scaled-count models were trained again with every setting unchanged except
+  stopping (theta settling by less than 0.01 over five epochs, or 150 epochs). The projected
+  worst case was 4.3 hours, so all nine ran (2.1 hours). Five settled, all on N-Caltech101; the
+  three N-MNIST runs and one N-Caltech101 `T = 6` run reached the cap with theta still rising
+  slowly. Every learned scale stays above `s_min`, so the floor is zero throughout. On N-MNIST
+  the end points stay calibrated (|conf - acc| at most 0.0068). On N-Caltech101 the
+  overconfidence grows with training: at `T = 2` from +0.1177 at the checkpoint the original
+  rule would keep to +0.1737 at the end point. Accuracy rises too: at `T = 2` the end points
+  recover 72% of the gap from the count readout to the accumulator, against 28% at the
+  original rule's checkpoint of the same runs. The pre-registered runs remain the results of
+  predictions 6a to 8. `results/scale_convergence.json`.

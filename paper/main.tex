@@ -924,8 +924,8 @@ A scale cannot change a prediction, since it multiplies every logit by the same 
 so any accuracy it gains comes through training. At $T=2$ on N-Caltech101 the scaled count
 lies between the count readout and the accumulator in accuracy (Table~\ref{tab:scaled}), recovering % src: results/scaled_count_experiment.json
 \shareRecovered\% of the gap between them. Prediction 7 asked for at least % src: results/scaled_count_experiment.json predictions.7
-half; it is \verdictSeven. Since most of that gap is lost at the readout at inference % src: results/scaled_count_experiment.json predictions.7
-(Section~\ref{sec:readouts}), a scale could not have closed it.
+half; it is \verdictSeven. Trained for longer (below), the scaled count recovers more of the gap, % src: results/scaled_count_experiment.json predictions.7
+so the shortfall reflects when training stopped as well as the scale.
 
 \begin{table}[t]
 \centering
@@ -947,7 +947,48 @@ N-Caltech101 & 6 & \scaleMinScNcSix{} to \scaleMaxScNcSix & \sminMinScNcSix{} to
 \end{tabular}
 \end{table}
 
-%%SCALECONV%%
+\paragraph{Trained until the scale settles (added after review, not pre-registered).}
+In the pre-registered runs the scale was still rising when early stopping ended training
+(Figure~\ref{fig:scale}). The nine models were therefore trained again with every setting
+unchanged except stopping. Training continued until $\theta=\ln s$ moved by less than 0.01 over
+five consecutive epochs, or for \aSevenEpochCap{} epochs, three times the original cap. The % src: results/scale_convergence.json thresholds.max_epochs
+criterion, the cap and a compute limit were recorded in NOTES.md before the runs. The projected
+worst case was \aSevenProjected{} hours, within the limit, so all \aSevenRuns{} runs were trained. % src: results/scale_convergence.json projected_worst_case_seconds, rows
+Of these, \aSevenConverged{} met the criterion, all on N-Caltech101. The other \aSevenCapped{}, the % src: results/scale_convergence.json rows stopped_by
+three on N-MNIST and one on N-Caltech101 at $T=6$, reached the cap with $\theta$ still moving by
+\aSevenCapSpanMin{} to \aSevenCapSpanMax{} over their last five epochs % src: results/scale_convergence.json rows history
+(Table~\ref{tab:scaleconv} in Appendix~\ref{app:scaleconv}).
+
+That the scale keeps rising is what cross-entropy rewards. For one sample with counts $c$, the
+derivative of the loss with respect to $s$ is $-(c_y-\mathbb{E}_{p}[c])$, with $c_y$ the true
+class's count and the expectation taken under the softmax. It is negative whenever the true class
+has the largest count, so on training data that is mostly classified correctly the loss keeps
+falling as $s$ grows. Wei et al.\ make the same observation for the norm of unbounded
+logits~\citep{wei2022logitnorm}. % [LIT] wei2022logitnorm, Section 1
+
+The conclusions of the pre-registered runs hold, and on N-Caltech101 they strengthen. At every
+checkpoint the learned scale is above $s_{\min}$, so the floor of Proposition~\ref{prop:floor} is
+zero. On N-MNIST the end points stay calibrated: their scale is \aSevenNmTwoEndSMin{} to % src: results/scale_convergence.json rows end_point
+\aSevenNmTwoEndSMax{}, and mean confidence minus accuracy is at most \aSevenNmGapMax{} in % src: results/scale_convergence.json rows end_point
+magnitude. On N-Caltech101 the overconfidence grows with training. At $T=2$ mean confidence minus
+accuracy is \aSevenNcTwoOrigGap{} at the checkpoint the original rule would have kept and % src: results/scale_convergence.json rows original_rule
+\aSevenNcTwoEndGap{} at the end point; at $T=6$ it grows from \aSevenNcSixOrigGap{} to % src: results/scale_convergence.json rows
+\aSevenNcSixEndGap. Accuracy rises too. At $T=2$ the end points recover % src: results/scale_convergence.json rows end_point
+\aSevenNcTwoEndRecovered\% of the gap between the count readout and the accumulator, against % [DERIVED] paper/make_numbers.py
+\aSevenNcTwoOrigRecovered\% at the original rule's checkpoint of the same runs. How much accuracy % [DERIVED] paper/make_numbers.py
+a learned scale buys therefore depends on when training stops. The pre-registered runs remain the
+results of predictions 6a to 8.
+
+\begin{figure}[t]
+\centering
+\includegraphics{figures/fig-scale.pdf} % drawn by spikecalib/paper_figures.py figure_scale from results/scaled_count_experiment.json and results/scale_convergence.json
+\caption{The learned scale $s=e^{\theta}$ against epoch, every seed (line style). Black: the
+pre-registered runs, which early stopping ended (crosses). Vermilion: the same nine models trained
+again until $\theta$ settled or for at most 150 epochs, added after review; open circles mark the
+checkpoint the original stopping rule would have kept in each. The band is the range of $s_{\min}$
+over the runs in the panel.}
+\label{fig:scale}
+\end{figure}
 
 % =========================================================================================
 \subsection{The choice of calibrator depends on the regime (RQ4)}
@@ -1161,7 +1202,10 @@ N-MNIST at $T=2$ only. No correction for multiple comparisons was applied.
 
 \paragraph{The learned scale was not tuned.} The scale shared the network's optimiser and learning
 rate, and in the pre-registered runs it was still rising when early stopping ended training.
-%%SCALELIMIT%%
+Trained for up to three times longer (added after review), it settled in \aSevenConverged{} of % src: results/scale_convergence.json rows
+\aSevenRuns{} runs and was still rising slowly in the rest, every N-MNIST run among them. The
+calibration findings did not change, but the accuracy a learned scale recovers depends on when
+training stops, and a separate learning rate or a penalty on the scale was not tried.
 
 \paragraph{The fusion result is an exploratory pilot.} The two inputs of Section~\ref{sec:fusion}
 are the same network reading two samples of one class from one sensor, the second degraded by
@@ -1200,7 +1244,8 @@ the floor is \frNmTwoInt\% of the observed error on N-MNIST and \frNcTwoInt\% on
 with three seeds per setting. Temperature scaling, which lifts the cap on the same weights, removes
 the underconfidence on N-MNIST and most of it on N-Caltech101; lifting the cap far above accuracy,
 by an unbounded readout or a learned scale, leaves the harder dataset overconfident. The accuracy a count readout loses at low
-$T$ is lost mostly to coarse, tied counts at inference, which no logit scale can recover.
+$T$ is lost mostly to coarse, tied counts at inference; a logit scale cannot change a prediction
+and recovers accuracy only by changing what the network learns.
 Temperature scaling and isotonic regression are equivalent on N-MNIST within a stated margin; on
 N-Caltech101, where the cap binds, isotonic regression is better on nine runs of one architecture.
 The number of confidence values a count readout can emit is fixed by $T$ and $C$ and by no scale,
@@ -1738,7 +1783,41 @@ $T$ & accuracy & w & m & w & m & w & m & differ \\
 \end{tabular}
 \end{table}
 
-%%SCALEAPP%%
+\section{The learned scale trained to convergence}
+\label{app:scaleconv}
+
+Added after review, not pre-registered. Every setting of the pre-registered runs was kept except
+stopping; each model was initialised after seeding, so its initialisation depends on its seed
+alone. Table~\ref{tab:scaleconv} gives, for every run, the checkpoint the original stopping rule
+(best validation accuracy, patience 5, at most 50 epochs) would have kept within the run, and the
+end point. The training took \aSevenHours{} hours. % src: results/scale_convergence.json rows seconds
+
+\begin{table}[ht]
+\centering
+\caption{The learned scale trained until $\theta$ settled or for at most 150 epochs: epochs run and
+why training stopped; at the original rule's checkpoint, the scale $s$, test accuracy, mean
+confidence minus accuracy (gap) and equal-width ECE; at the end point, the same with $s_{\min}$.}
+\label{tab:scaleconv}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrr rl rrrr rrrrr}
+\toprule
+ & & & & & \multicolumn{4}{c}{original rule's checkpoint} & \multicolumn{5}{c}{end point} \\
+\cmidrule(lr){6-9}\cmidrule(lr){10-14}
+dataset & $T$ & seed & epochs & stop & $s$ & acc. & gap & ECE & $s$ & $s_{\min}$ & acc. & gap & ECE \\
+\midrule
+N-MNIST      & 2 & 0 & \aSevenRowNmTwoZero \\ % src: results/scale_convergence.json rows
+N-MNIST      & 2 & 1 & \aSevenRowNmTwoOne \\ % src: results/scale_convergence.json rows
+N-MNIST      & 2 & 2 & \aSevenRowNmTwoTwo \\ % src: results/scale_convergence.json rows
+N-Caltech101 & 2 & 0 & \aSevenRowNcTwoZero \\ % src: results/scale_convergence.json rows
+N-Caltech101 & 2 & 1 & \aSevenRowNcTwoOne \\ % src: results/scale_convergence.json rows
+N-Caltech101 & 2 & 2 & \aSevenRowNcTwoTwo \\ % src: results/scale_convergence.json rows
+N-Caltech101 & 6 & 0 & \aSevenRowNcSixZero \\ % src: results/scale_convergence.json rows
+N-Caltech101 & 6 & 1 & \aSevenRowNcSixOne \\ % src: results/scale_convergence.json rows
+N-Caltech101 & 6 & 2 & \aSevenRowNcSixTwo \\ % src: results/scale_convergence.json rows
+\bottomrule
+\end{tabular}
+\end{table}
 
 \input{fusion_appendix}
 
