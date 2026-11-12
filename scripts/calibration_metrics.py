@@ -199,7 +199,9 @@ def main() -> int:
                 # A8: share of confidences in the top equal-width bin (14/15, 1]
                 "share_top_equal_width_bin": float(np.mean(bin_assignment(conf, "equal_width", N_BINS)[0]
                                                            == N_BINS - 1)),
-                "auroc": discrimination(conf, correct)["auroc"],
+                # AUROC on confidences grouped to 12 decimals, so that values equal in exact
+                # arithmetic tie (the unrounded N-MNIST sweep convention is kept for ECE only)
+                "auroc": discrimination(quantise_confidence(conf), correct)["auroc"],
                 **top_label_scores(conf, correct), "published_check": checked,
             })
             if arm in fit["probs"]:
