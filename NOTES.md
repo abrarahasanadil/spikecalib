@@ -2236,6 +2236,16 @@ reported, whichever way it falls.
 - **Spread over seeds.** For the AUROC difference between the count readout and the
   accumulator on N-MNIST at `T = 2`, a t-interval over the three seeds (`t(0.975, 2)`),
   beside the test-set bootstrap interval of A4.
+- **Ranking with the weights held fixed** (added the same day, after the first independent
+  checks and before computation). The three count-trained N-MNIST networks at `T = 2` (two
+  blocks) are run once more on their test sets on MPS; their counts must equal the stored
+  outputs exactly. Their pre-threshold output is read as the accumulator and as the leaky
+  membrane, as in A6. Reported: the AUROC of each reading, and the paired difference between
+  the count readout and the accumulator reading, with the test-set bootstrap of A4
+  (`default_rng(seed)`, 1,000 resamples). For the count readout, the separately trained
+  accumulator and the accumulator reading, the AUROC is also split into the shares of
+  correct-wrong pairs ordered correctly, tied and ordered wrongly (`AUROC = ordered + tied / 2`).
+  Descriptive; no threshold.
 
 ## Does the ceiling bind in published work? Resolved: no, and the reason is informative
 
