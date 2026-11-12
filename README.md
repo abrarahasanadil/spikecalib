@@ -102,7 +102,7 @@ python scripts/make_figures.py            # every figure, as vector PDF and PNG
 cd paper && pdflatex main && bibtex main && pdflatex main && pdflatex main
 ```
 
-SHA-256 of `spikecalib-results-v1.0.0.tar.gz`: `RELEASE_SHA256_PENDING`
+SHA-256 of `spikecalib-results-v1.0.0.tar.gz`: `d846bd7ce3a21b4220e6dc75a2eba73cacb5e2beaea8dfa7bdfaa9cf6a7c63f6`
 
 **From the raw data.** The event datasets are not redistributed. `scripts/fetch_data.py`
 downloads them from their original sources and builds the frame caches:
