@@ -871,8 +871,8 @@ used matters much less there.
 calibrator was fitted to a trained model, was that temperature scaling would match or beat
 isotonic regression at every $T$, with no isotonic advantage resolvable under equal-width binning
 (Appendix~\ref{app:predictions} quotes it). As written it failed: under equal-width binning
-isotonic regression is better at $T=6$, seed~0. Its substance, that the two do not differ, is % src: results/sweep_nmnist.csv iso_minus_temp_resolvable
-consistent with every later test. Under the registered rule no N-MNIST run is resolved, because
+isotonic regression is better at $T=6$, seed~0. Its substance, that the two do not differ % src: results/sweep_nmnist.csv iso_minus_temp_resolvable
+appreciably, is supported by the equivalence tests below. Under the registered rule no N-MNIST run is resolved, because
 the runs whose interval excludes zero under one estimator are disjoint from those under the other
 (Figure~\ref{fig:paired}): \resolveEither{} runs resolve under one estimator and \resolveBoth{} % src: results/sweep_nmnist.csv
 under both. A difference that is not resolved is not an equivalence, so equivalence was tested
