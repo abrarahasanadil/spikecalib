@@ -223,10 +223,13 @@ def discrimination(conf: np.ndarray, correct: np.ndarray) -> dict:
     means confidence carries no information about correctness; 1.0 means it orders them
     perfectly.
 
-    This is prior to calibration, not part of it. A calibrator is a monotone map from
-    confidence to a probability, and a monotone map cannot change the ordering of samples
-    by confidence -- so it cannot change AUROC at all. Whatever separation exists here is
-    the ceiling on what any calibrated confidence can express. If it is 0.5, the best
+    This is prior to calibration, not part of it. A calibrator that is a strictly increasing
+    map of the top-label confidence cannot change the ordering of samples by confidence, so it
+    cannot change AUROC. Two calibrators used here can: temperature scaling rescales the whole
+    logit vector, so for a count readout it can reorder count vectors whose top confidences
+    differ (see tests/test_theory.py), and isotonic regression is only non-decreasing, so it can
+    merge groups into ties. Whatever separation exists here bounds what a strictly monotone
+    calibration of the top-label confidence can express. If it is 0.5, the best
     possible calibrator outputs the base accuracy rate for every sample, which is a correct
     but useless model, and the interesting question stops being "which calibrator" and
     becomes "why is the readout uninformative".

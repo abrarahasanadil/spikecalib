@@ -29,8 +29,8 @@ class wins. Let $S$ be the event that both inputs saturate, and $a_{k,S}$ the ac
 input $k$ on $S$.
 \begin{enumerate}
 \item[(a)] On $S$ the two reports are permutations of each other. A fusion rule that uses only
-  the two reports, treats the inputs alike, treats the classes alike and rates a class
-  strictly higher when an input does gives the two winners equal scores. With uniform
+  the two reports, treats the inputs alike, treats the classes alike and scores a class higher
+  whenever an input's report rates it higher gives the two winners equal scores. With uniform
   tie-breaking it is an unweighted vote: a coin flip whenever the inputs disagree. The
   product, sum and max rules are of this kind. Ju et al.\ observe the like for networks whose
   confidences have all saturated towards one, where averaging ``is identical to the majority
@@ -48,11 +48,11 @@ Parts (a) to (c) are checked by enumeration and by simulation in the accompanyin
 \subsection{Setup}
 \label{app:fusionsetup}
 
-No network was trained. Input A is an N-MNIST test sample read by a trained network; input B
+No fusion network was trained. Input A is an N-MNIST test sample read by a trained network; input B
 is a different test sample of the same class, read by the same network after each event is
 removed with probability \fuRate, so the two are independent given the class. The rate was % src: results/fusion_dropout_rate.json
 fixed on the calibration split before any fused prediction was computed, as the grid value
-that lowers calibration accuracy by closest to ten points (\fuCalClean{} to \fuCalDropped). % src: results/fusion_experiment.json dropout
+whose calibration accuracy falls by the amount closest to ten points (\fuCalClean{} to \fuCalDropped). % src: results/fusion_experiment.json dropout
 Three rules are compared over \fuPairings{} random pairings of the \nmSplitTest{} test samples: % src: results/fusion_experiment.json pairings; results/nmnist_T2_seed0_split.npz
 R0, the product rule on the raw softmax outputs; R1, the product rule after temperature scaling
 each input on calibration data; and R2, the reliability-weighted vote, its weights from each
@@ -77,7 +77,8 @@ equal-width and \fuTwoEceRZeroM{} with equal-mass bins. After per-input calibrat
 to \fuTwoEceROneW{} and \fuTwoEceROneM. % src: results/fusion_experiment.json ece_r1_ew, ece_r1_em
 
 From $T=4$ the means of $\delta$ are indistinguishable from zero (Table~\ref{tab:fusionhigh}), % src: results/fusion_experiment.json predictions.14 mean_delta_by_t
-and the interval includes zero in all \fuHighRuns{} of those runs. % src: results/fusion_experiment.json delta_ci Saturation is % src: results/fusion_experiment.json delta_ci
+and the interval includes zero in all \fuHighRuns{} of those runs. % src: results/fusion_experiment.json delta_ci
+Saturation is % src: results/fusion_experiment.json delta_ci
 still common at $T=4$, where $P(S)$ is \fuCountFourPS, but two saturated inputs almost never % src: results/fusion_experiment.json p_s
 disagree there: the joint probability falls from \fuTwoPSDisagree{} at $T=2$ to % src: results/fusion_experiment.json p_s_and_disagree
 \fuFourPSDisagree. Prediction 14 required the mean to fall strictly through $T=2$, 4 and 6 and % src: results/fusion_experiment.json p_s_and_disagree
@@ -137,9 +138,9 @@ and Cao et al.\ bound the generalisation error of dynamic fusion, and the bound 
 static fusion's when each modality's weight is negatively correlated with its
 loss~\citep{zhang2023provable,cao2024predictive}; % [LIT] zhang2023provable, Theorem 2; cao2024predictive, Theorem 3.1 and Corollary 3.2
 Zhang et al.\ note that a constant weight has zero covariance with every loss. Restricted to
-$S$, an output-derived weight is such a constant: the former condition is met only with
-equality, the strict form of the latter is not met, and whatever advantage remains must come
-from pairs outside $S$. Their theorems are not contradicted, and methods that predict weights
+$S$, an output-derived weight is such a constant. On $S$ its covariance with each loss is
+therefore zero, so the negative correlation their bound rewards is absent, and whatever advantage
+remains must come from pairs outside $S$. Their theorems are not contradicted, and methods that predict weights
 from features instead of outputs are not affected.
 
 Second, Ma et al.\ argue that a

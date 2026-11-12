@@ -91,7 +91,7 @@
 \newcommand{\roMemLevels}{9{,}998}% results/readout_experiment.json T=2 n_distinct
 \newcommand{\roMemOps}{9{,}998}% results/readout_experiment.json T=2 n_achievable_coverage_levels
 \newcommand{\roMemAcc}{0.9851}% results/readout_experiment.json T=2 test_accuracy
-\newcommand{\roAccConfAcc}{$+$0.0000}% results/readout_experiment.json T=2 mean_conf_minus_acc
+\newcommand{\roAccConfAcc}{0.0000}% results/readout_experiment.json T=2 mean_conf_minus_acc
 \newcommand{\roAccEceW}{0.0031}% results/readout_experiment.json T=2 ece_equal_width
 \newcommand{\roAccEceM}{0.0016}% results/readout_experiment.json T=2 ece_equal_mass
 \newcommand{\roAccLevels}{10{,}000}% results/readout_experiment.json T=2 n_distinct
@@ -234,7 +234,7 @@
 \newcommand{\accCountRefScNm}{0.9850}% results/scaled_count_experiment.json count_test_accuracy (the existing count runs)
 \newcommand{\accAccumRefScNm}{0.9861}% results/scaled_count_experiment.json accumulator_test_accuracy
 \newcommand{\gapCountRefScNm}{$-$0.5386}% results/scaled_count_experiment.json count_mean_conf_minus_acc
-\newcommand{\gapAccumRefScNm}{$+$0.0000}% results/scaled_count_experiment.json accumulator_mean_conf_minus_acc
+\newcommand{\gapAccumRefScNm}{0.0000}% results/scaled_count_experiment.json accumulator_mean_conf_minus_acc
 \newcommand{\accDeltaScNm}{$-$0.43}% results/scaled_count_experiment.json test_accuracy minus count_test_accuracy, in points
 \newcommand{\accCostScNm}{0.4}% results/scaled_count_experiment.json count_test_accuracy minus test_accuracy, in points, one decimal
 \newcommand{\levelsMinScNm}{9}% results/scaled_count_experiment.json n_distinct
@@ -285,6 +285,10 @@
 \newcommand{\checkInformative}{18}% results/resolution_experiment.json check.cells_where_bound_is_below_n_test
 \newcommand{\levelsObsMinNmTwo}{8}% results/resolution_experiment.json check rows, N-MNIST T=2, count and scaled-count, both depths
 \newcommand{\levelsObsMaxNmTwo}{10}% results/resolution_experiment.json check rows, N-MNIST T=2
+\newcommand{\levelsScMinNmTwo}{9}% results/resolution_experiment.json check rows, N-MNIST T=2, two blocks, scaled count: fewest distinct values in a seed
+\newcommand{\levelsScMaxNmTwo}{10}% results/resolution_experiment.json check rows, N-MNIST T=2, two blocks, scaled count: most distinct values in a seed
+\newcommand{\levelsCtMinNmTwo}{8}% results/resolution_experiment.json check rows, N-MNIST T=2, two blocks, count: fewest distinct values in a seed
+\newcommand{\levelsCtMaxNmTwo}{10}% results/resolution_experiment.json check rows, N-MNIST T=2, two blocks, count: most distinct values in a seed
 \newcommand{\shareOfBoundMax}{18}% results/resolution_experiment.json check rows where the bound is below n_test: largest observed/bound, per cent
 \newcommand{\verdictNine}{falsified}% results/resolution_experiment.json prediction_9
 \newcommand{\nineBelow}{4}% results/resolution_experiment.json prediction_9.comparisons
@@ -378,6 +382,7 @@
 \newcommand{\csIsoWinsHundred}{3}% results/calibration_size_experiment.json summary, n_cal=100
 \newcommand{\csTempWinsMaxHundred}{9}% results/calibration_size_experiment.json summary, n_cal=100, largest per-seed count
 \newcommand{\csDifferMaxHundred}{11}% results/calibration_size_experiment.json summary, n_cal=100, largest per-seed count
+\newcommand{\csDifferTotalHundred}{29}% results/calibration_size_experiment.json summary, n_cal=100, draws that differ, all seeds
 \newcommand{\csTempWHundred}{0.0079}% results/calibration_size_experiment.json temp_ece_ew, n_cal=100, mean over seeds and draws
 \newcommand{\csTempMHundred}{0.0061}% results/calibration_size_experiment.json temp_ece_em, n_cal=100, mean over seeds and draws
 \newcommand{\csIsoWHundred}{0.0114}% results/calibration_size_experiment.json iso_ece_ew, n_cal=100, mean over seeds and draws
@@ -386,6 +391,7 @@
 \newcommand{\csIsoWinsThousand}{2}% results/calibration_size_experiment.json summary, n_cal=1000
 \newcommand{\csTempWinsMaxThousand}{7}% results/calibration_size_experiment.json summary, n_cal=1000, largest per-seed count
 \newcommand{\csDifferMaxThousand}{8}% results/calibration_size_experiment.json summary, n_cal=1000, largest per-seed count
+\newcommand{\csDifferTotalThousand}{19}% results/calibration_size_experiment.json summary, n_cal=1000, draws that differ, all seeds
 \newcommand{\csTempWThousand}{0.0032}% results/calibration_size_experiment.json temp_ece_ew, n_cal=1000, mean over seeds and draws
 \newcommand{\csTempMThousand}{0.0018}% results/calibration_size_experiment.json temp_ece_em, n_cal=1000, mean over seeds and draws
 \newcommand{\csIsoWThousand}{0.0055}% results/calibration_size_experiment.json iso_ece_ew, n_cal=1000, mean over seeds and draws
@@ -394,6 +400,7 @@
 \newcommand{\csIsoWinsFull}{0}% results/calibration_size_experiment.json summary, n_cal=5000
 \newcommand{\csTempWinsMaxFull}{0}% results/calibration_size_experiment.json summary, n_cal=5000, largest per-seed count
 \newcommand{\csDifferMaxFull}{0}% results/calibration_size_experiment.json summary, n_cal=5000, largest per-seed count
+\newcommand{\csDifferTotalFull}{0}% results/calibration_size_experiment.json summary, n_cal=5000, draws that differ, all seeds
 \newcommand{\csTempWFull}{0.0018}% results/calibration_size_experiment.json temp_ece_ew, n_cal=5000, mean over seeds and draws
 \newcommand{\csTempMFull}{0.0008}% results/calibration_size_experiment.json temp_ece_em, n_cal=5000, mean over seeds and draws
 \newcommand{\csIsoWFull}{0.0042}% results/calibration_size_experiment.json iso_ece_ew, n_cal=5000, mean over seeds and draws
@@ -426,8 +433,8 @@
 \newcommand{\fuCountFourRTwo}{0.9887}% results/fusion_experiment.json acc_r2, count, T=4
 \newcommand{\fuCountFourPS}{0.496}% results/fusion_experiment.json p_s, count, T=4
 \newcommand{\fuCountFourDelta}{$+$0.0001}% results/fusion_experiment.json delta, count, T=4, mean of seeds
-\newcommand{\fuCountFourDeltaOnS}{$+$0.0000}% results/fusion_experiment.json delta_on_s, count, T=4
-\newcommand{\fuCountFourDeltaOffS}{$+$0.0000}% results/fusion_experiment.json delta_off_s, count, T=4
+\newcommand{\fuCountFourDeltaOnS}{0.0000}% results/fusion_experiment.json delta_on_s, count, T=4
+\newcommand{\fuCountFourDeltaOffS}{0.0000}% results/fusion_experiment.json delta_off_s, count, T=4
 \newcommand{\fuCountFourPredicted}{$+$0.0001}% results/fusion_experiment.json predicted_on_s, count, T=4
 \newcommand{\fuCountFourExcl}{0}% results/fusion_experiment.json seeds whose delta interval excludes zero, count, T=4
 \newcommand{\fuCountSixAccA}{0.9902}% results/fusion_experiment.json accuracy_a, count, T=6
@@ -436,10 +443,10 @@
 \newcommand{\fuCountSixROne}{0.9993}% results/fusion_experiment.json acc_r1, count, T=6
 \newcommand{\fuCountSixRTwo}{0.9902}% results/fusion_experiment.json acc_r2, count, T=6
 \newcommand{\fuCountSixPS}{0.204}% results/fusion_experiment.json p_s, count, T=6
-\newcommand{\fuCountSixDelta}{$+$0.0000}% results/fusion_experiment.json delta, count, T=6, mean of seeds
-\newcommand{\fuCountSixDeltaOnS}{$-$0.0000}% results/fusion_experiment.json delta_on_s, count, T=6
-\newcommand{\fuCountSixDeltaOffS}{$+$0.0000}% results/fusion_experiment.json delta_off_s, count, T=6
-\newcommand{\fuCountSixPredicted}{$+$0.0000}% results/fusion_experiment.json predicted_on_s, count, T=6
+\newcommand{\fuCountSixDelta}{0.0000}% results/fusion_experiment.json delta, count, T=6, mean of seeds
+\newcommand{\fuCountSixDeltaOnS}{0.0000}% results/fusion_experiment.json delta_on_s, count, T=6
+\newcommand{\fuCountSixDeltaOffS}{0.0000}% results/fusion_experiment.json delta_off_s, count, T=6
+\newcommand{\fuCountSixPredicted}{0.0000}% results/fusion_experiment.json predicted_on_s, count, T=6
 \newcommand{\fuCountSixExcl}{0}% results/fusion_experiment.json seeds whose delta interval excludes zero, count, T=6
 \newcommand{\fuCountEightAccA}{0.9898}% results/fusion_experiment.json accuracy_a, count, T=8
 \newcommand{\fuCountEightAccB}{0.9700}% results/fusion_experiment.json accuracy_b, count, T=8
@@ -447,10 +454,10 @@
 \newcommand{\fuCountEightROne}{0.9992}% results/fusion_experiment.json acc_r1, count, T=8
 \newcommand{\fuCountEightRTwo}{0.9898}% results/fusion_experiment.json acc_r2, count, T=8
 \newcommand{\fuCountEightPS}{0.033}% results/fusion_experiment.json p_s, count, T=8
-\newcommand{\fuCountEightDelta}{$-$0.0000}% results/fusion_experiment.json delta, count, T=8, mean of seeds
-\newcommand{\fuCountEightDeltaOnS}{$-$0.0000}% results/fusion_experiment.json delta_on_s, count, T=8
-\newcommand{\fuCountEightDeltaOffS}{$-$0.0000}% results/fusion_experiment.json delta_off_s, count, T=8
-\newcommand{\fuCountEightPredicted}{$+$0.0000}% results/fusion_experiment.json predicted_on_s, count, T=8
+\newcommand{\fuCountEightDelta}{0.0000}% results/fusion_experiment.json delta, count, T=8, mean of seeds
+\newcommand{\fuCountEightDeltaOnS}{0.0000}% results/fusion_experiment.json delta_on_s, count, T=8
+\newcommand{\fuCountEightDeltaOffS}{0.0000}% results/fusion_experiment.json delta_off_s, count, T=8
+\newcommand{\fuCountEightPredicted}{0.0000}% results/fusion_experiment.json predicted_on_s, count, T=8
 \newcommand{\fuCountEightExcl}{0}% results/fusion_experiment.json seeds whose delta interval excludes zero, count, T=8
 \newcommand{\fuCountTenAccA}{0.9908}% results/fusion_experiment.json accuracy_a, count, T=10
 \newcommand{\fuCountTenAccB}{0.9736}% results/fusion_experiment.json accuracy_b, count, T=10
@@ -458,10 +465,10 @@
 \newcommand{\fuCountTenROne}{0.9994}% results/fusion_experiment.json acc_r1, count, T=10
 \newcommand{\fuCountTenRTwo}{0.9908}% results/fusion_experiment.json acc_r2, count, T=10
 \newcommand{\fuCountTenPS}{0.007}% results/fusion_experiment.json p_s, count, T=10
-\newcommand{\fuCountTenDelta}{$+$0.0000}% results/fusion_experiment.json delta, count, T=10, mean of seeds
-\newcommand{\fuCountTenDeltaOnS}{$+$0.0000}% results/fusion_experiment.json delta_on_s, count, T=10
-\newcommand{\fuCountTenDeltaOffS}{$+$0.0000}% results/fusion_experiment.json delta_off_s, count, T=10
-\newcommand{\fuCountTenPredicted}{$+$0.0000}% results/fusion_experiment.json predicted_on_s, count, T=10
+\newcommand{\fuCountTenDelta}{0.0000}% results/fusion_experiment.json delta, count, T=10, mean of seeds
+\newcommand{\fuCountTenDeltaOnS}{0.0000}% results/fusion_experiment.json delta_on_s, count, T=10
+\newcommand{\fuCountTenDeltaOffS}{0.0000}% results/fusion_experiment.json delta_off_s, count, T=10
+\newcommand{\fuCountTenPredicted}{0.0000}% results/fusion_experiment.json predicted_on_s, count, T=10
 \newcommand{\fuCountTenExcl}{0}% results/fusion_experiment.json seeds whose delta interval excludes zero, count, T=10
 \newcommand{\fuAccumTwoAccA}{0.9861}% results/fusion_experiment.json accuracy_a, accumulator, T=2
 \newcommand{\fuAccumTwoAccB}{0.9441}% results/fusion_experiment.json accuracy_b, accumulator, T=2
@@ -475,21 +482,21 @@
 \newcommand{\fuAccumSixRZero}{0.9990}% results/fusion_experiment.json acc_r0, accumulator, T=6
 \newcommand{\fuAccumSixROne}{0.9990}% results/fusion_experiment.json acc_r1, accumulator, T=6
 \newcommand{\fuAccumSixRTwo}{0.9888}% results/fusion_experiment.json acc_r2, accumulator, T=6
-\newcommand{\fuAccumSixDelta}{$-$0.0000}% results/fusion_experiment.json delta, accumulator, T=6
+\newcommand{\fuAccumSixDelta}{0.0000}% results/fusion_experiment.json delta, accumulator, T=6
 \newcommand{\fuAccumSixExcl}{0}% results/fusion_experiment.json seeds whose delta interval excludes zero, accumulator, T=6
 \newcommand{\fuAccumTenAccA}{0.9879}% results/fusion_experiment.json accuracy_a, accumulator, T=10
 \newcommand{\fuAccumTenAccB}{0.9604}% results/fusion_experiment.json accuracy_b, accumulator, T=10
 \newcommand{\fuAccumTenRZero}{0.9991}% results/fusion_experiment.json acc_r0, accumulator, T=10
 \newcommand{\fuAccumTenROne}{0.9991}% results/fusion_experiment.json acc_r1, accumulator, T=10
 \newcommand{\fuAccumTenRTwo}{0.9879}% results/fusion_experiment.json acc_r2, accumulator, T=10
-\newcommand{\fuAccumTenDelta}{$+$0.0000}% results/fusion_experiment.json delta, accumulator, T=10
+\newcommand{\fuAccumTenDelta}{0.0000}% results/fusion_experiment.json delta, accumulator, T=10
 \newcommand{\fuAccumTenExcl}{0}% results/fusion_experiment.json seeds whose delta interval excludes zero, accumulator, T=10
 \newcommand{\fuTwoDeltaMin}{$+$0.0032}% results/fusion_experiment.json delta, count, T=2, smallest seed
 \newcommand{\fuTwoDeltaMax}{$+$0.0064}% results/fusion_experiment.json delta, count, T=2, largest seed
 \newcommand{\fuTwoCiLowMin}{$+$0.0026}% results/fusion_experiment.json delta_ci lower end, count, T=2, smallest
 \newcommand{\fuTwoAccAOnS}{0.9980}% results/fusion_experiment.json accuracy_a_on_s, count, T=2
 \newcommand{\fuTwoAccBOnS}{0.9903}% results/fusion_experiment.json accuracy_b_on_s, count, T=2
-\newcommand{\fuTwoDrafted}{$+$0.0000}% results/fusion_experiment.json predicted_on_s_as_first_drafted, count, T=2
+\newcommand{\fuTwoDrafted}{0.0000}% results/fusion_experiment.json predicted_on_s_as_first_drafted, count, T=2
 \newcommand{\fuTwoPDisagreeGivenS}{0.012}% results/fusion_experiment.json p_s_and_disagree / p_s, count, T=2
 \newcommand{\fuTwoTempA}{0.28}% results/fusion_experiment.json temperature_a, count, T=2
 \newcommand{\fuTwoTempB}{0.32}% results/fusion_experiment.json temperature_b, count, T=2
@@ -514,7 +521,7 @@
 \newcommand{\fuTwoScaleOrderRuns}{3}% results/fusion_experiment.json r1_gives_a_the_larger_scale, count, T=2
 \newcommand{\fuAccumDeltaMin}{$-$0.00016}% results/fusion_experiment.json delta, accumulator, smallest run
 \newcommand{\fuAccumDeltaMax}{$+$0.00004}% results/fusion_experiment.json delta, accumulator, largest run
-\newcommand{\fuHighDeltaMin}{$-$0.0000}% results/fusion_experiment.json delta, count, T>=4, smallest run
+\newcommand{\fuHighDeltaMin}{0.0000}% results/fusion_experiment.json delta, count, T>=4, smallest run
 \newcommand{\fuHighDeltaMax}{$+$0.0002}% results/fusion_experiment.json delta, count, T>=4, largest run
 \newcommand{\fuHighRuns}{12}% results/fusion_experiment.json count rows at T>=4
 \newcommand{\fuHighExclAll}{0}% results/fusion_experiment.json count rows at T>=4 whose delta interval excludes zero
@@ -782,6 +789,13 @@
 \newcommand{\overNcTwoDistinctMax}{73}% results/ece_floor.json N-Caltech101 T=2, distinct values: most overconfident groups in a seed
 \newcommand{\overNcTwoDistinctShare}{12.7}% results/ece_floor.json N-Caltech101 T=2, distinct values: largest share in overconfident groups, per cent
 \newcommand{\overNcTwoDistinctGap}{0.0649}% results/ece_floor.json N-Caltech101 T=2, distinct values: largest overconfident gap
+\newcommand{\pbarNmTwo}{0.4464}% results/ece_floor.json cells, N-MNIST two blocks T=2: mean confidence, seed mean
+\newcommand{\pbarNcTwo}{0.0574}% results/ece_floor.json cells, N-Caltech101 four blocks T=2: mean confidence, seed mean
+\newcommand{\overShareMax}{3.2}% results/ece_floor.json runs where the cap binds, both binned estimators: largest (ECE - (a - pbar)) / ECE, per cent
+\newcommand{\overNcTwoMedianSize}{2}% results/ece_floor.json runs, N-Caltech101 T=2, distinct: median size of the overconfident groups, every seed (A8)
+\newcommand{\overNcTwoMinP}{0.54}% results/ece_floor.json runs, N-Caltech101 T=2, distinct: smallest one-sided binomial p-value of an overconfident group (A8)
+\newcommand{\overNcTwoExpMin}{74}% results/ece_floor.json runs, N-Caltech101 T=2: fewest negative-gap groups expected under calibration, per seed (A8)
+\newcommand{\overNcTwoExpMax}{118}% results/ece_floor.json runs, N-Caltech101 T=2: most negative-gap groups expected under calibration, per seed (A8)
 \newcommand{\groupsNcTwoMin}{102}% results/ece_floor.json N-Caltech101 T=2: fewest distinct values in a seed
 \newcommand{\groupsNcTwoMax}{154}% results/ece_floor.json N-Caltech101 T=2: most distinct values in a seed
 \newcommand{\emBinsNmTwo}{1}% results/ece_floor.json N-MNIST T=2: effective equal-mass bins, every seed (asserted)
@@ -797,6 +811,8 @@
 \newcommand{\ewBinsNcTwo}{2}% results/ece_floor.json N-Caltech101 T=2: occupied equal-width bins
 \newcommand{\emBinsMin}{1}% results/ece_floor.json runs: fewest effective equal-mass bins over the 36 count test sets
 \newcommand{\countTestSets}{36}% results/ece_floor.json runs
+\newcommand{\slackSettings}{5}% results/ece_floor.json cells where the cap is slack in every seed
+\newcommand{\slackUnder}{4}% results/ece_floor.json cells where the cap is slack and the count readout is underconfident (seed means)
 \newcommand{\bindsRuns}{21}% results/ece_floor.json runs where accuracy exceeds the cap
 \newcommand{\deltaStrict}{0.005}% NOTES.md, Post-review analyses, A3; results/calibration_metrics.json deltas
 \newcommand{\deltaMid}{0.01}% NOTES.md, Post-review analyses, A3; results/calibration_metrics.json deltas
@@ -848,6 +864,56 @@
 \newcommand{\tostNmWidest}{0.0064}% results/calibration_metrics.json tost, N-MNIST: largest |endpoint| of any 90% interval
 \newcommand{\tostTests}{234}% results/calibration_metrics.json tost entries x margins
 \newcommand{\tostRunsAll}{39}% results/calibration_metrics.json tost runs
+\newcommand{\tostNmDifferBasic}{2}% results/calibration_metrics.json tost_summary, nmnist count, differ under the registered rule with basic intervals (A8)
+\newcommand{\tostNmEitherBasic}{12}% results/calibration_metrics.json tost_summary, nmnist count, resolve under at least one estimator with basic intervals (A8)
+\newcommand{\tostNmEither}{5}% results/calibration_metrics.json tost_summary, nmnist count, resolve under at least one estimator, percentile intervals
+\newcommand{\tostNmBothBasicStrict}{11}% results/calibration_metrics.json tost_summary, nmnist count, equivalent at 0.005 under both, basic intervals (A8)
+\newcommand{\tostNmBothBasicMid}{15}% results/calibration_metrics.json tost_summary, nmnist count, equivalent at 0.01 under both, basic intervals (A8)
+\newcommand{\tostNmBothBasicWide}{15}% results/calibration_metrics.json tost_summary, nmnist count, equivalent at 0.02 under both, basic intervals (A8)
+\newcommand{\biasNmMax}{0.0008}% results/calibration_metrics.json tost_summary, nmnist count, largest |mean of draws - point| (A8)
+\newcommand{\tostNcCountDifferBasic}{5}% results/calibration_metrics.json tost_summary, ncaltech101 count, differ under the registered rule with basic intervals (A8)
+\newcommand{\tostNcCountEitherBasic}{6}% results/calibration_metrics.json tost_summary, ncaltech101 count, resolve under at least one estimator with basic intervals (A8)
+\newcommand{\tostNcCountEither}{5}% results/calibration_metrics.json tost_summary, ncaltech101 count, resolve under at least one estimator, percentile intervals
+\newcommand{\tostNcCountBothBasicStrict}{0}% results/calibration_metrics.json tost_summary, ncaltech101 count, equivalent at 0.005 under both, basic intervals (A8)
+\newcommand{\tostNcCountBothBasicMid}{0}% results/calibration_metrics.json tost_summary, ncaltech101 count, equivalent at 0.01 under both, basic intervals (A8)
+\newcommand{\tostNcCountBothBasicWide}{1}% results/calibration_metrics.json tost_summary, ncaltech101 count, equivalent at 0.02 under both, basic intervals (A8)
+\newcommand{\biasNcCountMax}{0.0093}% results/calibration_metrics.json tost_summary, ncaltech101 count, largest |mean of draws - point| (A8)
+\newcommand{\tostNcAccumDifferBasic}{5}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, differ under the registered rule with basic intervals (A8)
+\newcommand{\tostNcAccumEitherBasic}{7}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, resolve under at least one estimator with basic intervals (A8)
+\newcommand{\tostNcAccumEither}{6}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, resolve under at least one estimator, percentile intervals
+\newcommand{\tostNcAccumBothBasicStrict}{0}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, equivalent at 0.005 under both, basic intervals (A8)
+\newcommand{\tostNcAccumBothBasicMid}{0}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, equivalent at 0.01 under both, basic intervals (A8)
+\newcommand{\tostNcAccumBothBasicWide}{1}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, equivalent at 0.02 under both, basic intervals (A8)
+\newcommand{\biasNcAccumMax}{0.0046}% results/calibration_metrics.json tost_summary, ncaltech101 accumulator, largest |mean of draws - point| (A8)
+\newcommand{\tostNcScaledDifferBasic}{3}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, differ under the registered rule with basic intervals (A8)
+\newcommand{\tostNcScaledEitherBasic}{3}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, resolve under at least one estimator with basic intervals (A8)
+\newcommand{\tostNcScaledEither}{4}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, resolve under at least one estimator, percentile intervals
+\newcommand{\tostNcScaledBothBasicStrict}{0}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, equivalent at 0.005 under both, basic intervals (A8)
+\newcommand{\tostNcScaledBothBasicMid}{0}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, equivalent at 0.01 under both, basic intervals (A8)
+\newcommand{\tostNcScaledBothBasicWide}{1}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, equivalent at 0.02 under both, basic intervals (A8)
+\newcommand{\biasNcScaledMax}{0.0065}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, largest |mean of draws - point| (A8)
+\newcommand{\penalisedTop}{159}% results/calibration_metrics.json clipped.penalised_top_label (A8)
+\newcommand{\maxCalEceNm}{0.0070}% results/calibration_metrics.json rows, nmnist two blocks count, calibrated arms: largest ECE under either estimator
+\newcommand{\ewExclNm}{2}% results/calibration_metrics.json tost, N-MNIST: equal-width 95% intervals excluding zero
+\newcommand{\emExclNm}{3}% results/calibration_metrics.json tost, N-MNIST: equal-mass 95% intervals excluding zero
+\newcommand{\cmRows}{225}% results/calibration_metrics.json rows (run and arm)
+\newcommand{\rlMissingRuns}{30}% results/*_record.json against results/calibration_metrics.json rows: runs without stored outputs (membrane and weighted count)
+\newcommand{\scTempNcMin}{1.28}% results/calibration_metrics.json rows, ncaltech101 scaled-count, temperature arm: smallest fitted temperature
+\newcommand{\scTempNcMax}{2.06}% results/calibration_metrics.json rows, ncaltech101 scaled-count, temperature arm: largest fitted temperature
+\newcommand{\brierNmTwoTemp}{0.0110}% results/calibration_metrics.json rows, nmnist T=2 count, temperature: top-label Brier, seed mean
+\newcommand{\brierNmTwoIso}{0.0104}% results/calibration_metrics.json rows, nmnist T=2 count, isotonic: top-label Brier, seed mean
+\newcommand{\llNmTwoTemp}{0.0469}% results/calibration_metrics.json rows, nmnist T=2 count, temperature: top-label log loss, seed mean
+\newcommand{\llNmTwoIso}{0.0414}% results/calibration_metrics.json rows, nmnist T=2 count, isotonic: top-label log loss, seed mean
+\newcommand{\brierNcTwoTemp}{0.1927}% results/calibration_metrics.json rows, ncaltech101 T=2 count, temperature: top-label Brier, seed mean
+\newcommand{\brierNcTwoIso}{0.1404}% results/calibration_metrics.json rows, ncaltech101 T=2 count, isotonic: top-label Brier, seed mean
+\newcommand{\llNcTwoTemp}{0.5693}% results/calibration_metrics.json rows, ncaltech101 T=2 count, temperature: top-label log loss, seed mean
+\newcommand{\llNcTwoIso}{0.4882}% results/calibration_metrics.json rows, ncaltech101 T=2 count, isotonic: top-label log loss, seed mean
+\newcommand{\emSmallBinRows}{46}% results/calibration_metrics.json rows with an equal-mass bin of fewer than 30 samples
+\newcommand{\emOneSampleRows}{41}% results/calibration_metrics.json rows with an equal-mass bin of one sample
+\newcommand{\topBinAccNmTwoMin}{95.1}% results/calibration_metrics.json rows, nmnist T=2 accumulator uncalibrated: share_top_equal_width_bin, smallest seed, per cent (A8)
+\newcommand{\topBinAccNmTwoMax}{96.0}% results/calibration_metrics.json rows, nmnist T=2 accumulator uncalibrated: share_top_equal_width_bin, largest seed, per cent (A8)
+\newcommand{\aurocCountAboveSixTen}{6}% results/calibration_metrics.json rows, nmnist T=6 and 10: seeds where the count readout's AUROC exceeds the accumulator's
+\newcommand{\aurocSeedsSixTen}{6}% results/calibration_metrics.json rows, nmnist T=6 and 10: seeds compared
 \newcommand{\hdNmTwoUncW}{0.5386}% results/calibration_metrics.json headline.ece, nmnist T=2 uncalibrated equal_width, seed mean
 \newcommand{\hdNmTwoUncWSd}{0.0005}% results/calibration_metrics.json headline.ece, nmnist T=2 uncalibrated equal_width, sd over seeds
 \newcommand{\hdNmTwoUncWLo}{0.5374}% results/calibration_metrics.json headline.ece, nmnist T=2 uncalibrated equal_width, 95% bootstrap interval of the seed mean
@@ -1004,6 +1070,8 @@
 \newcommand{\hdAurocDiffSd}{0.0122}% results/calibration_metrics.json headline.auroc.count_minus_accumulator, sd over seeds
 \newcommand{\hdAurocDiffLo}{$-$0.0647}% results/calibration_metrics.json headline.auroc.count_minus_accumulator, 95% interval
 \newcommand{\hdAurocDiffHi}{$-$0.0348}% results/calibration_metrics.json headline.auroc.count_minus_accumulator, 95% interval
+\newcommand{\hdAurocDiffTLo}{$-$0.0798}% results/calibration_metrics.json headline.auroc.count_minus_accumulator, t-interval over 3 seeds, lower (A8)
+\newcommand{\hdAurocDiffTHi}{$-$0.0191}% results/calibration_metrics.json headline.auroc.count_minus_accumulator, t-interval over 3 seeds, upper (A8)
 \newcommand{\clipTop}{126{,}956}% results/calibration_metrics.json clipped.top_label
 \newcommand{\clipTopTotal}{1{,}358{,}136}% results/calibration_metrics.json clipped.scores_computed_top_label
 \newcommand{\clipMulti}{0}% results/calibration_metrics.json clipped.multiclass
@@ -1249,9 +1317,9 @@
 \newcommand{\silentHiddenMax}{0.0}% results/spiking_activity.json cells: largest share of hidden neurons never firing, any seed, per cent
 \newcommand{\rasterNeurons}{32}% NOTES.md A5; results/spiking_activity.json rasters
 \newcommand{\swNmTwoTwo}{0.9850 & $-$0.5386 & 0.5386 & 0.0018 & 0.9868 & $+$0.0097 & 0.0099 & 0.0034 & 0.9865 & $-$0.0101 & 0.0114 & 0.0028 & 0.9861}% results/same_weights_readouts.json rows, nmnist 2 blocks T=2, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
-\newcommand{\swNmTwoFour}{0.9887 & $-$0.1446 & 0.1447 & 0.0031 & 0.9896 & $+$0.0079 & 0.0083 & 0.0026 & 0.9866 & $-$0.0250 & 0.0251 & 0.0032 & --}% results/same_weights_readouts.json rows, nmnist 2 blocks T=4, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
+\newcommand{\swNmTwoFour}{0.9887 & $-$0.1446 & 0.1447 & 0.0031 & 0.9896 & $+$0.0079 & 0.0083 & 0.0026 & 0.9866 & $-$0.0250 & 0.0251 & 0.0032 & n/a}% results/same_weights_readouts.json rows, nmnist 2 blocks T=4, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
 \newcommand{\swNmTwoSix}{0.9902 & $-$0.0272 & 0.0273 & 0.0026 & 0.9910 & $+$0.0069 & 0.0072 & 0.0029 & 0.9850 & $-$0.0763 & 0.0763 & 0.0029 & 0.9888}% results/same_weights_readouts.json rows, nmnist 2 blocks T=6, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
-\newcommand{\swNmTwoEight}{0.9898 & $-$0.0065 & 0.0072 & 0.0028 & 0.9915 & $+$0.0063 & 0.0066 & 0.0026 & 0.9793 & $-$0.1917 & 0.1918 & 0.0040 & --}% results/same_weights_readouts.json rows, nmnist 2 blocks T=8, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
+\newcommand{\swNmTwoEight}{0.9898 & $-$0.0065 & 0.0072 & 0.0028 & 0.9915 & $+$0.0063 & 0.0066 & 0.0026 & 0.9793 & $-$0.1917 & 0.1918 & 0.0040 & n/a}% results/same_weights_readouts.json rows, nmnist 2 blocks T=8, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
 \newcommand{\swNmTwoTen}{0.9908 & $-$0.0008 & 0.0029 & 0.0026 & 0.9917 & $+$0.0062 & 0.0065 & 0.0021 & 0.9765 & $-$0.2587 & 0.2587 & 0.0034 & 0.9879}% results/same_weights_readouts.json rows, nmnist 2 blocks T=10, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
 \newcommand{\swNmFourTwo}{0.9869 & $-$0.5398 & 0.5398 & 0.0019 & 0.9878 & $+$0.0099 & 0.0102 & 0.0031 & 0.9869 & $-$0.0055 & 0.0127 & 0.0036 & 0.9859}% results/same_weights_readouts.json rows, nmnist 4 blocks T=2, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
 \newcommand{\swNmFourSix}{0.9887 & $-$0.0253 & 0.0256 & 0.0036 & 0.9893 & $+$0.0088 & 0.0089 & 0.0022 & 0.9813 & $-$0.0856 & 0.0856 & 0.0026 & 0.9872}% results/same_weights_readouts.json rows, nmnist 4 blocks T=6, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
@@ -1274,6 +1342,17 @@
 \newcommand{\swNcTwoMemGap}{$-$0.2435}% results/same_weights_readouts.json N-Caltech101 T=2 membrane on count weights, conf-acc
 \newcommand{\swNmMaxDiff}{0.18}% results/same_weights_readouts.json N-MNIST cells: largest |same-weights accumulator - count| accuracy, points
 \newcommand{\swNcAccumOverAll}{5}% results/same_weights_readouts.json N-Caltech101 cells, all with the same-weights accumulator overconfident (asserted)
+\newcommand{\swNmMemMaxDiff}{1.43}% results/same_weights_readouts.json N-MNIST settings: largest (count - same-weights membrane) accuracy, seed means, points
+\newcommand{\swNcMemUnderRuns}{15}% results/same_weights_readouts.json N-Caltech101 runs, every same-weights membrane reading underconfident (asserted)
+\newcommand{\swrAurocAccum}{0.9781}% results/same_weights_ranking.json summary: AUROC of the accumulator reading of the count-trained weights, seed mean
+\newcommand{\swrAurocMem}{0.9757}% results/same_weights_ranking.json summary: AUROC of the membrane reading of the count-trained weights, seed mean
+\newcommand{\swrAurocDiff}{$-$0.0577}% results/same_weights_ranking.json summary: count minus accumulator reading, seed mean
+\newcommand{\swrAurocDiffLo}{$-$0.0729}% results/same_weights_ranking.json summary: 95% test-set bootstrap interval, lower
+\newcommand{\swrAurocDiffHi}{$-$0.0441}% results/same_weights_ranking.json summary: 95% test-set bootstrap interval, upper
+\newcommand{\pairsCountTied}{14.1}% results/same_weights_ranking.json summary: share of correct-wrong pairs tied by the count readout, seed mean, per cent
+\newcommand{\pairsCountReversed}{0.9}% results/same_weights_ranking.json summary: share ordered wrongly by the count readout, seed mean, per cent
+\newcommand{\pairsAccSwReversed}{2.2}% results/same_weights_ranking.json summary: share ordered wrongly by the accumulator reading, seed mean, per cent
+\newcommand{\pairsAccTrReversed}{3.0}% results/same_weights_ranking.json summary: share ordered wrongly by the trained accumulator, seed mean, per cent
 \newcommand{\bestNmTwoCount}{12.7}% results/nmnist_T2_seed*_record.json best_epoch + 1, mean over seeds
 \newcommand{\bestNmTwoWeightedCount}{11.0}% results/nmnist_T2_seed*_weighted-count_record.json best_epoch + 1, mean over seeds
 \newcommand{\bestNmTwoMembrane}{7.7}% results/nmnist_T2_seed*_membrane_record.json best_epoch + 1, mean over seeds
@@ -1328,7 +1407,7 @@
 \newcommand{\gapCalNmSixTemp}{$-$0.0003}% results/calibration_metrics.json rows, nmnist count T=6 temperature: mean confidence minus accuracy, seed mean
 \newcommand{\gapCalNmSixIso}{$-$0.0024}% results/calibration_metrics.json rows, nmnist count T=6 isotonic-top-label: mean confidence minus accuracy, seed mean
 \newcommand{\gapCalNmEightUnc}{$-$0.0065}% results/calibration_metrics.json rows, nmnist count T=8 uncalibrated: mean confidence minus accuracy, seed mean
-\newcommand{\gapCalNmEightTemp}{$+$0.0000}% results/calibration_metrics.json rows, nmnist count T=8 temperature: mean confidence minus accuracy, seed mean
+\newcommand{\gapCalNmEightTemp}{0.0000}% results/calibration_metrics.json rows, nmnist count T=8 temperature: mean confidence minus accuracy, seed mean
 \newcommand{\gapCalNmEightIso}{$-$0.0009}% results/calibration_metrics.json rows, nmnist count T=8 isotonic-top-label: mean confidence minus accuracy, seed mean
 \newcommand{\gapCalNmTenUnc}{$-$0.0008}% results/calibration_metrics.json rows, nmnist count T=10 uncalibrated: mean confidence minus accuracy, seed mean
 \newcommand{\gapCalNmTenTemp}{$+$0.0002}% results/calibration_metrics.json rows, nmnist count T=10 temperature: mean confidence minus accuracy, seed mean
@@ -1428,15 +1507,15 @@
 \newcommand{\aSevenNmGapMax}{0.0068}% results/scale_convergence.json N-MNIST end points: largest |conf - acc|
 \newcommand{\aSevenCapSpanMin}{0.021}% results/scale_convergence.json capped runs: smallest span of theta over the last six epochs
 \newcommand{\aSevenCapSpanMax}{0.044}% results/scale_convergence.json capped runs: largest span of theta over the last six epochs
-\newcommand{\aSevenRowNmTwoZero}{150 & cap & 5.55 & 0.9824 & $+$0.0051 & 0.0063 & 7.71 & 3.26 & 0.9869 & $+$0.0061 & 0.0065}% results/scale_convergence.json rows, nmnist T=2 seed 0: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
-\newcommand{\aSevenRowNmTwoOne}{150 & cap & 5.40 & 0.9812 & $+$0.0047 & 0.0062 & 7.54 & 3.29 & 0.9877 & $+$0.0048 & 0.0055}% results/scale_convergence.json rows, nmnist T=2 seed 1: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
-\newcommand{\aSevenRowNmTwoTwo}{150 & cap & 3.49 & 0.9764 & $-$0.0046 & 0.0056 & 7.51 & 3.24 & 0.9865 & $+$0.0068 & 0.0074}% results/scale_convergence.json rows, nmnist T=2 seed 2: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
-\newcommand{\aSevenRowNcTwoZero}{47 & converged & 3.85 & 0.4897 & $+$0.1033 & 0.1168 & 7.04 & 2.36 & 0.5287 & $+$0.1542 & 0.1558}% results/scale_convergence.json rows, ncaltech101 T=2 seed 0: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
-\newcommand{\aSevenRowNcTwoOne}{108 & converged & 4.44 & 0.5023 & $+$0.1088 & 0.1108 & 8.03 & 2.39 & 0.5459 & $+$0.1788 & 0.1814}% results/scale_convergence.json rows, ncaltech101 T=2 seed 1: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
-\newcommand{\aSevenRowNcTwoTwo}{114 & converged & 4.13 & 0.4770 & $+$0.1411 & 0.1433 & 8.20 & 2.43 & 0.5637 & $+$0.1882 & 0.1882}% results/scale_convergence.json rows, ncaltech101 T=2 seed 2: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
-\newcommand{\aSevenRowNcSixZero}{43 & converged & 2.00 & 0.5620 & $+$0.1101 & 0.1101 & 3.53 & 0.85 & 0.6148 & $+$0.2041 & 0.2041}% results/scale_convergence.json rows, ncaltech101 T=6 seed 0: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
-\newcommand{\aSevenRowNcSixOne}{30 & converged & 2.79 & 0.5723 & $+$0.1827 & 0.1827 & 3.41 & 0.82 & 0.5821 & $+$0.2224 & 0.2224}% results/scale_convergence.json rows, ncaltech101 T=6 seed 1: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
-\newcommand{\aSevenRowNcSixTwo}{150 & cap & 2.52 & 0.5741 & $+$0.1684 & 0.1705 & 4.11 & 0.86 & 0.6320 & $+$0.2140 & 0.2153}% results/scale_convergence.json rows, ncaltech101 T=6 seed 2: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenRowNmTwoZero}{150 & limit & 5.55 & 0.9824 & $+$0.0051 & 0.0063 & 7.71 & 3.26 & 0.9869 & $+$0.0061 & 0.0065}% results/scale_convergence.json rows, nmnist T=2 seed 0: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenRowNmTwoOne}{150 & limit & 5.40 & 0.9812 & $+$0.0047 & 0.0062 & 7.54 & 3.29 & 0.9877 & $+$0.0048 & 0.0055}% results/scale_convergence.json rows, nmnist T=2 seed 1: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenRowNmTwoTwo}{150 & limit & 3.49 & 0.9764 & $-$0.0046 & 0.0056 & 7.51 & 3.24 & 0.9865 & $+$0.0068 & 0.0074}% results/scale_convergence.json rows, nmnist T=2 seed 2: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenRowNcTwoZero}{47 & settled & 3.85 & 0.4897 & $+$0.1033 & 0.1168 & 7.04 & 2.36 & 0.5287 & $+$0.1542 & 0.1558}% results/scale_convergence.json rows, ncaltech101 T=2 seed 0: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenRowNcTwoOne}{108 & settled & 4.44 & 0.5023 & $+$0.1088 & 0.1108 & 8.03 & 2.39 & 0.5459 & $+$0.1788 & 0.1814}% results/scale_convergence.json rows, ncaltech101 T=2 seed 1: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenRowNcTwoTwo}{114 & settled & 4.13 & 0.4770 & $+$0.1411 & 0.1433 & 8.20 & 2.43 & 0.5637 & $+$0.1882 & 0.1882}% results/scale_convergence.json rows, ncaltech101 T=2 seed 2: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenRowNcSixZero}{43 & settled & 2.00 & 0.5620 & $+$0.1101 & 0.1101 & 3.53 & 0.85 & 0.6148 & $+$0.2041 & 0.2041}% results/scale_convergence.json rows, ncaltech101 T=6 seed 0: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenRowNcSixOne}{30 & settled & 2.79 & 0.5723 & $+$0.1827 & 0.1827 & 3.41 & 0.82 & 0.5821 & $+$0.2224 & 0.2224}% results/scale_convergence.json rows, ncaltech101 T=6 seed 1: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
+\newcommand{\aSevenRowNcSixTwo}{150 & limit & 2.52 & 0.5741 & $+$0.1684 & 0.1705 & 4.11 & 0.86 & 0.6320 & $+$0.2140 & 0.2153}% results/scale_convergence.json rows, ncaltech101 T=6 seed 2: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
 \newcommand{\aSevenTableRows}{9}% results/scale_convergence.json rows
 \newcommand{\lsQueries}{18}% results/literature_search.json required_queries
 \newcommand{\lsQueryRows}{481}% results/literature_search.json query_rows

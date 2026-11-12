@@ -21,7 +21,7 @@ A count readout is \emph{saturated} when its winner fires at all $T$ steps and n
 fires; its output is then the cap of Equation~\eqref{eq:ceiling}, one vector up to which class
 wins. Where both inputs saturate, an event $S$, the product rule~\citep{kittler1998combining} % [LIT] kittler1998combining, Section 2.1
 cannot weight one input above the other and becomes an unweighted vote. Against a rule that sides
-with input A on every disagreement in $S$ it loses
+with input A, the clean sample, over input B, the degraded one, on every disagreement in $S$ it loses
 \begin{equation}
 \tfrac12\,P(S)\,\big(a_{A,S}-a_{B,S}\big)
 \label{eq:fusioncost}
@@ -50,9 +50,9 @@ Grillo et al.\ weight a sensory signal delayed by 100\,ms against a cerebellar p
 spiking state estimator in NEST, by reliabilities computed from the variability of spike counts
 within each input population, tested on simulated inputs as an isolated block with each
 population's variability set by the authors~\citep{grillo2022bayesian}. Here reliability is read % [LIT] grillo2022bayesian, Sections 2.1, 2.2 and 4
-from a readout's confidence, which the cap limits. Habara et al.\ fuse an early prediction of a
-spiking network with its later output by a Bayesian rule whose weighting changes over
-time~\citep{habara2024bayesianspikefusion}. % [LIT] habara2024bayesianspikefusion, Sec. 2.1 and Sec. 5.2
+from a readout's confidence, which the cap limits. Habara et al.\ fuse the prediction of an
+internal classifier at an intermediate layer of a spiking network with that of the final layer,
+by a Bayesian rule whose prior weight is scheduled over timesteps~\citep{habara2024bayesianspikefusion}. % [LIT] habara2024bayesianspikefusion, Sec. 2.1 and Sec. 5.2
 
 \begin{table}[t]
 \centering

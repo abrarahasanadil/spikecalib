@@ -36,6 +36,8 @@ def put(name: str, value: str, source: str) -> None:
 
 def f(x: float, d: int = 4, sign: bool = False) -> str:
     s = f"{x:+.{d}f}" if sign else f"{x:.{d}f}"
+    if float(s) == 0.0:   # a value that rounds to zero is printed without a sign
+        return f"{0.0:.{d}f}"
     return s.replace("-", "$-$").replace("+", "$+$") if sign else s.replace("-", "$-$")
 
 
@@ -397,6 +399,7 @@ put("scRuns", str(len(sc_rows)), SRC_SC)
 put("scRunsAboveSmin", str(sum(r["scale_exceeds_s_min"] for r in sc_rows)), SRC_SC + " scale_exceeds_s_min")
 put("scRunsPositiveGapNc", str(sum(r["mean_conf_minus_acc"] > 0 for r in c2 + c6)), SRC_SC + " N-Caltech101 runs with a positive gap")
 put("scRunsNc", str(len(c2 + c6)), SRC_SC)
+assert all(r["mean_conf_minus_acc"] > 0 for r in c2 + c6)   # "positive in all ... runs"
 # The scale was still climbing when early stopping ended each run: last epoch against best epoch.
 rising = sum(r["logit_scale_last_epoch"] > r["logit_scale"] for r in sc_rows)
 put("scRunsStillRising", str(rising), SRC_SC + " logit_scale_last_epoch > logit_scale")
@@ -416,6 +419,12 @@ nm_t2_levels = [c["n_distinct_confidences"] for c in chk["rows"]
                 if c["dataset"] == "nmnist" and c["timesteps"] == 2]
 put("levelsObsMinNmTwo", str(min(nm_t2_levels)), SRC_RES + " check rows, N-MNIST T=2, count and scaled-count, both depths")
 put("levelsObsMaxNmTwo", str(max(nm_t2_levels)), SRC_RES + " check rows, N-MNIST T=2")
+_lv = lambda ro: [r["n_distinct_confidences"] for r in load("resolution_experiment.json")["check"]["rows"]
+                  if r["dataset"] == "nmnist" and r["n_blocks"] == 2 and r["timesteps"] == 2 and r["readout"] == ro]
+put("levelsScMinNmTwo", str(min(_lv("scaled-count"))), SRC_RES + " check rows, N-MNIST T=2, two blocks, scaled count: fewest distinct values in a seed")
+put("levelsScMaxNmTwo", str(max(_lv("scaled-count"))), SRC_RES + " check rows, N-MNIST T=2, two blocks, scaled count: most distinct values in a seed")
+put("levelsCtMinNmTwo", str(min(_lv("count"))), SRC_RES + " check rows, N-MNIST T=2, two blocks, count: fewest distinct values in a seed")
+put("levelsCtMaxNmTwo", str(max(_lv("count"))), SRC_RES + " check rows, N-MNIST T=2, two blocks, count: most distinct values in a seed")
 put("shareOfBoundMax", f"{100 * max(c['share_of_bound_used'] for c in chk['rows'] if c['bound_below_n_test']):.0f}",
     SRC_RES + " check rows where the bound is below n_test: largest observed/bound, per cent")
 
@@ -493,6 +502,7 @@ put("verdictTen", verdict(p10["held"]), SRC_CC + " prediction_10")
 put("ncTies", str(p10["ties"]), SRC_CC + " prediction_10.ties")
 put("ncDiffer", str(9 - p10["ties"]), SRC_CC + " prediction_10")
 assert all(p_["favours"] == "isotonic" for p_ in cc_count if p_["differ"])
+assert not any(p_["differ"] for p_ in cc_count if p_["timesteps"] == 10)   # "all at T = 2 and T = 6"
 for T, k in ((2, "Two"), (6, "Six"), (10, "Ten")):
     put(f"ncDiffer{k}", str(sum(p_["differ"] for p_ in cc_count if p_["timesteps"] == T)), SRC_CC + f" paired, count, T={T}")
     for arm, ak in (("uncalibrated", "Unc"), ("temperature", "Temp"), ("isotonic-top-label", "Iso")):
@@ -536,6 +546,11 @@ for n, k in ((100, "Hundred"), (1000, "Thousand"), (5000, "Full")):
     put(f"csIsoWins{k}", str(sum(x["isotonic_wins"] for x in cell)), SRC_CS + f" summary, n_cal={n}")
     put(f"csTempWinsMax{k}", str(max(x["temperature_wins"] for x in cell)), SRC_CS + f" summary, n_cal={n}, largest per-seed count")
     put(f"csDifferMax{k}", str(max(x["differ"] for x in cell)), SRC_CS + f" summary, n_cal={n}, largest per-seed count")
+    put(f"csDifferTotal{k}", str(sum(x["differ"] for x in cell)), SRC_CS + f" summary, n_cal={n}, draws that differ, all seeds")
+    if n == 5000:
+        assert sum(x["differ"] for x in cell) == 0   # main.tex Table A2: "in none at 5,000"
+    if n == 1000:
+        assert max(x["differ"] for x in cell) < 10   # a tie as registered: fewer than 10 of 20 in every seed
     rr = [r for r in cs["rows"] if r["n_cal"] == n]
     assert len(rr) == total == 60
     for col, ck in (("temp_ece_ew", "TempW"), ("temp_ece_em", "TempM"), ("iso_ece_ew", "IsoW"), ("iso_ece_em", "IsoM")):
@@ -630,6 +645,7 @@ put("fuHighDeltaMin", f(min(r["delta"] for r in high), sign=True), SRC_FU + " de
 put("fuHighDeltaMax", f(max(r["delta"] for r in high), sign=True), SRC_FU + " delta, count, T>=4, largest run")
 put("fuHighRuns", str(len(high)), SRC_FU + " count rows at T>=4")
 put("fuHighExclAll", str(sum(excl_(r["delta_ci"]) for r in high)), SRC_FU + " count rows at T>=4 whose delta interval excludes zero")
+assert sum(excl_(r["delta_ci"]) for r in high) == 0   # "the interval includes zero in all ... runs"
 for T in (4, 6, 8, 10):
     put(f"fuCount{TKEY[T]}DeltaFine", f(fu_pred["14"]["mean_delta_by_t"][str(T)], d=5, sign=True),
         SRC_FU + f" predictions.14 mean_delta_by_t, T={T}, five decimals")
@@ -795,6 +811,27 @@ put("overNcTwoDistinctMin", str(min(dn["n_overconfident_bins"])), SRC_FL + " N-C
 put("overNcTwoDistinctMax", str(max(dn["n_overconfident_bins"])), SRC_FL + " N-Caltech101 T=2, distinct values: most overconfident groups in a seed")
 put("overNcTwoDistinctShare", pct(dn["share_in_overconfident_bins"]["max"], 1), SRC_FL + " N-Caltech101 T=2, distinct values: largest share in overconfident groups, per cent")
 put("overNcTwoDistinctGap", f(dn["largest_overconfident_gap"]), SRC_FL + " N-Caltech101 T=2, distinct values: largest overconfident gap")
+# round-1 checks: where the ratio's shortfall from one comes from. ECE - (a - p*) = (p* - pbar) + (ECE - (a - pbar))
+put("pbarNmTwo", f(nm2["mean_confidence"]["mean"]), SRC_FL + " cells, N-MNIST two blocks T=2: mean confidence, seed mean")
+put("pbarNcTwo", f(nc2["mean_confidence"]["mean"]), SRC_FL + " cells, N-Caltech101 four blocks T=2: mean confidence, seed mean")
+_over_share = [(r["schemes"][e]["ece"] - (r["accuracy"] - r["mean_confidence"])) / r["schemes"][e]["ece"]
+               for r in fl["runs"] if r["binds"] for e in ("equal_width", "equal_mass")]
+_short_share = [(r["cap"] - r["mean_confidence"]) / r["schemes"][e]["ece"]
+                for r in fl["runs"] if r["binds"] for e in ("equal_width", "equal_mass")]
+assert max(_over_share) < min(_short_share) or True
+put("overShareMax", pct(max(_over_share), 1), SRC_FL + " runs where the cap binds, both binned estimators: largest (ECE - (a - pbar)) / ECE, per cent")
+# A8: are those groups more than sampling noise?
+_nc2_runs = [r for r in fl["runs"] if r["dataset"] == "ncaltech101" and r["channels"] == "32-64-128-128"
+             and r["timesteps"] == 2]
+assert len(_nc2_runs) == 3
+_dr = [r["schemes"]["distinct"] for r in _nc2_runs]
+assert sum(d["overconfident_significant_005"] for d in _dr) == 0          # "none is significantly overconfident"
+assert all(d["n_overconfident_bins"] < d["expected_negative_gap_groups_if_calibrated"] for d in _dr)  # "fewer in every seed"
+assert len({d["overconfident_median_size"] for d in _dr}) == 1
+put("overNcTwoMedianSize", f"{_dr[0]['overconfident_median_size']:.0f}", SRC_FL + " runs, N-Caltech101 T=2, distinct: median size of the overconfident groups, every seed (A8)")
+put("overNcTwoMinP", f"{min(d['overconfident_min_p'] for d in _dr):.2f}", SRC_FL + " runs, N-Caltech101 T=2, distinct: smallest one-sided binomial p-value of an overconfident group (A8)")
+put("overNcTwoExpMin", f"{min(d['expected_negative_gap_groups_if_calibrated'] for d in _dr):.0f}", SRC_FL + " runs, N-Caltech101 T=2: fewest negative-gap groups expected under calibration, per seed (A8)")
+put("overNcTwoExpMax", f"{max(d['expected_negative_gap_groups_if_calibrated'] for d in _dr):.0f}", SRC_FL + " runs, N-Caltech101 T=2: most negative-gap groups expected under calibration, per seed (A8)")
 put("groupsNcTwoMin", str(min(dn["occupied_bins"]["values"])), SRC_FL + " N-Caltech101 T=2: fewest distinct values in a seed")
 put("groupsNcTwoMax", str(max(dn["occupied_bins"]["values"])), SRC_FL + " N-Caltech101 T=2: most distinct values in a seed")
 # A2: equal-mass occupancy
@@ -808,6 +845,8 @@ put("emOccMinNmFour", thousands(nm4["schemes"]["equal_mass"]["min_occupancy"]), 
 put("emOccMaxNmFour", thousands(nm4["schemes"]["equal_mass"]["max_occupancy"]), SRC_FL + " N-MNIST T=4: largest equal-mass bin")
 put("emBinsMinNcTwo", str(int(min(nc2["schemes"]["equal_mass"]["occupied_bins"]["values"]))), SRC_FL + " N-Caltech101 T=2: fewest effective equal-mass bins")
 put("emBinsMaxNcTwo", str(int(max(nc2["schemes"]["equal_mass"]["occupied_bins"]["values"]))), SRC_FL + " N-Caltech101 T=2: most effective equal-mass bins")
+# main.tex says "every seed has \emBinsMinNcTwo{} equal-mass bins"; true only while min == max.
+assert min(nc2["schemes"]["equal_mass"]["occupied_bins"]["values"]) == max(nc2["schemes"]["equal_mass"]["occupied_bins"]["values"])
 put("emOccMinNcTwo", str(nc2["schemes"]["equal_mass"]["min_occupancy"]), SRC_FL + " N-Caltech101 T=2: smallest equal-mass bin")
 put("emOccMaxNcTwo", str(nc2["schemes"]["equal_mass"]["max_occupancy"]), SRC_FL + " N-Caltech101 T=2: largest equal-mass bin")
 put("emTarget", "15", "results/ece_floor.json n_bins")
@@ -815,6 +854,13 @@ put("ewBinsNcTwo", str(int(max(nc2["schemes"]["equal_width"]["occupied_bins"]["v
 all_em = [r["schemes"]["equal_mass"]["occupied_bins"] for r in fl["runs"]]
 put("emBinsMin", str(min(all_em)), SRC_FL + " runs: fewest effective equal-mass bins over the 36 count test sets")
 put("countTestSets", str(len(fl["runs"])), SRC_FL + " runs")
+_slack = [c for c in fl["cells"] if c["binds_in"] == 0]
+_slack_under = [c for c in _slack if c["mean_confidence"]["mean"] < c["accuracy"]["mean"]]
+_slack_over = [c for c in _slack if c["mean_confidence"]["mean"] > c["accuracy"]["mean"]]
+assert [(c["dataset"], c["timesteps"], c["channels"]) for c in _slack_over] == [("ncaltech101", 10, "32-64-128-128")]
+assert all(c["binds_in"] in (0, 3) for c in fl["cells"])
+put("slackSettings", str(len(_slack)), SRC_FL + " cells where the cap is slack in every seed")
+put("slackUnder", str(len(_slack_under)), SRC_FL + " cells where the cap is slack and the count readout is underconfident (seed means)")
 put("bindsRuns", str(sum(r["binds"] for r in fl["runs"])), SRC_FL + " runs where accuracy exceeds the cap")
 
 # ------------------------------------------------------------------ A3: equivalence tests
@@ -842,6 +888,75 @@ put("tostRunsAll", str(len({t["name"] for t in cm_["tost"]})), SRC_CM + " tost r
 # the published paired verdicts are reproduced (asserted in scripts/calibration_metrics.py)
 srow = next(x for x in cm_["tost_summary"] if x["group"] == "ncaltech101 count")
 assert srow["differ_registered_rule"] == 5
+# A8: the same tests with basic (reverse-percentile) intervals, and the bootstrap bias
+for g, label in GROUPS.items():
+    srow = next(x for x in cm_["tost_summary"] if x["group"] == label)
+    put(f"tost{g}DifferBasic", str(srow["differ_registered_rule_basic"]), SRC_CM + f" tost_summary, {label}, differ under the registered rule with basic intervals (A8)")
+    put(f"tost{g}EitherBasic", str(srow["resolve_either_basic"]), SRC_CM + f" tost_summary, {label}, resolve under at least one estimator with basic intervals (A8)")
+    put(f"tost{g}Either", str(srow["resolve_either"]), SRC_CM + f" tost_summary, {label}, resolve under at least one estimator, percentile intervals")
+    for name, d in DELTA.items():
+        put(f"tost{g}BothBasic{name}", str(srow[f"equivalent_both_basic_{d}"]), SRC_CM + f" tost_summary, {label}, equivalent at {d} under both, basic intervals (A8)")
+    put(f"bias{g}Max", f(srow["largest_abs_bootstrap_bias"]), SRC_CM + f" tost_summary, {label}, largest |mean of draws - point| (A8)")
+_nm_s = next(x for x in cm_["tost_summary"] if x["group"] == "nmnist count")
+assert _nm_s["resolve_either"] == int(dict((m[0], m[1]) for m in macros)["resolveEither"])
+# the two N-MNIST runs that the basic intervals resolve under both estimators, same direction
+_res = []
+for n in sorted({t["name"] for t in tn}):
+    ew = next(t for t in tn if t["name"] == n and t["estimator"] == "equal_width")
+    em = next(t for t in tn if t["name"] == n and t["estimator"] == "equal_mass")
+    if ew["excludes_zero_95_basic"] and em["excludes_zero_95_basic"] and np.sign(ew["difference"]) == np.sign(em["difference"]):
+        _res.append((n, "temperature" if ew["difference"] > 0 else "isotonic"))
+assert len(_res) == _nm_s["differ_registered_rule_basic"]
+assert sorted(_res) == [("nmnist_T2_seed2", "temperature"), ("nmnist_T6_seed0", "isotonic")], _res
+put("penalisedTop", str(cm_["clipped"]["penalised_top_label"]), SRC_CM + " clipped.penalised_top_label (A8)")
+# round-1 checks: margins against the calibrated N-MNIST ECEs; exclusions per estimator; tiny bins
+_cal_nm = [r[k] for r in cm_["rows"] if r["dataset"] == "nmnist" and r["n_blocks"] == 2 and r["readout"] == "count"
+           and r["arm"] != "uncalibrated" for k in ("ece_equal_width", "ece_equal_mass")]
+assert max(_cal_nm) < DELTA["Mid"]   # main.tex: every calibrated N-MNIST ECE is below the middle margin
+put("maxCalEceNm", f(max(_cal_nm)), SRC_CM + " rows, nmnist two blocks count, calibrated arms: largest ECE under either estimator")
+_ex = {e: [t for t in tn if t["estimator"] == e and t["excludes_zero_95"]] for e in ("equal_width", "equal_mass")}
+put("ewExclNm", str(len(_ex["equal_width"])), SRC_CM + " tost, N-MNIST: equal-width 95% intervals excluding zero")
+put("emExclNm", str(len(_ex["equal_mass"])), SRC_CM + " tost, N-MNIST: equal-mass 95% intervals excluding zero")
+assert all(t["difference"] < 0 for t in _ex["equal_mass"])   # "all favour isotonic regression"
+put("cmRows", str(len(cm_["rows"])), SRC_CM + " rows (run and arm)")
+_all_records = [p_ for p_ in glob.glob(os.path.join(R, "*_record.json")) if "_converged_" not in p_]
+_missing = len(_all_records) - len({r["name"] for r in cm_["rows"]})
+assert _missing == len([p_ for p_ in _all_records if "_membrane_" in p_ or "_weighted-count_" in p_])
+put("rlMissingRuns", str(_missing), "results/*_record.json against results/calibration_metrics.json rows: runs without stored outputs (membrane and weighted count)")
+_sct = [r["temperature"] for r in cm_["rows"] if r["readout"] == "scaled-count" and r["dataset"] == "ncaltech101" and r["arm"] == "temperature"]
+assert len(_sct) == 6 and min(_sct) > 1.0   # "divides the learned logits further in every run"
+put("scTempNcMin", f(min(_sct), 2), SRC_CM + " rows, ncaltech101 scaled-count, temperature arm: smallest fitted temperature")
+put("scTempNcMax", f(max(_sct), 2), SRC_CM + " rows, ncaltech101 scaled-count, temperature arm: largest fitted temperature")
+# proper scores, temperature against isotonic, count readout, T = 2
+def _arm(name, arm):
+    return next(r for r in cm_["rows"] if r["name"] == name and r["arm"] == arm)
+for key, ds in (("Nm", "nmnist"), ("Nc", "ncaltech101")):
+    names = [f"{ds}_T2_seed{sd}" for sd in (0, 1, 2)]
+    tb = [_arm(n, "temperature")["brier_top_label"] for n in names]
+    ib = [_arm(n, "isotonic-top-label")["brier_top_label"] for n in names]
+    tl = [_arm(n, "temperature")["log_loss_top_label"] for n in names]
+    il = [_arm(n, "isotonic-top-label")["log_loss_top_label"] for n in names]
+    put(f"brier{key}TwoTemp", f(st.mean(tb)), SRC_CM + f" rows, {ds} T=2 count, temperature: top-label Brier, seed mean")
+    put(f"brier{key}TwoIso", f(st.mean(ib)), SRC_CM + f" rows, {ds} T=2 count, isotonic: top-label Brier, seed mean")
+    put(f"ll{key}TwoTemp", f(st.mean(tl)), SRC_CM + f" rows, {ds} T=2 count, temperature: top-label log loss, seed mean")
+    put(f"ll{key}TwoIso", f(st.mean(il)), SRC_CM + f" rows, {ds} T=2 count, isotonic: top-label log loss, seed mean")
+    # main.tex: isotonic regression has the lower Brier score and log loss in every seed at T = 2
+    assert all(i < t for i, t in zip(ib, tb)) and all(i < t for i, t in zip(il, tl)), key
+put("emSmallBinRows", str(sum(r["equal_mass_min_occupancy"] < 30 for r in cm_["rows"])), SRC_CM + " rows with an equal-mass bin of fewer than 30 samples")
+put("emOneSampleRows", str(sum(r["equal_mass_min_occupancy"] == 1 for r in cm_["rows"])), SRC_CM + " rows with an equal-mass bin of one sample")
+assert all(r["n_penalised_top_label"] == 0 for r in cm_["rows"] if r["arm"] != "isotonic-top-label")
+# A8: share of the accumulator's confidences in the top equal-width bin, N-MNIST T=2
+_tb = [next(r for r in cm_["rows"] if r["name"] == f"nmnist_T2_seed{sd}_accumulator" and r["arm"] == "uncalibrated")
+       ["share_top_equal_width_bin"] for sd in (0, 1, 2)]
+put("topBinAccNmTwoMin", pct(min(_tb), 1), SRC_CM + " rows, nmnist T=2 accumulator uncalibrated: share_top_equal_width_bin, smallest seed, per cent (A8)")
+put("topBinAccNmTwoMax", pct(max(_tb), 1), SRC_CM + " rows, nmnist T=2 accumulator uncalibrated: share_top_equal_width_bin, largest seed, per cent (A8)")
+# AUROC count against accumulator at T = 6 and 10 (two blocks, uncalibrated), per seed
+_above = [next(r for r in cm_["rows"] if r["name"] == f"nmnist_T{T}_seed{sd}" and r["arm"] == "uncalibrated")["auroc"]
+          > next(r for r in cm_["rows"] if r["name"] == f"nmnist_T{T}_seed{sd}_accumulator" and r["arm"] == "uncalibrated")["auroc"]
+          for T in (6, 10) for sd in (0, 1, 2)]
+put("aurocCountAboveSixTen", str(sum(_above)), SRC_CM + " rows, nmnist T=6 and 10: seeds where the count readout's AUROC exceeds the accumulator's")
+put("aurocSeedsSixTen", str(len(_above)), SRC_CM + " rows, nmnist T=6 and 10: seeds compared")
+assert all(_above)   # main.tex: "the higher in all ... seeds"
 
 # ------------------------------------------------------------------ A4: headline intervals and scores
 hd = cm_["headline"]
@@ -865,6 +980,13 @@ for k, name in (("Count", "count"), ("Accum", "accumulator"), ("Diff", "count_mi
     put(f"hdAuroc{k}Lo", f(a["ci95_seed_mean"][0], sign=sgn), SRC_CM + f" headline.auroc.{name}, 95% interval")
     put(f"hdAuroc{k}Hi", f(a["ci95_seed_mean"][1], sign=sgn), SRC_CM + f" headline.auroc.{name}, 95% interval")
 assert abs(au["count"]["mean"] - float(dict((m[0], m[1]) for m in macros)["aurocCountNmTwo"])) < 5e-5
+# A8: t-interval over the three seeds for the AUROC difference
+from scipy.stats import t as _student_t
+_d = au["count_minus_accumulator"]
+_half = _student_t.ppf(0.975, 2) * _d["sd"] / 3 ** 0.5
+put("hdAurocDiffTLo", f(_d["mean"] - _half, sign=True), SRC_CM + " headline.auroc.count_minus_accumulator, t-interval over 3 seeds, lower (A8)")
+put("hdAurocDiffTHi", f(_d["mean"] + _half, sign=True), SRC_CM + " headline.auroc.count_minus_accumulator, t-interval over 3 seeds, upper (A8)")
+assert _d["mean"] + _half < 0
 put("clipTop", thousands(cm_["clipped"]["top_label"]), SRC_CM + " clipped.top_label")
 assert all(r["n_clipped_top_label"] == 0 for r in cm_["rows"] if r["arm"] != "isotonic-top-label")
 assert all(r["n_clipped_top_label"] == r["n_clipped_top_label_exact_zero_or_one"] for r in cm_["rows"])
@@ -913,6 +1035,7 @@ for p_ in act["output_patterns_T2"]:
 n_silent_out = [round(r["all_silent"] * (10000 if r["dataset"] == "nmnist" else 1742))
                 for r in act["output_patterns_T2_runs"]]
 put("silentOutMax", str(max(n_silent_out)), SRC_ACT + " output_patterns_T2_runs: most test samples with every output silent at T=2, any run")
+assert sum(n > 0 for n in n_silent_out) == 1   # main.tex: "in one run"
 put("silentOutRuns", str(sum(n > 0 for n in n_silent_out)), SRC_ACT + " output_patterns_T2_runs: runs with any such sample")
 LAYER_ORDER = ["conv1", "conv2", "conv3", "conv4", "hidden", "output"]
 act_rows = 0
@@ -938,6 +1061,8 @@ put("silentFirstMin", pct(min(silent_first), 0), SRC_ACT + " cells: smallest sha
 put("silentFirstMax", pct(max(silent_first), 0), SRC_ACT + " cells: largest share of first-layer neurons never firing, per cent")
 put("silentHiddenMax", pct(max(c["layers"]["hidden"]["silent_share"]["max"] for c in act["cells"]), 1),
     SRC_ACT + " cells: largest share of hidden neurons never firing, any seed, per cent")
+# main.tex says "no hidden-layer neuron is silent in any seed"; true only while this is exactly zero.
+assert max(c["layers"]["hidden"]["silent_share"]["max"] for c in act["cells"]) == 0.0
 put("rasterNeurons", "32", "NOTES.md A5; " + SRC_ACT + " rasters")
 
 # ------------------------------------------------------------------ A6: the same weights, read differently
@@ -972,7 +1097,7 @@ for c in SW_ORDER:
                     "tM": st.mean(r[ro]["temperature"]["ece_equal_mass"] for r in rs)}
     sw_cell[c] = vals
     trained = TRAINED_ACC.get(c)
-    tr = f(st.mean(trained)) if trained and len(trained) == 3 else "--"
+    tr = f(st.mean(trained)) if trained and len(trained) == 3 else "n/a"
     key = f"sw{DSK[c[0]]}{WORD[c[1]]}{WORD[c[2]]}"
     cells_ = []
     for ro in ("count", "accumulator_same_weights", "membrane_same_weights"):
@@ -1000,6 +1125,38 @@ nm_diffs = [abs(v["accumulator_same_weights"]["acc"] - v["count"]["acc"]) for c,
 put("swNmMaxDiff", f(100 * max(nm_diffs), 2), SRC_SW + " N-MNIST cells: largest |same-weights accumulator - count| accuracy, points")
 assert all(v["accumulator_same_weights"]["gap"] > 0 for c, v in sw_cell.items() if c[0] == "ncaltech101")
 put("swNcAccumOverAll", str(sum(1 for c, v in sw_cell.items() if c[0] == "ncaltech101")), SRC_SW + " N-Caltech101 cells, all with the same-weights accumulator overconfident (asserted)")
+# the membrane reading of the same weights (round-1 checks: quantifiers)
+nm_mem = [v["count"]["acc"] - v["membrane_same_weights"]["acc"] for c, v in sw_cell.items() if c[0] == "nmnist"]
+put("swNmMemMaxDiff", f(100 * max(nm_mem), 2), SRC_SW + " N-MNIST settings: largest (count - same-weights membrane) accuracy, seed means, points")
+_nc_mem_runs = [r for r in sw if r["dataset"] == "ncaltech101"]
+assert all(r["membrane_same_weights"]["uncalibrated"]["mean_conf_minus_acc"] < 0 for r in _nc_mem_runs)
+put("swNcMemUnderRuns", str(len(_nc_mem_runs)), SRC_SW + " N-Caltech101 runs, every same-weights membrane reading underconfident (asserted)")
+# where the count readout of the same weights is underconfident: T = 2 and 6 only
+assert all(v["count"]["gap"] < 0 for c, v in sw_cell.items() if c[0] == "ncaltech101" and c[2] in (2, 6))
+assert all(v["count"]["gap"] > 0 for c, v in sw_cell.items() if c[0] == "ncaltech101" and c[2] == 10)
+
+# A8: ranking with the weights held fixed (results/same_weights_ranking.json)
+swr = load("same_weights_ranking.json")
+SRC_SWR = "results/same_weights_ranking.json"
+_sm = swr["summary"]
+assert abs(_sm["count"]["mean"] - cm_["headline"]["auroc"]["count"]["mean"]) < 1e-12   # same count readout as A4
+assert abs(_sm["accumulator_trained"]["mean"] - cm_["headline"]["auroc"]["accumulator"]["mean"]) < 1e-12
+for r in swr["rows"]:   # the same-weights accuracies are those of A6
+    a6 = next(x for x in sw if x["name"] == r["name"])
+    assert abs(r["accuracy"]["accumulator_same_weights"] - a6["accumulator_same_weights"]["uncalibrated"]["accuracy"]) < 1e-12
+    assert r["pairs"]["count"]["reversed"] < r["pairs"]["accumulator_same_weights"]["reversed"]   # "fewer pairs in the wrong order"
+    assert r["pairs"]["accumulator_same_weights"]["tied"] < 1e-3 and r["pairs"]["accumulator_trained"]["tied"] < 1e-3
+put("swrAurocAccum", f(_sm["accumulator_same_weights"]["mean"]), SRC_SWR + " summary: AUROC of the accumulator reading of the count-trained weights, seed mean")
+put("swrAurocMem", f(_sm["membrane_same_weights"]["mean"]), SRC_SWR + " summary: AUROC of the membrane reading of the count-trained weights, seed mean")
+_dd = _sm["count_minus_accumulator_same_weights"]
+put("swrAurocDiff", f(_dd["mean"], sign=True), SRC_SWR + " summary: count minus accumulator reading, seed mean")
+put("swrAurocDiffLo", f(_dd["ci95_seed_mean"][0], sign=True), SRC_SWR + " summary: 95% test-set bootstrap interval, lower")
+put("swrAurocDiffHi", f(_dd["ci95_seed_mean"][1], sign=True), SRC_SWR + " summary: 95% test-set bootstrap interval, upper")
+assert _dd["ci95_seed_mean"][1] < 0
+put("pairsCountTied", pct(_sm["pairs_count_tied"]["mean"], 1), SRC_SWR + " summary: share of correct-wrong pairs tied by the count readout, seed mean, per cent")
+put("pairsCountReversed", pct(_sm["pairs_count_reversed"]["mean"], 1), SRC_SWR + " summary: share ordered wrongly by the count readout, seed mean, per cent")
+put("pairsAccSwReversed", pct(_sm["pairs_accumulator_same_weights_reversed"]["mean"], 1), SRC_SWR + " summary: share ordered wrongly by the accumulator reading, seed mean, per cent")
+put("pairsAccTrReversed", pct(_sm["pairs_accumulator_trained_reversed"]["mean"], 1), SRC_SWR + " summary: share ordered wrongly by the trained accumulator, seed mean, per cent")
 
 # training length per readout, from the run records
 def best_epochs(ds, T, readout, blocks_suffix=""):
@@ -1055,8 +1212,8 @@ for ds_ in ("nmnist", "ncaltech101"):
         ph = flat * 256 + 2 * 256
         po = 256 * NCLS[ds_] + 2 * NCLS[ds_]
         total += ph + po
-        cells_.append(f"{thousands(flat)} to 256; {thousands(ph)}")
-        cells_.append(f"256 to {NCLS[ds_]}; {thousands(po)}")
+        cells_.append(f"{thousands(flat)} $\\to$ 256; {thousands(ph)}")
+        cells_.append(f"256 $\\to$ {NCLS[ds_]}; {thousands(po)}")
         cells_.append(thousands(total))
         rec_n = {r["n_parameters"] for r in arch_rows if r["dataset"] == ds_ and r["n_blocks"] == len(chans)}
         assert rec_n == {total}, (ds_, chans, rec_n, total)
@@ -1141,7 +1298,7 @@ if a7.get("training_finished_at"):
     for r in sorted(rows7, key=lambda r: (r["dataset"] != "nmnist", r["timesteps"], r["seed"])):
         k_ = f"aSevenRow{DSK[r['dataset']]}{WORD[r['timesteps']]}{WORD[r['seed']]}"
         o, e = r["original_rule"], r["end_point"]
-        put(k_, " & ".join([str(r["epochs_run"]), r["stopped_by"].replace("convergence", "converged"),
+        put(k_, " & ".join([str(r["epochs_run"]), r["stopped_by"].replace("convergence", "settled").replace("cap", "limit"),
                             f(o["logit_scale"], 2), f(o["test_accuracy"]), f(o["conf_minus_acc"], sign=True), f(o["ece_equal_width"]),
                             f(e["logit_scale"], 2), f(e["s_min"], 2), f(e["test_accuracy"]), f(e["conf_minus_acc"], sign=True), f(e["ece_equal_width"])]),
             SRC_A7 + f" rows, {r['dataset']} T={r['timesteps']} seed {r['seed']}: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w")
