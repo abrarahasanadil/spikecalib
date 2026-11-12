@@ -94,7 +94,9 @@ def _style():
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
+    plt.rcdefaults()
     plt.rcParams.update({
+        "svg.hashsalt": "spikecalib",
         "font.family": "serif",
         "font.serif": ["Georgia", "Times New Roman", "DejaVu Serif"],
         "font.size": 10,
@@ -168,7 +170,7 @@ def save(fig, out_dir: str, name: str) -> list[str]:
     paths = []
     for ext in ("svg", "png", "pdf"):
         path = os.path.join(out_dir, f"{name}.{ext}")
-        meta = {"CreationDate": None} if ext == "pdf" else None
+        meta = {"CreationDate": None} if ext == "pdf" else {"Date": None} if ext == "svg" else None
         fig.savefig(path, format=ext, bbox_inches="tight", dpi=160, metadata=meta)
         paths.append(path)
     plt.close(fig)
