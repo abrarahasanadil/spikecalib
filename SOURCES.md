@@ -122,8 +122,9 @@ nothing in the brief is now treated as a source until it has been opened.
 itself; the copy used here is the Mendeley Data mirror, `doi:10.17632/cy6cvx3ryv.1`,
 version 1. The DOI record at DataCite gives the creator as **Garrick Orchard**, the publisher
 as Mendeley and the issue date as **12 January 2022**
-(https://api.datacite.org/dois/10.17632/cy6cvx3ryv.1); `paper/refs.bib` uses these.
-`Caltech101.zip``Caltech101.zip` is 3,989,375,649 bytes with SHA-256
+(https://api.datacite.org/dois/10.17632/cy6cvx3ryv.1). *(Corrected 2026-11-12: `paper/refs.bib` now
+follows the repository's own citation, which lists four authors; see "References verified
+2026-11-12" below.)* `Caltech101.zip` is 3,989,375,649 bytes with SHA-256
 `c70d387facd67f38f04a6f0afc4b1181416f2610cb924afa1f16fed99f7ebb9f`, and its MD5 matches the
 hash SpikingJelly publishes for the same file exactly, so the mirror is serving the archive
 upstream expects. `[MEASURED]` 8,709 samples in 101 class directories, class sizes 31
@@ -1045,6 +1046,61 @@ Zenodo record 8135935; the MIT Press and Politecnico di Milano links refused aut
 - *What may be said:* everything in the paper's one paragraph on it. *What may not:* that it
   uses a readout's confidence, or that it was run in a closed loop. Closed-loop integration is
   stated as future work.
+
+## References verified 2026-11-12
+
+Every entry of `paper/refs.bib` was checked again on 2026-11-12, field by field, against
+Crossref (`https://api.crossref.org/works/<DOI>`), DataCite, the DOI landing page, arXiv,
+OpenReview, PMLR or the publisher. Entries marked *corrected* were changed in `refs.bib` on
+that date; the others were found correct as they stood.
+
+- **zhang2023provable** (correct). authors (Qingyang Zhang, Haitao Wu, Changqing Zhang, Qinghua Hu, Huazhu Fu, Joey Tianyi Zhou, Xi Peng), title, Proceedings of the 40th ICML, PMLR 202:41753-41769, 2023 verified against PMLR page proceedings.mlr.press/v202/zhang23ar.html; PMLR assigns no DOI.
+- **cao2024predictive** (correct). authors (Bing Cao, Yinan Xia, Yi Ding, Changqing Zhang, Qinghua Hu), title, Proceedings of the 41st ICML, PMLR 235:5608-5628, 2024 verified against PMLR page proceedings.mlr.press/v235/cao24c.html; PMLR assigns no DOI.
+- **ma2006bayesian** (correct). authors (Wei Ji Ma, Jeffrey M. Beck, Peter E. Latham, Alexandre Pouget), title, Nature Neuroscience 9(11):1432-1438, 2006 (print Nov 2006, online 22 Oct 2006), DOI 10.1038/nn1790 verified against Crossref.
+- **beck2008probabilistic** (correct). all nine authors in order (Beck, Ma, Kiani, Hanks, Churchland, Roitman, Shadlen, Latham, Pouget) with given names, title, Neuron 60(6):1142-1152, Dec 2008, DOI 10.1016/j.neuron.2008.09.021 verified against Crossref.
+- **perezlebel2023beyond** (corrected). authors, title, year verified against the OpenReview ICLR 2023 record (forum 6w1k-IixnL8, poster) and arXiv:2210.16315v3 (27 Apr 2023); booktitle expanded to 'The Eleventh International Conference on Learning Representations' and OpenReview URL added; no DOI exists.
+- **skatchkovsky2022bayesian** (correct). authors (Nicolas Skatchkovsky, Hyeryung Jang, Osvaldo Simeone), title, Frontiers in Computational Neuroscience vol. 16, article number 1037976 (Crossref 'article-number', given as pages), published 16 Nov 2022, DOI 10.3389/fncom.2022.1037976 verified against Crossref; arXiv:2208.13723 (latest v2, 1 Nov 2022, cs.NE) is the preprint of this article.
+- **grillo2022bayesian** (correct). six authors in order (Massimo Grillo, Alice Geminiani, Cristiano Alessandro, Egidio D'Angelo, Alessandra Pedrocchi, Claudia Casellato), title, Neural Computation 34(9):1893-1914, 2022, MIT Press, DOI 10.1162/neco_a_01525 verified against Crossref (confirmed by Semantic Scholar).
+- **fan2024sfod** (correct). authors (Yimeng Fan, Wei Zhang, Changsong Liu, Mingyang Li, Wenrui Lu), title, pages 17191-17200, year 2024 and DOI 10.1109/CVPR52733.2024.01627 match Crossref and the CVF open-access record. The booktitle matches the CVF BibTeX word for word (Crossref container: '2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)').
+- **murphy1973partition** (correct). author Allan H. Murphy, title, Journal of Applied Meteorology 12(4):595-600, June 1973, and the DOI all match Crossref (publisher: American Meteorological Society).
+- **stephenson2008two** (correct). authors (D. B. Stephenson, C. A. S. Coelho, I. T. Jolliffe, which are initials only in Crossref), title, Weather and Forecasting 23(4):752-757, August 2008, and the DOI all match Crossref. Full given names could not be confirmed from the primary record because the AMS page returned 403, so the initials are kept.
+- **gupta2022toplabel** (corrected). authors, title and year checked against the OpenReview ICLR 2022 record (forum WqoBaaPHS-, ICLR 2022 Poster) and arXiv 2107.08353 (latest v4, 2022-09-02). Added the edition to the booktitle and the OpenReview url. No DOI exists.
+- **dimitriadis2021stable** (correct). authors (Timo Dimitriadis, Tilmann Gneiting, Alexander I. Jordan), title, PNAS 118(8), article number e2016191118 (Crossref article-number, given here as pages), year 2021 (online 17 Feb, print 23 Feb) and DOI all match Crossref.
+- **fawcett2006roc** (correct). author Tom Fawcett, title 'An introduction to ROC analysis', Pattern Recognition Letters 27(8):861-874, June 2006 and DOI all match Crossref (Elsevier). {ROC} is already protected.
+- **galil2023selective** (corrected). checked against the OpenReview ICLR 2023 record (forum p66AzKi6Xim, ICLR 2023 poster). The title is changed to the published form, which ends in '?'. Added the edition to the booktitle and the OpenReview url. The arXiv preprint 2302.11874 has only v1 (2023-02-23). No DOI exists for the conference version.
+- **kittler1998combining** (correct). title, IEEE TPAMI 20(3):226-239, March 1998, and DOI 10.1109/34.667881 match Crossref. The author order Kittler, Hatef, Duin, Matas matches Crossref, which gives initials only (J., M., R.P.W., J.). The full given names in refs.bib are consistent with those initials and with Semantic Scholar ('Jiri Matas').
+- **shapley1984optimizing** (correct). every field checked against Crossref 10.1007/BF00118940 and all match. Authors Lloyd Shapley and Bernard Grofman in that order; title exact; Public Choice 43(3):329-343, January 1984; DOI matches.
+- **nitzan1982optimal** (correct). checked against Crossref/JSTOR 10.2307/2526438, which gives Shmuel Nitzan and Jacob Paroush, the exact title, International Economic Review 23(2), June 1982, and first page 289. Crossref records only the first page, so the last page (297) was confirmed from the RePEc/IDEAS record (pages 289-297). All bib fields match.
+- **chair1986optimal** (correct). checked against Crossref 10.1109/TAES.1986.310699 and IEEE Xplore 4104179. Both list the authors only as initials, Z. Chair and P.K. Varshney, so the bib keeps the initials. Title exact; IEEE Transactions on Aerospace and Electronic Systems AES-22(1):98-101, January 1986. All fields match.
+- **kuncheva2014weighted** (correct). checked against Crossref 10.1007/s10115-012-0586-6. Authors Ludmila I. Kuncheva and Juan J. Rodriguez (with accent); title exact ('A weighted voting framework for classifiers ensembles'); Knowledge and Information Systems 38(2):259-275. It was online 7 Dec 2012 and appeared in the February 2014 issue, so year 2014 is right. All fields match.
+- **li2014error** (corrected). checked against arXiv 1411.4086 (API and abstract page) and DataCite DOI 10.48550/arXiv.1411.4086. Authors Hongwei Li and Bin Yu; exact title; v1 of 15 Nov 2014 is the only version; primary category stat.ML. No peer-reviewed version found in Crossref, OpenAlex or a web search; DBLP and Semantic Scholar could not be reached.
+- **brummer2007fusion** (correct). checked against Crossref 10.1109/TASL.2007.902870 and IEEE Xplore 4291590. All 10 authors in the right order with matching given names; exact title, with STBU and NIST braced; IEEE Transactions on Audio, Speech, and Language Processing 15(7):2072-2084, September 2007. The diacritics are the authors' own spellings (BUT FIT record); Crossref and IEEE store ASCII forms.
+- **ju2018relative** (correct). checked against Crossref 10.1080/02664763.2018.1441383. Authors Cheng Ju, Aurélien Bibaut and Mark van der Laan in that order; exact title; Journal of Applied Statistics 45(15):2800-2818. It was online 26 Feb 2018 and in the November 2018 issue, so year 2018 is right. All fields match.
+- **kumar2022calibrated** (corrected). checked against PMLR v180 kumar22a (abstract page and official BibTeX). Authors, title, volume 180, pages 1041-1051 and year 2022 match. The booktitle is changed to PMLR's exact name, 'Proceedings of the Thirty-Eighth Conference on Uncertainty in Artificial Intelligence'. PMLR assigns no DOI.
+- **zhang2019adacos** (corrected). checked against Crossref 10.1109/CVPR.2019.01108 and OpenAlex; pages changed from the CVF PDF numbering 10823-10832 to the DOI record's 10815-10824; all other fields match.
+- **wang2017normface** (corrected). checked against Crossref 10.1145/3123266.3123359 (title plus subtitle L<sub>2</sub>, pages 1041-1049, MM '17); fourth author's given names changed to 'Alan Loddon' as in the record.
+- **wei2022logitnorm** (correct). every field (six authors in order, title, Proceedings of the 39th ICML, PMLR vol. 162, pp. 23631-23644, 2022) matches the PMLR page v162/wei22d. PMLR assigns no DOI.
+- **wei2023logitclip** (correct). every field (seven authors in order, title, Proceedings of the 40th ICML, PMLR vol. 202, pp. 36868-36886, 2023) matches the PMLR page v202/wei23e. PMLR assigns no DOI.
+- **wang2018cosface** (corrected). checked against Crossref 10.1109/CVPR.2018.00552 (pages 5265-5274 confirmed) and the CVF page; booktitle aligned with the DOI record's 'IEEE/CVF Conference on Computer Vision and Pattern Recognition'.
+- **ranjan2017l2** (corrected). checked against the arXiv API and abstract page (cs.CV; v3 of 7 Jun 2017 is the latest) and DataCite 10.48550/arXiv.1703.09507; no peer-reviewed version in Crossref or OpenAlex (DBLP and Semantic Scholar unreachable); added eprint, archivePrefix, primaryClass and doi.
+- **meng2022dsr** (corrected). checked against Crossref 10.1109/CVPR52688.2022.01212 and OpenAlex; pages changed from the CVF numbering 12444-12453 to the DOI record's 12434-12443; all other fields match.
+- **chen2025knowing** (correct). every field (Jiechen Chen, Sangwoo Park, Osvaldo Simeone; exact title; IEEE Journal of Selected Topics in Signal Processing 19(1):88-102, January 2025; DOI) matches Crossref 10.1109/JSTSP.2024.3431996 and OpenAlex.
+- **atarashi2025bounding** (corrected). authors and title checked against arXiv API and abs page for 2506.10572. The title is v2's (23 Feb 2026); v1 (12 Jun 2025) was 'Box-Constrained Softmax Function and Its Application for Post-Hoc Calibration'. Primary class stat.ML. No peer-reviewed version found on Semantic Scholar, OpenReview/DBLP-CoRR, Crossref or the Kyoto University researcher database (2026-11-12).
+- **ncaltech101mirror** (corrected). DataCite 10.17632/cy6cvx3ryv.1 gives creator Garrick Orchard (Jayawant, Thakor and Cohen as contributors), title N-Caltech101, issued 2022-01-12. The Mendeley Data landing page and API cite four authors (Orchard, Jayawant, Cohen, Thakor), Mendeley Data, v1. Deposited by Garrick Orchard and linked to the Frontiers 2015 paper as its source; the record does not call itself a mirror.
+- **orchard2015converting** (corrected). authors, title, journal, volume 9, year and DOI checked against Crossref 10.3389/fnins.2015.00437. The article number 437 is not in Crossref; it is taken from the Frontiers citation line ('Front. Neurosci. 9:437') and the JATS elocation-id, and is given as pages = {437}.
+- **li2023dynamic** (corrected). authors and title checked against Crossref 10.1109/ICCV51070.2023.01228 (2023 IEEE/CVF ICCV, pp. 13304-13314, IEEE) and the CVF open-access BibTeX (pp. 13350-13360). DOI added and IEEE pagination used for consistency. arXiv 2303.10276 title differs ('by Dynamic Confidence').
+- **chen2024agreeing** (correct). every field checked against Crossref 10.3390/e26020126. Authors Jiechen Chen, Sangwoo Park and Osvaldo Simeone; title exact; Entropy 26(2), article 126; published 2024-01-31; MDPI.
+- **guo2017calibration** (corrected). checked against PMLR v70 (guo17a). Proceedings of the 34th International Conference on Machine Learning, PMLR 70, pp. 1321-1330, eds. Precup and Teh, 2017. No DOI exists.
+- **horowitz2014energy** (corrected). checked against Crossref 10.1109/ISSCC.2014.6757323. Mark Horowitz, 2014 IEEE ISSCC Digest of Technical Papers, pp. 10-14, IEEE, San Francisco; Crossref prefixes the title with the paper number '1.1'.
+- **fang2023spikingjelly** (correct). every field checked against Crossref 10.1126/sciadv.adi1480. All ten authors in order (Fang, Chen Y., Ding J., Yu, Masquelier, Chen D., Huang, Zhou, Li, Tian); title exact (plainnat's sentence case reproduces the published form); Science Advances 9(40), article eadi1480; published 2023-10-06.
+
+The arXiv identifier stays in `note` for every arXiv entry because `plainnat` prints neither
+`eprint` nor `archivePrefix`. N-Caltech101: the Mendeley Data record is the 2022 deposit, by
+the dataset's first author, of the data described in Orchard et al. (2015); it links that
+paper as its source and does not call itself a mirror. The paper calls it a redistribution
+of the original data. Its DataCite metadata names one creator (Garrick Orchard) and three
+further contributors; the repository's own citation, which `refs.bib` follows, lists all four
+as authors.
 
 ## Still to verify
 
