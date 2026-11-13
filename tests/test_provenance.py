@@ -97,7 +97,7 @@ def test_the_paper_carries_the_disclosure_notes_prescribes() -> None:
     section = notes[notes.index("## AI disclosure, for the paper"):notes.index("## Status")]
     block = section[section.rindex("**Superseded "):]
     quoted = " ".join(line[2:] for line in block.splitlines() if line.startswith("> "))
-    assert quoted.startswith("AI coding and writing assistants were used, under the first author's direction,")
+    assert quoted.startswith("AI assistants were used as tools for literature search, coding and writing,")
     assert "are the author's" not in section, "the withdrawn claim about research design is back"
     paper = _read("paper", "main.tex")
     section = paper[paper.index("\\section*{Acknowledgements}"):paper.index("\\bibliographystyle")]

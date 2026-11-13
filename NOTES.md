@@ -2845,14 +2845,15 @@ added.
 `paper/main.tex`. This section only records its current wording. Earlier wordings are in the
 repository history. One of them said that all research design, hypotheses and verification
 decisions were the first author's alone; that claim is withdrawn, because the working records
-show AI assistants carrying out and recording parts of that work under the first author's
-direction. The whole Acknowledgements section of `paper/main.tex` is now exactly this:
+show AI assistants used as tools for literature search, coding and writing under the first
+author's direction, with research decisions set or approved by him. The whole
+Acknowledgements section of `paper/main.tex` is now exactly this:
 
-> AI coding and writing assistants were used, under the first author's direction, to implement
-> the code, run the experiments and analyses, and draft the text. Every citation was checked
-> against its primary document or, where that was inaccessible, against a verified secondary
-> source, as recorded in SOURCES.md. The first author verified all results; all authors
-> reviewed the manuscript and take responsibility for its content.
+> AI assistants were used as tools for literature search, coding and writing, under the first
+> author's direction. The research question, study design and predictions were set or approved
+> by the first author, who verified all results. Every citation was checked against its primary
+> document or, where that was inaccessible, against a verified secondary source, as recorded in
+> SOURCES.md. All authors reviewed the manuscript and take responsibility for its content.
 
 The disclosure names no tool. It appears once, in the paper. `tests/test_provenance.py` checks
 that the paper carries this text verbatim.
