@@ -55,7 +55,8 @@ experiments that tested them, 13 <!-- n:predictionsEverythingHeld --> held and
   On N-Caltech101 at *T* = 2 no single temperature removes the count readout's error, and
   isotonic regression does better in every seed, also with the calibration set reweighted to the
   test class distribution; for the other readouts there the comparison depends on the
-  calibration set (nine runs of one architecture per readout).
+  calibration set (one architecture: nine runs each for the count readout and the accumulator, six
+  for the learned scale).
 - A count readout emits at most binom(*T*+*C*−1, *C*−1) distinct confidences at any scale; on
   N-MNIST at *T* = 2 its ties lower its AUROC below that of an accumulator reading the same
   weights.

@@ -1423,6 +1423,7 @@ for k, ro in (("Count", "count"), ("Accum", "accumulator"), ("Scaled", "scaled-c
 put("rwUnderUnw", str(sum(e["unweighted"]["underconfident_calibrated"] for e in rw_["summary"])), SRC_RW + " summary: calibrated four-block runs underconfident on the test set, unweighted fits")
 put("rwUnderRw", str(sum(e["reweighted"]["underconfident_calibrated"] for e in rw_["summary"])), SRC_RW + " summary: calibrated four-block runs underconfident on the test set, reweighted fits")
 put("rwCalibrated", str(sum(e["reweighted"]["calibrated_runs"] for e in rw_["summary"])), SRC_RW + " summary: calibrated four-block runs (two calibrators per run)")
+assert _rws["count"]["reweighted"]["favour_temperature"] == 0   # main.tex: "never resolved as worse" after reweighting
 put("rwUnderCountRw", str(_rws["count"]["reweighted"]["underconfident_calibrated"]), SRC_RW + " summary, count: reweighted calibrated runs underconfident on the test set")
 put("rwCountCalibrated", str(_rws["count"]["reweighted"]["calibrated_runs"]), SRC_RW + " summary, count: calibrated runs")
 _c2 = [r for r in _rw4 if r["readout"] == "count" and r["timesteps"] == 2]

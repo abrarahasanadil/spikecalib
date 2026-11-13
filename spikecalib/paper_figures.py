@@ -129,9 +129,8 @@ def figure_overview(results, pdf_dir, png_dir):
                xytext=(0.12, 0.93), fontsize=7.5, color=OKABE_ITO["blue"], va="top", ha="left",
                arrowprops=dict(arrowstyle="-", color=OKABE_ITO["blue"], lw=0.6))
     from matplotlib.lines import Line2D
-    handles = [Line2D([], [], color=DATASET_COLOUR["nmnist"], lw=1.3, label="N-MNIST, $C=10$"),
-               Line2D([], [], color=DATASET_COLOUR["ncaltech101"], lw=1.3, label="N-Caltech101, $C=101$"),
-               Line2D([], [], color=GREY, lw=1.3, label=r"cap $p^{*}$ (solid curves)"),
+    handles = [Line2D([], [], color=DATASET_COLOUR["nmnist"], lw=1.3, label=r"cap $p^{*}$, N-MNIST ($C=10$)"),
+               Line2D([], [], color=DATASET_COLOUR["ncaltech101"], lw=1.3, label=r"cap $p^{*}$, N-Caltech101 ($C=101$)"),
                Line2D([], [], color=GREY, marker="s", ls="none", ms=4.2, mec="white", label="test accuracy"),
                Line2D([], [], color=GREY, marker="o", ls="none", ms=5.2, mfc="white", label="largest confidence")]
     a.legend(handles=handles, loc="lower right", bbox_to_anchor=(1.0, 0.02))

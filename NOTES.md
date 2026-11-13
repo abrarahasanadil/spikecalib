@@ -16,22 +16,24 @@ and the list of what still needs checking. Nothing marked `[UNVERIFIED]` may be 
 the paper until verified. Code in this repository is expected to follow this document, and
 where the two disagree, this document is what needs updating first.
 
-**Reading guide, added 2026-11-13.** This notebook is append-only: it records what was believed
-on each date, and no prediction, date or outcome in it has been edited. Where it differs from
+**Reading guide, added 2026-11-13.** This notebook records what was believed on each date. No
+prediction, date or outcome in it has been edited; on 2026-11-13 this guide was added, the AI
+disclosure section below was reduced to its current wording, and a few phrases about how the work
+was organised were made neutral. Where it differs from
 the paper (`paper/main.tex`, release v1.0.0), the paper is current. The main differences:
 
-1. The cap was later found in prior work for normalised and clipped logits (`SOURCES.md`,
-   "Literature check, 2026-10-13"). `[DERIVED]` on it, and "not from any paper", mean derived
-   here, not new.
+1. The cap was later found in prior work on normalised and clipped logits (`SOURCES.md`,
+   "Literature check, 2026-10-13"). Where the cap is tagged `[DERIVED]` or called "not from any
+   paper", read: derived here independently; it is not new.
 2. Where a share of ECE is said to be "accounted for" or "explained" by the ceiling, read: the
    floor `a - p*` is that share of the binned ECE. The floor is a lower bound, not a causal
    decomposition (A1 below; the paper's Section 5.2).
 3. "Tie" in registered wording means not resolved under the registered rule. Equivalence was
    tested separately (A3). On N-MNIST the rule was written after the results it summarises.
-4. "Resolved: no" on whether the ceiling binds in published work covers the references checked
-   on 2026-09-12. The search of 2026-11-12 found published readouts to which the cap applies
-   (Jang and Simeone 2022; Katti et al. 2024, as their readout is described); see the paper's
-   Section 2.
+4. The heading "Does the ceiling bind in published work? Resolved: no" covers only the
+   references checked on 2026-09-12. The search of 2026-11-12 found published readouts to which
+   the cap applies: Jang and Simeone (2022), and Katti et al. (2024) as their readout is
+   described. The paper's Section 2 gives the details.
 5. The reference withdrawn on 2026-09-12 ("Skatchkovsky & Simeone") was very probably
    Skatchkovsky, Jang and Simeone (2022), found on 2026-10-13 (`SOURCES.md`); the paper cites
    that work for what it reports.
@@ -2840,11 +2842,11 @@ added.
 ## AI disclosure, for the paper
 
 **Superseded 2026-11-13.** The operative disclosure is the Acknowledgements section of the paper,
-`paper/main.tex`, and this section only records its current wording. The earlier wordings kept
-here until 2026-11-13, one of which said that all research design, hypotheses and verification
-decisions were the author's, are in the repository history; that claim is withdrawn, since the
-working records show AI assistants carrying out and recording parts of that work under the first
-author's direction. The whole Acknowledgements section of `paper/main.tex` is now exactly this:
+`paper/main.tex`. This section only records its current wording. Earlier wordings are in the
+repository history. One of them said that all research design, hypotheses and verification
+decisions were the first author's alone; that claim is withdrawn, because the working records
+show AI assistants carrying out and recording parts of that work under the first author's
+direction. The whole Acknowledgements section of `paper/main.tex` is now exactly this:
 
 > AI coding and writing assistants were used, under the first author's direction, to implement
 > the code, run the experiments and analyses, and draft the text. Every citation was checked
