@@ -775,6 +775,15 @@ FL_CELLS = {"NmTwo": ("nmnist", "32-64", 2), "NmFour": ("nmnist", "32-64", 4), "
 EST = {"W": "equal_width", "M": "equal_mass", "D": "distinct"}
 
 
+# S3 (second internal review): N-MNIST seeds share one test set, so intervals on N-MNIST seed
+# means come from one shared resample per draw (results/shared_resample_intervals.json); the
+# independent-resample intervals stored with A1, A4 and A8 are reproduced there and replaced here.
+sh_ = load("shared_resample_intervals.json")
+SRC_SH = "results/shared_resample_intervals.json"
+SH_FLOOR = {(c["channels"], c["timesteps"]): c["estimators"] for c in sh_["floor_ratio"]}
+SH_ECE = {(e["timesteps"], e["arm"], e["estimator"]): e for e in sh_["ece"]}
+
+
 def fl_cell(ds, ch, T):
     c = [c for c in fl["cells"] if c["dataset"] == ds and c["channels"] == ch and c["timesteps"] == T]
     assert len(c) == 1 and c[0]["binds_in"] == 3, (ds, ch, T)
@@ -788,13 +797,17 @@ for key, (ds, ch, T) in FL_CELLS.items():
     for e, est in EST.items():
         fr = c["schemes"][est]["floor_ratio"]
         lo, hi = c["schemes"][est]["floor_ratio_ci95"]
+        if ds == "nmnist":
+            assert max(abs(u - v) for u, v in zip(SH_FLOOR[(ch, T)][est]["independent"], (lo, hi))) < 1e-12
+            lo, hi = SH_FLOOR[(ch, T)][est]["shared"]
         assert fr["max"] <= 1.0 + 1e-12  # the floor never exceeds the ECE
         put(f"fr{key}{e}", pct(fr["mean"]), src + f" floor_ratio {est}, mean over seeds, per cent")
         put(f"fr{key}{e}Sd", pct(fr["sd"]), src + f" floor_ratio {est}, standard deviation over seeds, percentage points")
         put(f"fr{key}{e}Min", pct(fr["min"]), src + f" floor_ratio {est}, smallest seed")
         put(f"fr{key}{e}Max", pct(fr["max"]), src + f" floor_ratio {est}, largest seed")
-        put(f"fr{key}{e}Lo", pct(lo), src + f" floor_ratio_ci95 {est}, lower")
-        put(f"fr{key}{e}Hi", pct(hi), src + f" floor_ratio_ci95 {est}, upper")
+        isrc = (SRC_SH + f" floor_ratio, {ch} T={T} {est}, shared resample") if ds == "nmnist" else (src + f" floor_ratio_ci95 {est}")
+        put(f"fr{key}{e}Lo", pct(lo), isrc + ", lower")
+        put(f"fr{key}{e}Hi", pct(hi), isrc + ", upper")
         put(f"ece{key}{e}", f(c["schemes"][est]["ece"]["mean"]), src + f" ece {est}, seed mean")
         put(f"ece{key}{e}Sd", f(c["schemes"][est]["ece"]["sd"]), src + f" ece {est}, sd over seeds")
 # overconfident bins where the cap binds hardest
@@ -998,16 +1011,24 @@ for e in hd["ece"]:
     src = SRC_CM + f" headline.ece, {e['dataset']} T={e['timesteps']} {e['arm']} {e['estimator']}"
     put(k, f(e["mean"]), src + ", seed mean")
     put(k + "Sd", f(e["sd"]), src + ", sd over seeds")
-    put(k + "Lo", f(e["ci95_seed_mean"][0]), src + ", 95% bootstrap interval of the seed mean")
-    put(k + "Hi", f(e["ci95_seed_mean"][1]), src + ", 95% bootstrap interval of the seed mean")
+    lo_, hi_ = e["ci95_seed_mean"]
+    if e["dataset"] == "nmnist":
+        sh = SH_ECE[(e["timesteps"], e["arm"], e["estimator"])]
+        assert max(abs(u - v) for u, v in zip(sh["independent"], (lo_, hi_))) < 1e-12
+        lo_, hi_ = sh["shared"]
+        src = SRC_SH + f" ece, nmnist T={e['timesteps']} {e['arm']} {e['estimator']}, shared resample"
+    put(k + "Lo", f(lo_), src + ", 95% bootstrap interval of the seed mean")
+    put(k + "Hi", f(hi_), src + ", 95% bootstrap interval of the seed mean")
 au = hd["auroc"]
 for k, name in (("Count", "count"), ("Accum", "accumulator"), ("Diff", "count_minus_accumulator")):
     a = au[name]
     sgn = name == "count_minus_accumulator"
     put(f"hdAuroc{k}", f(a["mean"], sign=sgn), SRC_CM + f" headline.auroc.{name}, seed mean")
     put(f"hdAuroc{k}Sd", f(a["sd"]), SRC_CM + f" headline.auroc.{name}, sd over seeds")
-    put(f"hdAuroc{k}Lo", f(a["ci95_seed_mean"][0], sign=sgn), SRC_CM + f" headline.auroc.{name}, 95% interval")
-    put(f"hdAuroc{k}Hi", f(a["ci95_seed_mean"][1], sign=sgn), SRC_CM + f" headline.auroc.{name}, 95% interval")
+    shA = sh_["auroc"][name]
+    assert max(abs(u - v) for u, v in zip(shA["independent"], a["ci95_seed_mean"])) < 1e-12
+    put(f"hdAuroc{k}Lo", f(shA["shared"][0], sign=sgn), SRC_SH + f" auroc.{name}, 95% interval, shared resample")
+    put(f"hdAuroc{k}Hi", f(shA["shared"][1], sign=sgn), SRC_SH + f" auroc.{name}, 95% interval, shared resample")
 assert abs(au["count"]["mean"] - float(dict((m[0], m[1]) for m in macros)["aurocCountNmTwo"])) < 5e-5
 # A8: t-interval over the three seeds for the AUROC difference
 from scipy.stats import t as _student_t
@@ -1188,9 +1209,11 @@ put("swrAurocAccum", f(_sm["accumulator_same_weights"]["mean"]), SRC_SWR + " sum
 put("swrAurocMem", f(_sm["membrane_same_weights"]["mean"]), SRC_SWR + " summary: AUROC of the membrane reading of the count-trained weights, seed mean")
 _dd = _sm["count_minus_accumulator_same_weights"]
 put("swrAurocDiff", f(_dd["mean"], sign=True), SRC_SWR + " summary: count minus accumulator reading, seed mean")
-put("swrAurocDiffLo", f(_dd["ci95_seed_mean"][0], sign=True), SRC_SWR + " summary: 95% test-set bootstrap interval, lower")
-put("swrAurocDiffHi", f(_dd["ci95_seed_mean"][1], sign=True), SRC_SWR + " summary: 95% test-set bootstrap interval, upper")
-assert _dd["ci95_seed_mean"][1] < 0
+_shw = sh_["same_weights"]["count_minus_accumulator_same_weights"]
+assert max(abs(u - v) for u, v in zip(_shw["independent"], _dd["ci95_seed_mean"])) < 1e-12
+put("swrAurocDiffLo", f(_shw["shared"][0], sign=True), SRC_SH + " same_weights: 95% test-set bootstrap interval, shared resample, lower")
+put("swrAurocDiffHi", f(_shw["shared"][1], sign=True), SRC_SH + " same_weights: 95% test-set bootstrap interval, shared resample, upper")
+assert _shw["shared"][1] < 0
 put("pairsCountTied", pct(_sm["pairs_count_tied"]["mean"], 1), SRC_SWR + " summary: share of correct-wrong pairs tied by the count readout, seed mean, per cent")
 put("pairsCountReversed", pct(_sm["pairs_count_reversed"]["mean"], 1), SRC_SWR + " summary: share ordered wrongly by the count readout, seed mean, per cent")
 put("pairsAccSwReversed", pct(_sm["pairs_accumulator_same_weights_reversed"]["mean"], 1), SRC_SWR + " summary: share ordered wrongly by the accumulator reading, seed mean, per cent")
