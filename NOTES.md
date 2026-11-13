@@ -2247,6 +2247,90 @@ reported, whichever way it falls.
   correct-wrong pairs ordered correctly, tied and ordered wrongly (`AUROC = ordered + tied / 2`).
   Descriptive; no threshold.
 
+## Second internal review, settings fixed 2026-11-13 before computation
+
+Added after a second internal review, not pre-registered. A second round of internal checks of
+the revised draft (2026-11-13) found two problems that new computation can address. These
+settings are written and committed before any of the analyses below is run; every result is
+reported whichever way it falls, and the results of A1 to A8 stay as computed.
+
+### S1. N-Caltech101: calibrators refitted to the test class distribution
+
+The N-Caltech101 test split is proportional to class size with a floor of six, while the
+validation and calibration splits hold 3 and 10 samples of every class
+(`spikecalib/datasets.py`, `spikecalib/data.py`). Calibrators are therefore fitted on one class
+distribution and scored on another. This check refits them with the calibration set weighted to
+the test distribution.
+
+- **Runs.** Every N-Caltech101 run with stored outputs of the A4 form: count, accumulator and
+  scaled count with four blocks (9, 9 and 6 runs), and count and accumulator with two blocks.
+  The four-block runs are the ones reported in the paper; the two-block runs are recorded.
+- **Weights.** Each calibration sample of class `c` gets `w = pi_test(c) / pi_cal(c)`, where
+  `pi_test(c)` is the share of class `c` in that run's test split and `pi_cal(c)` its share in
+  the calibration split (1/101 by construction), normalised to mean one over the calibration
+  set. Only labels enter the weights; the test shares follow from the split rule and the class
+  sizes. No model output on the test set is used to fit anything.
+- **Temperature scaling.** The single temperature minimising the weighted mean negative
+  log-likelihood of the calibration logits, `sum_i w_i NLL_i / sum_i w_i`, searched over
+  `log t` in `[ln 1e-3, ln 1e3]` with the same bounded scalar search as the unweighted fit.
+- **Isotonic regression.** Top-label isotonic regression, same settings as the unweighted fit
+  (`y_min = 0`, `y_max = 1`, increasing, clipped out of range), fitted with `sample_weight = w`.
+- **Scoring.** Test predictions, the seeded tie-break and the rounding of confidences to 12
+  decimals as in A4. Per run and arm: equal-width and equal-mass ECE (15 bins), mean confidence
+  minus accuracy, top-label Brier score. The unweighted refit is computed beside it and must
+  reproduce the stored A4 values to within `1e-9`. Isotonic minus temperature is compared with
+  the paired bootstrap of the registered rule (1,000 resamples, `default_rng(seed)`, both 95%
+  percentile intervals excluding zero with the same sign).
+- **Statements checked, fixed now.** (a) For the count readout, isotonic regression is better in
+  5 of 9 runs and never resolved as worse. (b) For the accumulator, it is better in 6 of 9 runs.
+  (c) The learned-scale comparison (3 of 6 resolved, 2 for temperature scaling). (d) At `T = 2`,
+  temperature scaling removes 69% of the count readout's underconfidence (seed means,
+  `1 - gap_temperature / gap_uncalibrated`). (e) Calibrated N-Caltech101 runs are underconfident
+  on the test set. (f) The ECE values after calibration at `T = 2`. Each is reported as holding
+  with its reweighted value, or as changed. Any change of a resolved verdict or of a count in
+  (a) to (c), or a change of more than 10 points in (d), is reported in the paper as weakening
+  or changing the statement.
+- **Reporting.** The unweighted fits stay the primary results; the reweighted ones are a
+  sensitivity analysis.
+
+### S2. N-Caltech101: the best any single temperature can do on the test set
+
+The paper says that at `T = 2` the error left by temperature scaling is one no single scale
+removes; only the temperature fitted by negative log-likelihood was evaluated.
+
+- **Runs.** The nine four-block count runs.
+- **Scan.** For temperatures `t` on a grid of 2,001 values spaced evenly in `log t` from 0.05 to
+  20, the count logits divided by `t`, predictions and tie-break as in A4, confidences rounded to
+  12 decimals; equal-width and equal-mass ECE (15 bins) on the test set.
+- **Reported.** Per run and estimator, the smallest ECE over the grid and the temperature that
+  attains it; the temperature at which mean confidence equals accuracy (bisection in `log t`) and
+  the ECE there. Because the scan uses the test labels it is not a calibrator: it bounds what any
+  single temperature could reach on that test set.
+
+### S3. N-MNIST: intervals on seed means with one shared resample
+
+Every N-MNIST seed is tested on the same 10,000 official test samples in the same order, but the
+intervals on seed means of A1, A4 and A8 resampled each seed's test set with its own generator,
+which treats one test set as three independent ones and gives intervals that are too narrow.
+
+- **Intervals.** Every interval on an N-MNIST seed mean used in the paper: the floor ratio of
+  A1 (each binding cell, both binned estimators and the distinct-value grouping); the ECE of the
+  count readout per calibrator and estimator at `T` = 2, 6 and 10 (A4); the AUROC of the count
+  readout, of the separately trained accumulator and of their difference at `T = 2` (A4); and
+  the AUROC difference between the count readout and the accumulator reading of the same weights
+  (A8), for which the three networks are run again on MPS and must reproduce the stored counts
+  exactly.
+- **Construction.** 1,000 resamples. Resample `b` draws one vector of 10,000 test indices, the
+  `b`-th draw of `numpy.random.default_rng(0)` (the stream seed 0 used before), and applies it to
+  the outputs of all three seeds; that the seeds share one test set in one order is asserted from
+  the stored labels. The statistic of each seed is computed on the resample, with bins rebuilt
+  and calibrators held fixed as before, and averaged over seeds. The 95% interval is the 2.5th
+  and 97.5th percentiles over resamples.
+- **Check and reporting.** The independent-resample intervals are recomputed beside the new ones
+  and must reproduce the stored values to within `1e-12`. The shared-resample intervals replace
+  them in the paper. N-Caltech101 seeds have different test splits, so their intervals keep the
+  independent construction.
+
 ## Does the ceiling bind in published work? Resolved: no, and the reason is informative
 
 The verification pass left one consequential question open. Li, Jones & Furber report
