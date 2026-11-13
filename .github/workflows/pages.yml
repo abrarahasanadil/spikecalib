@@ -1,18 +1,13 @@
 name: pages
 
-# Deploys docs/ to GitHub Pages on every push to main.
+# Deploys docs/ to GitHub Pages when started by hand (Actions -> pages -> Run workflow).
 #
-# This workflow will fail until Pages is enabled for the repository
-# (Settings -> Pages -> Build and deployment -> Source: GitHub Actions).
-# That is deliberate: the site is not meant to go live until the preprint is,
-# and enabling Pages is a separate, manual decision.
+# It runs only on request: Pages must first be enabled for the repository
+# (Settings -> Pages -> Build and deployment -> Source: GitHub Actions), and the
+# site is not meant to go live until the preprint is. Enabling Pages and running
+# this workflow are separate, manual decisions.
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "docs/**"
-      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:

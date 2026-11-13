@@ -201,7 +201,9 @@ paper, version 1.0.0, https://github.com/abrarahasanadil/spikecalib
 
 ## Licence
 
-MIT; see [LICENSE](LICENSE).
+The code is released under the MIT licence; see [LICENSE](LICENSE). The manuscript (the LaTeX
+sources in `paper/`, `paper/main.pdf` and the figures in `paper/figures/`) is copyright of its
+three authors and is not covered by the MIT licence.
 
 ## Contact
 

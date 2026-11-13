@@ -19,3 +19,11 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+Scope
+
+The MIT licence above covers the code and data files of this repository. It does not cover
+the manuscript: the LaTeX sources in paper/ (*.tex and refs.bib), paper/main.pdf and the
+figures in paper/figures/ are copyright (c) 2026 Mohammed Abrar Ahasan Chowdhury, Md Mahmudul
+Hasan and Pedro Machado, all rights reserved. paper/make_numbers.py is code and is covered by
+the MIT licence.
