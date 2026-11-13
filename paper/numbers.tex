@@ -360,6 +360,7 @@
 \newcommand{\ccTemperatureTen}{1.10}% results/caltech_calibrators.json temperature, count, T=10
 \newcommand{\ccIsoTenW}{0.0300}% results/caltech_calibrators.json ece_equal_width, count, isotonic-top-label, T=10
 \newcommand{\ccIsoTenM}{0.0311}% results/caltech_calibrators.json ece_equal_mass, count, isotonic-top-label, T=10
+\newcommand{\capAtTempNcTwo}{0.56}% [DERIVED] arithmetic in paper/make_numbers.py: cap e^(2/t) / (e^(2/t) + 100) at each seed's fitted temperature, N-Caltech101 T=2 count, seed mean (results/caltech_calibrators.json)
 \newcommand{\ccCalSize}{1{,}010}% results/caltech_calibrators.json n_cal
 \newcommand{\ccTestSize}{1{,}742}% results/caltech_calibrators.json n_test
 \newcommand{\ccAccumDiffer}{6}% results/caltech_calibrators.json paired, accumulator
@@ -367,6 +368,7 @@
 \newcommand{\ccScaledRuns}{6}% results/caltech_calibrators.json paired, scaled-count
 \newcommand{\ccScaledIso}{1}% results/caltech_calibrators.json paired, scaled-count
 \newcommand{\ccScaledTemp}{2}% results/caltech_calibrators.json paired, scaled-count
+\newcommand{\ccScaledDiffer}{3}% results/caltech_calibrators.json paired, scaled-count: runs resolved under the registered rule
 \newcommand{\ccScaledTie}{3}% results/caltech_calibrators.json paired, scaled-count
 \newcommand{\ccAccumTempTwoW}{0.0528}% results/caltech_calibrators.json ece_equal_width, accumulator, temperature, T=2
 \newcommand{\ccAccumTempTwoM}{0.0504}% results/caltech_calibrators.json ece_equal_mass, accumulator, temperature, T=2
@@ -608,6 +610,8 @@
 \newcommand{\predictionsEverything}{25}% NOTES.md, every prediction and part, 1 to 15
 \newcommand{\predictionsEverythingHeld}{13}% verdict blocks and scripts/dashboard_summary.py early_predictions
 \newcommand{\predictionsEverythingFalsified}{12}% verdict blocks and scripts/dashboard_summary.py early_predictions
+\newcommand{\shWidthMin}{0.93}% results/shared_resample_intervals.json: smallest ratio of shared to independent interval width
+\newcommand{\shWidthMax}{1.54}% results/shared_resample_intervals.json: largest ratio of shared to independent interval width
 \newcommand{\floorNmTwo}{0.5341}% results/ece_floor.json cells, nmnist 32-64 T=2 floor a - p*, seed mean
 \newcommand{\frNmTwoW}{99.17}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio equal_width, mean over seeds, per cent
 \newcommand{\frNmTwoWSd}{0.02}% results/ece_floor.json cells, nmnist 32-64 T=2 floor_ratio equal_width, standard deviation over seeds, percentage points
@@ -796,6 +800,8 @@
 \newcommand{\overNcTwoMinP}{0.54}% results/ece_floor.json runs, N-Caltech101 T=2, distinct: smallest one-sided binomial p-value of an overconfident group (A8)
 \newcommand{\overNcTwoExpMin}{74}% results/ece_floor.json runs, N-Caltech101 T=2: fewest negative-gap groups expected under calibration, per seed (A8)
 \newcommand{\overNcTwoExpMax}{118}% results/ece_floor.json runs, N-Caltech101 T=2: most negative-gap groups expected under calibration, per seed (A8)
+\newcommand{\overNcTwoMaxSize}{25}% results/ece_floor.json runs, N-Caltech101 four blocks T=2, distinct: largest overconfident group, samples
+\newcommand{\overNcTwoSigN}{43}% [DERIVED] arithmetic in paper/make_numbers.py: smallest n with (1 - p*)^n < 0.05 at p* = p*(2, 101)
 \newcommand{\groupsNcTwoMin}{102}% results/ece_floor.json N-Caltech101 T=2: fewest distinct values in a seed
 \newcommand{\groupsNcTwoMax}{154}% results/ece_floor.json N-Caltech101 T=2: most distinct values in a seed
 \newcommand{\emBinsNmTwo}{1}% results/ece_floor.json N-MNIST T=2: effective equal-mass bins, every seed (asserted)
@@ -896,10 +902,15 @@
 \newcommand{\tostNcScaledBothBasicMid}{0}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, equivalent at 0.01 under both, basic intervals (A8)
 \newcommand{\tostNcScaledBothBasicWide}{1}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, equivalent at 0.02 under both, basic intervals (A8)
 \newcommand{\biasNcScaledMax}{0.0065}% results/calibration_metrics.json tost_summary, ncaltech101 scaled-count, largest |mean of draws - point| (A8)
+\newcommand{\biasExceedsTen}{5}% results/calibration_metrics.json tost, ncaltech101 count T=10: tests whose |bias| exceeds |difference|
+\newcommand{\biasTestsTen}{6}% results/calibration_metrics.json tost, ncaltech101 count T=10: tests
+\newcommand{\wideMarginSe}{1.7}% [DERIVED] arithmetic in paper/make_numbers.py: lenient margin / sqrt(0.25 / N-Caltech101 test size), binomial standard errors
+\newcommand{\nmAbsDiffMax}{0.0061}% results/calibration_metrics.json tost, N-MNIST: largest |isotonic - temperature| ECE difference, either estimator
 \newcommand{\penalisedTop}{159}% results/calibration_metrics.json clipped.penalised_top_label (A8)
 \newcommand{\maxCalEceNm}{0.0070}% results/calibration_metrics.json rows, nmnist two blocks count, calibrated arms: largest ECE under either estimator
 \newcommand{\ewExclNm}{2}% results/calibration_metrics.json tost, N-MNIST: equal-width 95% intervals excluding zero
 \newcommand{\emExclNm}{3}% results/calibration_metrics.json tost, N-MNIST: equal-mass 95% intervals excluding zero
+\newcommand{\emExclTail}{0.04}% [DERIVED] P(at least that many of the N-MNIST runs' 95% intervals exclude zero by chance), binomial with p = 0.05, independent exact intervals (results/calibration_metrics.json tost)
 \newcommand{\cmRows}{225}% results/calibration_metrics.json rows (run and arm)
 \newcommand{\rlMissingRuns}{30}% results/*_record.json against results/calibration_metrics.json rows: runs without stored outputs (membrane and weighted count)
 \newcommand{\scTempNcMin}{1.28}% results/calibration_metrics.json rows, ncaltech101 scaled-count, temperature arm: smallest fitted temperature
@@ -1330,7 +1341,7 @@
 \newcommand{\silentFirstMin}{2}% results/spiking_activity.json cells: smallest share of first-layer neurons never firing, per cent
 \newcommand{\silentFirstMax}{33}% results/spiking_activity.json cells: largest share of first-layer neurons never firing, per cent
 \newcommand{\silentHiddenMax}{0.0}% results/spiking_activity.json cells: largest share of hidden neurons never firing, any seed, per cent
-\newcommand{\rasterNeurons}{32}% NOTES.md A5; results/spiking_activity.json rasters
+\newcommand{\rasterNeurons}{32}% results/spiking_activity.json rasters, neurons shown per hidden layer
 \newcommand{\swNmTwoTwo}{0.9850 & $-$0.5386 & 0.5386 & 0.0018 & 0.9868 & $+$0.0097 & 0.0099 & 0.0034 & 0.9865 & $-$0.0101 & 0.0114 & 0.0028 & 0.9861}% results/same_weights_readouts.json rows, nmnist 2 blocks T=2, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
 \newcommand{\swNmTwoFour}{0.9887 & $-$0.1446 & 0.1447 & 0.0031 & 0.9896 & $+$0.0079 & 0.0083 & 0.0026 & 0.9866 & $-$0.0250 & 0.0251 & 0.0032 & n/a}% results/same_weights_readouts.json rows, nmnist 2 blocks T=4, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
 \newcommand{\swNmTwoSix}{0.9902 & $-$0.0272 & 0.0273 & 0.0026 & 0.9910 & $+$0.0069 & 0.0072 & 0.0029 & 0.9850 & $-$0.0763 & 0.0763 & 0.0029 & 0.9888}% results/same_weights_readouts.json rows, nmnist 2 blocks T=6, seed means: per readout accuracy, conf-acc, ECE w before and after temperature scaling; trained accumulator accuracy from its own experiment
@@ -1568,6 +1579,13 @@
 \newcommand{\scanNcTwoLowM}{0.1107}% results/reweighted_calibration.json runs, count T=2: smallest equal-mass ECE over the temperature grid, lowest seed
 \newcommand{\scanNcTwoMatchLo}{0.1132}% results/reweighted_calibration.json runs, count T=2: equal-width ECE where mean confidence equals accuracy, smallest seed
 \newcommand{\scanNcTwoMatchHi}{0.1209}% results/reweighted_calibration.json runs, count T=2: equal-width ECE where mean confidence equals accuracy, largest seed
+\newcommand{\valGapNcRuns}{36}% results/ncaltech101_*_record.json: runs compared
+\newcommand{\valGapNcMin}{7.0}% results/ncaltech101_*_record.json history at best_epoch; results/calibration_metrics.json: smallest (test - validation) accuracy, points
+\newcommand{\valGapNcMax}{20.4}% results/ncaltech101_*_record.json history at best_epoch; results/calibration_metrics.json: largest (test - validation) accuracy, points
+\newcommand{\ovTrainLossMin}{0.03}% results/ncaltech101_*_record.json: accumulator and scaled-count, train_loss at best_epoch, smallest
+\newcommand{\ovTrainLossMax}{1.18}% results/ncaltech101_*_record.json: accumulator and scaled-count, train_loss at best_epoch, largest
+\newcommand{\ovNllMin}{1.86}% results/calibration_metrics.json rows, ncaltech101 accumulator and scaled-count, uncalibrated: multiclass NLL, smallest
+\newcommand{\ovNllMax}{2.78}% results/calibration_metrics.json rows, ncaltech101 accumulator and scaled-count, uncalibrated: multiclass NLL, largest
 \newcommand{\lsQueries}{18}% results/literature_search.json required_queries
 \newcommand{\lsQueryRows}{481}% results/literature_search.json query_rows
 \newcommand{\lsScreenings}{17{,}234}% results/literature_search.json record_screenings

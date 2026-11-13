@@ -50,23 +50,24 @@ The Calibration Cost of a Known Softmax Bound in Low-Timestep Spiking Networks}
 \maketitle
 
 \begin{abstract}
-Spiking neural networks are often read through a softmax over the spike count of each output
-neuron. Over $T$ timesteps every count lies in $[0,T]$, so the softmax
+Spiking neural networks are often read through a softmax over their output spike counts. Over $T$ timesteps every count lies in $[0,T]$, so the softmax
 cannot exceed $p^{*}=e^{T}/(e^{T}+C-1)$ for $C$ classes, a bound known for normalised and clipped
 logits. We measure what this cap does to calibration on two event-camera datasets, N-MNIST and
-N-Caltech101, at low $T$ with three seeds per setting.
+N-Caltech101, at low $T$ with three seeds each.
 Wherever accuracy $a$ exceeds $p^{*}$, the cap sets a floor of $a-p^{*}$ on expected calibration
 error (ECE) under any binning. At two timesteps this floor is \frNmTwoInt\% of the binned ECE % src: results/ece_floor.json floor_ratio
-on N-MNIST and \frNcTwoInt\% on N-Caltech101. Temperature scaling, which lifts the cap without % src: results/ece_floor.json floor_ratio
-retraining, removes the underconfidence on N-MNIST and most of it on N-Caltech101. An accumulating
-readout or a learned scale, which lift the cap far above accuracy, overshoot into overconfidence on
-N-Caltech101. There, a count readout loses accuracy mostly to coarse, often tied counts. On N-MNIST, where both reach low error, temperature scaling
-and isotonic regression are equivalent within \deltaMid{} ECE; on N-Caltech101, where the count % src: results/calibration_metrics.json deltas, tost_summary
-readout is underconfident, isotonic regression is better in most of those runs and never
-resolved as worse. A count readout emits at most $\binom{T+C-1}{C-1}$ distinct confidences; on N-MNIST at
-two timesteps its ties lower its AUROC below an accumulator reading of the same weights. Nearly half of
-the predictions recorded in advance failed; all are reported. $T$ should be chosen with the cap
-compared against the expected accuracy, and a low-timestep count readout calibrated before use.
+on N-MNIST and \frNcTwoInt\% on N-Caltech101. Temperature scaling lifts the cap without % src: results/ece_floor.json floor_ratio
+changing predictions and removes the underconfidence on N-MNIST and most of it on N-Caltech101.
+An accumulating readout or a learned scale lifts it far above accuracy and overshoots into
+overconfidence on N-Caltech101. There, at two timesteps, no single temperature removes the error,
+and isotonic regression does better in every seed, also after reweighting the calibration set to
+the test classes. The same
+count-trained weights, read through an accumulator, reach an accuracy of \swNcTwoAccumAcc{} % src: results/same_weights_readouts.json
+against \swNcTwoCountAcc{} through their spikes. A count readout emits at most $\binom{T+C-1}{C-1}$ distinct confidences; at two
+timesteps on N-MNIST their ties make it separate right from wrong predictions worse than the
+accumulator reading. Nearly half of the predictions recorded in
+advance failed; all are reported. A low-timestep count readout should be calibrated before use,
+at no cost in accuracy; more timesteps add distinct confidences, which no scale can do.
 \end{abstract}
 
 \noindent{\small\textbf{Keywords:} spiking neural networks; uncertainty calibration; expected calibration
@@ -178,9 +179,14 @@ much of the observed error the floor makes up, or that compares the readouts of 
 network with its weights held fixed. Of the \lsRead{} papers read, \lsReadAbstract{} could be read % src: results/literature_search.json
 only in abstract, two of them closely related~\citep{jurado2023spikemoid,banteywalu2026trustworthy}, and an embargoed
 2026 master's dissertation on the calibration of spiking networks for ordinal classification
-(University of Porto) could not be read at all; it may compare post-hoc calibrators. Nor did we find a comparison of temperature scaling with
-isotonic regression on spiking networks, or a bound on the number of distinct confidences a count
-readout can emit. The comparison of calibrators here is tested against predictions recorded in
+(University of Porto) could not be read at all; it may compare post-hoc calibrators. Jurado et
+al.'s abstract reports that a scaling term gives less coarse probability outputs; their analysis,
+which we could not read, may bear on the bound on distinct confidences below. Nor did we find a comparison
+of temperature scaling with isotonic regression on spiking classifiers by regime or
+calibration-set size; the closest, a spiking graph network for node classification under
+distribution shift, compares multi-class isotonic regression with variants of temperature
+scaling~\citep{ren2026sight}. Nor did we find a bound on the number of distinct confidences a % [LIT] ren2026sight, Section 4.1 (Baselines) and Table 3
+count readout can emit. The comparison of calibrators here is tested against predictions recorded in
 advance, the ones that failed are reported, and every number is published with its provenance.
 
 Code, configurations, run records, result files and figure scripts are available at
@@ -200,7 +206,7 @@ measured calibration error~\citep{kumar2019verified}. % [LIT] kumar2019verified,
 A softmax over logits confined to an interval cannot reach a probability of one, and
 face-recognition work met this when it normalised features and classifier weights. Wang et
 al.\ (NormFace) note that cosine logits in $[-1,1]$ cap the correct-class probability at
-$e/(e+(n-1)e^{-1})$, ``0.45 when $n=10$'', bound the loss to match, and append a scale layer with
+$e/(e+(n-1)e^{-1})$, ``0.45 when $n=10$'', give a lower bound on the loss for normalised features (their Proposition~2), and append a scale layer with
 one learnable parameter as the remedy~\citep{wang2017normface}. % [LIT] wang2017normface, Section 3.2 and Proposition 2
 Zhang et al.\ (AdaCos) state the range for logits in $[0,s]$ as $P\le e^{s}/(e^{s}+C-1)$~\citep{zhang2019adacos}, % [LIT] zhang2019adacos, Eq. (5)
 and Wang et al.\ (CosFace) and Ranjan et al.\ had earlier derived closely related minimum scales
@@ -278,7 +284,7 @@ firing rates. % [LIT] jurado2023spikemoid, abstract; public code github.com/audr
 The calibration of spiking networks at few timesteps has been measured before. Sun, Yin and
 Boht\'e report ECE, Brier score and negative log-likelihood at 1 to 10 timesteps for networks
 read through the membrane potential of readout integrators, with temperature scaling as a
-baseline, and state, without a reported comparison, that this readout estimates uncertainty
+baseline under corruption shift (CIFAR-10-C), and state, without a reported comparison, that this readout estimates uncertainty
 better than the coarse summed-rate readout of the networks they start from, at similar
 accuracy~\citep{sun2023mcdropout}. Yan et al.\ read networks through time-averaged real-valued % [LIT] sun2023mcdropout, Sec. 3.3, Table 3 and Sec. 4.3
 logits and report ECE at each timestep from 1 to 10 on DVS-CIFAR10, and an overall ECE for
@@ -339,9 +345,9 @@ Chen et al.~\citep{chen2025knowing} & softmax over spike counts & 80 & no (cap a
 Li et al.~\citep{li2023dynamic} & accumulator & 4 to 128 & no (unbounded) & confidence against accuracy & temperature scaling of the source network & no \\ % [LIT] li2023dynamic, Sec. 5, Table 1
 Skatchkovsky et al.~\citep{skatchkovsky2022bayesian} & averaged per-step softmax over projected spikes & 50 to 150 & no (cap applies) & ECE, reliability diagrams & none post hoc & no \\ % [LIT] skatchkovsky2022bayesian, Sec. III
 Jang and Simeone~\citep{jang2022multisample} & softmax over vote counts & 80 & no (cap applies) & ECE & none post hoc & no \\ % [LIT] jang2022multisample, Sec. V-C, Fig. 6
-Sun et al.~\citep{sun2023mcdropout} & membrane integrators & 1 to 10 & no (unbounded) & ECE, Brier, NLL & temperature scaling as a baseline & no \\ % [LIT] sun2023mcdropout, Sec. 3.3, 4.3, Table 3
+Sun et al.~\citep{sun2023mcdropout} & membrane integrators & 1 to 10 & no (unbounded) & ECE, Brier, NLL & temperature scaling as a baseline (CIFAR-10-C) & no \\ % [LIT] sun2023mcdropout, Sec. 3.3, 4.3, Table 3
 Katti et al.~\citep{katti2024bayesian} & softmax over accumulated spikes, combined over weight samples & 1 to 16 & no (cap applies to the readout as described) & ECE & none post hoc & no \\ % [LIT] katti2024bayesian, Sec. II, Fig. 5
-Yan et al.~\citep{yan2025temporal} & time-averaged logits & 4 to 10 & no (unbounded) & ECE, adaptive ECE & none post hoc & no \\ % [LIT] yan2025temporal, Sec. 3.2, Tables 1 and 2
+Yan et al.~\citep{yan2025temporal} & time-averaged logits & 1 to 10 & no (unbounded) & ECE, adaptive ECE & none post hoc & no \\ % [LIT] yan2025temporal, Sec. 3.2, Tables 1 and 2
 this study & five readouts & 2 to 10 & yes, as known; floor on ECE & ECE, NLL, Brier, resolution, AUROC & temperature scaling against isotonic regression & yes \\
 \bottomrule
 \end{tabular}
@@ -499,8 +505,11 @@ official test set of \nmSplitTest{} samples. Its training set is split into a tr
 here is the 2022 redistribution of the original data on Mendeley Data, deposited by the dataset's
 first author~\citep{ncaltech101mirror}. Its \ncSplitTotal{} samples are split class by class. % [LIT] ncaltech101mirror, record description and related links; src: results/ncaltech101_T2_seed0_split.npz
 Training uses \ncSplitTrain{} and testing \ncSplitTest; validation uses \ncSplitVal{} and % src: results/ncaltech101_T2_seed0_split.npz
-calibration \ncSplitCal. The calibration set is disjoint from the validation and test % src: results/ncaltech101_T2_seed0_split.npz
-sets. This is asserted on the index sets before any calibrator is fitted, because a calibrator
+calibration \ncSplitCal. The test split takes the same share of every class, with a small floor, % src: results/ncaltech101_T2_seed0_split.npz
+so it follows the class sizes, which differ widely; validation and calibration hold three and ten
+samples of every class. On N-Caltech101 calibrators are therefore fitted on a class distribution
+different from the one they are scored on (Section~\ref{sec:calibrators} examines the effect). The % spikecalib/datasets.py n_val_per_class, n_cal_per_class, test_fraction, test_floor
+calibration set is disjoint from the validation and test sets. This is asserted on the index sets before any calibrator is fitted, because a calibrator
 scored on the data it was fitted to reports its own training error. Splits and calibrator fits
 use CPU random number generators only, so both reproduce exactly.
 
@@ -592,9 +601,11 @@ integrate it without a threshold. With logits $\ell\in\mathbb{R}^C$ passed to th
 \text{membrane:}\quad & \ell=v_T,\ \ v_t=v_{t-1}+\tfrac{z_t-v_{t-1}}{\tau},\ v_0=0, & \text{unbounded}.
 \end{align}
 The weighted count has exactly the count's cap but can take more distinct values, so it
-separates the cap from the granularity of the output in part. The accumulator differs from the
+partly separates the cap from the granularity of the output. The accumulator differs from the
 count readout by the output LIF neuron, that is by its leak, threshold and reset, and from the
-membrane readout only by the leak. The scaled
+membrane readout by the leak and the membrane's input factor $1/\tau$, which together shrink the
+logits (at $T=2$ and $\tau=2$ the membrane weights $z_1$ and $z_2$ by $1/4$ and $1/2$), so on fixed
+weights the membrane acts in part as a temperature above one. The scaled
 count is the count with one learnable logit scale $s=e^{\theta}$, trained by the same optimiser at
 the same learning rate; it starts from the count readout exactly. It is the remedy of Wang et
 al.\ (NormFace)~\citep{wang2017normface}, applied earlier to spiking readouts as learned scales
@@ -676,7 +687,11 @@ share their resamples and are not independent replications.
 
 \paragraph{The registered rule.} \emph{Two calibrators are said to differ on a run only if that % rule: NOTES.md, fixed 2026-10-13; spikecalib/calibration.py paired_verdict
 interval excludes zero under both binning schemes, in the same direction.} The rule was fixed
-before any calibrator was fitted on N-Caltech101. Its registered wording calls every other
+before any calibrator was fitted on N-Caltech101 and before any calibration subsample was drawn.
+It was written after the N-MNIST sweep, from the observation that the N-MNIST runs whose interval
+excludes zero under one estimator are not those that do under the other
+(Appendix~\ref{app:predictions}), so on N-MNIST it describes that outcome and tests nothing; it
+is a rule fixed in advance only for N-Caltech101 and the calibration-size experiment. Its registered wording calls every other
 outcome a tie; this paper calls such outcomes not resolved, because an interval that includes
 zero does not show that two calibrators are equal. The rule is a deliberately conservative
 intersection: the two estimators are different functionals of the same outputs, and requiring
@@ -690,11 +705,13 @@ recorded in NOTES.md before any was computed, and all three are reported. The re
 resamples reproduce every stored 95\% interval exactly. The strict margin is of the order of
 N-MNIST's ECE after temperature scaling and of a few binomial standard errors of its accuracy;
 the middle margin, one percentage point of ECE, is a conventional practical margin; the lenient
-margin is of the order of one binomial standard error of an accuracy near one half on the
-N-Caltech101 test set. Every calibrated N-MNIST ECE is below the middle margin (the largest is % src: results/calibration_metrics.json rows
-\maxCalEceNm), so on N-MNIST equivalence within \deltaMid{} follows once both calibrators reach a
-low error and does not say which is better; there the strict margin is the informative one, and
-the test concerns ECE only.
+margin is about \wideMarginSe{} binomial standard errors of an accuracy near one half on the % [DERIVED] paper/make_numbers.py wideMarginSe
+\ncSplitTest-sample N-Caltech101 test set. Every calibrated N-MNIST ECE is below the middle margin (the largest is % src: results/calibration_metrics.json rows
+\maxCalEceNm). Because ECE is never negative, two calibrated errors that both stay below a margin
+differ by less than it, so on N-MNIST equivalence within \deltaMid{} follows once both calibrators
+reach a low error, and the strict margin too mainly records whether the larger error is below
+about \deltaStrict. On N-MNIST the informative quantity is therefore the size of the difference,
+and none of these tests says which calibrator is better. The tests concern ECE only.
 
 \paragraph{Bootstrap construction, added after review, not pre-registered.} Binned ECE is biased
 upwards, so the bootstrap distribution of a difference in ECE can be off-centre, and the coverage
@@ -704,24 +721,34 @@ intervals, $[2d-q_{1-\alpha/2},\,2d-q_{\alpha/2}]$ for a point difference $d$. T
 intervals remain the primary results; Section~\ref{sec:calibrators} reports where the two
 constructions disagree. The bias, the mean of the resampled differences minus the point
 difference, is at most \biasNmMax{} in magnitude on N-MNIST and up to \biasNcCountMax{} for the % src: results/calibration_metrics.json tost_summary, A8
-N-Caltech101 count readout, where at $T=10$ it exceeds the differences it accompanies. The same
-bias affects the percentile intervals of a single ECE, which lie above the estimate and can
-exclude it, and those of the floor ratio, which lie below it (Table~\ref{tab:floor}).
+N-Caltech101 count readout, where at $T=10$ it exceeds the difference it accompanies in % src: results/calibration_metrics.json tost
+\biasExceedsTen{} of the \biasTestsTen{} tests. The same bias affects the percentile intervals of a
+single ECE, which lie above the estimate and can exclude it, and those of the floor ratio, which
+are shifted below it (Table~\ref{tab:floor}). Near zero error the binned ECE is a non-smooth
+function of the gaps, so neither construction has assured coverage there.
 
 \paragraph{Multiplicity.} No correction for multiple comparisons is applied. Each run's interval
 and test are reported separately, the number of tests is stated beside each family, and the
 conclusions rest on patterns across runs, seeds and estimators. Of \runsTotal{} intervals per % src: results/sweep_nmnist.csv
 estimator at a 95\% level, about \expectedFalse{} would exclude zero by chance alone. % [DERIVED] paper/make_numbers.py
 On N-MNIST \emExclNm{} equal-mass intervals exclude zero, all in favour of isotonic regression, and % src: results/calibration_metrics.json tost
-\ewExclNm{} equal-width intervals do. The equal-mass exclusions are more than chance alone would
-give, so they are better read as small real differences in that binned functional, which the
-middle margin bounds and the strict margin does not (Section~\ref{sec:calibrators}).
+\ewExclNm{} equal-width intervals do. If the intervals were independent and exact, which they are
+not, at least \emExclNm{} exclusions would arise by chance with probability \emExclTail. The two % [DERIVED] paper/make_numbers.py emExclTail
+equal-mass exclusions at $T=4$, where equal-mass binning forms at most two bins, fall outside the
+strict margin, and the one at $T=8$ falls inside it (Section~\ref{sec:calibrators}).
 
 \paragraph{Intervals on means.} Table~\ref{tab:floor} gives means over seeds with their standard
 deviations and intervals; Tables~\ref{tab:readouts}, \ref{tab:scaled} and \ref{tab:calibrators}
 give seed means, and Appendix~\ref{app:runlevel} gives the runs behind them. Where an interval is
-given for a mean over seeds, each resample redraws every seed's test set with that seed's
-generator and averages the statistic over seeds. Every interval in the paper therefore covers
+given for a mean over seeds, the statistic is averaged over seeds on each resample. Every N-MNIST
+seed is tested on the same official test set in the same order, so each resample draws one set of
+test indices and applies it to all three seeds; each N-Caltech101 seed has its own test split,
+which is resampled with that seed's generator. The N-MNIST intervals were first computed with an
+independent resample per seed, which treats one test set as three and makes the intervals too
+narrow. They were recomputed with the shared resample after a second internal review, which is % src: results/shared_resample_intervals.json
+not pre-registered, with the construction fixed in NOTES.md beforehand. The shared intervals are % src: results/shared_resample_intervals.json
+\shWidthMin{} to \shWidthMax{} times as wide as the independent ones, and every conclusion drawn
+from them stands. Every interval in the paper therefore covers
 test-set sampling only: the trained network and the fitted calibrator are held fixed, so
 variation from training and from the calibration set is not included. The calibration-size
 experiment of Section~\ref{sec:calibrators} varies the calibration set, and the spread over seeds
@@ -866,36 +893,40 @@ The ratio is high because mean confidence sits just below the cap and almost no 
 overconfident. At $T=2$ mean confidence is \pbarNmTwo{} against a cap of \ceilTenTwo{} on N-MNIST, % src: results/ece_floor.json cells
 and \pbarNcTwo{} against \ceilHundredOneTwo{} on N-Caltech101; the shortfall $p^{*}-\bar p$ is % src: results/ece_floor.json cells
 nearly all of the gap between floor and ECE, and the overconfidence term is at most % [DERIVED] paper/make_numbers.py
-\overShareMax\% of ECE in any run where the cap binds. On N-MNIST at $T=2$, at most \overNmTwoMaxBins{} bin is overconfident % src: results/ece_floor.json
+\overShareMax\% of ECE under either binned estimator in any run where the cap binds. On N-MNIST at $T=2$, at most \overNmTwoMaxBins{} bin is overconfident % src: results/ece_floor.json
 in any seed, holding \overNmTwoShare\% of the test samples. On N-Caltech101 at $T=2$ no
 equal-width or equal-mass bin is overconfident in any seed, so ECE equals $a-\bar p$ there.
 Proposition~\ref{prop:floor} does not require this: accuracy above the cap does not force every
 group to be underconfident. Grouped by distinct value, every N-Caltech101 seed at $T=2$ has
 groups whose accuracy is below their confidence, \overNcTwoDistinctMin{} to % src: results/ece_floor.json
 \overNcTwoDistinctMax{} of them, holding at most \overNcTwoDistinctShare\% of the samples. They % src: results/ece_floor.json
-are what sampling noise produces in groups this small (added after review, not pre-registered).
-The median such group holds \overNcTwoMedianSize{} samples, none is significantly overconfident % src: results/ece_floor.json runs, distinct, A8
-(the smallest one-sided binomial p-value is \overNcTwoMinP), and every seed has fewer of them % src: results/ece_floor.json runs, distinct, A8
-than the \overNcTwoExpMin{} to \overNcTwoExpMax{} expected if each group's accuracy equalled its % src: results/ece_floor.json runs, distinct, A8
-confidence. The distinct-value estimate is larger than the binned ones because its groups are
+are consistent with sampling noise, but these data cannot show it. The median such group holds % src: results/ece_floor.json runs, distinct, A8
+\overNcTwoMedianSize{} samples and the largest \overNcTwoMaxSize, and with every confidence at most % src: results/ece_floor.json runs, distinct
+$p^{*}$ a group needs at least \overNcTwoSigN{} samples before even zero correct predictions % [DERIVED] paper/make_numbers.py overNcTwoSigN
+would be significant at the 5\% level. Proposition~\ref{prop:floor} does not depend on these
+groups. The distinct-value estimate is larger than the binned ones because its groups are
 small, and gives a floor ratio of \frNcTwoD\%.
 
 As the cap rises towards accuracy the floor shrinks. On N-MNIST it is \frNmFourW\% of the % src: results/ece_floor.json
 equal-width ECE at $T=4$ and \frNmSixW\% at $T=6$, and it is zero wherever the cap is slack: at % src: results/ece_floor.json
 $T=8$ and 10 on N-MNIST, and at $T=6$ and 10 on N-Caltech101. Error that remains in those settings has
 some other cause. The floor is a lower bound. It says how much error the readout forces, and it
-does not say that the cap is the only source of error. That the cap also causes the error it bounds is supported by
-the interventions that lift it on the same weights while changing nothing else of consequence:
-temperature scaling, and the accumulator reading of the count-trained weights
-(Sections~\ref{sec:readouts} and~\ref{sec:calibrators}).
+does not say that the cap is the only source of error. That the cap also causes the error it
+bounds is supported by temperature scaling, which lifts it while keeping the weights, the
+predictions and the grouping of confidences (Section~\ref{sec:calibrators}). The accumulator
+reading of the count-trained weights also lifts it and reverses the sign of the miscalibration
+(Section~\ref{sec:readouts}), but it changes the predictions as well, so it supports the causal
+reading without isolating the cap.
 
 \begin{table}[t]
 \centering
 \caption{The floor $a-p^{*}$ as a share of the observed ECE, count readout, in every setting where
 accuracy exceeds the cap; added after review, not pre-registered. Ratios are the mean over three
 seeds in per cent, with the standard deviation over seeds and a test-set bootstrap 95\% interval
-of the mean; because binned ECE is biased upwards under resampling, these percentile intervals
-lie below the ratio and can exclude it. The column ``distinct'' groups the samples by confidence value.}
+of the mean, with one resample shared by the three N-MNIST seeds, which share a test set
+(Section~\ref{sec:stats}). Because binned ECE is biased upwards under resampling, these percentile
+intervals are shifted below the ratio; for the distinct-value grouping, whose intervals are not
+shown, they can exclude it. The column ``distinct'' groups the samples by confidence value.}
 \label{tab:floor}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
@@ -937,11 +968,11 @@ the direction. Of the \slackSettings{} settings in which it is slack, the count 
 underconfident in \slackUnder{}, and is overconfident only at $T=10$ on N-Caltech101, by % src: results/ece_floor.json cells
 \ncCountTenConfAcc. % src: results/caltech_experiment.json
 
-The weighted count isolates the cap from granularity. It shares the count's cap exactly but
+The weighted count separates the cap from granularity in part. It shares the count's cap exactly but
 takes \roWcLevels{} distinct confidence values at $T=2$, against \roCountLevels{} for the count. % src: results/readout_experiment.json n_distinct
 Its ECE does not change (Table~\ref{tab:readouts}), so twice the granularity leaves the % src: results/readout_experiment.json
 underconfidence where it was. The stronger evidence is temperature scaling, which keeps the count
-readout's values and grouping and still removes the underconfidence on N-MNIST
+readout's grouping of samples and its predictions and still removes the underconfidence on N-MNIST
 (Section~\ref{sec:calibrators}).
 
 Removing the cap can remove the underconfidence and expose the opposite failure, but it is not
@@ -1026,7 +1057,7 @@ count is a separately trained network, so its number of distinct confidence valu
 the count readout's: it emits \levelsScMinNmTwo{} to \levelsScMaxNmTwo{} values per seed against % src: results/resolution_experiment.json check rows
 \levelsCtMinNmTwo{} to \levelsCtMaxNmTwo{}, both within the bound of Equation~\eqref{eq:levels}. % src: results/resolution_experiment.json check rows
 
-On N-Caltech101 the scale does not calibrate; it changes the sign. Mean confidence minus accuracy is
+On N-Caltech101 the learned scale turns the underconfidence into overconfidence. Mean confidence minus accuracy is
 \gapScNcTwo{} at $T=2$ and \gapScNcSix{} at $T=6$, positive in all \scRunsNc{} runs. At $T=6$ % src: results/scaled_count_experiment.json; asserted in paper/make_numbers.py
 neither cap binds, and the count readout's underconfidence of \residNcFourSix{} is not forced by % src: results/arch_matched.json
 the bound. Freeing the logit range removes it, so it appears to be an effect of the bounded range
@@ -1034,7 +1065,10 @@ on what the network learns. What replaces it is overconfidence of similar size. 
 afterwards on the held-out calibration split divides the learned logits by a further % src: results/calibration_metrics.json rows, temperature
 \scTempNcMin{} to \scTempNcMax, so the scale learned on training data is larger than the one that
 fits held-out data, as would be expected where the network fits its training data much better
-than data it has not seen. Lifting the cap far above accuracy, by removing it or by a learned
+than data it has not seen. Part of that factor could come from the class-balanced calibration set
+(Section~\ref{sec:data}); fitted with the calibration set reweighted to the test classes, it is % src: results/reweighted_calibration.json runs, scaled-count
+\rwScTempMin{} to \rwScTempMax, still above one in every run (added after a second internal
+review, not pre-registered). Lifting the cap far above accuracy, by removing it or by a learned
 scale, leaves every accumulator and scaled-count run on this dataset overconfident; the leaky
 membrane, also unbounded, stays underconfident (Section~\ref{sec:readouts}).
 
@@ -1131,25 +1165,26 @@ lifts the cap, since the fitted temperature is below one, and removes the underc
 confidence minus accuracy goes from \gapCalNmTwoUnc{} to \gapCalNmTwoTemp. Which calibrator is % src: results/calibration_metrics.json rows
 used matters much less there.
 
-\paragraph{N-MNIST: equivalent in ECE within a margin.} The prediction recorded on 2026-09-10, before any
+\paragraph{N-MNIST: both calibrators reach low error.} The prediction recorded on 2026-09-10, before any
 calibrator was fitted to a trained model, was that temperature scaling would match or beat
 isotonic regression at every $T$, with no isotonic advantage resolvable under equal-width binning
 (Appendix~\ref{app:predictions} quotes it). Under equal-width binning isotonic regression is
-better at $T=6$, seed~0, so the prediction failed as written. Its substance, that the two do not differ % src: results/sweep_nmnist.csv iso_minus_temp_resolvable
-appreciably, is supported by the equivalence tests below. Under the registered rule no N-MNIST run is resolved, because
+better at $T=6$, seed~0, so the prediction failed as written. Under the rule of % src: results/sweep_nmnist.csv iso_minus_temp_resolvable
+Section~\ref{sec:stats}, which was written after these results, no N-MNIST run is resolved, because
 the runs whose interval excludes zero under one estimator are disjoint from those under the other
 (Figure~\ref{fig:paired}): \resolveEither{} runs resolve under one estimator and \resolveBoth{} % src: results/sweep_nmnist.csv
 under both. A difference that is not resolved is not an equivalence, so equivalence was tested
 directly (added after review, not pre-registered). Within a margin of \deltaMid{} ECE the two % src: results/calibration_metrics.json deltas
 calibrators are equivalent in every N-MNIST run under both estimators. Within the strict margin of % src: results/calibration_metrics.json tost_summary
 \deltaStrict, \tostNmBothStrict{} of the \tostNmRuns{} runs are. Since every calibrated N-MNIST % src: results/calibration_metrics.json tost_summary
-ECE is below \deltaMid, the informative statements are the strict margin and the size of the
-difference. With \nmSplitCal{} calibration samples, the largest endpoint of any run's 90\% % src: results/nmnist_T2_seed0_split.npz
+ECE is at most \maxCalEceNm, these tests mainly restate that both errors are small % src: results/calibration_metrics.json rows
+(Section~\ref{sec:stats}). In absolute terms the two calibrated ECEs differ by at most % src: results/calibration_metrics.json tost
+\nmAbsDiffMax{} in any run under either estimator. The largest endpoint of any run's 90\% % src: results/calibration_metrics.json tost
 interval is \tostNmWidest{} in magnitude with percentile intervals (Figure~\ref{fig:paired}) and % src: results/calibration_metrics.json tost
-\tostNmWidestBasic{} with basic intervals, which is above every calibrated N-MNIST ECE; these % src: results/calibration_metrics.json tost, A8
+\tostNmWidestBasic{} with basic intervals, the latter above every calibrated N-MNIST ECE; these % src: results/calibration_metrics.json tost, A8
 intervals hold the fitted calibrators fixed. The runs that fail the strict margin are the three at $T=4$ % src: results/calibration_metrics.json tost
 under equal-mass binning, where isotonic regression is ahead in every seed, by \emFourIsoMin{} to % src: results/calibration_metrics.json tost; asserted in paper/make_numbers.py
-\emFourIsoMax. At $T=2$ both calibrated outputs fall into a single equal-mass bin in every seed, % src: results/calibration_metrics.json rows; asserted in paper/make_numbers.py
+\emFourIsoMax, against the direction the prediction gave. At $T=2$ both calibrated outputs fall into a single equal-mass bin in every seed, % src: results/calibration_metrics.json rows; asserted in paper/make_numbers.py
 so the equal-mass half of each comparison there concerns mean confidence only, $|a-\bar p|$. The study's starting hypothesis, that
 isotonic regression's extra capacity would win by a margin growing as $T$ falls, fails under ECE.
 At $T=2$ temperature scaling is ahead on average, by \isoMinusTempTwoW{} under equal-width % src: results/sweep_nmnist.csv
@@ -1167,16 +1202,22 @@ percentile intervals. Within \deltaStrict, \tostNmBothBasicStrict{} runs rather 
 The registered-rule outcome on N-MNIST therefore depends on how the interval is built, while
 equivalence within \deltaMid{} does not (\tostNmBothBasicMid{} of \tostNmRuns). % src: results/calibration_metrics.json tost_summary, A8
 
-\paragraph{N-Caltech101: isotonic regression is better where one temperature leaves a large error.} The prediction,
+\paragraph{N-Caltech101: isotonic regression is better for the underconfident count readout.} The prediction,
 recorded before any calibrator was fitted on this dataset, was that the two would not be resolved
 in at least 7 of 9 count-readout runs. They differ under the registered rule in % src: results/caltech_calibrators.json prediction_10
 \ncDiffer{} of 9, and the prediction failed. Every difference favours isotonic regression: all
 3 seeds at $T=2$ and \ncDifferSix{} of 3 at $T=6$ (Table~\ref{tab:caltechcal} in % src: results/caltech_calibrators.json
 Appendix~\ref{app:caltechcal}). At $T=2$ temperature scaling takes ECE from \hdNcTwoUncW{} to % src: results/calibration_metrics.json headline.ece
 \hdNcTwoTempW. Isotonic regression takes it to \hdNcTwoIsoW, with an interval of % src: results/calibration_metrics.json headline.ece
-\hdNcTwoIsoWLo{} to \hdNcTwoIsoWHi. The fitted temperature, \ccTemperatureTwo, lifts the cap well above accuracy, % src: results/caltech_calibrators.json temperature
-yet temperature scaling removes only \tempRemovesNcTwo\% of the underconfidence; the error that % [DERIVED] paper/make_numbers.py
-remains is one that no single scale removes (Figure~\ref{fig:reliability}). No N-Caltech101
+\hdNcTwoIsoWLo{} to \hdNcTwoIsoWHi. The fitted temperature, \ccTemperatureTwo, lifts the cap to % src: results/caltech_calibrators.json temperature
+about \capAtTempNcTwo, above the accuracy of \ccAccTwo, yet temperature scaling removes only % [DERIVED] paper/make_numbers.py capAtTempNcTwo; src: results/caltech_calibrators.json
+\tempRemovesNcTwo\% of the underconfidence. No single temperature removes the error that remains. % [DERIVED] paper/make_numbers.py
+A scan of temperatures on the test set itself, which uses the test labels and so bounds what any
+single temperature could reach, finds none with an equal-width ECE below \scanNcTwoLowW{} in any % src: results/reweighted_calibration.json runs, scan
+seed, or an equal-mass ECE below \scanNcTwoLowM; the temperature that brings mean confidence to % src: results/reweighted_calibration.json runs, scan
+accuracy leaves an equal-width ECE of \scanNcTwoMatchLo{} to \scanNcTwoMatchHi{} (added after a % src: results/reweighted_calibration.json runs, scan
+second internal review, not pre-registered). One temperature can match mean confidence to
+accuracy, but not the accuracy at each confidence value (Figure~\ref{fig:reliability}). No N-Caltech101
 count run is equivalent within \deltaMid. Within the lenient margin of \deltaWide, % src: results/calibration_metrics.json tost_summary
 \tostNcCountBothWide{} of the 9 are. The \ncDiffer{} resolved runs are all at $T=2$ and $T=6$, where the count readout is
 underconfident; the cap binds only at $T=2$. The basic interval leaves the same \tostNcCountDifferBasic{} % src: results/calibration_metrics.json tost_summary, A8
@@ -1185,9 +1226,35 @@ rules agree at $T=2$: isotonic regression has the lower top-label Brier score in
 \brierNcTwoIso{} against \brierNcTwoTemp{} as seed means. The log loss, which is infinite for isotonic
 regression wherever it outputs a certainty that is wrong, is not used to rank the two. At $T=10$, where the readout is overconfident, the calibrators are not resolved in any % src: results/calibration_metrics.json tost_summary
 of the three runs. For the accumulator the calibrators differ in \ccAccumDiffer{} of \ccAccumRuns{} % src: results/caltech_calibrators.json paired, accumulator
-runs (\tostNcAccumDifferBasic{} with basic intervals), each time in favour of isotonic regression; the accumulator is overconfident, so the
-advantage is not tied to the direction of miscalibration. The calibration set here is \ccCalSize{} % src: results/caltech_calibrators.json n_cal
-samples, ten per class, so this result rests on nine runs of one architecture.
+runs (\tostNcAccumDifferBasic{} with basic intervals), each time in favour of isotonic regression. % src: results/calibration_metrics.json tost_summary, A8
+For the learned scale, also overconfident, they differ in \ccScaledDiffer{} of \ccScaledRuns{} runs: % src: results/caltech_calibrators.json paired, scaled-count
+temperature scaling is better in \ccScaledTemp{} ($T=2$, seed~1; $T=6$, seed~2) and isotonic % src: results/caltech_calibrators.json paired, scaled-count; asserted in paper/make_numbers.py
+regression in \ccScaledIso{} ($T=2$, seed~2). An isotonic advantage is therefore not confined to
+underconfident readouts, and it is not general either. The calibration set here is \ccCalSize{} % src: results/caltech_calibrators.json n_cal
+samples, ten per class, and these results rest on nine runs of one architecture per readout.
+
+\paragraph{The class distribution of the calibration set.} The N-Caltech101 calibration set holds
+ten samples of every class, while the test set follows the class sizes (Section~\ref{sec:data}).
+The count readout at $T=2$ is right on \calAccNcTwo{} of the calibration samples, against % src: results/reweighted_calibration.json runs
+\ccAccTwo{} of the test samples, so calibrators fitted there learn a lower accuracy than the one they % src: results/caltech_calibrators.json test_accuracy
+are scored against. Every calibrator was therefore refitted with each calibration sample weighted
+by the ratio of its class's share of the test set to its share of the calibration set (weights % src: results/reweighted_calibration.json runs
+\rwWeightMin{} to \rwWeightMax; the weighted calibration accuracy is \calAccRwNcTwo) and scored on % src: results/reweighted_calibration.json runs
+the same test sets (added after a second internal review, not pre-registered; settings in NOTES.md).
+For the count readout at $T=2$ isotonic regression stays better in every seed, with an equal-width % src: results/reweighted_calibration.json runs
+ECE of \rwNcTwoIsoW{} against \rwNcTwoTempW{} for the reweighted temperature. That temperature, % src: results/reweighted_calibration.json runs
+\rwTempNcTwoMin{} to \rwTempNcTwoMax, removes \rwTempRemovesNcTwo\% of the underconfidence instead % src: results/reweighted_calibration.json runs; [DERIVED] paper/make_numbers.py
+of \tempRemovesNcTwo\%, so most of the shortfall left by the balanced fit came from the calibration
+set; the scan above, which does not use the calibration set, still finds no temperature below
+\scanNcTwoLowW. Over the nine count runs isotonic regression is better in \rwCountIso{} instead of % src: results/reweighted_calibration.json summary
+\ncDiffer, and temperature scaling in \rwCountTemp. For the accumulator isotonic regression is % src: results/reweighted_calibration.json summary
+better in \rwAccumIso{} of \rwAccumRuns{} runs instead of \ccAccumDiffer; for the learned scale % src: results/reweighted_calibration.json summary
+isotonic regression is better in \rwScaledIso{} and temperature scaling in \rwScaledTemp{} of % src: results/reweighted_calibration.json summary
+\rwScaledRuns. Of the \rwCalibrated{} calibrator fits on these runs, \rwUnderUnw{} are % src: results/reweighted_calibration.json summary
+underconfident on the test set when fitted on the balanced set and \rwUnderRw{} when reweighted. % src: results/reweighted_calibration.json summary
+The isotonic advantage for the count readout at $T=2$ and the error no single temperature removes
+hold; the isotonic advantage for the accumulator mostly does not, and much of the underconfidence
+left after calibration on this dataset reflects the calibration set rather than the readout.
 
 \paragraph{With little calibration data the balance shifts.} On N-MNIST at $T=2$ the calibration
 set was subsampled to 100 and to 1,000 samples, \csDraws{} stratified draws per seed and size. % src: results/calibration_size_experiment.json draws
@@ -1255,7 +1322,8 @@ they emit between \levelsObsMinNmTwo{} and \levelsObsMaxNmTwo{} values, of a pos
 \levelsTenTwo. % [DERIVED] paper/make_numbers.py
 
 \paragraph{At $T=2$, binned resolution cannot separate the readouts; AUROC can, and ties decide it.} The prediction
-was that on N-MNIST at $T=2$, where the count readout and the accumulator have the same accuracy,
+was that on N-MNIST at $T=2$, where the count readout and the accumulator have nearly the same % src: results/readout_experiment.json T=2 test_accuracy
+accuracy (\roCountAcc{} and \roAccAcc),
 the count readout's resolution term would be below the accumulator's in all twelve comparisons
 across estimators, scales and calibrators. It is below in \nineBelow{} of \nineTotal{}, and the % src: results/resolution_experiment.json prediction_9
 prediction is \verdictNine. Under equal-width binning the two resolutions are \resCountW{} and % src: results/resolution_experiment.json
@@ -1275,12 +1343,13 @@ review, not pre-registered). The AUROC of the accumulator reading is \swrAurocAc
 paired difference from the count readout is \swrAurocDiff. The test-set 95\% interval of that % src: results/same_weights_ranking.json summary
 difference runs from \swrAurocDiffLo{} to \swrAurocDiffHi. The deficit therefore belongs to the readout. It comes from % src: results/same_weights_ranking.json summary
 ties. The count readout gives the same confidence to \pairsCountTied\% of correct and wrong % src: results/same_weights_ranking.json summary, pairs
-pairs, each of which counts one half; it orders only \pairsCountReversed\% of pairs wrongly, % src: results/same_weights_ranking.json summary, pairs
-fewer than the \pairsAccSwReversed\% of the accumulator reading. At larger $T$ the order between % src: results/same_weights_ranking.json summary, pairs
+pairs, each of which counts one half, and orders \pairsCountReversed\% wrongly; the accumulator % src: results/same_weights_ranking.json summary, pairs
+reading leaves almost no pair unordered and orders \pairsAccSwReversed\% wrongly. At larger $T$ the order between % src: results/same_weights_ranking.json summary, pairs
 separately trained readouts reverses: with two blocks, at $T=6$ and $T=10$ the count readout's
 AUROC is the higher in all \aurocSeedsSixTen{} runs (three seeds at each $T$), by \aurocDiffSix{} and \aurocDiffTen{} on % src: results/calibration_metrics.json rows
 average. Over the three seeds the $t$-interval at $T=10$, \aurocDiffTenTLo{} to \aurocDiffTenTHi, % src: results/calibration_metrics.json rows
-excludes zero, and the one at $T=6$, \aurocDiffSixTLo{} to \aurocDiffSixTHi, does not. % src: results/calibration_metrics.json rows; asserted in paper/make_numbers.py
+excludes zero, and the one at $T=6$, \aurocDiffSixTLo{} to \aurocDiffSixTHi, does not; these two
+intervals are exploratory and were not in the fixed plan. % src: results/calibration_metrics.json rows; asserted in paper/make_numbers.py
 
 \paragraph{What the calibrators did to it.} Grouped by exact value, the count readout's
 resolution on N-MNIST at $T=2$ is \resCountExact, over \groupsCountExactMin{} to % src: results/resolution_experiment.json exact
@@ -1289,7 +1358,8 @@ regression merges the groups to \groupsCountIsoMin{} to \groupsCountIsoMax{} and
 resolution to \resCountExactIso, which Section~\ref{sec:bound} allows, since it cannot rise. Temperature scaling does % src: results/resolution_experiment.json exact
 change the ranking, and alters the AUROC in \aurocMovedCells{} of the \aurocCells{} count-readout % src: results/resolution_experiment.json auroc
 cells, by at most \aurocMovedMax. Galil et al.\ report that temperature scaling changes the % src: results/resolution_experiment.json auroc
-ranking of image classifiers, usually for the better~\citep{galil2023selective}. % [LIT] galil2023selective, Section 3
+order an image classifier's confidence induces on its predictions, usually improving
+AUROC~\citep{galil2023selective}. % [LIT] galil2023selective, Section 3
 
 \subsection{Selective prediction (RQ5)}
 \label{sec:selective}
@@ -1312,23 +1382,31 @@ input alone.
 \label{sec:discussion}
 
 \paragraph{Practical implications.} Each recommendation below rests on the result named beside it.
-Before choosing $T$ for a count readout, compare the cap $p^{*}(T,C)$ with the accuracy the
-model is expected to reach; where the accuracy is higher, the readout cannot be calibrated as
-trained, and Equation~\eqref{eq:tmin} gives the smallest $T$ that removes the floor
-(Proposition~\ref{prop:floor}, Section~\ref{sec:explains}). At low $T$, calibrate post hoc before
-using the confidence: at $T=2$ the floor is nearly all of the observed error, and temperature
-scaling removes it on N-MNIST (Section~\ref{sec:calibrators}). Where the cap binds hard and the
-classes are many, as on N-Caltech101 at $T=2$, prefer isotonic regression if there are enough
-calibration samples, since a single temperature leaves much of the error; with very few samples,
-temperature scaling is the safer choice (Section~\ref{sec:calibrators}). Do not lift the cap with
-a learned scale or an unbounded readout and assume the result is calibrated: on N-Caltech101 both
-overshoot into overconfidence (Sections~\ref{sec:readouts} and~\ref{sec:scale}). When reporting
-calibration of a count readout, give reliability by distinct confidence value with an interval
+The raw softmax of a count readout cannot exceed $p^{*}(T,C)$, so where the expected accuracy is
+higher the readout cannot be calibrated as trained (Proposition~\ref{prop:floor},
+Section~\ref{sec:explains}). Equation~\eqref{eq:tmin} gives the logit width $sT$ that removes the
+floor, and a scale reaches it without adding timesteps: temperature scaling on held-out data,
+which changes no prediction, took the N-MNIST ECE at $T=2$ from \hdNmTwoUncW{} to \hdNmTwoTempW{} % src: results/calibration_metrics.json headline.ece
+(Section~\ref{sec:calibrators}). A low-timestep count readout should therefore be calibrated before
+its confidence is used. More timesteps help with what no scale changes: the number of distinct
+confidences, at most $\binom{T+C-1}{C-1}$, and the ties among them, which cost ranking
+(Sections~\ref{sec:bound} and~\ref{sec:resolution}). Where one temperature leaves a large error,
+as for the count readout on N-Caltech101 at $T=2$, top-label isotonic regression fitted on ten
+samples per class did better in every seed, also with the calibration set reweighted to the test
+classes, though it returns no class distribution. For the accumulator and the learned scale its
+advantage was weaker and depended on the calibration set, and on N-MNIST at $T=2$ with 100
+calibration samples temperature scaling was the safer choice (Section~\ref{sec:calibrators}).
+Where the output layer's input can be read, reading the same count-trained weights through an
+accumulator raised N-Caltech101 accuracy at $T=2$ from \swNcTwoCountAcc{} to \swNcTwoAccumAcc{} % src: results/same_weights_readouts.json
+and N-MNIST AUROC at $T=2$ from \hdAurocCount{} to \swrAurocAccum{} (Sections~\ref{sec:readouts} % src: results/calibration_metrics.json headline.auroc; results/same_weights_ranking.json summary
+and~\ref{sec:resolution}; exploratory). Do not lift the cap with a learned scale or an unbounded
+readout and assume the result is calibrated: on N-Caltech101 both overshoot into overconfidence
+(Sections~\ref{sec:readouts} and~\ref{sec:scale}). When reporting the calibration of a count
+readout with few distinct values, give reliability by distinct confidence value with an interval
 for each, since equal-mass bins may collapse to a single bin and equal-width bins can mix values
-whose accuracies differ (Section~\ref{sec:explains}, Figure~\ref{fig:reliability}). Where ranking
-matters, as in selective prediction, note that the ties of a low-timestep count readout cost
-AUROC even where its ordering is sound; on N-MNIST at $T=2$ an accumulator reading the same weights
-ranks better (Section~\ref{sec:resolution}).
+whose accuracies differ (Section~\ref{sec:explains}, Figure~\ref{fig:reliability}); with many
+classes the groups are small and that estimate is biased upwards, so the binned estimates belong
+beside it.
 
 \paragraph{Other bounded readouts (an implication).} The lemma of
 Equation~\eqref{eq:lemma} needs only logits confined to an interval of width $W$. Any readout with
@@ -1349,7 +1427,14 @@ study.
 \paragraph{Two datasets, two architectures, three seeds.} Every result rests on N-MNIST and
 N-Caltech101, with three seeds per configuration. The deeper network is also the smaller one,
 \paramsNmFour{} parameters against \paramsNmTwo{} on N-MNIST, so a difference between the two % src: results/arch_matched.json
-cannot be attributed to depth or to capacity alone.
+cannot be attributed to depth or to capacity alone. The networks are small. N-MNIST is near
+saturation, and the N-Caltech101 networks, trained without augmentation or weight decay, are far
+below published accuracy on that dataset. Their unbounded readouts fit the training data much
+better than held-out data: the accumulator and learned-scale runs end with a training loss of % src: results/ncaltech101_*_record.json; results/calibration_metrics.json rows
+\ovTrainLossMin{} to \ovTrainLossMax{} against a test negative log-likelihood of \ovNllMin{} to
+\ovNllMax. Part of their overconfidence may therefore be ordinary overfitting, and the share of
+tied counts, which drives the N-Caltech101 accuracy and calibrator results, may be lower in a
+stronger network.
 
 \paragraph{No hyperparameter search.} The learning rate, batch size, early-stopping rule,
 surrogate parameter and membrane time constant were set once and never tuned. A tuned model could
@@ -1368,10 +1453,22 @@ with \ccCalSize{} calibration samples and \ccTestSize{} test samples. Nine runs 
 where between ten and 101 classes the answer changes. The calibration-size experiment was run on
 N-MNIST at $T=2$ only. No correction for multiple comparisons was applied.
 
+\paragraph{The N-Caltech101 calibration and validation sets are balanced.} They hold ten and three
+samples of every class, while the test set follows the class sizes (Section~\ref{sec:data}).
+Validation accuracy is \valGapNcMin{} to \valGapNcMax{} points below test accuracy in all % src: results/ncaltech101_*_record.json; results/calibration_metrics.json rows
+\valGapNcRuns{} N-Caltech101 runs, so early stopping and checkpoint choice rest on a class
+distribution unlike the test set's, and on few samples. Calibrators fitted on the balanced set
+leave almost every calibrated run underconfident on the test set. Refitted to the test class
+distribution (Section~\ref{sec:calibrators}), the isotonic advantage for the count readout at
+$T=2$ holds, the one for the accumulator mostly does not, and temperature scaling removes far more
+of the underconfidence. The temperature-scaled values of the same-weights control
+(Table~\ref{tab:sameweights}) and of Figure~\ref{fig:reliability} use the balanced fit.
+
 \paragraph{The learned scale was not tuned.} The scale shared the network's optimiser and learning
 rate, and in the pre-registered runs it was still rising when early stopping ended training.
 Trained for up to three times longer (added after review), it settled in \aSevenConverged{} of % src: results/scale_convergence.json rows
-\aSevenRuns{} runs and was still rising slowly in the rest, every N-MNIST run among them. The
+\aSevenRuns{} runs and had not settled in the rest, every N-MNIST run among them ($\theta$ still % src: results/scale_convergence.json rows history
+moving by \aSevenCapSpanMin{} to \aSevenCapSpanMax{} over their last five epochs). The
 calibration findings did not change, but the accuracy a learned scale recovers depends on when
 training stops, and a separate learning rate or a penalty on the scale was not tried.
 
@@ -1379,6 +1476,10 @@ training stops, and a separate learning rate or a penalty on the scale was not t
 are the same network reading two samples of one class from one sensor, the second degraded by
 removing events at random. This is synthetic degradation of a single sensor, and the pilot is
 not evidence about real multimodal fusion. No fusion network was trained.
+
+\paragraph{No early-exit rule was evaluated.} Every network is trained and read at a fixed $T$,
+$T=1$ was not run, and how a temperature fitted at one exit step carries over to another was not
+measured, although the cap after $t$ steps, $e^{t}/(e^{t}+C-1)$, changes with $t$.
 
 \paragraph{Derived claims.} No network with a rate readout, a saturating hardware counter or a
 clipped output was trained. Equation~\eqref{eq:rate} and the implications of
@@ -1390,7 +1491,8 @@ same way and was not tested on those authors' models.
 by \residNcFourSix{} with four blocks, although the mean conditional ceiling, % src: results/arch_matched.json
 \condCeilHundredOneSix, sits above the accuracy, \accHundredOneSix. A learned scale removes that % src: results/conditional_ceiling.json
 underconfidence, but it remains open why a network that could have been more confident was not. At $T=2$
-on that dataset no single scale calibrates the count readout.
+on that dataset no single temperature brings the count readout's equal-width ECE below % src: results/reweighted_calibration.json runs, scan
+\scanNcTwoLowW{} (Section~\ref{sec:calibrators}).
 
 \paragraph{The bound is not a finding here.} The inequality, the loss floor, the minimum scale and
 the learnable scale are prior work (Section~\ref{sec:related}); what is added, as far as the search
@@ -1406,24 +1508,31 @@ Counting spikes confines the logits to an interval as wide as the number of time
 softmax over such logits cannot be more confident than a known bound allows. Wherever accuracy is
 above that cap, the cap sets a floor on calibration error under any binning, and at two timesteps
 the floor is \frNmTwoInt\% of the binned error on N-MNIST and \frNcTwoInt\% on N-Caltech101, % src: results/ece_floor.json floor_ratio
-with three seeds per setting. Temperature scaling, which lifts the cap on the same weights, removes
+with three seeds per setting. The smallest logit width at which a readout can express its own
+accuracy $a$ is $\ln\big((C-1)a/(1-a)\big)$; with an unscaled count, rounded up, this is also the
+fewest timesteps, but a scale reaches it without more timesteps.
+
+Temperature scaling, which lifts the cap on the same weights and changes no prediction, removes
 the underconfidence on N-MNIST and most of it on N-Caltech101; lifting the cap far above accuracy,
-by an accumulating readout or a learned scale, leaves the harder dataset overconfident. The accuracy a count readout loses at low
-$T$ is lost mostly to coarse, tied counts at inference; a logit scale cannot change a prediction
-and recovers accuracy only by changing what the network learns.
-Temperature scaling and isotonic regression are equivalent in ECE on N-MNIST within \deltaMid{} in % src: results/calibration_metrics.json tost_summary
-every run, a margin above both calibrated errors; the Brier score favours isotonic regression
-slightly at $T=2$ and temperature scaling slightly at larger $T$. On N-Caltech101 isotonic regression is better in \ncDiffer{} of 9 % src: results/caltech_calibrators.json prediction_10
-runs, all at $T=2$ or $T=6$, where the count readout is underconfident, and resolved as worse in
-none; this rests on one architecture and three seeds per $T$.
+by an accumulating readout or a learned scale, leaves the harder dataset overconfident. On
+N-Caltech101 at $T=2$ the accuracy a count readout loses is lost mostly to coarse, tied counts at
+inference; a logit scale cannot change a prediction and recovers accuracy only by changing what
+the network learns. On N-MNIST both calibrators reach low error and their ECEs differ by at most % src: results/calibration_metrics.json tost
+\nmAbsDiffMax{} in any run; the Brier score favours isotonic regression slightly at $T=2$ and
+temperature scaling slightly at larger $T$. For the N-Caltech101 count readout isotonic regression
+is better in \ncDiffer{} of 9 runs, all at $T=2$ or $T=6$, where the readout is underconfident, % src: results/caltech_calibrators.json prediction_10
+and resolved as worse in none; with the calibration set reweighted to the test classes it is % src: results/reweighted_calibration.json summary
+better in \rwCountIso, including every seed at $T=2$. This rests on one architecture and three
+seeds per $T$, and for the other readouts on that dataset the comparison depends on the
+calibration set and goes both ways.
+
 The number of confidence values a count readout can emit is fixed by $T$ and $C$ and by no scale.
 On N-MNIST at $T=2$ its ties lower its AUROC below that of an accumulator reading the same
-weights, although it orders fewer pairs wrongly; at $T=10$, with two blocks, the count readout
-ranks slightly better than a separately trained accumulator. In an exploratory
-pilot with synthetic degradation of a single sensor, two saturated count readouts could not be
-weighted against each other by the product rule; this is not evidence about real multimodal
-fusion. $T_{\min}=\ln\big((C-1)a/(1-a)\big)$ is the smallest logit width, and with an unscaled
-count the fewest timesteps, at which a readout can express its own accuracy.
+weights; at $T=6$ and $T=10$, with two blocks, the count readout ranks slightly better than a
+separately trained accumulator in all \aurocSeedsSixTen{} runs, with a $t$-interval over seeds % src: results/calibration_metrics.json rows
+that excludes zero at $T=10$ only. In an exploratory pilot with synthetic degradation of a single
+sensor, two saturated count readouts could not be weighted against each other by the product
+rule; this is not evidence about real multimodal fusion.
 
 % =========================================================================================
 \section*{Code and data availability}

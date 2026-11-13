@@ -95,6 +95,7 @@ for key, fn in (("nm", "nmnist_T2_seed0_split.npz"), ("nc", "ncaltech101_T2_seed
 # The post-review A7 checkpoints (*_converged_*_weights.pt) are not among the study's trained
 # models; they are counted separately in the A7 section.
 weights = [w for w in glob.glob(os.path.join(R, "*_weights.pt")) if "_converged_" not in w]
+assert weights, "no trained weights in results/: unpack the release asset into results/ first"
 assert all(json.load(open(w.replace("_weights.pt", "_record.json"))) for w in weights)
 put("modelsTotal", str(len(weights)), "results/*_weights.pt (file count)")
 put("modelsNm", str(sum("nmnist" in w for w in weights)), "results/nmnist_*_weights.pt (file count)")
@@ -515,6 +516,9 @@ for T, k in ((2, "Two"), (6, "Six"), (10, "Ten")):
             put(f"ccTemperature{k}", f"{mean(rr, 'temperature'):.2f}", SRC_CC + f" temperature, count, T={T}")
         if arm == "uncalibrated":
             put(f"ccAcc{k}", f(mean(rr, "test_accuracy")), SRC_CC + f" test_accuracy, count, T={T}")
+_tt = [r["temperature"] for r in cc["rows"] if r["readout"] == "count" and r["timesteps"] == 2 and r["arm"] == "temperature"]
+put("capAtTempNcTwo", f(st.mean(math.exp(2 / t) / (math.exp(2 / t) + 100) for t in _tt), 2),
+    DERIVED + ": cap e^(2/t) / (e^(2/t) + 100) at each seed's fitted temperature, N-Caltech101 T=2 count, seed mean (" + SRC_CC + ")")
 put("ccCalSize", thousands(cc["rows"][0]["n_cal"]), SRC_CC + " n_cal")
 put("ccTestSize", thousands(cc["rows"][0]["n_test"]), SRC_CC + " n_test")
 acc_pairs = [p_ for p_ in cc["paired"] if p_["readout"] == "accumulator"]
@@ -525,6 +529,10 @@ sc_pairs = [p_ for p_ in cc["paired"] if p_["readout"] == "scaled-count"]
 put("ccScaledRuns", str(len(sc_pairs)), SRC_CC + " paired, scaled-count")
 put("ccScaledIso", str(sum(p_["favours"] == "isotonic" for p_ in sc_pairs)), SRC_CC + " paired, scaled-count")
 put("ccScaledTemp", str(sum(p_["favours"] == "temperature" for p_ in sc_pairs)), SRC_CC + " paired, scaled-count")
+put("ccScaledDiffer", str(sum(p_["differ"] for p_ in sc_pairs)), SRC_CC + " paired, scaled-count: runs resolved under the registered rule")
+# main.tex names the resolved scaled-count runs
+assert sorted((p_["timesteps"], p_["seed"], p_["favours"]) for p_ in sc_pairs if p_["differ"]) == \
+    [(2, 1, "temperature"), (2, 2, "isotonic"), (6, 2, "temperature")]
 put("ccScaledTie", str(sum(p_["tie"] for p_ in sc_pairs)), SRC_CC + " paired, scaled-count")
 # the residual the accumulator and the learned scale leave after temperature scaling, T = 2
 for readout, key in (("accumulator", "Accum"), ("scaled-count", "Scaled")):
@@ -782,6 +790,11 @@ sh_ = load("shared_resample_intervals.json")
 SRC_SH = "results/shared_resample_intervals.json"
 SH_FLOOR = {(c["channels"], c["timesteps"]): c["estimators"] for c in sh_["floor_ratio"]}
 SH_ECE = {(e["timesteps"], e["arm"], e["estimator"]): e for e in sh_["ece"]}
+_shw_all = ([v for c in sh_["floor_ratio"] for v in c["estimators"].values()] + sh_["ece"]
+            + list(sh_["auroc"].values()) + list(sh_["same_weights"].values()))
+_ratio = [(v["shared"][1] - v["shared"][0]) / (v["independent"][1] - v["independent"][0]) for v in _shw_all]
+put("shWidthMin", f(min(_ratio), 2), SRC_SH + ": smallest ratio of shared to independent interval width")
+put("shWidthMax", f(max(_ratio), 2), SRC_SH + ": largest ratio of shared to independent interval width")
 
 
 def fl_cell(ds, ch, T):
@@ -832,7 +845,8 @@ _over_share = [(r["schemes"][e]["ece"] - (r["accuracy"] - r["mean_confidence"]))
                for r in fl["runs"] if r["binds"] for e in ("equal_width", "equal_mass")]
 _short_share = [(r["cap"] - r["mean_confidence"]) / r["schemes"][e]["ece"]
                 for r in fl["runs"] if r["binds"] for e in ("equal_width", "equal_mass")]
-assert max(_over_share) < min(_short_share) or True
+# in every binding run and binned estimator the shortfall p* - pbar exceeds the overconfidence term
+assert all(o < sh for o, sh in zip(_over_share, _short_share))
 put("overShareMax", pct(max(_over_share), 1), SRC_FL + " runs where the cap binds, both binned estimators: largest (ECE - (a - pbar)) / ECE, per cent")
 # A8: are those groups more than sampling noise?
 _nc2_runs = [r for r in fl["runs"] if r["dataset"] == "ncaltech101" and r["channels"] == "32-64-128-128"
@@ -846,6 +860,14 @@ put("overNcTwoMedianSize", f"{_dr[0]['overconfident_median_size']:.0f}", SRC_FL 
 put("overNcTwoMinP", f"{min(d['overconfident_min_p'] for d in _dr):.2f}", SRC_FL + " runs, N-Caltech101 T=2, distinct: smallest one-sided binomial p-value of an overconfident group (A8)")
 put("overNcTwoExpMin", f"{min(d['expected_negative_gap_groups_if_calibrated'] for d in _dr):.0f}", SRC_FL + " runs, N-Caltech101 T=2: fewest negative-gap groups expected under calibration, per seed (A8)")
 put("overNcTwoExpMax", f"{max(d['expected_negative_gap_groups_if_calibrated'] for d in _dr):.0f}", SRC_FL + " runs, N-Caltech101 T=2: most negative-gap groups expected under calibration, per seed (A8)")
+# second internal review: the binomial test has no power here. Largest overconfident group, and the
+# smallest group in which even zero correct predictions would be significant at 5% at the cap.
+_over_n = [b["n"] for d in _dr for b in d["bins"] if b["gap"] < 0]
+put("overNcTwoMaxSize", str(max(_over_n)), SRC_FL + " runs, N-Caltech101 four blocks T=2, distinct: largest overconfident group, samples")
+_cap101 = ceiling(2, 101)
+_nsig = math.floor(math.log(0.05) / math.log(1 - _cap101)) + 1
+assert (1 - _cap101) ** _nsig < 0.05 <= (1 - _cap101) ** (_nsig - 1) and max(_over_n) < _nsig
+put("overNcTwoSigN", str(_nsig), DERIVED + ": smallest n with (1 - p*)^n < 0.05 at p* = p*(2, 101)")
 put("groupsNcTwoMin", str(min(dn["occupied_bins"]["values"])), SRC_FL + " N-Caltech101 T=2: fewest distinct values in a seed")
 put("groupsNcTwoMax", str(max(dn["occupied_bins"]["values"])), SRC_FL + " N-Caltech101 T=2: most distinct values in a seed")
 # A2: equal-mass occupancy
@@ -865,7 +887,7 @@ put("emBinsMaxNcTwo", str(int(max(nc2["schemes"]["equal_mass"]["occupied_bins"][
 assert min(nc2["schemes"]["equal_mass"]["occupied_bins"]["values"]) == max(nc2["schemes"]["equal_mass"]["occupied_bins"]["values"])
 put("emOccMinNcTwo", str(nc2["schemes"]["equal_mass"]["min_occupancy"]), SRC_FL + " N-Caltech101 T=2: smallest equal-mass bin")
 put("emOccMaxNcTwo", str(nc2["schemes"]["equal_mass"]["max_occupancy"]), SRC_FL + " N-Caltech101 T=2: largest equal-mass bin")
-put("emTarget", "15", "results/ece_floor.json n_bins")
+put("emTarget", str(fl["n_bins"]), "results/ece_floor.json n_bins")
 put("ewBinsNcTwo", str(int(max(nc2["schemes"]["equal_width"]["occupied_bins"]["values"]))), SRC_FL + " N-Caltech101 T=2: occupied equal-width bins")
 all_em = [r["schemes"]["equal_mass"]["occupied_bins"] for r in fl["runs"]]
 put("emBinsMin", str(min(all_em)), SRC_FL + " runs: fewest effective equal-mass bins over the 36 count test sets")
@@ -922,6 +944,15 @@ for g, label in GROUPS.items():
     for name, d in DELTA.items():
         put(f"tost{g}BothBasic{name}", str(srow[f"equivalent_both_basic_{d}"]), SRC_CM + f" tost_summary, {label}, equivalent at {d} under both, basic intervals (A8)")
     put(f"bias{g}Max", f(srow["largest_abs_bootstrap_bias"]), SRC_CM + f" tost_summary, {label}, largest |mean of draws - point| (A8)")
+# second internal review: how often the bias exceeds the difference at N-Caltech101 T = 10 (count),
+# the lenient margin in binomial standard errors, and the largest absolute N-MNIST difference
+_t10 = [e for e in cm_["tost"] if e["dataset"] == "ncaltech101" and e["readout"] == "count" and e["timesteps"] == 10]
+put("biasExceedsTen", str(sum(abs(e["bootstrap_bias"]) > abs(e["difference"]) for e in _t10)), SRC_CM + " tost, ncaltech101 count T=10: tests whose |bias| exceeds |difference|")
+put("biasTestsTen", str(len(_t10)), SRC_CM + " tost, ncaltech101 count T=10: tests")
+_nct = int(np.load(os.path.join(R, "ncaltech101_T2_seed0_split.npz"))["test"].size)
+put("wideMarginSe", f"{DELTA['Wide'] / math.sqrt(0.25 / _nct):.1f}", DERIVED + ": lenient margin / sqrt(0.25 / N-Caltech101 test size), binomial standard errors")
+_nmabs = [abs(e["difference"]) for e in cm_["tost"] if e["dataset"] == "nmnist"]
+put("nmAbsDiffMax", f(max(_nmabs)), SRC_CM + " tost, N-MNIST: largest |isotonic - temperature| ECE difference, either estimator")
 _nm_s = next(x for x in cm_["tost_summary"] if x["group"] == "nmnist count")
 assert _nm_s["resolve_either"] == int(dict((m[0], m[1]) for m in macros)["resolveEither"])
 # the two N-MNIST runs that the basic intervals resolve under both estimators, same direction
@@ -942,6 +973,10 @@ put("maxCalEceNm", f(max(_cal_nm)), SRC_CM + " rows, nmnist two blocks count, ca
 _ex = {e: [t for t in tn if t["estimator"] == e and t["excludes_zero_95"]] for e in ("equal_width", "equal_mass")}
 put("ewExclNm", str(len(_ex["equal_width"])), SRC_CM + " tost, N-MNIST: equal-width 95% intervals excluding zero")
 put("emExclNm", str(len(_ex["equal_mass"])), SRC_CM + " tost, N-MNIST: equal-mass 95% intervals excluding zero")
+from scipy.stats import binom as _binom
+_nr = len({e["name"] for e in cm_["tost"] if e["dataset"] == "nmnist"})
+put("emExclTail", f"{_binom.sf(len(_ex['equal_mass']) - 1, _nr, 0.05):.2f}",
+    "[DERIVED] P(at least that many of the N-MNIST runs' 95% intervals exclude zero by chance), binomial with p = 0.05, independent exact intervals (" + SRC_CM + " tost)")
 assert all(t["difference"] < 0 for t in _ex["equal_mass"])   # "all favour isotonic regression"
 put("cmRows", str(len(cm_["rows"])), SRC_CM + " rows (run and arm)")
 assert all(r["equal_mass_bins"] == 1 for r in cm_["rows"] if r["dataset"] == "nmnist" and r["n_blocks"] == 2
@@ -1118,7 +1153,9 @@ put("silentHiddenMax", pct(max(c["layers"]["hidden"]["silent_share"]["max"] for 
     SRC_ACT + " cells: largest share of hidden neurons never firing, any seed, per cent")
 # main.tex says "no hidden-layer neuron is silent in any seed"; true only while this is exactly zero.
 assert max(c["layers"]["hidden"]["silent_share"]["max"] for c in act["cells"]) == 0.0
-put("rasterNeurons", "32", "NOTES.md A5; " + SRC_ACT + " rasters")
+_rn = {len(L["neurons"]) for r in act["rasters"] for n, L in r["layers"].items() if n != "output"}
+assert len(_rn) == 1, _rn
+put("rasterNeurons", str(_rn.pop()), SRC_ACT + " rasters, neurons shown per hidden layer")
 
 # ------------------------------------------------------------------ A6: the same weights, read differently
 sw = load("same_weights_readouts.json")["rows"]
@@ -1411,6 +1448,32 @@ put("scanNcTwoLowW", f(min(r["scan"]["equal_width"]["min_ece"] for r in _c2)), S
 put("scanNcTwoLowM", f(min(r["scan"]["equal_mass"]["min_ece"] for r in _c2)), SRC_RW + " runs, count T=2: smallest equal-mass ECE over the temperature grid, lowest seed")
 put("scanNcTwoMatchLo", f(min(r["scan"]["mean_matched"]["ece_equal_width"] for r in _c2)), SRC_RW + " runs, count T=2: equal-width ECE where mean confidence equals accuracy, smallest seed")
 put("scanNcTwoMatchHi", f(max(r["scan"]["mean_matched"]["ece_equal_width"] for r in _c2)), SRC_RW + " runs, count T=2: equal-width ECE where mean confidence equals accuracy, largest seed")
+
+# second internal review: N-Caltech101 validation accuracy against test accuracy, and the training
+# loss of the unbounded readouts at the kept checkpoint against their test NLL (run records)
+_vg, _tl, _nll = [], [], []
+for _f in sorted(glob.glob(os.path.join(R, "ncaltech101_*_record.json"))):
+    if "_converged_" in _f:
+        continue
+    _r = json.load(open(_f))
+    _nm = os.path.basename(_f)[: -len("_record.json")]
+    _h = next(h for h in _r["history"] if h["epoch"] == _r["best_epoch"])
+    _row = next(x for x in cm_["rows"] if x["name"] == _nm and x["arm"] == "uncalibrated")
+    _vg.append(_row["accuracy"] - _h["val_accuracy"])
+    if _row["readout"] in ("accumulator", "scaled-count"):
+        _tl.append(_h["train_loss"])
+        _nll.append(_row["nll_multiclass"])
+assert len(_vg) == 36 and min(_vg) > 0
+put("valGapNcRuns", str(len(_vg)), "results/ncaltech101_*_record.json: runs compared")
+put("valGapNcMin", f(100 * min(_vg), 1), "results/ncaltech101_*_record.json history at best_epoch; " + SRC_CM + ": smallest (test - validation) accuracy, points")
+put("valGapNcMax", f(100 * max(_vg), 1), "results/ncaltech101_*_record.json history at best_epoch; " + SRC_CM + ": largest (test - validation) accuracy, points")
+assert max(_tl) < min(_nll)
+put("ovTrainLossMin", f(min(_tl), 2), "results/ncaltech101_*_record.json: accumulator and scaled-count, train_loss at best_epoch, smallest")
+put("ovTrainLossMax", f(max(_tl), 2), "results/ncaltech101_*_record.json: accumulator and scaled-count, train_loss at best_epoch, largest")
+put("ovNllMin", f(min(_nll), 2), SRC_CM + " rows, ncaltech101 accumulator and scaled-count, uncalibrated: multiclass NLL, smallest")
+put("ovNllMax", f(max(_nll), 2), SRC_CM + " rows, ncaltech101 accumulator and scaled-count, uncalibrated: multiclass NLL, largest")
+_smt = json.load(open(os.path.join(R, "same_weights_ranking.json")))["summary"]
+assert _smt["pairs_accumulator_same_weights_tied"]["max"] < 1e-5   # main.tex: "leaves almost no pair unordered"
 
 # ------------------------------------------------------------------ the literature search (added after review)
 ls_ = load("literature_search.json")

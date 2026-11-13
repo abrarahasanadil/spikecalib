@@ -1247,3 +1247,39 @@ passage. Locations refer to the versions named in the entries above.
     statement about `tau = 2`.
 10. **N-Caltech101 class semantics** — the 101 = 100 + background composition is from the
     dataset homepage; only the counts were measured here.
+
+## Citations checked 2026-11-13, second internal review
+
+- **ren2026sight** (added). Ren, Du, Li, Xu, Zheng, Jia, Ma, Xu and Xia, "Spiking Graph Predictive
+  Coding for Reliable OOD Generalization", arXiv:2602.19392v1 (22 February 2026), Proceedings of
+  the ACM Web Conference 2026 (WWW '26). Read on the arXiv abstract and HTML pages. Node
+  classification under distribution shift (Cora, Citeseer, Pubmed, Twitch, CBAS) with GCN and GAT
+  backbones; three layers of spiking graph convolution with LIF neurons, Poisson-encoded inputs,
+  T = 25, rate codes averaged over timesteps (Sections 3.2 to 3.4, 4.1). Table 3 ("Accuracy and
+  ECE under distribution shifts for different post-hoc calibration models using GCN and GAT
+  backbones, w/o and w/ SIGHT") compares CaGCN, Dirichlet calibration, ETS, GATS, multi-class
+  isotonic regression (IRM), order-invariant calibration, Spline and vector scaling; plain
+  temperature scaling has no row of its own, and Section 4.1 says "all baselines employ
+  temperature scaling as a post-processing step". No comparison by regime or calibration-set size
+  was found. The DOI printed in the HTML (10.1145/3774904.3793044) returned 404 at Crossref and
+  doi.org on 2026-11-13, so the entry cites the arXiv record and no DOI. Cited in the Introduction
+  as the closest comparison of isotonic regression with temperature-scaling variants on a spiking
+  model.
+- **sun2023mcdropout**. Temperature scaling appears only in Section 2.1 (background) and in
+  Section 4.3, "CIFAR-10-C: domain-shifted test dataset" (Figure 3); the in-distribution tables
+  (Tables 1 to 4) have no temperature-scaling row. Text and Table 1 now say "as a baseline under
+  corruption shift (CIFAR-10-C)".
+- **wang2017normface**. Proposition 2 (Section 3.2; proof in Section 8.2) gives the loss lower bound
+  log(1 + (n - 1) e^{-n l^2 / (n - 1)}) for features and weights normalised to norm l, which is not
+  -ln of the probability cap e/(e + (n - 1)e^{-1}) quoted beside it ("0.45 when n = 10"). The text
+  no longer says the loss bound "matches"; it says NormFace gives a lower bound on the loss for
+  normalised features.
+- **yan2025temporal**. Table 1 cell corrected from "4 to 10" to "1 to 10", as recorded above
+  (calibration reported at 1 to 10 timesteps).
+- **galil2023selective**. Section 3, item 2(a): "TS consistently and greatly improves AUROC and
+  selective performance ... it also improves the partial order of all instances"; 2(b): "While TS
+  is usually beneficial, it could harm some models". The citing sentence now speaks of the order
+  a classifier's confidence induces on its predictions.
+- **jurado2023spikemoid**. The caveat beside the distinct-confidence bound uses only the abstract's
+  statement that a scaling term gives "less coarse probability outputs".
+- **hofman2023preregistration**. Title set in sentence case like every other entry.
