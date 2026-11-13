@@ -16,6 +16,33 @@ and the list of what still needs checking. Nothing marked `[UNVERIFIED]` may be 
 the paper until verified. Code in this repository is expected to follow this document, and
 where the two disagree, this document is what needs updating first.
 
+**Reading guide, added 2026-11-13.** This notebook is append-only: it records what was believed
+on each date, and no prediction, date or outcome in it has been edited. Where it differs from
+the paper (`paper/main.tex`, release v1.0.0), the paper is current. The main differences:
+
+1. The cap was later found in prior work for normalised and clipped logits (`SOURCES.md`,
+   "Literature check, 2026-10-13"). `[DERIVED]` on it, and "not from any paper", mean derived
+   here, not new.
+2. Where a share of ECE is said to be "accounted for" or "explained" by the ceiling, read: the
+   floor `a - p*` is that share of the binned ECE. The floor is a lower bound, not a causal
+   decomposition (A1 below; the paper's Section 5.2).
+3. "Tie" in registered wording means not resolved under the registered rule. Equivalence was
+   tested separately (A3). On N-MNIST the rule was written after the results it summarises.
+4. "Resolved: no" on whether the ceiling binds in published work covers the references checked
+   on 2026-09-12. The search of 2026-11-12 found published readouts to which the cap applies
+   (Jang and Simeone 2022; Katti et al. 2024, as their readout is described); see the paper's
+   Section 2.
+5. The reference withdrawn on 2026-09-12 ("Skatchkovsky & Simeone") was very probably
+   Skatchkovsky, Jang and Simeone (2022), found on 2026-10-13 (`SOURCES.md`); the paper cites
+   that work for what it reports.
+6. The N-Caltech101 calibrator results were checked on 2026-11-13 with the calibration set
+   reweighted to the test class distribution (S1 below): the isotonic advantage for the count
+   readout at `T = 2` holds, the one for the accumulator mostly does not.
+7. Counts in the Status section ("96 models", "ten pages") are as of their date; the paper gives
+   the final ones.
+8. `LOG.md`, the working log cited below, was removed from the repository on 2026-11-13 and
+   remains in its history.
+
 ---
 
 ## Claim under test
@@ -2812,52 +2839,21 @@ added.
 
 ## AI disclosure, for the paper
 
-The paper, `paper/main.tex`, carries this in its Acknowledgements, once, in these words:
+**Superseded 2026-11-13.** The operative disclosure is the Acknowledgements section of the paper,
+`paper/main.tex`, and this section only records its current wording. The earlier wordings kept
+here until 2026-11-13, one of which said that all research design, hypotheses and verification
+decisions were the author's, are in the repository history; that claim is withdrawn, since the
+working records show AI assistants carrying out and recording parts of that work under the first
+author's direction. The whole Acknowledgements section of `paper/main.tex` is now exactly this:
 
-> AI assistance was used for implementation and drafting. All research design, hypotheses,
-> the pre-registered prediction and its outcome, and all verification decisions are the
-> author's. Every citation was checked against primary documents; two were withdrawn because
-> no primary document supported them, and one energy constant was reclassified from cited to
-> derived.
+> AI coding and writing assistants were used, under the first author's direction, to implement
+> the code, run the experiments and analyses, and draft the text. Every citation was checked
+> against its primary document or, where that was inaccessible, against a verified secondary
+> source, as recorded in SOURCES.md. The first author verified all results; all authors
+> reviewed the manuscript and take responsibility for its content.
 
-(Amended 2026-09-29: "withdrawn on verification" told a reader nothing, since the withdrawn
-references do not appear in the paper. The clause now states the reason, which covers both
-cases in `SOURCES.md`: one identifier belonged to a different paper, the other paper could not
-be found.)
-
-It is not to be softened and not to be expanded, and it belongs in the paper rather than on
-the dashboard. Both of its factual claims are supported here: the two withdrawn references
-are recorded in `SOURCES.md`, and the energy constant is E_MAC = 4.6 pJ, reclassified from
-`[LIT]` to `[DERIVED]` on 2026-09-12 because it appears nowhere in Horowitz and is the
-0.9 + 3.7 multiply-plus-add convention.
-
-**Superseded 2026-10-14 by the author.** The disclosure above is no longer the paper's. The
-whole Acknowledgements section of `paper/main.tex` is now exactly this, and this text
-supersedes the fixed wording above, including the sentence about two withdrawn citations:
-
-> AI assistance was used in preparing this work. The author verified all results and takes
-> full responsibility for the content. Every citation was checked against its primary
-> document or, where that was inaccessible, against a verified secondary source, as recorded
-> in SOURCES.md.
-
-The rules above on where it goes still hold: once, in the paper, not on the dashboard. The
-earlier text is kept here as a record. Its "two were withdrawn" had stopped being accurate:
-both papers were found on 2026-10-13 and are recorded in `SOURCES.md`. The new last sentence
-is supported there too: the citations that could not be opened, Nitzan and Paroush (1982) and
-Chair and Varshney (1986), are each recorded with the verified secondary source they are
-cited through. `tests/test_provenance.py` checks that the paper carries this text verbatim.
-
-**Superseded 2026-11-12, for three authors.** The paper now has three authors. The whole
-Acknowledgements section of `paper/main.tex` is now exactly this, and it supersedes the
-2026-10-14 text above, which is kept as a record:
-
-> AI assistance was used in preparing this work. Every citation was checked against its
-> primary document or, where that was inaccessible, against a verified secondary source, as
-> recorded in SOURCES.md. The first author verified all results; all authors reviewed the
-> manuscript and take responsibility for its content.
-
-The disclosure still names no tool. `tests/test_provenance.py` checks that the paper carries
-the latest superseding text verbatim.
+The disclosure names no tool. It appears once, in the paper. `tests/test_provenance.py` checks
+that the paper carries this text verbatim.
 
 ---
 
