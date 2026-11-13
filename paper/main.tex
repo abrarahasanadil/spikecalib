@@ -1448,9 +1448,10 @@ real-valued readouts were also chosen on a validation score computed from rounde
 (Section~\ref{sec:training}), and the original weight initialisations were not seeded.
 
 \paragraph{The N-Caltech101 calibrator result is nine runs.} That isotonic regression beats
-temperature scaling there rests on one architecture, three timestep settings and three seeds,
-with \ccCalSize{} calibration samples and \ccTestSize{} test samples. Nine runs do not establish % src: results/caltech_calibrators.json n_cal, n_test
-where between ten and 101 classes the answer changes. The calibration-size experiment was run on
+temperature scaling for the count readout there rests on one architecture, three timestep
+settings and three seeds, with \ccCalSize{} calibration samples and \ccTestSize{} test samples; % src: results/caltech_calibrators.json n_cal, n_test
+with the calibration set reweighted to the test classes it holds in \rwCountIso{} of the 9 runs. % src: results/reweighted_calibration.json summary
+Nine runs do not establish where between ten and 101 classes the answer changes. The calibration-size experiment was run on
 N-MNIST at $T=2$ only. No correction for multiple comparisons was applied.
 
 \paragraph{The N-Caltech101 calibration and validation sets are balanced.} They hold ten and three

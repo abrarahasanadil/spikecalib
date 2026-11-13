@@ -33,7 +33,7 @@ Means are over three seeds; ECE is under equal-width binning, 15 bins.
 | ECE at *T* = 2, uncalibrated | 0.5386 <!-- n:hdNmTwoUncW --> | 0.3969 <!-- n:hdNcTwoUncW --> |
 | ECE at *T* = 2, temperature scaling | 0.0018 <!-- n:hdNmTwoTempW --> | 0.1449 <!-- n:hdNcTwoTempW --> |
 | ECE at *T* = 2, isotonic regression | 0.0042 <!-- n:hdNmTwoIsoW --> | 0.0320 <!-- n:hdNcTwoIsoW --> |
-| count runs where the two calibrators are equivalent within ±0.01 <!-- n:deltaMid --> ECE | 15 <!-- n:tostNmBothMid --> of 15 <!-- n:tostNmRuns --> | 0 <!-- n:tostNcCountBothMid --> of 9 <!-- n:tostNcCountRuns --> |
+| count runs where isotonic regression is better under the registered rule; N-Caltech101 also with the calibration set reweighted to the test classes | 0 <!-- n:resolveBoth --> of 15 <!-- n:tostNmRuns --> | 5 <!-- n:ncDiffer --> of 9 <!-- n:tostNcCountRuns -->; 4 <!-- n:rwCountIso --> of 9 |
 | AUROC of confidence for correctness at *T* = 2, uncalibrated: count, accumulator trained separately | 0.9204 <!-- n:hdAurocCount -->, 0.9698 <!-- n:hdAurocAccum --> | 0.8593 <!-- n:hdNcAurocCount -->, 0.8885 <!-- n:hdNcAurocAccum --> |
 | accuracy at *T* = 2: count, accumulator on the same weights, accumulator trained | 0.9850 <!-- n:swNmTwoCountAcc -->, 0.9868 <!-- n:swNmTwoAccumAcc -->, 0.9861 <!-- n:swNmTwoTrainedAcc --> | 0.4543 <!-- n:swNcTwoCountAcc -->, 0.5744 <!-- n:swNcTwoAccumAcc -->, 0.5825 <!-- n:swNcTwoTrainedAcc --> |
 
@@ -51,10 +51,11 @@ experiments that tested them, 13 <!-- n:predictionsEverythingHeld --> held and
   readout or a learned scale, makes N-Caltech101 overconfident.
 - Most of the accuracy a count readout gives up on N-Caltech101 at *T* = 2 is lost at the readout
   at inference, to coarse and tied counts, and is present with identical weights.
-- Temperature scaling and isotonic regression are equivalent in ECE on N-MNIST within a margin
-  above both calibrated errors; on N-Caltech101, where the count readout is underconfident,
-  isotonic regression is better in most runs and never resolved as worse (nine runs of one
-  architecture).
+- On N-MNIST temperature scaling and isotonic regression both reach low error and differ little.
+  On N-Caltech101 at *T* = 2 no single temperature removes the count readout's error, and
+  isotonic regression does better in every seed, also with the calibration set reweighted to the
+  test class distribution; for the other readouts there the comparison depends on the
+  calibration set (nine runs of one architecture per readout).
 - A count readout emits at most binom(*T*+*C*−1, *C*−1) distinct confidences at any scale; on
   N-MNIST at *T* = 2 its ties lower its AUROC below that of an accumulator reading the same
   weights.
