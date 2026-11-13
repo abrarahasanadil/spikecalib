@@ -34,8 +34,8 @@ Means are over three seeds; ECE is under equal-width binning, 15 bins.
 | ECE at *T* = 2, temperature scaling | 0.0018 <!-- n:hdNmTwoTempW --> | 0.1449 <!-- n:hdNcTwoTempW --> |
 | ECE at *T* = 2, isotonic regression | 0.0042 <!-- n:hdNmTwoIsoW --> | 0.0320 <!-- n:hdNcTwoIsoW --> |
 | count runs where the two calibrators are equivalent within ±0.01 <!-- n:deltaMid --> ECE | 15 <!-- n:tostNmBothMid --> of 15 <!-- n:tostNmRuns --> | 0 <!-- n:tostNcCountBothMid --> of 9 <!-- n:tostNcCountRuns --> |
-| AUROC of confidence for correctness at *T* = 2: count, accumulator | 0.9204 <!-- n:hdAurocCount -->, 0.9698 <!-- n:hdAurocAccum --> | not measured |
-| accuracy at *T* = 2: count, accumulator on the same weights, accumulator trained | not shown | 0.4543 <!-- n:swNcTwoCountAcc -->, 0.5744 <!-- n:swNcTwoAccumAcc -->, 0.5825 <!-- n:swNcTwoTrainedAcc --> |
+| AUROC of confidence for correctness at *T* = 2, uncalibrated: count, accumulator trained separately | 0.9204 <!-- n:hdAurocCount -->, 0.9698 <!-- n:hdAurocAccum --> | 0.8593 <!-- n:hdNcAurocCount -->, 0.8885 <!-- n:hdNcAurocAccum --> |
+| accuracy at *T* = 2: count, accumulator on the same weights, accumulator trained | 0.9850 <!-- n:swNmTwoCountAcc -->, 0.9868 <!-- n:swNmTwoAccumAcc -->, 0.9861 <!-- n:swNmTwoTrainedAcc --> | 0.4543 <!-- n:swNcTwoCountAcc -->, 0.5744 <!-- n:swNcTwoAccumAcc -->, 0.5825 <!-- n:swNcTwoTrainedAcc --> |
 
 The bound is respected in **36 of 36** distinct count-readout cells <!-- n:cellsUnion -->. Of the
 25 <!-- n:predictionsEverything --> predictions and prediction parts recorded before the
@@ -160,13 +160,19 @@ stored outputs bit for bit on the MPS backend.
 
 [NOTES.md](NOTES.md) is the research notebook. Each prediction was written there, with the
 condition under which it would fail, and committed before the experiment that tested it; its
-outcome was recorded afterwards without editing the prediction. The order can be checked in the
+outcome was recorded afterwards without editing the prediction. The order is recorded in the
 history: `git log --follow -p NOTES.md` shows each prediction block arriving in a commit that
 precedes the first commit of the result file that tests it, for example
 `git log --oneline -- results/scaled_count_experiment.json` against the commit that registered
-predictions 6 to 11. The analyses added after review have their thresholds in the section
-"Post-review analyses, thresholds fixed 2026-11-12 before computation", committed before any of
-them was computed.
+predictions 6 to 11. No external registry was used. Commit dates are set by whoever commits, so
+the version history shows the order of the records but cannot certify it. When the history was
+rewritten on 2026-11-12 to remove lines from two configuration files and one line of the working
+log, every commit kept its date, author and message, and no prediction, date or outcome in
+NOTES.md changed; the commit identifiers quoted in the repository were updated. The analyses
+added after review have their thresholds in the section "Post-review analyses, thresholds fixed
+2026-11-12 before computation", committed before any of them was computed; those added after the
+second internal review are in "Second internal review, settings fixed 2026-11-13 before
+computation".
 
 ## Repository layout
 

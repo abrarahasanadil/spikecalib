@@ -1086,6 +1086,8 @@
 \newcommand{\hdAurocDiffTLo}{$-$0.0798}% results/calibration_metrics.json headline.auroc.count_minus_accumulator, t-interval over 3 seeds, lower (A8)
 \newcommand{\hdAurocDiffTHi}{$-$0.0191}% results/calibration_metrics.json headline.auroc.count_minus_accumulator, t-interval over 3 seeds, upper (A8)
 \newcommand{\clipTop}{126{,}956}% results/calibration_metrics.json clipped.top_label
+\newcommand{\hdNcAurocCount}{0.8593}% results/calibration_metrics.json rows, ncaltech101 four blocks T=2 count, uncalibrated: AUROC, seed mean
+\newcommand{\hdNcAurocAccum}{0.8885}% results/calibration_metrics.json rows, ncaltech101 four blocks T=2 accumulator, uncalibrated: AUROC, seed mean
 \newcommand{\clipTopTotal}{1{,}358{,}136}% results/calibration_metrics.json clipped.scores_computed_top_label
 \newcommand{\clipMulti}{0}% results/calibration_metrics.json clipped.multiclass
 \newcommand{\refitRuns}{75}% results/calibration_metrics.json rows, runs refitted
@@ -1346,6 +1348,9 @@
 \newcommand{\swNcTwoAccumAcc}{0.5744}% results/same_weights_readouts.json N-Caltech101 T=2 accumulator on count weights, accuracy
 \newcommand{\swNcTwoMemAcc}{0.5666}% results/same_weights_readouts.json N-Caltech101 T=2 membrane on count weights, accuracy
 \newcommand{\swNcTwoTrainedAcc}{0.5825}% results/caltech_experiment.json accumulator T=2, test_accuracy, seed mean
+\newcommand{\swNmTwoCountAcc}{0.9850}% results/same_weights_readouts.json N-MNIST two blocks T=2 count accuracy
+\newcommand{\swNmTwoAccumAcc}{0.9868}% results/same_weights_readouts.json N-MNIST two blocks T=2 accumulator on count weights, accuracy
+\newcommand{\swNmTwoTrainedAcc}{0.9861}% results/readout_experiment.json accumulator T=2, test_accuracy, seed mean
 \newcommand{\swNcTwoShare}{94}% [DERIVED] arithmetic in paper/make_numbers.py: (same-weights accumulator - count) / (trained accumulator - count), N-Caltech101 T=2, per cent
 \newcommand{\swNcSixCountAcc}{0.6427}% results/same_weights_readouts.json N-Caltech101 T=6 count accuracy
 \newcommand{\swNcSixAccumAcc}{0.6739}% results/same_weights_readouts.json N-Caltech101 T=6 accumulator on count weights

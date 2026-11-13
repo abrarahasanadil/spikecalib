@@ -93,7 +93,8 @@ later~\citep{chen2025knowing}. % [LIT] chen2025knowing, Section I and Figure 1(b
 This paper studies a common readout, the softmax over output spike
 counts~\citep{wu2019spikecount,shrestha2022spikemax,chen2025knowing}. Much direct training and % [LIT] wu2019spikecount, Eq. (8); shrestha2022spikemax, Eq. (13); chen2025knowing, Eq. (3)
 conversion reads a non-spiking output instead, averaged over time~\citep{yan2025temporal} or % [LIT] yan2025temporal, Sec. 3
-accumulated~\citep{li2023dynamic}, and the cap does not apply to it. % [LIT] li2023dynamic, Sec. 6.1 A count over $T$ timesteps is a whole number between $0$ and $T$,
+accumulated~\citep{li2023dynamic}, and the cap does not apply to it. % [LIT] li2023dynamic, Sec. 6.1
+A count over $T$ timesteps is a whole number between $0$ and $T$,
 so the logits lie in an interval of width $T$ and the softmax has a hard maximum, $p^{*}$. The
 inequality is the bound that face-recognition, out-of-distribution and noisy-label
 work derived for normalised and clipped
@@ -767,7 +768,7 @@ would fail were written into the repository's research notebook, NOTES.md, and c
 were then recorded against those conditions without editing the predictions. No external registry
 was used. Commit dates are set by whoever commits, so the version history shows the order of the
 records but cannot certify it. When the history was rewritten on 2026-11-12 to remove lines from
-two configuration files, every commit kept its date, author and message, and no prediction, date
+two configuration files and one line of the working log, every commit kept its date, author and message, and no prediction, date
 or outcome in NOTES.md changed; the commit identifiers quoted in the repository were updated.
 Table~\ref{tab:predcompact} lists all \predictionsEverything{} predictions and prediction parts; % src: NOTES.md; scripts/dashboard_summary.py
 Appendix~\ref{app:predictions} gives their full wording and the measurements. The manuscript was

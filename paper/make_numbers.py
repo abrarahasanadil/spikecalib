@@ -1017,6 +1017,11 @@ put("hdAurocDiffTLo", f(_d["mean"] - _half, sign=True), SRC_CM + " headline.auro
 put("hdAurocDiffTHi", f(_d["mean"] + _half, sign=True), SRC_CM + " headline.auroc.count_minus_accumulator, t-interval over 3 seeds, upper (A8)")
 assert _d["mean"] + _half < 0
 put("clipTop", thousands(cm_["clipped"]["top_label"]), SRC_CM + " clipped.top_label")
+# N-Caltech101 AUROC at T = 2 (four blocks, uncalibrated), seed means, for the README
+for k, suffix in (("Count", ""), ("Accum", "_accumulator")):
+    _au = [next(r for r in cm_["rows"] if r["name"] == f"ncaltech101_T2_seed{sd}{suffix}" and r["arm"] == "uncalibrated")["auroc"]
+           for sd in (0, 1, 2)]
+    put(f"hdNcAuroc{k}", f(st.mean(_au)), SRC_CM + f" rows, ncaltech101 four blocks T=2 {'count' if not suffix else 'accumulator'}, uncalibrated: AUROC, seed mean")
 assert all(r["n_clipped_top_label"] == 0 for r in cm_["rows"] if r["arm"] != "isotonic-top-label")
 assert all(r["n_clipped_top_label"] == r["n_clipped_top_label_exact_zero_or_one"] for r in cm_["rows"])
 put("clipTopTotal", thousands(cm_["clipped"]["scores_computed_top_label"]), SRC_CM + " clipped.scores_computed_top_label")
@@ -1142,6 +1147,10 @@ put("swNcTwoCountAcc", f(nc2s["count"]["acc"]), SRC_SW + " N-Caltech101 T=2 coun
 put("swNcTwoAccumAcc", f(nc2s["accumulator_same_weights"]["acc"]), SRC_SW + " N-Caltech101 T=2 accumulator on count weights, accuracy")
 put("swNcTwoMemAcc", f(nc2s["membrane_same_weights"]["acc"]), SRC_SW + " N-Caltech101 T=2 membrane on count weights, accuracy")
 put("swNcTwoTrainedAcc", f(tr2), "results/caltech_experiment.json accumulator T=2, test_accuracy, seed mean")
+nm2s = sw_cell[("nmnist", 2, 2)]
+put("swNmTwoCountAcc", f(nm2s["count"]["acc"]), SRC_SW + " N-MNIST two blocks T=2 count accuracy")
+put("swNmTwoAccumAcc", f(nm2s["accumulator_same_weights"]["acc"]), SRC_SW + " N-MNIST two blocks T=2 accumulator on count weights, accuracy")
+put("swNmTwoTrainedAcc", f(st.mean(TRAINED_ACC[("nmnist", 2, 2)])), "results/readout_experiment.json accumulator T=2, test_accuracy, seed mean")
 put("swNcTwoShare", f"{100 * (nc2s['accumulator_same_weights']['acc'] - nc2s['count']['acc']) / (tr2 - nc2s['count']['acc']):.0f}",
     DERIVED + ": (same-weights accumulator - count) / (trained accumulator - count), N-Caltech101 T=2, per cent")
 put("swNcSixCountAcc", f(nc6s["count"]["acc"]), SRC_SW + " N-Caltech101 T=6 count accuracy")
