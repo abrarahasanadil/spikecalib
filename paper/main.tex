@@ -89,7 +89,9 @@ Spiking neural networks suit event-driven sensors and low-power hardware because
 with sparse binary events spread over time. Every timestep costs latency and energy, so the
 pressure in practice is to use as few as possible. Early-exit networks stop as soon as the softmax
 confidence of the accumulated output passes a threshold, often after one or two
-timesteps~\citep{li2023seenn}, so at that point the confidence must be trustworthy. A spike-count % [LIT] li2023seenn, Sec. 3.3, Eq. (5) and Table 1
+timesteps~\citep{li2023seenn}, so at that point the confidence must be trustworthy. Where that
+output is a spike count, as in the stopping rule of Chen, Park and Simeone~\citep{chen2025knowing},
+the cap studied here applies. A spike-count % [LIT] li2023seenn, Sec. 3.3, Eq. (5) and Table 1
 readout has been reported to be underconfident early in a run and overconfident
 later~\citep{chen2025knowing}. % [LIT] chen2025knowing, Section I and Figure 1(b)
 
@@ -429,9 +431,10 @@ measured ECE comes to the floor is set by two terms. Wherever $a>\bar p$,
 $\mathrm{ECE}=(a-p^{*})+(p^{*}-\bar p)+[\mathrm{ECE}-(a-\bar p)]$: the second term is how far mean
 confidence falls short of the cap, and the third is twice the weighted overconfidence of the
 bins. Section~\ref{sec:explains} measures both. The floor is a property of the readout. That the cap is
-also the cause of the observed error is a further claim, and the evidence for it comes from
-interventions that lift the cap (Sections~\ref{sec:readouts}, \ref{sec:scale}
-and~\ref{sec:calibrators}).
+also the cause of the observed error is a further claim. The evidence for it comes from
+temperature scaling, which lifts the cap without changing the weights or the predictions
+(Section~\ref{sec:calibrators}), with supporting evidence from readouts and a learned scale that
+lift it but also change what the network predicts (Sections~\ref{sec:readouts} and~\ref{sec:scale}).
 
 \paragraph{A minimum width, and so a minimum scale.}
 Requiring the cap to reach a target accuracy $a$ gives
@@ -808,7 +811,10 @@ Table~\ref{tab:predcompact} lists all \predictionsEverything{} predictions and p
 Appendix~\ref{app:predictions} gives their full wording and the measurements. The manuscript was
 reviewed internally before submission, on 2026-11-12. Analyses added in response to that review
 are labelled ``added after review, not pre-registered''. Their thresholds, seeds and compute
-limits were committed to NOTES.md on 2026-11-12, before any of them was run.
+limits were committed to NOTES.md on 2026-11-12, before any of them was run. A second internal
+review on 2026-11-13 led to three more analyses, labelled ``added after a second internal review,
+not pre-registered''; their settings were committed to NOTES.md that day, under ``Second internal
+review, settings fixed 2026-11-13 before computation'', before any of them was run.
 
 \begin{table}[!ht]
 \centering
@@ -1162,7 +1168,7 @@ over the runs in the panel.}
 \end{figure}
 
 % =========================================================================================
-\subsection{The choice of calibrator depends on the regime (RQ4)}
+\subsection{Calibrators: close on N-MNIST, isotonic regression ahead for the N-Caltech101 count readout (RQ4)}
 \label{sec:calibrators}
 
 Calibration matters a great deal at low $T$. On N-MNIST at $T=2$, temperature scaling takes ECE
@@ -1421,7 +1427,7 @@ that property inherits the cap $e^{W}/(e^{W}+C-1)$ and, wherever accuracy exceed
 Proposition~\ref{prop:floor}. A firing-rate readout has $W=1$ at every $T$
 (Equation~\eqref{eq:rate}). A count readout implemented on neuromorphic hardware with saturating
 integer counters, or a clipped or quantised output, has a width set by its range: a counter that
-saturates at $M$ spikes gives $W=M$, and an output clipped to $[z_{\min},z_{\max}]$ gives
+saturates at $M$ spikes gives $W=\min(M,T)$, and an output clipped to $[z_{\min},z_{\max}]$ gives
 $W=z_{\max}-z_{\min}$. The number of distinct confidences is bounded whenever the logits take
 finitely many values. These statements follow from the mathematics; none of these readouts was
 trained or measured here, and how a network trained under them behaves is not known from this
@@ -1658,7 +1664,7 @@ ID & prediction & measured & outcome \\
 8 & N-Caltech101, $T=6$: scaled-count gap above $-0.05$ & \gapScNcSix & \verdictEight \\ % threshold: NOTES.md prediction 8; src: results/scaled_count_experiment.json
 9 & N-MNIST, $T=2$: count resolution below the accumulator's in all \nineTotal{} comparisons & below in \nineBelow{} & \verdictNine \\ % src: results/resolution_experiment.json
 10 & N-Caltech101: calibrators not resolved in at least 7 of 9 count runs & not resolved in \ncTies{} & \verdictTen \\ % threshold: NOTES.md prediction 10; src: results/caltech_calibrators.json
-11 & N-MNIST, $T=2$, 100 calibration samples: temperature better in at least 10 of \csDraws{} draws for 2 of 3 seeds; not resolved at 1,000 and 5,000 & at most \csTempWinsMaxHundred{} of \csDraws{} in any seed at 100; at 1,000 they differ in at most \csDifferMaxThousand{} of \csDraws{} draws per seed (\csDifferTotalThousand{} of \csDrawsTotal), a tie as registered; in none at 5,000 & \verdictEleven \\ % thresholds and sizes: NOTES.md prediction 11; src: results/calibration_size_experiment.json
+11 & N-MNIST, $T=2$, 100 calibration samples: temperature better in at least 10 of \csDraws{} draws for 2 of 3 seeds; not resolved at 1,000 and 5,000 & at most \csTempWinsMaxHundred{} of \csDraws{} in any seed at 100; at 1,000 they differ in at most \csDifferMaxThousand{} of \csDraws{} draws per seed (\csDifferTotalThousand{} of \csDrawsTotal), so not resolved under the registered rule; in none at 5,000 & \verdictEleven \\ % thresholds and sizes: NOTES.md prediction 11; src: results/calibration_size_experiment.json
 \midrule
 12 & Fusion, count, $T=2$: $\delta>0$ with its interval excluding zero in every seed & lower ends \fuTwoCiLowMin{} to \fuTwoCiLowMax & \verdictTwelve \\ % src: results/fusion_experiment.json predictions.12
 13 & Fusion, count, $T=2$: Eq.~\eqref{eq:fusioncost} inside the interval of the on-$S$ part of $\delta$ in every seed & inside in \fuThirteenWithin{} of 3 & \verdictThirteen \\ % src: results/fusion_experiment.json predictions.13
