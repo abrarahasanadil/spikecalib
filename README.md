@@ -33,7 +33,7 @@ Means are over three seeds; ECE is under equal-width binning, 15 bins.
 | ECE at *T* = 2, uncalibrated | 0.5386 <!-- n:hdNmTwoUncW --> | 0.3969 <!-- n:hdNcTwoUncW --> |
 | ECE at *T* = 2, temperature scaling | 0.0018 <!-- n:hdNmTwoTempW --> | 0.1449 <!-- n:hdNcTwoTempW --> |
 | ECE at *T* = 2, isotonic regression | 0.0042 <!-- n:hdNmTwoIsoW --> | 0.0320 <!-- n:hdNcTwoIsoW --> |
-| count runs where isotonic regression is better under the registered rule; N-Caltech101 also with the calibration set reweighted to the test classes | 0 <!-- n:resolveBoth --> of 15 <!-- n:tostNmRuns --> | 5 <!-- n:ncDiffer --> of 9 <!-- n:tostNcCountRuns -->; 4 <!-- n:rwCountIso --> of 9 |
+| count runs where isotonic regression is better under the registered rule (written after the N-MNIST results); N-Caltech101 also with the calibration set reweighted to the test classes | 0 <!-- n:resolveBoth --> of 15 <!-- n:tostNmRuns --> | 5 <!-- n:ncDiffer --> of 9 <!-- n:tostNcCountRuns -->; 4 <!-- n:rwCountIso --> of 9 <!-- n:rwCountRuns --> |
 | AUROC of confidence for correctness at *T* = 2, uncalibrated: count, accumulator trained separately | 0.9204 <!-- n:hdAurocCount -->, 0.9698 <!-- n:hdAurocAccum --> | 0.8593 <!-- n:hdNcAurocCount -->, 0.8885 <!-- n:hdNcAurocAccum --> |
 | accuracy at *T* = 2: count, accumulator on the same weights, accumulator trained | 0.9850 <!-- n:swNmTwoCountAcc -->, 0.9868 <!-- n:swNmTwoAccumAcc -->, 0.9861 <!-- n:swNmTwoTrainedAcc --> | 0.4543 <!-- n:swNcTwoCountAcc -->, 0.5744 <!-- n:swNcTwoAccumAcc -->, 0.5825 <!-- n:swNcTwoTrainedAcc --> |
 
@@ -110,6 +110,7 @@ shasum -a 256 spikecalib-results-v1.0.0.tar.gz     # sha256sum on Linux; compare
 tar -xzf spikecalib-results-v1.0.0.tar.gz -C results/
 python scripts/ece_floor.py               # the floor on ECE
 python scripts/calibration_metrics.py     # equivalence tests and run-level metrics
+python scripts/reweighted_calibration.py  # calibrators refitted to the test class distribution
 python paper/make_numbers.py              # every number in the paper
 python scripts/make_figures.py            # every figure, as vector PDF and PNG
 cd paper && pdflatex main && bibtex main && pdflatex main && pdflatex main
@@ -151,6 +152,8 @@ python scripts/calibration_metrics.py                    # added after review: e
 python scripts/count_network_probe.py                    # added after review: activity and same-weights control (MPS)
 python scripts/same_weights_ranking.py                   # added after review: AUROC with the weights held fixed (MPS)
 python scripts/scale_convergence.py                      # added after review: the learned scale to convergence
+python scripts/reweighted_calibration.py                 # second internal review: calibrators refitted to the test classes
+python scripts/shared_resample_intervals.py             # second internal review: N-MNIST intervals (event data and MPS)
 python scripts/extract_readout_stats.py
 python scripts/make_figures.py
 python paper/make_numbers.py

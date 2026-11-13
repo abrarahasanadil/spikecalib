@@ -18,8 +18,8 @@ where the two disagree, this document is what needs updating first.
 
 **Reading guide, added 2026-11-13.** This notebook records what was believed on each date. No
 prediction, date or outcome in it has been edited; on 2026-11-13 this guide was added, the AI
-disclosure section below was reduced to its current wording, and a few phrases about how the work
-was organised were made neutral. Where it differs from
+disclosure section below was reduced to its current wording, and two phrases outside the
+predictions and their outcomes, about how the work was organised, were made neutral. Where it differs from
 the paper (`paper/main.tex`, release v1.0.0), the paper is current. The main differences:
 
 1. The cap was later found in prior work on normalised and clipped logits (`SOURCES.md`,
@@ -868,7 +868,7 @@ Part 2 of the prediction held cleanly: the accumulator beats the leaky membrane 
 Part 3 said accumulator and membrane should be *close* at `T = 2`, because their windows
 nearly coincide there. On ranking they are: AUROC 0.9698 against 0.9659. **On calibration
 they are not close at all, and the difference answers a question left open by the previous
-runs.**
+session.**
 
 | `T = 2` | ECE per seed | mean | sd |
 |---|---|---|---|

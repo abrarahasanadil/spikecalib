@@ -1424,6 +1424,9 @@ put("rwUnderUnw", str(sum(e["unweighted"]["underconfident_calibrated"] for e in 
 put("rwUnderRw", str(sum(e["reweighted"]["underconfident_calibrated"] for e in rw_["summary"])), SRC_RW + " summary: calibrated four-block runs underconfident on the test set, reweighted fits")
 put("rwCalibrated", str(sum(e["reweighted"]["calibrated_runs"] for e in rw_["summary"])), SRC_RW + " summary: calibrated four-block runs (two calibrators per run)")
 assert _rws["count"]["reweighted"]["favour_temperature"] == 0   # main.tex: "never resolved as worse" after reweighting
+assert [(r["timesteps"], r["seed"]) for r in _rw4 if r["readout"] == "scaled-count"
+        and r["paired_unweighted"]["favours"] != r["paired_reweighted"]["favours"]
+        and r["paired_unweighted"]["differ"] and r["paired_reweighted"]["differ"]] == [(2, 1)]   # main.tex: the one reversal
 put("rwUnderCountRw", str(_rws["count"]["reweighted"]["underconfident_calibrated"]), SRC_RW + " summary, count: reweighted calibrated runs underconfident on the test set")
 put("rwCountCalibrated", str(_rws["count"]["reweighted"]["calibrated_runs"]), SRC_RW + " summary, count: calibrated runs")
 _c2 = [r for r in _rw4 if r["readout"] == "count" and r["timesteps"] == 2]
@@ -1449,8 +1452,8 @@ assert len(_sc) == 6 and min(r["temperature_reweighted"] for r in _sc) > 1.0
 put("rwScTempMin", f(min(r["temperature_reweighted"] for r in _sc), 2), SRC_RW + " runs, scaled-count: smallest reweighted temperature")
 put("rwScTempMax", f(max(r["temperature_reweighted"] for r in _sc), 2), SRC_RW + " runs, scaled-count: largest reweighted temperature")
 # S2: the single-temperature scan on the test set, count readout at T = 2
-put("scanNcTwoLowW", f(min(r["scan"]["equal_width"]["min_ece"] for r in _c2)), SRC_RW + " runs, count T=2: smallest equal-width ECE over the temperature grid, lowest seed")
-put("scanNcTwoLowM", f(min(r["scan"]["equal_mass"]["min_ece"] for r in _c2)), SRC_RW + " runs, count T=2: smallest equal-mass ECE over the temperature grid, lowest seed")
+put("scanNcTwoLowW", f"{math.floor(1000 * min(r['scan']['equal_width']['min_ece'] for r in _c2)) / 1000:.3f}", SRC_RW + " runs, count T=2: smallest equal-width ECE over the temperature grid, lowest seed, rounded down to three decimals")
+put("scanNcTwoLowM", f"{math.floor(1000 * min(r['scan']['equal_mass']['min_ece'] for r in _c2)) / 1000:.3f}", SRC_RW + " runs, count T=2: smallest equal-mass ECE over the temperature grid, lowest seed")
 put("scanNcTwoMatchLo", f(min(r["scan"]["mean_matched"]["ece_equal_width"] for r in _c2)), SRC_RW + " runs, count T=2: equal-width ECE where mean confidence equals accuracy, smallest seed")
 put("scanNcTwoMatchHi", f(max(r["scan"]["mean_matched"]["ece_equal_width"] for r in _c2)), SRC_RW + " runs, count T=2: equal-width ECE where mean confidence equals accuracy, largest seed")
 
