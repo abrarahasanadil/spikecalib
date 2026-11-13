@@ -19,6 +19,7 @@
 \usepackage{microtype}
 \usepackage{xurl}
 \usepackage[hidelinks]{hyperref}
+\usepackage{doi}
 \hypersetup{pdftitle={Counting Spikes Caps Confidence: The Calibration Cost of a Known Softmax Bound in Low-Timestep Spiking Networks},
   pdfauthor={Mohammed Abrar Ahasan Chowdhury, Md Mahmudul Hasan, Pedro Machado},
   pdfkeywords={spiking neural networks, uncertainty calibration, expected calibration error, softmax, spike-count readout, temperature scaling, event-based vision}}
@@ -794,6 +795,8 @@ near the threshold flip. Every number in this paper is generated from a stored a
 \label{sec:prereg}
 
 Pre-registration has been proposed for predictive modelling~\citep{hofman2023preregistration}. % [LIT] hofman2023preregistration, abstract and Section 4
+Here ``pre-registered'' means recorded and committed in the repository's notebook before the
+experiment, not lodged with an external registry.
 Here, before each experiment, the predictions it would test and the condition under which each
 would fail were written into the repository's research notebook, NOTES.md, and committed. Outcomes
 were then recorded against those conditions without editing the predictions. No external registry
