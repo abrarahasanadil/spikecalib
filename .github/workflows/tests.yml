@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   pytest:
     runs-on: ubuntu-latest
@@ -16,7 +19,7 @@ jobs:
 
       - name: Install dependencies (CPU-only torch)
         # CI has no Apple silicon and no GPU. The CPU wheel index keeps the download small
-        # and, more usefully, CPU float is bitwise deterministic where MPS is not -- so the
+        # and, more usefully, CPU float is bitwise deterministic where MPS is not, so the
         # reproducibility tests are stricter here than on the development machine.
         run: |
           python -m pip install --upgrade pip

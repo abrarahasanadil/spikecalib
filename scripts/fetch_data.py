@@ -730,7 +730,7 @@ def main() -> int:
         "--timesteps",
         type=int,
         default=10,
-        help="T for the integrated frame cache. Only T=10 is integrated for now.",
+        help="T for the integrated frame cache (the study uses 2 to 10).",
     )
     parser.add_argument("--data-root", default=DEFAULT_DATA_ROOT)
     parser.add_argument(

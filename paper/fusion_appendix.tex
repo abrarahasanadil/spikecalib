@@ -31,7 +31,7 @@ input $k$ on $S$.
 \item[(a)] On $S$ the two reports are permutations of each other. A fusion rule that uses only
   the two reports, treats the inputs alike, treats the classes alike and scores a class higher
   whenever an input's report rates it higher gives the two winners equal scores. With uniform
-  tie-breaking it is an unweighted vote: a coin flip whenever the inputs disagree. The
+  tie-breaking it is an unweighted vote, which amounts to a coin flip whenever the inputs disagree. The
   product, sum and max rules are of this kind. Ju et al.\ observe the like for networks whose
   confidences have all saturated towards one, where averaging ``is identical to the majority
   vote''~\citep{ju2018relative}. % [LIT] ju2018relative, Section 4.4.4
@@ -95,11 +95,11 @@ Two further observations qualify the picture. The reliability-weighted vote, R2,
 better rule overall. With two voters it is input A alone, and at $T=2$ its accuracy is
 \fuTwoRZeroMinusRTwo{} below the raw product rule's, because outside $S$ the counts carry graded % src: results/fusion_experiment.json r2_minus_r0
 evidence that a vote discards. Part (b) compares rules on $S$ only. And temperature scaling does
-not always favour the more accurate input: in all \fuLateScaleB{} of the \fuLateRuns{} count % src: results/fusion_experiment.json r1_gives_a_the_larger_scale
+not always favour the more accurate input: in every one of the \fuLateRuns{} count % src: results/fusion_experiment.json r1_gives_a_the_larger_scale; asserted in paper/make_numbers.py
 runs at $T\ge6$ it gave the event-dropped input the larger scale, since dropping events lowers
 the counts themselves. There Equation~\eqref{eq:fusioncost} has the wrong sign for R1, and it
 falls outside the measured interval in \fuPredMissAll{} runs, each resting on fewer than ten % src: results/fusion_experiment.json predicted_within_on_s_interval
-saturated disagreements in 200{,}000 pairs. % 10,000 test samples x 20 pairings: results/fusion_experiment.json n_test, pairings
+saturated disagreements in \fuPairsPerRun{} pairs. % src: results/fusion_experiment.json n_test, pairings
 
 \begin{table}[ht]
 \centering
@@ -149,8 +149,8 @@ nonlinearity which saturates at high firing rates costs little, since uncertaint
 there and ``there is little to be gained from exact inference''~\citep{ma2006bayesian}; Beck et % [LIT] ma2006bayesian, Discussion, p. 1436
 al.\ propose inhibition to avoid saturation and give no cost for it~\citep{beck2008probabilistic}. % [LIT] beck2008probabilistic
 Their setting is a population code for a continuous variable. For a count
-readout Equation~\eqref{eq:fusioncost} names the case in which saturation is not cheap: when
-two saturated sources of unequal reliability disagree. Nothing is claimed here about
+readout Equation~\eqref{eq:fusioncost} shows that saturation is costly when two saturated sources
+of unequal reliability disagree. Nothing is claimed here about
 perception or behaviour.
 
 Calibrating each input restores the weighting between them and no more. Every saturated

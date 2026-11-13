@@ -131,7 +131,7 @@ def figure_overview(results, pdf_dir, png_dir):
     from matplotlib.lines import Line2D
     handles = [Line2D([], [], color=DATASET_COLOUR["nmnist"], lw=1.3, label="N-MNIST, $C=10$"),
                Line2D([], [], color=DATASET_COLOUR["ncaltech101"], lw=1.3, label="N-Caltech101, $C=101$"),
-               Line2D([], [], color=GREY, lw=1.3, label=r"cap $p^{*}=e^{T}/(e^{T}+C-1)$"),
+               Line2D([], [], color=GREY, lw=1.3, label=r"cap $p^{*}$ (solid curves)"),
                Line2D([], [], color=GREY, marker="s", ls="none", ms=4.2, mec="white", label="test accuracy"),
                Line2D([], [], color=GREY, marker="o", ls="none", ms=5.2, mfc="white", label="largest confidence")]
     a.legend(handles=handles, loc="lower right", bbox_to_anchor=(1.0, 0.02))

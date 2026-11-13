@@ -86,15 +86,16 @@ post-review retraining of the learned scale is recorded separately in
 is deterministic.
 
 **Environment.** Python 3.13.1; every version, transitive dependencies included, is pinned in
-`requirements.txt`. The pins were resolved on that version and CI runs on it, so create the
-environment with the same minor version, as in the first command below: a newer default `python3` may lack
+`requirements.txt` as resolved on macOS arm64. On Linux, install the CPU wheels of PyTorch first,
+as `.github/workflows/tests.yml` does. CI uses the same minor version of Python; create the
+environment with it, as in the first command below, since a newer default `python3` may lack
 wheels for the pinned versions.
 
 ```sh
 python3.13 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python -m pytest tests/ -q
-python scripts/check_env.py        # a real forward pass through a SpikingJelly LIF layer
+python scripts/check_env.py        # Apple silicon only: a forward pass through a SpikingJelly LIF layer
 ```
 
 **Without retraining.** The release v1.0.0 carries the trained weights and the stored model
@@ -104,7 +105,7 @@ regenerates every table and figure without the event data or a GPU:
 
 ```sh
 gh release download v1.0.0 -R abrarahasanadil/spikecalib -p 'spikecalib-results-*.tar.gz'
-shasum -a 256 spikecalib-results-v1.0.0.tar.gz     # compare with the value below
+shasum -a 256 spikecalib-results-v1.0.0.tar.gz     # sha256sum on Linux; compare with the value below
 tar -xzf spikecalib-results-v1.0.0.tar.gz -C results/
 python scripts/ece_floor.py               # the floor on ECE
 python scripts/calibration_metrics.py     # equivalence tests and run-level metrics
@@ -115,7 +116,10 @@ cd paper && pdflatex main && bibtex main && pdflatex main && pdflatex main
 
 SHA-256 of `spikecalib-results-v1.0.0.tar.gz`: `d846bd7ce3a21b4220e6dc75a2eba73cacb5e2beaea8dfa7bdfaa9cf6a7c63f6`
 
-**From the raw data.** The event datasets are not redistributed. `scripts/fetch_data.py`
+**From the raw data.** N-MNIST and N-Caltech101 were recorded by Orchard, Jayawant, Cohen and
+Thakor (2015, [Frontiers in Neuroscience 9:437](https://doi.org/10.3389/fnins.2015.00437)) and are distributed
+by their authors. They are not redistributed here; the release holds weights, outputs and split
+indices derived from them. `scripts/fetch_data.py`
 downloads them from their original sources and builds the frame caches:
 
 ```sh
@@ -183,7 +187,7 @@ computation".
 | `scripts/` | one script per experiment, analysis or figure set |
 | `results/` | run records, result files (JSON and CSV); weights and outputs come with the release |
 | `paper/` | `main.tex`, the generated `numbers.tex`, the number generator, figures, `main.pdf` |
-| `figures/` | every figure as PNG, SVG and PDF |
+| `figures/` | PNG copies of the paper's figures (vector PDFs in `paper/figures/`) and the earlier dashboard figures |
 | `tests/` | the test suite, run on every push |
 | `docs/` | a static dashboard of the results (not published) |
 | [NOTES.md](NOTES.md) | the research design, predictions and their outcomes |
@@ -194,7 +198,7 @@ computation".
 Please cite the paper using the metadata in [CITATION.cff](CITATION.cff):
 
 ```
-Chowdhury, M. A. A., Hasan, M. M. and Machado, P. Counting Spikes Caps Confidence: The
+Chowdhury, M. A. A., Hasan, M. M. and Machado, P. (2026). Counting Spikes Caps Confidence: The
 Calibration Cost of a Known Softmax Bound in Low-Timestep Spiking Networks. Software and
 paper, version 1.0.0, https://github.com/abrarahasanadil/spikecalib
 ```

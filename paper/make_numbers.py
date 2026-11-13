@@ -590,6 +590,9 @@ put("fuRatePercent", f"{100 * fu['dropout']['rate']:.0f}", SRC_FU + " dropout.ra
 put("fuCalClean", f(fu["dropout"]["clean_calibration_accuracy"]), SRC_FU + " dropout.clean_calibration_accuracy")
 put("fuCalDropped", f(fu["dropout"]["calibration_accuracy_at_rate"]), SRC_FU + " dropout.calibration_accuracy_at_rate")
 put("fuPairings", str(fu["pairings"]), SRC_FU + " pairings")
+_ppr = {r["n_test"] * fu["pairings"] for r in fu["rows"]}
+assert len(_ppr) == 1, _ppr
+put("fuPairsPerRun", thousands(_ppr.pop()), SRC_FU + " rows n_test x pairings: fused pairs per run")
 for T in (2, 4, 6, 8, 10):
     rs = fu_cell("count", T)
     k = "fuCount" + TKEY[T]
@@ -676,6 +679,7 @@ assert all(r["timesteps"] >= 6 and not r["r1_gives_a_the_larger_scale"]
 assert all(r["n_test"] * r["pairings"] == 200000 for r in fu_rows)
 late = [r for r in fu_count_all if r["timesteps"] >= 6]
 put("fuLateRuns", str(len(late)), SRC_FU + " count rows at T>=6")
+assert all(not r["r1_gives_a_the_larger_scale"] for r in late)   # fusion_appendix.tex: "in every one of the ... count runs"
 put("fuLateScaleB", str(sum(not r["r1_gives_a_the_larger_scale"] for r in late)),
     SRC_FU + " count rows at T>=6 where temperature scaling gave B the larger scale")
 put("fuTwoPSDisagree", f(mean(t2, "p_s_and_disagree")), SRC_FU + " p_s_and_disagree, count, T=2")

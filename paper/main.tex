@@ -20,7 +20,8 @@
 \usepackage{xurl}
 \usepackage[hidelinks]{hyperref}
 \hypersetup{pdftitle={Counting Spikes Caps Confidence: The Calibration Cost of a Known Softmax Bound in Low-Timestep Spiking Networks},
-  pdfauthor={Mohammed Abrar Ahasan Chowdhury, Md Mahmudul Hasan, Pedro Machado}}
+  pdfauthor={Mohammed Abrar Ahasan Chowdhury, Md Mahmudul Hasan, Pedro Machado},
+  pdfkeywords={spiking neural networks, uncertainty calibration, expected calibration error, softmax, spike-count readout, temperature scaling, event-based vision}}
 \newtheorem{proposition}{Proposition}
 
 % Every measured value in this file is a macro defined in numbers.tex. That file is
@@ -28,8 +29,8 @@
 % artefact it was read from. The comment beside each use below names the same file.
 \input{numbers}
 
-\title{Counting Spikes Caps Confidence:\\
-The Calibration Cost of a Known Softmax Bound in Low-Timestep Spiking Networks}
+\title{Counting Spikes Caps Confidence:\\ The Calibration Cost of a Known Softmax Bound\\
+in Low-Timestep Spiking Networks}
 \author{Mohammed Abrar Ahasan Chowdhury\textsuperscript{1,*}\quad
   Md Mahmudul Hasan\textsuperscript{2}\quad
   Pedro Machado\textsuperscript{3}\\[6pt]
@@ -112,7 +113,7 @@ confidence values.
 \caption{(a) The cap $p^{*}=e^{T}/(e^{T}+C-1)$ against the measured test accuracy (filled squares,
 mean of three seeds) and the largest confidence observed (open circles, mean of three seeds) of the
 count readout, with two convolutional blocks ($K=2$) on N-MNIST and four ($K=4$) on N-Caltech101. Where accuracy sits above the cap,
-the arrow is the floor $a-p^{*}$ on ECE. Markers are offset slightly in $T$ so that coincident
+the arrows show the floor $a-p^{*}$ on ECE. Markers are offset slightly in $T$ so that coincident
 values stay visible. (b) Every distinct confidence the N-MNIST count readout
 emits at $T=2$ on the test set (seed 0), with the number of test samples at each.}
 \label{fig:ceiling}
@@ -177,7 +178,7 @@ literature from 2017 to November 2026 (Appendix~\ref{app:search}), we found no p
 states the cap for a softmax over spike counts or turns it into a floor on ECE, that measures how
 much of the observed error the floor makes up, or that compares the readouts of one spiking
 network with its weights held fixed. Of the \lsRead{} papers read, \lsReadAbstract{} could be read % src: results/literature_search.json
-only in abstract, two of them closely related~\citep{jurado2023spikemoid,banteywalu2026trustworthy}, and an embargoed
+only from their abstracts, two of them closely related~\citep{jurado2023spikemoid,banteywalu2026trustworthy}, and an embargoed
 2026 master's dissertation on the calibration of spiking networks for ordinal classification
 (University of Porto) could not be read at all; it may compare post-hoc calibrators. Jurado et
 al.'s abstract reports that a scaling term gives less coarse probability outputs; their analysis,
@@ -261,7 +262,7 @@ cap is set by the projection.
 \paragraph{Imposed bounds, and measurement.}
 Atarashi et al.\ generalise the softmax to enforce bounds on each output probability and fit
 them on a validation set as a remedy for miscalibration~\citep{atarashi2025bounding}. They also % [LIT] atarashi2025bounding, arXiv v2, Sections 3 and 4
-calibrate by clipping logits to an interval, map bounds on probabilities to bounds on logits, and
+calibrate by clipping logits to an interval, map bounds on probabilities to bounds on logits, and,
 for binary classification, bound the smooth calibration error of their bounded softmax from
 above. Theirs are bounds placed on a model and % [LIT] atarashi2025bounding, Sec. 3, Theorem 3.6; Sec. 4.1, Proposition 4.1
 an upper bound on the error; the floor studied here is a lower bound forced by an interval the
@@ -281,7 +282,7 @@ trains a softmax over spike counts divided by fixed scales on N-MNIST and offers
 firing rates. % [LIT] jurado2023spikemoid, abstract; public code github.com/audreydunn/spikemoid, mnist/train.py, checked 2026-11-12
 
 \paragraph{Calibration of spiking networks at few timesteps.}
-The calibration of spiking networks at few timesteps has been measured before. Sun, Yin and
+Sun, Yin and
 Boht\'e report ECE, Brier score and negative log-likelihood at 1 to 10 timesteps for networks
 read through the membrane potential of readout integrators, with temperature scaling as a
 baseline under corruption shift (CIFAR-10-C), and state, without a reported comparison, that this readout estimates uncertainty
@@ -290,7 +291,7 @@ accuracy~\citep{sun2023mcdropout}. Yan et al.\ read networks through time-averag
 logits and report ECE at each timestep from 1 to 10 on DVS-CIFAR10, and an overall ECE for
 N-Caltech101 at 10 timesteps~\citep{yan2025temporal}. Banteywalu and Leroux report an ECE for a % [LIT] yan2025temporal, Sec. 3.2, Tables 1 and 2
 Bayesian spiking network on three digits of N-MNIST. The article is open access, but its full text
-could not be retrieved for this revision, and the abstract states neither the readout nor
+could not be retrieved, and the abstract states neither the readout nor
 $T$~\citep{banteywalu2026trustworthy}. % [LIT] banteywalu2026trustworthy, abstract only (full text not reached)
 Two further works use readouts % [LIT] katti2024bayesian, Sec. II; jang2022multisample, Sec. V-C
 to which the cap applies, and neither notes it. Katti et al.\ read a Bayesian network through a
@@ -302,9 +303,9 @@ pooled across samples, which the paper does not state. If each sample's counts e
 softmax unscaled, every sample's confidence, and so their average, would be capped at
 \ceilTenTwo{} at two timesteps for ten classes, well below the accuracy their figure shows % [DERIVED] paper/make_numbers.py; katti2024bayesian, Fig. 5 (top)
 there, and Proposition~\ref{prop:floor} would then force an ECE far above the one they report. % katti2024bayesian, Fig. 5 (bottom)
-Their counts must therefore be scaled or summed across samples before the softmax, since
-averaging them across samples would leave the cap where it is, or else their output layer does
-not spike, contrary to their description. At 80
+Either their counts are scaled or summed across samples before the softmax (averaging them
+across samples would leave the cap where it is), or their output layer does not spike; the paper
+does not say which. At 80
 timesteps, Jang and Simeone report ECE for a softmax over vote counts, each between 0 and 2
 because two samples vote, across three classes~\citep{jang2022multisample}; there the cap comes
 from the number of voting samples. By Equation~\eqref{eq:lemma} that confidence cannot exceed % [LIT] jang2022multisample, Sec. V-C (definition before Eq. (30)) and Fig. 6
@@ -398,8 +399,9 @@ Expected calibration error partitions the test samples into bins $b$, with $n_b$
 $\mathrm{acc}_b$ and mean confidence $\mathrm{conf}_b$, and averages the absolute gaps:
 $\mathrm{ECE}=\sum_b \frac{n_b}{n}\,|\mathrm{acc}_b-\mathrm{conf}_b|$.
 The first inequality below is the single-bin case of the fact that coarser binning cannot raise
-the calibration error~\citep[Proposition~3.3]{kumar2019verified}; it is stated here with its % [LIT] kumar2019verified, Section 3, Proposition 3.3
-equality condition because the measurements of Section~\ref{sec:explains} use both.
+the calibration error~\citep[Proposition~3.3]{kumar2019verified}, stated there for the $\ell_2$ % [LIT] kumar2019verified, Section 3, Proposition 3.3 and Definition 2.1
+error, with the same argument holding for $\ell_1$. It is stated here with its equality condition
+because Section~\ref{sec:explains} uses that condition as well as the inequality.
 \begin{proposition}
 \label{prop:floor}
 For any partition of the test set, $\mathrm{ECE}\ge|a-\bar p|$, where $a$ is the accuracy and
@@ -465,8 +467,8 @@ N(T,C) \;=\; \binom{T+C-1}{C-1}
 \end{equation}
 distinct confidence values: \levelsTenTwo{} at $T=2$ and $C=10$, and \levelsTenSix{} at $T=6$. % [DERIVED] paper/make_numbers.py
 Enumerating every count vector at $T=2$, $C=10$ gives exactly \levelsTenTwo{} values at each of % [DERIVED] paper/make_numbers.py; enumeration in tests/test_theory.py
-three scales. A scale moves every one of these values and adds none. The cap is set by one
-number, and the count of values only by $T$ and $C$. The bound is informative only while it is below
+three scales. A scale moves every one of these values and adds none. The cap depends only on the
+product $sT$, and the number of values only on $T$ and $C$. The bound is informative only while it is below
 the number of test samples, which here means $C=10$ and $T\le6$; at $C=101$ it is already
 \levelsHundredOneTwo{} at $T=2$. % [DERIVED] paper/make_numbers.py
 
@@ -499,8 +501,8 @@ terms~\citep{stephenson2008two}. % [LIT] stephenson2008two, Eq. (7)
 \label{sec:data}
 
 N-MNIST~\citep{orchard2015converting} has ten classes recorded at $34\times34$ pixels and an % [LIT] orchard2015converting
-official test set of \nmSplitTest{} samples. Its training set is split into a training set of % src: results/nmnist_T2_seed0_split.npz
-\nmSplitTrain{} samples, a validation set of \nmSplitVal{} and a calibration set of \nmSplitCal. % src: results/nmnist_T2_seed0_split.npz
+official test set of \nmSplitTest{} samples. Its official training set is split into % src: results/nmnist_T2_seed0_split.npz
+\nmSplitTrain{} samples for training, \nmSplitVal{} for validation and \nmSplitCal{} for calibration. % src: results/nmnist_T2_seed0_split.npz
 \mbox{N-Caltech101}~\citep{orchard2015converting} has 101 classes and no official split. The copy used % [LIT] orchard2015converting
 here is the 2022 redistribution of the original data on Mendeley Data, deposited by the dataset's
 first author~\citep{ncaltech101mirror}. Its \ncSplitTotal{} samples are split class by class. % [LIT] ncaltech101mirror, record description and related links; src: results/ncaltech101_T2_seed0_split.npz
@@ -664,10 +666,9 @@ value may close a bin of its own, however few samples it holds: \emSmallBinRows{
 \cmRows{} run and calibrator combinations of Appendix~\ref{app:runlevel} have an equal-mass bin of
 fewer than 30 samples, \emOneSampleRows{} of them a bin of one sample, nearly all after isotonic % src: results/calibration_metrics.json rows
 regression. Under equal-width binning a confidence exactly on an edge $k/15$ falls in the lower
-bin. Isotonic outputs are ratios of small integers and can sit exactly on an edge, where rounding
-at the twelfth decimal decides the bin; the N-MNIST sweep scored calibrated confidences without
-that rounding and the later analyses with it, and each is reproduced here under its own
-convention. Equal-mass ECE groups values to twelve decimals and is not affected. At $T=2$ on N-MNIST, where one confidence holds most of the test set, every seed has % src: results/ece_floor.json
+bin. Isotonic outputs are ratios of small integers and can fall exactly on an edge, where rounding
+at the twelfth decimal decides the bin. The N-MNIST sweep did not apply that rounding and the later
+analyses did; each result is reproduced here under the convention it was computed with. Equal-mass ECE groups values to twelve decimals and is not affected. At $T=2$ on N-MNIST, where one confidence holds most of the test set, every seed has % src: results/ece_floor.json
 a single equal-mass bin, and equal-mass ECE equals $|a-\bar p|$. Effective bin
 counts and occupancies are reported with the results (Section~\ref{sec:explains}). As a third
 estimate, free of any binning choice, ECE is also computed with one group per distinct confidence
@@ -757,32 +758,35 @@ is the standard deviation beside each mean.
 \subsection{Scoring rules and selective prediction}
 \label{sec:scoring}
 
-Beside ECE, each run is scored with proper scoring rules. The top-label Brier score and log loss
+Alongside ECE, each run is scored with proper scoring rules. The top-label Brier score and log loss
 score the confidence as a probability that the prediction is right, which every calibrator
 provides. Where the output is a full distribution, before calibration and after temperature
-scaling, the multiclass negative log-likelihood and Brier score are also given. Probabilities are
+scaling, the multiclass negative log-likelihood and Brier score are also given; the multiclass
+Brier score sums the squared error over the $C$ classes and lies in $[0,2]$. Probabilities are
 clipped at $10^{-12}$ before a logarithm; \clipTop{} of \clipTopTotal{} top-label scores were % src: results/calibration_metrics.json clipped
 clipped, all of them isotonic-regression outputs of exactly zero or one, and no multiclass score
 was. Of the clipped scores, \penalisedTop{} are certain and wrong (a confidence of one on a wrong % src: results/calibration_metrics.json clipped.penalised_top_label
 prediction, or of zero on a right one); each costs $-\ln 10^{-12}$, and the others cost almost
 nothing. The log loss of isotonic regression is therefore unbounded in principle, and its finite
 values in Appendix~\ref{app:runlevel} depend on the clip. The area
-under the ROC curve (AUROC) of confidence as a score for correctness measures ranking. Reliability
-diagrams plot accuracy against confidence: for a count readout, at each distinct confidence value
-with a marker whose area is proportional to its share of samples and a Wilson 95\% interval; for
-a readout with more than 50 distinct values, in equal-mass bins. Selective prediction is
+under the receiver operating characteristic (ROC) curve (AUROC) of confidence as a score for correctness measures ranking. Reliability
+diagrams plot accuracy against confidence: for a readout with at most 50 distinct confidence
+values, at each value, with a marker whose area is proportional to its share of samples and a
+Wilson 95\% interval; otherwise, including count readouts at larger $T$ or with 101 classes, in
+tie-respecting equal-mass bins. This is a change from the plan in NOTES.md, which gave every count
+readout per value, made for legibility. Selective prediction is
 described by the deterministic operating points a readout offers, one per distinct confidence
 value, at each of which a group of tied confidences enters whole (Section~\ref{sec:selective}).
 
 \subsection{Compute and reproducibility}
 \label{sec:compute}
 
-Training ran on Apple silicon through PyTorch's MPS backend; the post-review analyses ran on an
+Training ran on Apple silicon through PyTorch's Metal Performance Shaders (MPS) backend; the post-review analyses ran on an
 Apple M1 Max with 32\,GB of memory. The recorded training time of the \trainRecords{} run % src: results/*_record.json
 records is \trainHoursAll{} hours. The software is Python 3.13.1, PyTorch 2.14.0, SpikingJelly % src: results/*_record.json seconds; versions: requirements.txt
 0.0.0.0.14, NumPy 2.5.3, SciPy 1.18.1 and scikit-learn 1.9.0, pinned with every transitive
 dependency in the repository. Seeds 0, 1 and 2 are used throughout. Inference on the stored
-weights reproduces the stored outputs bit for bit on the MPS backend; on the CPU a few spikes
+weights reproduces the stored outputs of the count networks bit for bit on the MPS backend; on the CPU a few spikes
 near the threshold flip. Every number in this paper is generated from a stored artefact by
 \texttt{paper/make\_numbers.py}, and the code is tagged v1.0.0 (see Code and data availability).
 
@@ -1543,9 +1547,10 @@ stored model outputs are attached to that release as assets. Every number in thi
 generated from the result files by \texttt{paper/make\_numbers.py}, and every figure by
 \texttt{scripts/make\_figures.py}. The event datasets are not redistributed;
 \texttt{scripts/fetch\_data.py} downloads them from their original sources. The seed-0 N-MNIST
-split has fingerprint \texttt{\splitFingerprint}. % src: results/sweep_nmnist.csv split_fingerprint
+split has fingerprint \texttt{\splitFingerprint}, the first 16 hexadecimal digits of a SHA-256
+hash of its index arrays (\texttt{spikecalib/data.py}). % src: results/sweep_nmnist.csv split_fingerprint
 
-\section*{Author contributions}
+\section*{Author contributions (CRediT)}
 M.\,A.\,A.\ Chowdhury: conceptualisation, methodology, software, investigation, formal analysis,
 visualisation, writing (original draft). M.\,M.\ Hasan: conceptualisation, writing (review and
 editing). P.\ Machado: conceptualisation, writing (review and editing).
@@ -2088,7 +2093,7 @@ $T$ & accuracy & w & m & w & m & w & m & differ \\
 Added after review, not pre-registered. Every setting of the pre-registered runs was kept except
 stopping; each model was initialised after seeding, so its initialisation depends on its seed
 alone. Table~\ref{tab:scaleconv} gives, for every run, the checkpoint the original stopping rule
-(best validation accuracy, patience 5, at most 50 epochs) would have kept within the run, and the
+(best validation accuracy, patience \patienceEpochs, at most \epochCap{} epochs) would have kept within the run, and the
 end point. The training took \aSevenHours{} hours. % src: results/scale_convergence.json rows seconds
 
 \begin{table}[ht]
@@ -2150,7 +2155,7 @@ In all, \lsQueryRows{} queries were logged and their results screened by title a
 a contribution were read on a fixed form: what the paper does, its readout, its range of $T$, its
 datasets, whether it states the cap, whether it measures calibration, which calibrators it uses,
 whether anything was recorded in advance, and a rating of its overlap with each contribution, with
-the passage that supports it. \lsRead{} papers were read in this way, \lsReadFull{} in full text % src: results/literature_search.json papers_read, papers_read_full_text
+the passage that supports it. In this way \lsRead{} papers were read, \lsReadFull{} in full text % src: results/literature_search.json papers_read, papers_read_full_text
 and \lsReadAbstract{} from the abstract only where no full text could be reached; \lsLow{} further % src: results/literature_search.json papers_read_abstract_only, low_relevance_records
 records were judged peripheral at screening. The search would miss papers that report a
 spiking network's calibration, a count cap or temperature scaling only in their body text and

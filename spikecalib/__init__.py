@@ -1,18 +1,17 @@
 """SpikeCalib: post-hoc confidence calibration for event-driven spiking neural networks.
 
-A multi-dataset benchmark testing whether the advantage of isotonic regression over
-temperature scaling grows as the number of simulation timesteps ``T`` falls. The design
-document for the study is ``NOTES.md`` at the repository root; it is authoritative, and
-this package is expected to follow it.
+Code for the paper "Counting Spikes Caps Confidence": the softmax over output spike counts
+is capped, and this package measures what the cap does to calibration at low timestep counts
+``T`` on N-MNIST and N-Caltech101. The study began by testing whether isotonic regression's
+advantage over temperature scaling grows as ``T`` falls; that hypothesis failed, as
+``NOTES.md`` at the repository root records.
 
 Package-level responsibility: this module fixes the version and the public surface. It
 holds no experiment logic, so that importing the package never has side effects on RNG
 state -- a package import must not perturb the seeded, reproducible pipeline described in
 correctness rule 4.
 
-TODO: export the stable public API once the submodules exist.
 """
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
-# TODO: __all__ = ["data", "models", "train", "calibration", "sweep", "figures"]

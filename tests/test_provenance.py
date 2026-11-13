@@ -7,8 +7,8 @@ design-comparison proxy", and "``E_MAC`` is ``[DERIVED]``, not cited to Horowitz
 audit found that half unguarded: mutating ``E_MAC_JOULES`` failed a test, but nothing would
 have caught the constant being re-attributed to a figure number it does not appear in.
 
-Rule 2 gets the other guard here. ``results/*.csv`` is gitignored, so ``docs/sweep.csv`` is
-the only copy of the sweep a reader ever sees; it drifted eleven columns behind the copy
+Rule 2 gets the other guard here. ``results/*.csv`` was once gitignored, so ``docs/sweep.csv`` was
+the only copy of the sweep a reader saw; it drifted eleven columns behind the copy
 embedded in ``docs/data.js`` and nothing noticed.
 """
 
@@ -109,7 +109,7 @@ def test_the_paper_carries_the_disclosure_notes_prescribes() -> None:
 # --------------------------------------------------------------------------- rule 2
 
 def test_the_tracked_csv_matches_the_one_the_page_renders() -> None:
-    """results/*.csv is gitignored, so the tracked copy is all a reader ever gets."""
+    """docs/sweep.csv must have the columns of the sweep the page renders."""
     tracked = os.path.join(ROOT, "docs", "sweep.csv")
     with open(tracked) as fh:
         tracked_cols = next(csv.reader(fh))
