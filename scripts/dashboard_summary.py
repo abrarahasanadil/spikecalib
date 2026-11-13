@@ -241,10 +241,10 @@ def paper_predictions(scaled, resolution, caltech_cal, cal_size, fusion):
          f"gap {_f(P['8']['mean_signed_gap'], sign=True)}, overshooting into overconfidence", P["8"]["held"]),
         ("9", "2026-10-13", f"N-MNIST, T = 2: count resolution below the accumulator's in all {len(p9['comparisons'])} comparisons",
          f"below in {below}", p9["held"]),
-        ("10", "2026-10-13", f"N-Caltech101: calibrators tie in at least 7 of {p10['runs']} count runs",
-         f"tie in {p10['ties']}", p10["held"]),
+        ("10", "2026-10-13", f"N-Caltech101: calibrators not resolved in at least 7 of {p10['runs']} count runs",
+         f"not resolved in {p10['ties']}", p10["held"]),
         ("11", "2026-10-13", "N-MNIST, T = 2, 100 calibration samples: temperature better in at least 10 of "
-                             f"{cal_size['draws']} draws for two seeds; ties at 1,000 and 5,000",
+                             f"{cal_size['draws']} draws for two seeds; not resolved at 1,000 and 5,000",
          f"at most {max(x['temperature_wins'] for x in at100)} of {cal_size['draws']}", p11["held"]),
         ("12", "2026-10-14", "Fusion pilot, count, T = 2: δ above zero with its interval excluding zero in every seed",
          f"lower ends {lows}", F["12"]["held"]),

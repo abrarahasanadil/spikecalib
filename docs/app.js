@@ -209,8 +209,9 @@
   function renderNumbers() {
     var S = D.summary, L = D.ledger;
     if (S) {
-      setN("share-c10", pc(S.share_explained_t2.c10, 1));
-      setN("share-c101", pc(S.share_explained_t2.c101, 1));
+      var FR = S.floor_ratio_t2 || S.share_explained_t2;
+      setN("share-c10", pc(FR.c10, 1));
+      setN("share-c101", pc(FR.c101, 1));
       setN("ece-raw-ew", fx(S.ece_t2.uncalibrated.ew, 4)); setN("ece-temp-ew", fx(S.ece_t2.temperature.ew, 4));
       setN("ece-raw-em", fx(S.ece_t2.uncalibrated.em, 4)); setN("ece-temp-em", fx(S.ece_t2.temperature.em, 4));
       setN("auroc-count", fx(S.auroc_t2.count, 4)); setN("auroc-accum", fx(S.auroc_t2.accumulator, 4));

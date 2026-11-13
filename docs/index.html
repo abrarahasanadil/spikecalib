@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SpikeCalib</title>
-<meta name="description" content="A chart-first summary of the SpikeCalib paper: a spike-count readout caps confidence, and at few timesteps the cap sets a floor on calibration error.">
-<link rel="stylesheet" href="style.css?v=20261017">
+<meta name="description" content="A chart-first summary of the SpikeCalib paper: a spike-count readout caps confidence, and wherever accuracy is above the cap it sets a floor on calibration error.">
+<link rel="stylesheet" href="style.css?v=20261113">
 </head>
 <body>
 
@@ -32,12 +32,12 @@
 <section class="band hero" id="hero">
   <p class="chip">Preprint in preparation</p>
   <h1>Counting Spikes Caps Confidence: The Calibration Cost of a Known Softmax Bound in Low-Timestep Spiking Networks</h1>
-  <p class="lede">Read a spiking network by counting its output spikes and its confidence has a ceiling; at few timesteps that ceiling, not training, makes almost all of its calibration error.</p>
+  <p class="lede">Read a spiking network by counting its output spikes and its confidence has a ceiling. Wherever accuracy is above it, the ceiling sets a floor on calibration error, and at two timesteps that floor is nearly all of the error measured. This page summarises the paper in the repository's release; where the two differ, the paper is current.</p>
   <div class="tiles">
     <div class="tile">
-      <p class="label">Share of the confidence gap the cap forces, <i>T</i>&nbsp;=&nbsp;2</p>
+      <p class="label">Floor <i>a</i>&nbsp;−&nbsp;<i>p</i>* as a share of binned ECE, <i>T</i>&nbsp;=&nbsp;2</p>
       <p class="value"><span data-n="share-c10"></span><span class="sep">·</span><span data-n="share-c101"></span></p>
-      <p class="sub"><span data-n="c-small"></span> classes · <span data-n="c-large"></span> classes</p>
+      <p class="sub">equal-width bins; <span data-n="c-small"></span> classes · <span data-n="c-large"></span> classes</p>
     </div>
     <div class="tile">
       <p class="label">ECE at <i>T</i>&nbsp;=&nbsp;2, before <span aria-hidden="true">→</span> after temperature scaling</p>
@@ -45,23 +45,23 @@
       <p class="sub">equal-width bins; equal-mass <span data-n="ece-raw-em"></span> → <span data-n="ece-temp-em"></span></p>
     </div>
     <div class="tile">
-      <p class="label">Error-detection AUROC at <i>T</i>&nbsp;=&nbsp;2</p>
+      <p class="label">Error-detection AUROC at <i>T</i>&nbsp;=&nbsp;2, N-MNIST</p>
       <p class="value"><span data-n="auroc-count"></span><span class="sep">·</span><span data-n="auroc-accum"></span></p>
-      <div class="keys"><span class="key k-count"><i class="dot"></i><span>count</span></span><span class="key k-accum"><i class="dot"></i><span>accumulator</span></span></div>
+      <div class="keys"><span class="key k-count"><i class="dot"></i><span>count</span></span><span class="key k-accum"><i class="dot"></i><span>accumulator, trained separately</span></span></div>
     </div>
     <div class="tile">
-      <p class="label">Pre-registered predictions and parts</p>
+      <p class="label">Predictions and parts recorded in advance</p>
       <p class="value"><span data-n="all-held"></span> held<span class="sep">·</span><span data-n="all-false"></span> falsified</p>
       <p class="sub">main table <span data-n="pred-held"></span> held, <span data-n="pred-false"></span> falsified; earlier <span data-n="early-held"></span> held, <span data-n="early-false"></span> falsified</p>
     </div>
   </div>
-  <p class="byline">Mohammed Abrar Ahasan Chowdhury · ORCID <a href="https://orcid.org/0009-0006-9273-6593">0009-0006-9273-6593</a> · <a href="https://github.com/abrarahasanadil/spikecalib">code and artifacts</a></p>
+  <p class="byline">Mohammed Abrar Ahasan Chowdhury (<a href="https://orcid.org/0009-0006-9273-6593">ORCID</a>) · Md Mahmudul Hasan (<a href="https://orcid.org/0000-0003-2543-3112">ORCID</a>) · Pedro Machado (<a href="https://orcid.org/0000-0003-1760-3871">ORCID</a>) · <a href="https://github.com/abrarahasanadil/spikecalib">code and artifacts</a></p>
 </section>
 
 <!-- 2. The cap -->
 <section class="band" id="cap">
   <h2>The cap</h2>
-  <p class="take">A softmax over spike counts cannot exceed <i>e<sup>T</sup></i>/(<i>e<sup>T</sup></i>+<i>C</i>−1). Every measured count readout sits on it, below its own accuracy, until <i>T</i> is large enough.</p>
+  <p class="take">A softmax over spike counts cannot exceed <i>e<sup>T</sup></i>/(<i>e<sup>T</sup></i>+<i>C</i>−1). No measured count readout exceeds it, and in almost every configuration the most confident output reaches it; at few timesteps that is far below accuracy.</p>
   <div class="panel">
     <div class="legend"><span class="key k-ink"><i></i><span>ceiling</span></span><span class="key k-count"><i class="dot"></i><span>max confidence, count readout</span></span><span class="key k-muted"><i class="dia"></i><span>accuracy</span></span></div>
     <div class="grid two">
@@ -69,16 +69,16 @@
       <div><h3 id="cap-b-title"></h3><div class="chart" id="chart-cap-b"></div></div>
     </div>
     <details><summary>How it was measured, and the table</summary><div class="body">
-      <p>The ceiling is the softmax of the count vector with the winner at <i>T</i> and every other class at zero. It is a known bound for logits confined to an interval (normalised and clipped logits); the paper restates it for spike counts. Points are means over <span data-n="n-seeds"></span> seeds; the bound held in <span data-n="cells-all"></span> of <span data-n="cells-all"></span> distinct count-readout configurations.</p>
+      <p>The ceiling is the softmax of the count vector with the winner at <i>T</i> and every other class at zero. It is a known bound for logits confined to an interval (normalised and clipped logits); the paper restates it for spike counts. Points are means over <span data-n="n-seeds"></span> seeds; the bound held in <span data-n="cells-all"></span> of <span data-n="cells-all"></span> distinct count-readout configurations. On N-Caltech101 at <i>T</i>&nbsp;=&nbsp;10 the cap is respected but not reached.</p>
       <div class="scroll"><table id="table-cap"></table></div>
     </div></details>
   </div>
 </section>
 
-<!-- 3. Calibration fixes the average, not the ranking -->
+<!-- 3. Calibration fixes the average; ties limit the ranking at T = 2 -->
 <section class="band" id="calibration">
-  <h2>Calibration fixes the average, not the ranking</h2>
-  <p class="take">Temperature scaling moves the count readout onto the diagonal. It cannot add confidence values, so the few the readout emits still rank errors worse than an unbounded readout's.</p>
+  <h2>Calibration fixes the average; ties limit the ranking at <i>T</i> = 2</h2>
+  <p class="take">Temperature scaling moves the count readout onto the diagonal and keeps its grouping of samples, so it cannot break ties. At <i>T</i> = 2 those ties rank errors worse than an accumulator, whether trained separately or reading the same weights; at <i>T</i> = 6 and 10, with two blocks, the count readout ranks slightly better than a separately trained accumulator.</p>
   <div class="grid three">
     <div class="panel"><h3>Reliability, <i>T</i> = 2</h3><p class="note">N-MNIST, count readout, seeds pooled</p><div class="chart" id="chart-rel-2"></div></div>
     <div class="panel"><h3>Reliability, <i>T</i> = 10</h3><p class="note">N-MNIST, count readout, seeds pooled</p><div class="chart" id="chart-rel-10"></div></div>
@@ -86,15 +86,15 @@
   </div>
   <div class="legend" style="margin-top:8px"><span class="key k-muted"><i class="dot"></i><span>raw</span></span><span class="key k-count"><i class="dot"></i><span>temperature-scaled (reliability) · count (AUROC)</span></span><span class="key k-accum"><i class="dot"></i><span>accumulator</span></span></div>
   <details><summary>How it was measured, and the tables</summary><div class="body">
-    <p>Reliability uses <span data-n="n-bins"></span> equal-width bins; each point is a bin's mean confidence against its accuracy, pooled over seeds. AUROC is the area under the ROC curve of confidence for separating correct from incorrect predictions.</p>
+    <p>Reliability uses <span data-n="n-bins"></span> equal-width bins; each point is a bin's mean confidence against its accuracy, pooled over seeds. AUROC is the area under the receiver operating characteristic (ROC) curve of confidence for separating correct from incorrect predictions; tied confidences count one half. The accumulator in this chart was trained separately.</p>
     <div class="scroll"><table id="table-calibration"></table></div>
   </div></details>
 </section>
 
-<!-- 4. The readout sets the direction of failure -->
+<!-- 4. Where the cap binds, the readout is underconfident -->
 <section class="band" id="readouts">
-  <h2>The readout sets the direction of failure</h2>
-  <p class="take">Capped readouts are underconfident at low <i>T</i>; unbounded ones are not. Below zero, confidence is lower than accuracy.</p>
+  <h2>Where the cap binds, the readout is underconfident</h2>
+  <p class="take">Count readouts are underconfident where the cap binds; where it is slack it does not set the direction. Removing the cap is not enough by itself: the leaky membrane, also unbounded, stays slightly underconfident, and the accumulator is overconfident on N-Caltech101. Below zero, confidence is lower than accuracy.</p>
   <div class="panel">
     <div class="legend"><span class="key k-count"><i></i><span>count</span></span><span class="key k-wcount"><i></i><span>weighted count</span></span><span class="key k-membrane"><i></i><span>membrane</span></span><span class="key k-accum"><i></i><span>accumulator</span></span></div>
     <div class="grid two">
@@ -102,7 +102,7 @@
       <div><h3>N-Caltech101</h3><p class="note">confidence minus accuracy, before calibration</p><div class="chart" id="chart-gap-b"></div></div>
     </div>
     <details><summary>Readouts, and the table</summary><div class="body">
-      <p>Count and weighted count are capped at the same ceiling; membrane (a leaky integrator) and accumulator (the same without the leak) are not. Every readout shares the network up to the last layer. Means over <span data-n="n-seeds"></span> seeds.</p>
+      <p>Count and weighted count are capped at the same ceiling; membrane (a leaky integrator of the output layer's input) and accumulator (the plain sum of that input, with no leak and no input factor) are not. Every readout uses the same network up to and including the output layer's batch norm, and each was trained separately, so differences between readouts can also come from training. Means over <span data-n="n-seeds"></span> seeds.</p>
       <div class="scroll"><table id="table-gap"></table></div>
     </div></details>
   </div>
@@ -110,8 +110,8 @@
 
 <!-- 5. A learned scale -->
 <section class="band" id="scale">
-  <h2>A learned scale lifts the cap; it does not calibrate</h2>
-  <p class="take">One trainable logit scale removes the underconfidence on N-MNIST, overshoots into overconfidence on N-Caltech101, and at <i>T</i> = 6 there costs <span data-n="scale-cost"></span> accuracy points.</p>
+  <h2>A learned scale lifts the cap, and overshoots</h2>
+  <p class="take">One trainable logit scale removes the underconfidence on N-MNIST and overshoots into overconfidence on N-Caltech101, where at <i>T</i> = 6 it costs <span data-n="scale-cost"></span> accuracy points. These are the original runs, stopped early.</p>
   <div class="panel">
     <div class="legend"><span class="key k-count"><i class="dot"></i><span>count</span></span><span class="key k-count"><i class="ring"></i><span>count with a learned scale</span></span><span class="key k-accum"><i class="dot"></i><span>accumulator</span></span></div>
     <div class="grid two">
@@ -119,7 +119,7 @@
       <div><h3>Accuracy</h3><div class="chart" id="chart-scale-acc"></div></div>
     </div>
     <details><summary>The arm, and the table</summary><div class="body">
-      <p>The scale is <i>s</i> = exp(θ), started at one and trained with the network's optimiser. It rose above the minimum the bound requires in every run and was still rising when early stopping ended training. Means over <span data-n="n-seeds"></span> seeds.</p>
+      <p>The scale is <i>s</i> = exp(θ), started at one and trained with the network's optimiser. In these runs it rose above the minimum the bound requires in every run and was still rising when early stopping ended training. The paper retrains the same models until the scale settles or an epoch limit is reached: the calibration findings hold, the N-Caltech101 overconfidence at <i>T</i> = 2 grows, and the accuracy recovered depends on when training stops. Means over <span data-n="n-seeds"></span> seeds.</p>
       <div class="scroll"><table id="table-scale"></table></div>
     </div></details>
   </div>
@@ -127,8 +127,8 @@
 
 <!-- 6. Calibrators -->
 <section class="band" id="calibrators">
-  <h2>Which calibrator depends on the regime</h2>
-  <p class="take">Isotonic minus temperature ECE, per run, with paired 95% intervals. On N-MNIST no run differs under both estimators; on N-Caltech101 isotonic regression is better in <span data-n="nc-differ"></span> of <span data-n="nc-runs"></span> count runs.</p>
+  <h2>Calibrators: close on N-MNIST, isotonic regression ahead for the N-Caltech101 count readout</h2>
+  <p class="take">Isotonic minus temperature ECE, per run, with paired 95% intervals. On N-MNIST no run differs under both estimators, and both calibrated errors are small; on N-Caltech101 isotonic regression is better in <span data-n="nc-differ"></span> of <span data-n="nc-runs"></span> count runs and never resolved as worse. For the learned scale on N-Caltech101 the comparison went both ways.</p>
   <div class="panel">
     <div class="legend"><span class="key k-count"><i class="dot"></i><span>interval excludes zero</span></span><span class="key k-count"><i class="ring"></i><span>interval includes zero</span></span><span class="key k-ink"><i></i><span>zero: no difference</span></span></div>
     <div class="grid two">
@@ -138,7 +138,7 @@
       <div><h3>N-Caltech101, equal-mass</h3><div class="chart" id="chart-cal-b-em"></div></div>
     </div>
     <details><summary>The rule, and the table</summary><div class="body">
-      <p>Two calibrators differ on a run only if the paired bootstrap interval excludes zero under both binning estimators, in the same direction; otherwise the difference is not resolved. Negative values favour isotonic regression. The two datasets have their own horizontal scales.</p>
+      <p>Two calibrators differ on a run only if the paired bootstrap interval excludes zero under both binning estimators, in the same direction; otherwise the difference is not resolved, which is not the same as equivalent. The rule was written after the N-MNIST results and before any N-Caltech101 calibrator was fitted, so on N-MNIST it describes the result. On N-Caltech101 the calibration set holds ten samples of every class while the test set follows class sizes; the paper reports a check that reweights the calibration set. Negative values favour isotonic regression. The two datasets have their own horizontal scales.</p>
       <div class="scroll"><table id="table-cal"></table></div>
     </div></details>
   </div>
@@ -153,7 +153,7 @@
     <h3>Accuracy gained by calibrating each input before fusing</h3>
     <p class="note">N-MNIST; points are seeds with 95% intervals</p>
     <div class="chart" id="chart-fusion"></div>
-    <p class="note" style="margin-top:8px">Limits: one dataset; the second input is a degraded sample of the same class from the same sensor, not a second modality; no fusion network trained; no reference-frame transformation; no closed loop.</p>
+    <p class="note" style="margin-top:8px">Limits: an exploratory pilot with synthetic degradation of a single sensor, not evidence about real multimodal fusion; one dataset; the second input is a degraded sample of the same class from the same sensor, not a second modality; no fusion network trained; no reference-frame transformation; no closed loop.</p>
     <details><summary>Setup, and the table</summary><div class="body">
       <p>Input A is a test sample; input B a different sample of the same class with events removed at a rate fixed beforehand on the calibration split. The gain is the product rule's accuracy after temperature scaling each input minus its accuracy on the raw outputs.</p>
       <div class="scroll"><table id="table-fusion"></table></div>
@@ -164,7 +164,7 @@
 <!-- 8. Ledger -->
 <section class="band" id="ledger">
   <h2>Pre-registration ledger</h2>
-  <p class="take">Every prediction, recorded before the run that tested it. Falsified ones stay falsified.</p>
+  <p class="take">Every prediction, recorded in the notebook before the run that tested it. Falsified ones stay falsified. No external registry was used, so the version history shows the order of the records but cannot certify it.</p>
   <div class="panel">
     <div class="scroll"><table class="ledger" id="table-ledger"></table></div>
     <details><summary>How verdicts are derived</summary><div class="body">
@@ -180,12 +180,15 @@
     <div class="panel">
       <h3>Known gaps</h3>
       <ul class="tight">
-        <li>Two event datasets; the deeper network is also the smaller one, so depth and capacity are confounded.</li>
+        <li>Two event datasets, small networks, three seeds; the deeper network is also the smaller one, so depth and capacity are confounded.</li>
+        <li>The N-Caltech101 networks are far below published accuracy and fit their training data much better than held-out data, so some of the overconfidence of unbounded readouts there may be ordinary overfitting.</li>
+        <li>On N-Caltech101 the calibration set is class-balanced and the test set is not.</li>
         <li>No hyperparameter search; one membrane time constant.</li>
-        <li>The learned scale was not tuned and had not settled.</li>
+        <li>The learned scale was not tuned, and some retrained runs reached the epoch limit before it settled.</li>
         <li>The N-Caltech101 calibrator result rests on <span data-n="nc-runs"></span> runs of one architecture.</li>
-        <li>The fusion result is a pilot.</li>
-        <li>The bound itself is prior work; the contribution is its measurement for spike counts.</li>
+        <li>The fusion result is an exploratory pilot with synthetic degradation of a single sensor.</li>
+        <li>The bound itself is prior work for normalised and clipped logits; the contribution is its application to spike counts and the measurement of what it costs.</li>
+        <li>No early-exit rule was evaluated; every network is trained and read at a fixed <i>T</i>.</li>
       </ul>
     </div>
     <div class="panel">
@@ -209,7 +212,7 @@ python paper/make_numbers.py</pre>
 </footer>
 
 <div class="tip" id="tip" role="tooltip"></div>
-<script src="data.js?v=20261017"></script>
-<script src="app.js?v=20261017"></script>
+<script src="data.js?v=20261113"></script>
+<script src="app.js?v=20261113"></script>
 </body>
 </html>

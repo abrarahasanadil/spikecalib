@@ -234,6 +234,18 @@ def main() -> int:
             return len(json.load(fh)["model_config"]["channels"])
 
     summary = build_summary(readout_rows, conditional_rows, csv_text, caltech_rows)
+    # The floor a - p* as a share of equal-width ECE at T = 2, read from the floor analysis
+    # (A1), the source the paper's Table 4 uses. The older share above, from the
+    # conditional-ceiling run, agrees with it to within 0.001 (one N-MNIST seed differs in
+    # the fourth decimal); the page shows the floor analysis.
+    floor = whole("ece_floor.json")
+    if floor:
+        main_channels = {"nmnist": "32-64", "ncaltech101": "32-64-128-128"}
+        ratio = {c["dataset"]: c["schemes"]["equal_width"]["floor_ratio"]["mean"] for c in floor["cells"]
+                 if c["timesteps"] == 2 and c["channels"] == main_channels[c["dataset"]]}
+        summary["floor_ratio_t2"] = {"c10": ratio["nmnist"], "c101": ratio["ncaltech101"]}
+        for k in ("c10", "c101"):
+            assert abs(summary["floor_ratio_t2"][k] - summary["share_explained_t2"][k]) < 1e-3, k
     summary["cells_union"] = count_cells(readout_rows, caltech_rows, arch_rows, blocks_of)
     summary["n_sweep_runs"] = len({(r["timesteps"], r["seed"]) for r in csv.DictReader(io.StringIO(csv_text))})
     ledger = build_ledger(readout_rows, conditional_rows, arch_rows, csv_text, scaled, resolution,

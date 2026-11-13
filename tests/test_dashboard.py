@@ -10,12 +10,11 @@ promised:
    is read, and each renderer runs inside its own ``try``, so one missing field cannot take
    the page down with it. The old modals failed silently for exactly that reason.
 3. **Assets are versioned**, so a browser holding an old ``app.js`` cannot serve it.
-4. **The bands are the ones the brief named, in its order**, and detail lives in
+4. **The bands are the ones the design specified, in its order**, and detail lives in
    ``<details>`` blocks, not modals.
-5. **One colour per readout**, with the hex values the brief fixed, in both themes.
+5. **One colour per readout**, with the fixed palette's hex values, in both themes.
 
-Cheap structural checks, not a substitute for opening the page; the browser check in
-``LOG.md`` is that.
+Cheap structural checks, not a substitute for opening the page in a browser.
 """
 
 from __future__ import annotations
@@ -167,7 +166,7 @@ def test_export_records_its_source_artifacts() -> None:
     assert "max(sources, key=os.path.getmtime)" in src
 
 
-def test_bands_are_in_the_order_the_brief_set(index: str) -> None:
+def test_bands_are_in_the_designed_order(index: str) -> None:
     order = ["hero", "cap", "calibration", "readouts", "scale", "calibrators", "fusion", "ledger", "limits"]
     found = re.findall(r'<section class="band[^"]*" id="([^"]+)"', index)
     assert found == order, f"bands are {found}"
