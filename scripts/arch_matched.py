@@ -7,7 +7,7 @@ datasets**, ``T`` in {2, 6}, seeds 0-2, count and accumulator in every cell, so 
 comparison is matched as well as the dataset comparison.
 
 Two of the four quadrants already exist and are reused rather than retrained; the weights
-are found under the names the earlier sessions gave them. The 24 new cells are trained here.
+are found under the names the earlier runs gave them. The 24 new cells are trained here.
 
 It doubles as the alternative-architecture check the study never had: any claim that holds
 at both depths is not an artifact of one network.

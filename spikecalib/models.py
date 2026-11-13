@@ -188,7 +188,7 @@ class ModelConfig:
     # not: it must spread counts across [0, T] so the argmax is informative. With
     # BatchNorm normalising pre-activations to roughly unit variance, a threshold of 1.0
     # fires only the top few percent per step, so most classes stay at 0, most samples are
-    # fully tied, and predictions are close to random. Measured, not assumed -- see LOG.md.
+    # fully tied, and predictions are close to random. Measured in earlier runs, not assumed.
     output_v_threshold: Optional[float] = None
     # [DESIGN] ATan surrogate gradient. The spike function's true derivative is zero almost
     # everywhere and undefined at threshold, so a surrogate is required to train directly.

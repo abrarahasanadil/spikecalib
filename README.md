@@ -187,7 +187,6 @@ computation".
 | `tests/` | the test suite, run on every push |
 | `docs/` | a static dashboard of the results (not published) |
 | [NOTES.md](NOTES.md) | the research design, predictions and their outcomes |
-| [LOG.md](LOG.md) | the working log of what was run and decided |
 | [SOURCES.md](SOURCES.md) | the provenance of every cited fact, with what was checked |
 
 ## How to cite

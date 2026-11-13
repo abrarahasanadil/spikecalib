@@ -866,7 +866,7 @@ Part 2 of the prediction held cleanly: the accumulator beats the leaky membrane 
 Part 3 said accumulator and membrane should be *close* at `T = 2`, because their windows
 nearly coincide there. On ranking they are: AUROC 0.9698 against 0.9659. **On calibration
 they are not close at all, and the difference answers a question left open by the previous
-session.**
+runs.**
 
 | `T = 2` | ECE per seed | mean | sd |
 |---|---|---|---|
@@ -2580,7 +2580,7 @@ is stated rather than implied.
 - **"Sun & Bohte, AOT-SNN, arXiv:2405.00699" was a wrong citation** and is withdrawn. That
   identifier is **Wu, Qi, Cai, Jin, Yi & Huang**, "Direct Training Needs Regularisation:
   Anytime Optimal Inference Spiking Neural Network" — method AOI-SNN, not AOT-SNN. A real
-  AOT-SNN line exists and is Sun & Bohté's, but the paper the brief meant was never
+  AOT-SNN line exists and is Sun & Bohté's, but the paper the design specification meant was never
   identified, so no claim is made about it.
 - **"Skatchkovsky & Simeone on SNN overconfidence" could not be confirmed** and is
   withdrawn. The overconfidence result this study compares itself against is **Chen, Park &
@@ -2925,7 +2925,7 @@ predictions have now been registered in all. The fusion section is in the paper,
 sixteen pages with it.
 
 **Added 2026-10-14, after the author's review.** The author accepted prediction 13 in its
-corrected form and the overnight decisions on the fusion section. The paper is set in the
+corrected form and the decisions recorded on the fusion section. The paper is set in the
 original eleven-point type, not ten-point, under the title "Counting Spikes Caps Confidence:
 The Calibration Cost of a Known Softmax Bound in Low-Timestep Spiking Networks". Three items
 moved to an appendix with nothing deleted: the N-Caltech101 calibrator table, the fusion

@@ -101,12 +101,12 @@ Geoff Pleiss, Yu Sun and Kilian Q. Weinberger**, published 17 July 2017.
 `IsotonicOneVsRest`), `NOTES.md` correctness rule 2, `paper/main.tex`.
 *Not read:* Naeini et al. (2015) and Zadrozny & Elkan (2002). Neither is cited.
 
-### Prior-work citations from the project brief, checked 2026-09-12
+### Prior-work citations from the design specification, checked 2026-09-12
 
-**Four prior-work citations carried over from the project brief.** **Checked 2026-09-12;
+**Four prior-work citations carried over from the design specification.** **Checked 2026-09-12;
 two did not survive.** See "Verified 2026-09-12" below for the evidence.
 
-| as supplied in the brief | outcome |
+| as supplied in the design specification | outcome |
 |---|---|
 | Li, Jones & Furber, "Dynamic Confidence" (ICCV 2023) | **confirmed**, with the title corrected — *Dynamic Confidence* is the method, not the paper |
 | Sun & Bohte, "AOT-SNN" | **withdrawn** — the arXiv identifier attached to it belongs to Wu et al. and a different method |
@@ -114,7 +114,7 @@ two did not survive.** See "Verified 2026-09-12" below for the evidence.
 | "Knowing When to Stop" on conformal prediction for SNN early exit | **confirmed** — Chen, Park & Simeone, arXiv:2305.11322 |
 
 Two of four supplied references being wrong is the reason this pass was run, and the reason
-nothing in the brief is now treated as a source until it has been opened.
+nothing in the design specification is now treated as a source until it has been opened.
 
 ### Added 2026-09-11, against the study's final claims
 
@@ -148,7 +148,7 @@ against the arXiv record 2026-09-12.
 > **Attribution corrected 2026-09-12.** This entry previously read "Sun & Bohte". It is not
 > theirs. arXiv:2405.00699 is by **Dengyu Wu, Yi Qi, Kaiwen Cai, Gaojie Jin, Xinping Yi and
 > Xiaowei Huang**, and the method is **AOI-SNN** (Anytime Optimal Inference), not AOT-SNN.
-> The brief supplied the wrong author pair against this identifier and it was carried
+> The design specification supplied the wrong author pair against this identifier and it was carried
 > unchecked. A separate AOT-SNN line does exist and is Sun & Bohté's — see "Could NOT be
 > confirmed", item 4 —
 > so two different papers with similar acronyms had been merged into one citation.
@@ -350,7 +350,7 @@ are marked as such and say nothing about spiking networks.
 ## Design choices that are not sourced at all
 
 Listed so they are not mistaken for findings. These are decisions, and the justification
-is engineering judgement recorded in `LOG.md`, not a citation.
+is engineering judgement recorded in the working log (in the repository history), not a citation.
 
 - Split sizes: N-MNIST 500/500 per class, DVS-Gesture 10/30, CIFAR10-DVS 100/100.
   `[DERIVED]` from dataset size, but the specific numbers are a choice.
@@ -480,7 +480,7 @@ Regularisation: Anytime Optimal Inference Spiking Neural Network" — method **A
 genuine **AOT-SNN** line exists and is Tao Sun & Sander Bohté's; the one reference confirmed
 is **Sun & Bohté, "Average-Over-Time Spiking Neural Networks for Uncertainty Estimation in
 Regression", arXiv:2412.00278, 29 November 2024**, which is a **regression** paper and
-therefore probably not what the brief intended. A related earlier paper, **Sun, Yin &
+therefore probably not what the design specification intended. A related earlier paper, **Sun, Yin &
 Bohté, "Efficient Uncertainty Estimation in Spiking Neural Networks via MC-dropout",
 arXiv:2304.10191, 20 April 2023**, is confirmed to exist but was not read.
 **Action taken:** the Wu et al. paper is cited correctly under its real authors. The claim
@@ -657,7 +657,7 @@ unread.** AOT is Average-Over-Time. The readout is a membrane potential, not a s
 "probabilities of AOT-SNNs are computed based on the membrane potentials of readout
 integrator neurons". It reports ECE, Brier score and NLL at one to ten timesteps on
 CIFAR-10, and compares against "the temperature scaling method that re-calibrates
-probabilities output by the LTS-SNN". So the brief's original claim, that this line uses
+probabilities output by the LTS-SNN". So the design specification's original claim, that this line uses
 temperature scaling as a calibration baseline, was right about the paper and wrong about the
 identifier. ICANN 2023 per the search's Crossref check, not confirmed by me. The cap does
 not apply to its readout.
@@ -685,7 +685,7 @@ Potential of Spiking Neural Networks **with** Dynamic Confidence"; the arXiv rec
 `paper/refs.bib` uses "by" and should follow the published title.
 
 **The two withdrawn references, revisited.** Both exist, under identifiers and author lists
-the brief did not give. The withdrawals were correct as made, since neither could be tied to
+the design specification did not give. The withdrawals were correct as made, since neither could be tied to
 a document at the time, and the test that keeps the old strings out of live files should stay
 until the author decides whether to cite the papers under their real records.
 
@@ -1017,7 +1017,7 @@ overconfidence" very probably meant (see "Literature check, 2026-10-13").
   readout's cap would be slack, and find frequentist training overconfident. *What may not:*
   that their readout is subject to the count cap, or that its cap is slack. The cap of a
   per-step softmax over `B^(L) s_t` is set by the range of `B^(L) s_t`, which the paper does
-  not report, not by `T`. The brief's phrase "where the cap is slack" is therefore used only
+  not report, not by `T`. The phrase "where the cap is slack" is therefore used only
   as a statement about count readouts at those lengths.
 
 **Grillo, Geminiani, Alessandro, D'Angelo, Pedrocchi & Casellato (2022). "Bayesian Integration

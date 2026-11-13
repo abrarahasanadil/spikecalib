@@ -23,5 +23,3 @@ paper/*.bbl
 paper/*.toc
 paper/*.synctex.gz
 
-# private review material, never published
-paper/review/
