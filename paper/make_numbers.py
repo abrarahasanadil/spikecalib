@@ -1344,6 +1344,51 @@ if a7.get("training_finished_at"):
     put("aSevenTableRows", str(a7rows), SRC_A7 + " rows")
 
 
+# ------------------------------------------------------------------ S1, S2: N-Caltech101 calibrators refitted to the test class distribution
+rw_ = load("reweighted_calibration.json")
+SRC_RW = "results/reweighted_calibration.json"
+_rws = {e["readout"]: e for e in rw_["summary"]}
+_rw4 = [r for r in rw_["runs"] if r["n_blocks"] == 4]
+for k, ro in (("Count", "count"), ("Accum", "accumulator"), ("Scaled", "scaled-count")):
+    e = _rws[ro]
+    # the unweighted refit reproduces the published verdict counts
+    assert e["unweighted"]["favour_isotonic"] == {"count": 5, "accumulator": 6, "scaled-count": 1}[ro], ro
+    put(f"rw{k}Runs", str(e["runs"]), SRC_RW + f" summary, {ro}: runs")
+    put(f"rw{k}Iso", str(e["reweighted"]["favour_isotonic"]), SRC_RW + f" summary, {ro}: reweighted, isotonic better under the registered rule")
+    put(f"rw{k}Temp", str(e["reweighted"]["favour_temperature"]), SRC_RW + f" summary, {ro}: reweighted, temperature scaling better under the registered rule")
+put("rwUnderUnw", str(sum(e["unweighted"]["underconfident_calibrated"] for e in rw_["summary"])), SRC_RW + " summary: calibrated four-block runs underconfident on the test set, unweighted fits")
+put("rwUnderRw", str(sum(e["reweighted"]["underconfident_calibrated"] for e in rw_["summary"])), SRC_RW + " summary: calibrated four-block runs underconfident on the test set, reweighted fits")
+put("rwCalibrated", str(sum(e["reweighted"]["calibrated_runs"] for e in rw_["summary"])), SRC_RW + " summary: calibrated four-block runs (two calibrators per run)")
+put("rwUnderCountRw", str(_rws["count"]["reweighted"]["underconfident_calibrated"]), SRC_RW + " summary, count: reweighted calibrated runs underconfident on the test set")
+put("rwCountCalibrated", str(_rws["count"]["reweighted"]["calibrated_runs"]), SRC_RW + " summary, count: calibrated runs")
+_c2 = [r for r in _rw4 if r["readout"] == "count" and r["timesteps"] == 2]
+assert len(_c2) == 3
+for arm, ak in (("temperature", "Temp"), ("isotonic-top-label", "Iso")):
+    put(f"rwNcTwo{ak}W", f(st.mean(r["reweighted"][arm]["ece_equal_width"] for r in _c2)), SRC_RW + f" runs, count T=2 reweighted {arm}: equal-width ECE, seed mean")
+    put(f"rwNcTwo{ak}M", f(st.mean(r["reweighted"][arm]["ece_equal_mass"] for r in _c2)), SRC_RW + f" runs, count T=2 reweighted {arm}: equal-mass ECE, seed mean")
+    put(f"rwNcTwo{ak}Gap", f(st.mean(r["reweighted"][arm]["mean_conf_minus_acc"] for r in _c2), sign=True), SRC_RW + f" runs, count T=2 reweighted {arm}: mean confidence minus accuracy, seed mean")
+assert all(r["paired_reweighted"]["favours"] == "isotonic" for r in _c2)   # "in every seed at T = 2"
+_u = st.mean(r["unweighted"]["uncalibrated"]["mean_conf_minus_acc"] for r in _c2)
+_t = st.mean(r["reweighted"]["temperature"]["mean_conf_minus_acc"] for r in _c2)
+_t0 = st.mean(r["unweighted"]["temperature"]["mean_conf_minus_acc"] for r in _c2)
+assert f"{100 * (1 - _t0 / _u):.0f}" == dict((m[0], m[1]) for m in macros)["tempRemovesNcTwo"]
+put("rwTempRemovesNcTwo", f"{100 * (1 - _t / _u):.0f}", DERIVED + ": share of the N-Caltech101 T=2 underconfidence removed by the reweighted temperature, per cent (" + SRC_RW + ")")
+put("rwTempNcTwoMin", f(min(r["temperature_reweighted"] for r in _c2), 2), SRC_RW + " runs, count T=2: smallest reweighted temperature")
+put("rwTempNcTwoMax", f(max(r["temperature_reweighted"] for r in _c2), 2), SRC_RW + " runs, count T=2: largest reweighted temperature")
+put("rwWeightMin", f(min(r["weights"]["min"] for r in _rw4), 2), SRC_RW + " runs: smallest calibration weight")
+put("rwWeightMax", f(max(r["weights"]["max"] for r in _rw4), 2), SRC_RW + " runs: largest calibration weight")
+put("calAccNcTwo", f(st.mean(r["cal_accuracy"] for r in _c2)), SRC_RW + " runs, count T=2: calibration-set accuracy, seed mean")
+put("calAccRwNcTwo", f(st.mean(r["cal_accuracy_reweighted"] for r in _c2)), SRC_RW + " runs, count T=2: reweighted calibration-set accuracy, seed mean")
+_sc = [r for r in _rw4 if r["readout"] == "scaled-count"]
+assert len(_sc) == 6 and min(r["temperature_reweighted"] for r in _sc) > 1.0
+put("rwScTempMin", f(min(r["temperature_reweighted"] for r in _sc), 2), SRC_RW + " runs, scaled-count: smallest reweighted temperature")
+put("rwScTempMax", f(max(r["temperature_reweighted"] for r in _sc), 2), SRC_RW + " runs, scaled-count: largest reweighted temperature")
+# S2: the single-temperature scan on the test set, count readout at T = 2
+put("scanNcTwoLowW", f(min(r["scan"]["equal_width"]["min_ece"] for r in _c2)), SRC_RW + " runs, count T=2: smallest equal-width ECE over the temperature grid, lowest seed")
+put("scanNcTwoLowM", f(min(r["scan"]["equal_mass"]["min_ece"] for r in _c2)), SRC_RW + " runs, count T=2: smallest equal-mass ECE over the temperature grid, lowest seed")
+put("scanNcTwoMatchLo", f(min(r["scan"]["mean_matched"]["ece_equal_width"] for r in _c2)), SRC_RW + " runs, count T=2: equal-width ECE where mean confidence equals accuracy, smallest seed")
+put("scanNcTwoMatchHi", f(max(r["scan"]["mean_matched"]["ece_equal_width"] for r in _c2)), SRC_RW + " runs, count T=2: equal-width ECE where mean confidence equals accuracy, largest seed")
+
 # ------------------------------------------------------------------ the literature search (added after review)
 ls_ = load("literature_search.json")
 SRC_LS = "results/literature_search.json"

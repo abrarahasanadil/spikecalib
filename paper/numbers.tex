@@ -1535,6 +1535,39 @@
 \newcommand{\aSevenRowNcSixOne}{30 & settled & 2.79 & 0.5723 & $+$0.1827 & 0.1827 & 3.41 & 0.82 & 0.5821 & $+$0.2224 & 0.2224}% results/scale_convergence.json rows, ncaltech101 T=6 seed 1: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
 \newcommand{\aSevenRowNcSixTwo}{150 & limit & 2.52 & 0.5741 & $+$0.1684 & 0.1705 & 4.11 & 0.86 & 0.6320 & $+$0.2140 & 0.2153}% results/scale_convergence.json rows, ncaltech101 T=6 seed 2: epochs, stop; original-rule s, acc, gap, ECE w; end s, s_min, acc, gap, ECE w
 \newcommand{\aSevenTableRows}{9}% results/scale_convergence.json rows
+\newcommand{\rwCountRuns}{9}% results/reweighted_calibration.json summary, count: runs
+\newcommand{\rwCountIso}{4}% results/reweighted_calibration.json summary, count: reweighted, isotonic better under the registered rule
+\newcommand{\rwCountTemp}{0}% results/reweighted_calibration.json summary, count: reweighted, temperature scaling better under the registered rule
+\newcommand{\rwAccumRuns}{9}% results/reweighted_calibration.json summary, accumulator: runs
+\newcommand{\rwAccumIso}{2}% results/reweighted_calibration.json summary, accumulator: reweighted, isotonic better under the registered rule
+\newcommand{\rwAccumTemp}{0}% results/reweighted_calibration.json summary, accumulator: reweighted, temperature scaling better under the registered rule
+\newcommand{\rwScaledRuns}{6}% results/reweighted_calibration.json summary, scaled-count: runs
+\newcommand{\rwScaledIso}{3}% results/reweighted_calibration.json summary, scaled-count: reweighted, isotonic better under the registered rule
+\newcommand{\rwScaledTemp}{1}% results/reweighted_calibration.json summary, scaled-count: reweighted, temperature scaling better under the registered rule
+\newcommand{\rwUnderUnw}{47}% results/reweighted_calibration.json summary: calibrated four-block runs underconfident on the test set, unweighted fits
+\newcommand{\rwUnderRw}{25}% results/reweighted_calibration.json summary: calibrated four-block runs underconfident on the test set, reweighted fits
+\newcommand{\rwCalibrated}{48}% results/reweighted_calibration.json summary: calibrated four-block runs (two calibrators per run)
+\newcommand{\rwUnderCountRw}{7}% results/reweighted_calibration.json summary, count: reweighted calibrated runs underconfident on the test set
+\newcommand{\rwCountCalibrated}{18}% results/reweighted_calibration.json summary, count: calibrated runs
+\newcommand{\rwNcTwoTempW}{0.1197}% results/reweighted_calibration.json runs, count T=2 reweighted temperature: equal-width ECE, seed mean
+\newcommand{\rwNcTwoTempM}{0.1214}% results/reweighted_calibration.json runs, count T=2 reweighted temperature: equal-mass ECE, seed mean
+\newcommand{\rwNcTwoTempGap}{$-$0.0196}% results/reweighted_calibration.json runs, count T=2 reweighted temperature: mean confidence minus accuracy, seed mean
+\newcommand{\rwNcTwoIsoW}{0.0272}% results/reweighted_calibration.json runs, count T=2 reweighted isotonic-top-label: equal-width ECE, seed mean
+\newcommand{\rwNcTwoIsoM}{0.0322}% results/reweighted_calibration.json runs, count T=2 reweighted isotonic-top-label: equal-mass ECE, seed mean
+\newcommand{\rwNcTwoIsoGap}{$+$0.0038}% results/reweighted_calibration.json runs, count T=2 reweighted isotonic-top-label: mean confidence minus accuracy, seed mean
+\newcommand{\rwTempRemovesNcTwo}{95}% [DERIVED] arithmetic in paper/make_numbers.py: share of the N-Caltech101 T=2 underconfidence removed by the reweighted temperature, per cent (results/reweighted_calibration.json)
+\newcommand{\rwTempNcTwoMin}{0.34}% results/reweighted_calibration.json runs, count T=2: smallest reweighted temperature
+\newcommand{\rwTempNcTwoMax}{0.35}% results/reweighted_calibration.json runs, count T=2: largest reweighted temperature
+\newcommand{\rwWeightMin}{0.35}% results/reweighted_calibration.json runs: smallest calibration weight
+\newcommand{\rwWeightMax}{9.28}% results/reweighted_calibration.json runs: largest calibration weight
+\newcommand{\calAccNcTwo}{0.2706}% results/reweighted_calibration.json runs, count T=2: calibration-set accuracy, seed mean
+\newcommand{\calAccRwNcTwo}{0.4582}% results/reweighted_calibration.json runs, count T=2: reweighted calibration-set accuracy, seed mean
+\newcommand{\rwScTempMin}{1.19}% results/reweighted_calibration.json runs, scaled-count: smallest reweighted temperature
+\newcommand{\rwScTempMax}{1.92}% results/reweighted_calibration.json runs, scaled-count: largest reweighted temperature
+\newcommand{\scanNcTwoLowW}{0.1073}% results/reweighted_calibration.json runs, count T=2: smallest equal-width ECE over the temperature grid, lowest seed
+\newcommand{\scanNcTwoLowM}{0.1107}% results/reweighted_calibration.json runs, count T=2: smallest equal-mass ECE over the temperature grid, lowest seed
+\newcommand{\scanNcTwoMatchLo}{0.1132}% results/reweighted_calibration.json runs, count T=2: equal-width ECE where mean confidence equals accuracy, smallest seed
+\newcommand{\scanNcTwoMatchHi}{0.1209}% results/reweighted_calibration.json runs, count T=2: equal-width ECE where mean confidence equals accuracy, largest seed
 \newcommand{\lsQueries}{18}% results/literature_search.json required_queries
 \newcommand{\lsQueryRows}{481}% results/literature_search.json query_rows
 \newcommand{\lsScreenings}{17{,}234}% results/literature_search.json record_screenings
